@@ -19,10 +19,15 @@ resource "aws_apigatewayv2_authorizer" "jwt" {
   api_id           = aws_apigatewayv2_api.main.id
   authorizer_type  = "JWT"
   identity_sources = ["$request.header.Authorization"]
+  name             = "${var.environment}-jwt-authorizer"
 
   jwt_configuration {
     audience = [var.cognito_app_client_id]
     issuer   = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${var.cognito_user_pool_id}"
+  }
+
+  lifecycle {
+    ignore_changes = [name]
   }
 }
 
