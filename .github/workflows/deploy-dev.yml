@@ -27,44 +27,35 @@ jobs:
         working-directory: api
         run: npm install
 
+      - name: Run API typecheck
+        working-directory: api
+        run: npm run typecheck
+
+      - name: Run API lint
+        working-directory: api
+        run: npm run lint
+
       - name: Build Lambda artifact
         working-directory: api
         run: |
           set -e
-          echo "Starting build..."
-          npm run build 2>&1 | tee /tmp/build.log
-          BUILD_EXIT=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo "::error::Build command failed with exit code $BUILD_EXIT"
-            cat /tmp/build.log
-            exit $BUILD_EXIT
-          fi
+          npm run build
           if [ ! -f dist/lambda.zip ]; then
             echo "::error::Build failed - lambda.zip not created"
-            echo "Build log:"
-            cat /tmp/build.log
             echo "Contents of dist directory:"
             ls -la dist/ || echo "dist directory does not exist"
-            echo "Current directory: $(pwd)"
             exit 1
           fi
-          echo "Build successful: $(ls -lh dist/lambda.zip)"
-          echo "File size: $(stat -f%z dist/lambda.zip 2>/dev/null || stat -c%s dist/lambda.zip) bytes"
-
-      - name: Verify Lambda artifact exists (from repo root)
-        run: |
-          if [ ! -f api/dist/lambda.zip ]; then
-            echo "::error::Lambda artifact not found at api/dist/lambda.zip"
-            echo "Build output:"
-            ls -la api/dist/ || echo "dist directory does not exist"
-            exit 1
-          fi
-          echo "Lambda artifact verified: $(ls -lh api/dist/lambda.zip)"
+          echo "Lambda artifact created: $(ls -lh dist/lambda.zip)"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.0"
+
+      - name: Terraform fmt check
+        working-directory: infra
+        run: terraform fmt -check -recursive
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -96,28 +87,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Verify Lambda artifact before Terraform plan
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Checking for lambda.zip..."
-          ls -la api/dist/lambda.zip || echo "File not found at api/dist/lambda.zip"
-          if [ ! -f api/dist/lambda.zip ]; then
-            echo "::error::Lambda artifact missing. Build step must have failed."
-            echo "Contents of api/dist/:"
-            ls -la api/dist/ || echo "api/dist directory does not exist"
-            exit 1
-          fi
-          echo "Lambda artifact verified: $(ls -lh api/dist/lambda.zip)"
-          echo "Absolute path: $(realpath api/dist/lambda.zip)"
-
       - name: Terraform plan
         working-directory: infra/env/dev
-        run: |
-          echo "Terraform working directory: $(pwd)"
-          echo "Checking lambda.zip from Terraform directory:"
-          ls -la ../../../api/dist/lambda.zip || echo "File not found at ../../../api/dist/lambda.zip from $(pwd)"
-          echo "Expected absolute path: $(realpath ../../../api/dist/lambda.zip 2>/dev/null || echo 'Path does not resolve')"
-          terraform plan -no-color -refresh=true
+        run: terraform plan -no-color -refresh=true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
