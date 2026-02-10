@@ -33,7 +33,7 @@ locals {
 }
 
 locals {
-  lambda_zip_hash = fileexists(var.artifact_path) ? filebase64sha256(var.artifact_path) : ""
+  lambda_zip_hash = try(filebase64sha256(var.artifact_path), "")
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
