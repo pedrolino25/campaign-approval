@@ -97,7 +97,7 @@ jobs:
 
       - name: Terraform apply
         working-directory: infra/env/prod
-        run: terraform apply -no-color -refresh=true
+        run: terraform apply -auto-approve -no-color -refresh=true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
