@@ -33,7 +33,8 @@ locals {
 }
 
 locals {
-  lambda_zip_hash = fileexists(var.artifact_path) ? filebase64sha256(var.artifact_path) : ""
+  artifact_path_resolved = abspath("${path.root}/${var.artifact_path}")
+  lambda_zip_hash        = try(filebase64sha256(local.artifact_path_resolved), "")
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
@@ -50,7 +51,7 @@ resource "aws_lambda_function" "api" {
     if k != "notification"
   }
 
-  filename         = var.artifact_path
+  filename         = local.artifact_path_resolved
   function_name    = each.value.name
   role             = each.value.role
   handler          = "api.${each.key}.handler"
@@ -81,7 +82,7 @@ resource "aws_lambda_function" "api" {
 }
 
 resource "aws_lambda_function" "notification" {
-  filename         = var.artifact_path
+  filename         = local.artifact_path_resolved
   function_name    = local.lambda_functions.notification.name
   role             = local.lambda_functions.notification.role
   handler          = "api.notification.handler"

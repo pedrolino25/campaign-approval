@@ -37,8 +37,15 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
   supported_identity_providers         = ["COGNITO"]
 
-  access_token_validity  = "${var.access_token_validity_minutes}m"
-  refresh_token_validity = "${var.refresh_token_validity_days}d"
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
+
+  access_token_validity  = var.access_token_validity_minutes
+  id_token_validity       = var.access_token_validity_minutes
+  refresh_token_validity  = var.refresh_token_validity_days
 
   callback_urls = ["https://worklient.com"]
   logout_urls   = ["https://worklient.com"]

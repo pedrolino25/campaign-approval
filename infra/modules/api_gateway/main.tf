@@ -25,6 +25,10 @@ resource "aws_apigatewayv2_authorizer" "jwt" {
     audience = [var.cognito_app_client_id]
     issuer   = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${var.cognito_user_pool_id}"
   }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 data "aws_region" "current" {}

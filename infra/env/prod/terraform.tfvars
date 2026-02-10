@@ -19,7 +19,7 @@ lambda_architecture       = "x86_64"
 lambda_memory_mb          = 512
 lambda_timeout_seconds    = 15
 lambda_log_retention_days = 14
-lambda_artifact_path      = "../../api/dist/lambda.zip"
+lambda_artifact_path      = "../../../api/dist/lambda.zip"
 
 cognito_user_pool_name        = "prod-worklient-user-pool"
 cognito_app_client_name       = "prod-worklient-app-client"
@@ -45,6 +45,59 @@ api_cors_allowed_methods = [
 api_cors_allowed_headers = [
   "Authorization",
   "Content-Type"
+]
+
+email_mx_records = [
+  {
+    priority = 0
+    value    = "worklient-com.mail.protection.outlook.com"
+  }
+]
+
+email_txt_records = [
+  {
+    name  = "@"
+    value = "NETORGFT20342567.onmicrosoft.com"
+  },
+  {
+    name  = "@"
+    value = "v=spf1 include:secureserver.net -all"
+  },
+  {
+    name  = "_dmarc"
+    value = "v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;"
+  }
+]
+
+email_cname_records = [
+  {
+    name  = "autodiscover"
+    value = "autodiscover.outlook.com"
+  },
+  {
+    name  = "email"
+    value = "email.secureserver.net"
+  },
+  {
+    name  = "lyncdiscover"
+    value = "webdir.online.lync.com"
+  },
+  {
+    name  = "msoid"
+    value = "clientconfig.microsoftonline-p.net"
+  },
+  {
+    name  = "sip"
+    value = "sipdir.online.lync.com"
+  },
+  {
+    name  = "www"
+    value = "worklient.com"
+  },
+  {
+    name  = "_domainconnect"
+    value = "_domainconnect.gd.domaincontrol.com"
+  }
 ]
 
 resource_tags = {
