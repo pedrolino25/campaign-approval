@@ -1,6 +1,6 @@
 import type {
-    APIGatewayProxyEvent,
-    APIGatewayProxyResult,
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
 } from "aws-lambda"
 
 export const handler = (
