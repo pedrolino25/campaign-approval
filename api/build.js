@@ -3,7 +3,7 @@ import { mkdir, writeFile, readFile } from "fs/promises"
 import { createWriteStream } from "fs"
 import { join, dirname } from "path"
 import { fileURLToPath } from "url"
-import { create } from "archiver"
+import archiver from "archiver"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -61,7 +61,7 @@ async function buildLambda() {
 
   const zipPath = join(__dirname, "dist", "lambda.zip")
   const output = createWriteStream(zipPath)
-  const archive = create("zip", { zlib: { level: 9 } })
+  const archive = archiver("zip", { zlib: { level: 9 } })
 
   archive.pipe(output)
 
