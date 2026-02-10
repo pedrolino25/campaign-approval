@@ -1,0 +1,48 @@
+module.exports = {
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: "module",
+    project: "./tsconfig.json",
+  },
+  plugins: [
+    "@typescript-eslint",
+    "import",
+    "simple-import-sort",
+    "unused-imports",
+  ],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier",
+  ],
+  rules: {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/consistent-type-imports": "error",
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "error",
+      {
+        vars: "all",
+        varsIgnorePattern: "^_",
+        args: "after-used",
+        argsIgnorePattern: "^_",
+      },
+    ],
+    "no-console": "error",
+    "no-debugger": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-duplicate-imports": "error",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/no-return-await": "error",
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "max-lines-per-function": ["error", { max: 80 }],
+    complexity: ["error", { max: 10 }],
+  },
+  ignorePatterns: ["dist", "node_modules", "*.js"],
+};

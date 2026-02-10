@@ -1,0 +1,79 @@
+variable "environment" {
+  description = "Environment name (dev, prod)"
+  type        = string
+}
+
+variable "lambda_runtime" {
+  description = "Lambda runtime"
+  type        = string
+  default     = "nodejs18.x"
+}
+
+variable "lambda_architecture" {
+  description = "Lambda architecture"
+  type        = string
+  default     = "x86_64"
+}
+
+variable "lambda_memory_mb" {
+  description = "Lambda memory in MB"
+  type        = number
+}
+
+variable "lambda_timeout_seconds" {
+  description = "Lambda timeout in seconds"
+  type        = number
+}
+
+variable "lambda_log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+}
+
+variable "artifact_path" {
+  description = "Path to Lambda artifact zip file"
+  type        = string
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name"
+  type        = string
+}
+
+variable "sqs_queue_arn" {
+  description = "SQS queue ARN"
+  type        = string
+}
+
+variable "sqs_queue_url" {
+  description = "SQS queue URL"
+  type        = string
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "cognito_app_client_id" {
+  description = "Cognito App Client ID"
+  type        = string
+}
+
+variable "iam_roles" {
+  description = "Map of Lambda function names to IAM role ARNs"
+  type = object({
+    organization = string
+    client       = string
+    review       = string
+    attachment   = string
+    comment      = string
+    notification = string
+  })
+}
+
+variable "tags" {
+  description = "Resource tags"
+  type        = map(string)
+  default     = {}
+}
