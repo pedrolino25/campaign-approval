@@ -5,7 +5,6 @@ import { verifyJwt } from './verify-jwt.js'
 
 export interface AuthContext {
   userId: string
-  organizationId: string
   rawToken: string
 }
 

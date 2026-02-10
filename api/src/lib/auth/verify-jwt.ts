@@ -1,11 +1,10 @@
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from 'jose'
 
-import { ForbiddenError, UnauthorizedError } from '../../models/errors.js'
+import { UnauthorizedError } from '../../models/errors.js'
 import { config } from '../config.js'
 
 interface VerifiedToken {
   userId: string
-  organizationId: string
   rawToken: string
 }
 
@@ -49,15 +48,8 @@ export const verifyJwt = async (token: string): Promise<VerifiedToken> => {
     throw new UnauthorizedError('Token missing subject claim')
   }
 
-  const organizationId = payload['custom:organizationId'] as string | undefined
-
-  if (!organizationId || typeof organizationId !== 'string') {
-    throw new ForbiddenError('Token missing organization claim')
-  }
-
   return {
     userId: payload.sub,
-    organizationId,
     rawToken: token,
   }
 }
