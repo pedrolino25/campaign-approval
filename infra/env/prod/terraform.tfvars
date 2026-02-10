@@ -19,7 +19,7 @@ lambda_architecture       = "x86_64"
 lambda_memory_mb          = 512
 lambda_timeout_seconds    = 15
 lambda_log_retention_days = 14
-lambda_artifact_path      = "../../api/dist/lambda.zip"
+lambda_artifact_path      = "../../../api/dist/lambda.zip"
 
 cognito_user_pool_name        = "prod-worklient-user-pool"
 cognito_app_client_name       = "prod-worklient-app-client"

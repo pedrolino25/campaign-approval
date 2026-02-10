@@ -33,8 +33,6 @@ locals {
 }
 
 locals {
-  # Resolve artifact path relative to root module directory (infra/env/prod or infra/env/dev)
-  # The path in tfvars is "../../api/dist/lambda.zip" which goes up to repo root
   artifact_path_resolved = abspath("${path.root}/${var.artifact_path}")
   lambda_zip_hash        = try(filebase64sha256(local.artifact_path_resolved), "")
 }

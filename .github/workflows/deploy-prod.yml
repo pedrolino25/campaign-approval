@@ -115,7 +115,8 @@ jobs:
         run: |
           echo "Terraform working directory: $(pwd)"
           echo "Checking lambda.zip from Terraform directory:"
-          ls -la ../../api/dist/lambda.zip || echo "File not found at ../../api/dist/lambda.zip from $(pwd)"
+          ls -la ../../../api/dist/lambda.zip || echo "File not found at ../../../api/dist/lambda.zip from $(pwd)"
+          echo "Expected absolute path: $(realpath ../../../api/dist/lambda.zip 2>/dev/null || echo 'Path does not resolve')"
           terraform plan -no-color -refresh=true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
