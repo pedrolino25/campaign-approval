@@ -77,6 +77,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
+      - name: Verify Lambda artifact before Terraform plan
+        run: |
+          if [ ! -f api/dist/lambda.zip ]; then
+            echo "::error::Lambda artifact missing. Build step must have failed."
+            exit 1
+          fi
+
       - name: Terraform plan
         working-directory: infra/env/dev
         run: terraform plan -no-color

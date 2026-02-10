@@ -14,6 +14,19 @@ resource "aws_route53_zone" "main" {
   tags = var.tags
 }
 
+locals {
+  hosted_zone_id   = var.create_hosted_zone ? aws_route53_zone.main[0].zone_id : data.aws_route53_zone.existing[0].zone_id
+  hosted_zone_name = var.create_hosted_zone ? aws_route53_zone.main[0].name : data.aws_route53_zone.existing[0].name
+
+  txt_records_by_name = {
+    for name, records in {
+      for record in var.email_txt_records : record.name => record...
+    } : name => [
+      for record in records : record.value
+    ]
+  }
+}
+
 resource "aws_route53_record" "email_mx" {
   for_each = {
     for idx, record in var.email_mx_records : idx => record
@@ -28,16 +41,14 @@ resource "aws_route53_record" "email_mx" {
 }
 
 resource "aws_route53_record" "email_txt" {
-  for_each = {
-    for idx, record in var.email_txt_records : idx => record
-  }
+  for_each = local.txt_records_by_name
 
   zone_id = local.hosted_zone_id
-  name    = each.value.name == "@" ? var.domain_name : "${each.value.name}.${var.domain_name}"
+  name    = each.key == "@" ? var.domain_name : "${each.key}.${var.domain_name}"
   type    = "TXT"
   ttl     = 3600
 
-  records = [each.value.value]
+  records = each.value
 }
 
 resource "aws_route53_record" "email_cname" {
@@ -51,9 +62,4 @@ resource "aws_route53_record" "email_cname" {
   ttl     = 3600
 
   records = [each.value.value]
-}
-
-locals {
-  hosted_zone_id = var.create_hosted_zone ? aws_route53_zone.main[0].zone_id : data.aws_route53_zone.existing[0].zone_id
-  hosted_zone_name = var.create_hosted_zone ? aws_route53_zone.main[0].name : data.aws_route53_zone.existing[0].name
 }
