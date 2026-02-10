@@ -147,6 +147,33 @@ variable "api_cors_allowed_headers" {
   type        = list(string)
 }
 
+variable "email_mx_records" {
+  description = "MX records for email delivery. Get these from your current DNS provider before switching nameservers."
+  type = list(object({
+    priority = number
+    value    = string
+  }))
+  default = []
+}
+
+variable "email_txt_records" {
+  description = "TXT records for email authentication (SPF, DKIM, DMARC). Get these from your current DNS provider."
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
+variable "email_cname_records" {
+  description = "CNAME records for email services. Get these from your current DNS provider."
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
 variable "resource_tags" {
   description = "Resource tags"
   type        = map(string)

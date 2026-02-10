@@ -9,7 +9,12 @@ terraform {
 module "route53" {
   source       = "../../modules/route53"
   domain_name  = var.root_domain_name
-  tags         = var.resource_tags
+
+  email_mx_records    = var.email_mx_records
+  email_txt_records   = var.email_txt_records
+  email_cname_records = var.email_cname_records
+
+  tags = var.resource_tags
 }
 
 # --------------------------------------------
