@@ -93,5 +93,6 @@ async function buildLambda() {
 
 buildLambda().catch((error) => {
   console.error("Build failed:", error)
+  console.error("Error stack:", error.stack)
   process.exit(1)
 })

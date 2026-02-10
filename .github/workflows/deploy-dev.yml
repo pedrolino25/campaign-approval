@@ -29,18 +29,27 @@ jobs:
 
       - name: Build Lambda artifact
         working-directory: api
-        run: npm run build
+        run: |
+          set -e
+          npm run build
+          if [ ! -f dist/lambda.zip ]; then
+            echo "::error::Build failed - lambda.zip not created"
+            echo "Contents of dist directory:"
+            ls -la dist/ || echo "dist directory does not exist"
+            exit 1
+          fi
+          echo "Build successful: $(ls -lh dist/lambda.zip)"
+          echo "File size: $(stat -f%z dist/lambda.zip 2>/dev/null || stat -c%s dist/lambda.zip) bytes"
 
-      - name: Verify Lambda artifact exists
+      - name: Verify Lambda artifact exists (from repo root)
         run: |
           if [ ! -f api/dist/lambda.zip ]; then
-            echo "Error: Lambda artifact not found at api/dist/lambda.zip"
+            echo "::error::Lambda artifact not found at api/dist/lambda.zip"
             echo "Build output:"
             ls -la api/dist/ || echo "dist directory does not exist"
             exit 1
           fi
           echo "Lambda artifact verified: $(ls -lh api/dist/lambda.zip)"
-          echo "File size: $(stat -f%z api/dist/lambda.zip 2>/dev/null || stat -c%s api/dist/lambda.zip) bytes"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -83,20 +92,6 @@ jobs:
             echo "::error::Lambda artifact missing. Build step must have failed."
             exit 1
           fi
-
-      - name: Terraform refresh state
-        working-directory: infra/env/dev
-        run: |
-          terraform refresh -no-color 2>&1 | tee /tmp/refresh.log || true
-          if grep -q "empty result" /tmp/refresh.log; then
-            echo "::warning::Stale state detected. Attempting to remove stale MX record from state..."
-            terraform state rm 'module.route53.aws_route53_record.email_mx[0]' 2>&1 || true
-          fi
-        continue-on-error: true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
 
       - name: Terraform plan
         working-directory: infra/env/dev
