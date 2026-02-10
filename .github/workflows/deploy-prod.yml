@@ -36,6 +36,20 @@ jobs:
         with:
           terraform_version: "1.5.0"
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check if backend bucket exists
+        run: |
+          if ! aws s3 ls s3://worklient-terraform-state-prod 2>/dev/null; then
+            echo "::error::Terraform backend bucket does not exist. Please run the 'Bootstrap Terraform Backend' workflow first."
+            exit 1
+          fi
+
       - name: Terraform init
         working-directory: infra/env/prod
         run: terraform init
