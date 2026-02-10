@@ -6,7 +6,7 @@ variable "domain_name" {
 variable "create_hosted_zone" {
   description = "Whether to create a new hosted zone (false if zone already exists)"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "tags" {
