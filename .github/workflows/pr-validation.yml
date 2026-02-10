@@ -5,6 +5,7 @@ on:
     paths:
       - "infra/**"
       - "api/**"
+  workflow_dispatch:
 
 jobs:
   validate:
