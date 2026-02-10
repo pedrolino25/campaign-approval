@@ -1,31 +1,31 @@
 environment = "dev"
 aws_region  = "us-east-1"
 
-root_domain_name     = "worklient.com"
-dev_api_subdomain    = "dev-api.worklient.com"
-prod_api_subdomain   = "api.worklient.com"
+root_domain_name   = "worklient.com"
+dev_api_subdomain  = "dev-api.worklient.com"
+prod_api_subdomain = "api.worklient.com"
 
 s3_bucket_name       = "dev-worklient-storage"
 enable_s3_versioning = true
 
-notification_queue_name                          = "dev-notification-queue"
-notification_dlq_name                            = "dev-notification-dlq"
-notification_queue_visibility_timeout_seconds    = 60
-notification_queue_message_retention_seconds     = 345600
-notification_queue_max_receive_count             = 5
+notification_queue_name                       = "dev-notification-queue"
+notification_dlq_name                         = "dev-notification-dlq"
+notification_queue_visibility_timeout_seconds = 60
+notification_queue_message_retention_seconds  = 345600
+notification_queue_max_receive_count          = 5
 
-lambda_runtime                = "nodejs18.x"
-lambda_architecture           = "x86_64"
-lambda_memory_mb              = 512
-lambda_timeout_seconds        = 15
-lambda_log_retention_days     = 14
-lambda_artifact_path          = "../../../api/dist/lambda.zip"
+lambda_runtime            = "nodejs18.x"
+lambda_architecture       = "x86_64"
+lambda_memory_mb          = 512
+lambda_timeout_seconds    = 15
+lambda_log_retention_days = 14
+lambda_artifact_path      = "../../../api/dist/lambda.zip"
 
-cognito_user_pool_name        = "dev-worklient-user-pool"
-cognito_app_client_name       = "dev-worklient-app-client"
-cognito_access_token_validity_minutes  = 60
-cognito_refresh_token_validity_days    = 30
-cognito_password_minimum_length        = 12
+cognito_user_pool_name                = "dev-worklient-user-pool"
+cognito_app_client_name               = "dev-worklient-app-client"
+cognito_access_token_validity_minutes = 60
+cognito_refresh_token_validity_days   = 30
+cognito_password_minimum_length       = 12
 
 api_stage_name = "v1"
 

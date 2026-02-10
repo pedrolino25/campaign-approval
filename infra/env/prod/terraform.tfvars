@@ -1,9 +1,9 @@
 environment = "prod"
 aws_region  = "us-east-1"
 
-root_domain_name     = "worklient.com"
-dev_api_subdomain    = "dev-api.worklient.com"
-prod_api_subdomain   = "api.worklient.com"
+root_domain_name   = "worklient.com"
+dev_api_subdomain  = "dev-api.worklient.com"
+prod_api_subdomain = "api.worklient.com"
 
 s3_bucket_name       = "prod-worklient-storage"
 enable_s3_versioning = true
@@ -21,11 +21,11 @@ lambda_timeout_seconds    = 15
 lambda_log_retention_days = 14
 lambda_artifact_path      = "../../../api/dist/lambda.zip"
 
-cognito_user_pool_name        = "prod-worklient-user-pool"
-cognito_app_client_name       = "prod-worklient-app-client"
-cognito_access_token_validity_minutes  = 60
-cognito_refresh_token_validity_days    = 30
-cognito_password_minimum_length        = 12
+cognito_user_pool_name                = "prod-worklient-user-pool"
+cognito_app_client_name               = "prod-worklient-app-client"
+cognito_access_token_validity_minutes = 60
+cognito_refresh_token_validity_days   = 30
+cognito_password_minimum_length       = 12
 
 api_stage_name = "v1"
 

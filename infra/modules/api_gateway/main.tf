@@ -46,7 +46,7 @@ resource "aws_apigatewayv2_integration" "client" {
   integration_type = "AWS_PROXY"
 
   integration_method = "POST"
-  integration_uri     = var.lambda_invoke_arns.client
+  integration_uri    = var.lambda_invoke_arns.client
 }
 
 resource "aws_apigatewayv2_integration" "review" {
@@ -54,7 +54,7 @@ resource "aws_apigatewayv2_integration" "review" {
   integration_type = "AWS_PROXY"
 
   integration_method = "POST"
-  integration_uri     = var.lambda_invoke_arns.review
+  integration_uri    = var.lambda_invoke_arns.review
 }
 
 resource "aws_apigatewayv2_integration" "attachment" {
@@ -70,7 +70,7 @@ resource "aws_apigatewayv2_integration" "comment" {
   integration_type = "AWS_PROXY"
 
   integration_method = "POST"
-  integration_uri     = var.lambda_invoke_arns.comment
+  integration_uri    = var.lambda_invoke_arns.comment
 }
 
 resource "aws_apigatewayv2_route" "organization" {
@@ -79,7 +79,7 @@ resource "aws_apigatewayv2_route" "organization" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -89,7 +89,7 @@ resource "aws_apigatewayv2_route" "clients_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -99,7 +99,7 @@ resource "aws_apigatewayv2_route" "clients_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -109,7 +109,7 @@ resource "aws_apigatewayv2_route" "clients_patch" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -119,7 +119,7 @@ resource "aws_apigatewayv2_route" "review_items_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -129,7 +129,7 @@ resource "aws_apigatewayv2_route" "review_items_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -139,7 +139,7 @@ resource "aws_apigatewayv2_route" "review_items_get_id" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -149,7 +149,7 @@ resource "aws_apigatewayv2_route" "review_items_send" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -159,7 +159,7 @@ resource "aws_apigatewayv2_route" "review_items_approve" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -169,7 +169,7 @@ resource "aws_apigatewayv2_route" "review_items_request_changes" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -179,7 +179,7 @@ resource "aws_apigatewayv2_route" "review_items_archive" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -189,7 +189,7 @@ resource "aws_apigatewayv2_route" "attachments_presign" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -199,7 +199,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -209,7 +209,7 @@ resource "aws_apigatewayv2_route" "comments_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 
@@ -219,7 +219,7 @@ resource "aws_apigatewayv2_route" "comments_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
-  authorizer_id = aws_apigatewayv2_authorizer.jwt.id
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
 }
 

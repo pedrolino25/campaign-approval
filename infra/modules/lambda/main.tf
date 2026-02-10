@@ -63,7 +63,7 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      ENVIRONMENT            = var.environment
+      ENVIRONMENT           = var.environment
       S3_BUCKET_NAME        = var.s3_bucket_name
       SQS_QUEUE_URL         = var.sqs_queue_url
       COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
@@ -95,7 +95,7 @@ resource "aws_lambda_function" "notification" {
   environment {
     variables = {
       ENVIRONMENT   = var.environment
-      SQS_QUEUE_URL  = var.sqs_queue_url
+      SQS_QUEUE_URL = var.sqs_queue_url
     }
   }
 

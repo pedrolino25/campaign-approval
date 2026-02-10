@@ -21,7 +21,7 @@ locals {
   txt_records_by_name = {
     for name, records in {
       for record in var.email_txt_records : record.name => record...
-    } : name => [
+      } : name => [
       for record in records : record.value
     ]
   }
@@ -44,7 +44,6 @@ resource "aws_route53_record" "email_mx" {
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes        = []
   }
 }
 
