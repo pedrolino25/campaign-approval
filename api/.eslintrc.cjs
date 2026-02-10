@@ -44,6 +44,7 @@ module.exports = {
     "simple-import-sort/exports": "error",
     "max-lines-per-function": ["error", { max: 80 }],
     complexity: ["error", { max: 10 }],
+    "object-property-newline": ["error", { allowAllPropertiesOnSameLine: false }],
   },
   ignorePatterns: ['dist', 'node_modules', '*.js', '.eslintrc.cjs', 'build.js'],
   overrides: [

@@ -4,23 +4,32 @@ import type {
   SQSEvent,
 } from 'aws-lambda'
 
-import { handleError } from './error-handler.js'
-import { logger } from './logger.js'
+import {
+  type AuthenticatedEvent,
+  authMiddleware,
+} from '../auth/auth-middleware.js'
+import { handleError } from '../errors/error-handler.js'
+import { logger } from '../logger.js'
+
+type AuthenticatedHandler = (
+  event: AuthenticatedEvent
+) => Promise<APIGatewayProxyResult>
+
+type SQSHandler = (event: SQSEvent) => Promise<void>
 
 type LambdaHandler = (
   event: APIGatewayProxyEvent
 ) => Promise<APIGatewayProxyResult>
 
-type SQSHandler = (event: SQSEvent) => Promise<void>
-
 export const createHandler = (
-  handler: LambdaHandler
+  handler: AuthenticatedHandler
 ): LambdaHandler => {
   return async (
     event: APIGatewayProxyEvent
   ): Promise<APIGatewayProxyResult> => {
     try {
-      return await handler(event)
+      const authenticatedEvent = await authMiddleware(event)
+      return await handler(authenticatedEvent)
     } catch (error) {
       const requestId =
         event.requestContext.requestId ||

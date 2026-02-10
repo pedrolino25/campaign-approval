@@ -1,14 +1,17 @@
-import type {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-} from 'aws-lambda'
+import type { APIGatewayProxyResult } from 'aws-lambda'
 
-import { createHandler } from '../lib/lambda-handler.js'
+import {
+  type AuthenticatedEvent,
+  createHandler,
+} from '../lib/index.js'
 
 const handlerFn = async (
-  _event: APIGatewayProxyEvent
+  event: AuthenticatedEvent
 ): Promise<APIGatewayProxyResult> => {
   await Promise.resolve()
+  const { authContext } = event
+  void authContext
+
   return {
     statusCode: 200,
     headers: {

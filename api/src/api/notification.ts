@@ -1,6 +1,6 @@
 import type { SQSEvent } from 'aws-lambda'
 
-import { createSQSHandler } from '../lib/lambda-handler.js'
+import { createSQSHandler } from '../lib/index.js'
 
 const handlerFn = async (event: SQSEvent): Promise<void> => {
   await Promise.resolve()
