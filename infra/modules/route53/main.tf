@@ -25,28 +25,32 @@ locals {
       for record in records : record.value
     ]
   }
+
+  mx_records_combined = [
+    for record in var.email_mx_records : "${record.priority} ${record.value}"
+  ]
 }
 
 resource "aws_route53_record" "email_mx" {
-  for_each = {
-    for idx, record in var.email_mx_records : idx => record
-  }
+  count = length(var.email_mx_records) > 0 ? 1 : 0
 
-  zone_id = local.hosted_zone_id
-  name    = var.domain_name
-  type    = "MX"
-  ttl     = 3600
+  zone_id         = local.hosted_zone_id
+  name            = var.domain_name
+  type            = "MX"
+  ttl             = 3600
+  allow_overwrite = true
 
-  records = ["${each.value.priority} ${each.value.value}"]
+  records = local.mx_records_combined
 }
 
 resource "aws_route53_record" "email_txt" {
   for_each = local.txt_records_by_name
 
-  zone_id = local.hosted_zone_id
-  name    = each.key == "@" ? var.domain_name : "${each.key}.${var.domain_name}"
-  type    = "TXT"
-  ttl     = 3600
+  zone_id         = local.hosted_zone_id
+  name            = each.key == "@" ? var.domain_name : "${each.key}.${var.domain_name}"
+  type            = "TXT"
+  ttl             = 3600
+  allow_overwrite = true
 
   records = each.value
 }
@@ -56,10 +60,11 @@ resource "aws_route53_record" "email_cname" {
     for idx, record in var.email_cname_records : idx => record
   }
 
-  zone_id = local.hosted_zone_id
-  name    = "${each.value.name}.${var.domain_name}"
-  type    = "CNAME"
-  ttl     = 3600
+  zone_id         = local.hosted_zone_id
+  name            = "${each.value.name}.${var.domain_name}"
+  type            = "CNAME"
+  ttl             = 3600
+  allow_overwrite = true
 
   records = [each.value.value]
 }
