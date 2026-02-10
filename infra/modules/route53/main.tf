@@ -41,6 +41,11 @@ resource "aws_route53_record" "email_mx" {
   allow_overwrite = true
 
   records = local.mx_records_combined
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = []
+  }
 }
 
 resource "aws_route53_record" "email_txt" {
