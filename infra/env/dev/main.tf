@@ -10,6 +10,8 @@ module "route53" {
   source      = "../../modules/route53"
   domain_name = var.root_domain_name
 
+  create_hosted_zone = false
+
   email_mx_records    = var.email_mx_records
   email_txt_records   = var.email_txt_records
   email_cname_records = var.email_cname_records
