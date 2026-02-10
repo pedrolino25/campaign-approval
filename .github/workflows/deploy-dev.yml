@@ -98,14 +98,25 @@ jobs:
 
       - name: Verify Lambda artifact before Terraform plan
         run: |
+          echo "Current directory: $(pwd)"
+          echo "Checking for lambda.zip..."
+          ls -la api/dist/lambda.zip || echo "File not found at api/dist/lambda.zip"
           if [ ! -f api/dist/lambda.zip ]; then
             echo "::error::Lambda artifact missing. Build step must have failed."
+            echo "Contents of api/dist/:"
+            ls -la api/dist/ || echo "api/dist directory does not exist"
             exit 1
           fi
+          echo "Lambda artifact verified: $(ls -lh api/dist/lambda.zip)"
+          echo "Absolute path: $(realpath api/dist/lambda.zip)"
 
       - name: Terraform plan
         working-directory: infra/env/dev
-        run: terraform plan -no-color -refresh=true
+        run: |
+          echo "Terraform working directory: $(pwd)"
+          echo "Checking lambda.zip from Terraform directory:"
+          ls -la ../../api/dist/lambda.zip || echo "File not found at ../../api/dist/lambda.zip from $(pwd)"
+          terraform plan -no-color -refresh=true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
