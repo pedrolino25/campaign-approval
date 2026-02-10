@@ -1,9 +1,11 @@
+const path = require('path')
+
 module.exports = {
-  parser: "@typescript-eslint/parser",
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
-    sourceType: "module",
-    project: "./tsconfig.json",
+    sourceType: 'module',
+    project: path.resolve(__dirname, 'tsconfig.json'),
   },
   plugins: [
     "@typescript-eslint",
@@ -43,5 +45,13 @@ module.exports = {
     "max-lines-per-function": ["error", { max: 80 }],
     complexity: ["error", { max: 10 }],
   },
-  ignorePatterns: ["dist", "node_modules", "*.js"],
-};
+  ignorePatterns: ['dist', 'node_modules', '*.js', '.eslintrc.cjs', 'build.js'],
+  overrides: [
+    {
+      files: ['*.js', '*.cjs'],
+      parserOptions: {
+        project: null,
+      },
+    },
+  ],
+}

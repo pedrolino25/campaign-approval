@@ -1,18 +1,23 @@
 import type {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
-} from "aws-lambda"
+} from 'aws-lambda'
 
-export const handler = (
+import { createHandler } from '../lib/lambda-handler.js'
+
+const handlerFn = async (
   _event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  return Promise.resolve({
+  await Promise.resolve()
+  return {
     statusCode: 200,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      message: "Comment API placeholder",
+      message: 'Comment API placeholder',
     }),
-  })
+  }
 }
+
+export const handler = createHandler(handlerFn)
