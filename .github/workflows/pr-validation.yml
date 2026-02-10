@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
 
       - name: Install API dependencies
         working-directory: api
@@ -50,7 +49,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform init
+      - name: Terraform init (no backend for validation)
         working-directory: infra/env/dev
         run: terraform init -backend=false
         env:

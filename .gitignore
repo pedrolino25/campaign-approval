@@ -9,3 +9,8 @@ terraform.tfstate.*
 .env.*
 *.log
 .DS_Store
+
+# Bootstrap state (local only)
+infra/bootstrap/.terraform/
+infra/bootstrap/terraform.tfstate
+infra/bootstrap/terraform.tfstate.*

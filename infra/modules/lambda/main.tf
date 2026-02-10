@@ -33,7 +33,7 @@ locals {
 }
 
 locals {
-  lambda_zip_hash = filebase64sha256(var.artifact_path)
+  lambda_zip_hash = fileexists(var.artifact_path) ? filebase64sha256(var.artifact_path) : ""
 }
 
 resource "aws_cloudwatch_log_group" "lambda" {
@@ -54,7 +54,7 @@ resource "aws_lambda_function" "api" {
   function_name    = each.value.name
   role             = each.value.role
   handler          = "api.${each.key}.handler"
-  source_code_hash = local.lambda_zip_hash
+  source_code_hash = local.lambda_zip_hash != "" ? local.lambda_zip_hash : null
   runtime          = var.lambda_runtime
   architectures    = [var.lambda_architecture]
   memory_size      = var.lambda_memory_mb
@@ -85,7 +85,7 @@ resource "aws_lambda_function" "notification" {
   function_name    = local.lambda_functions.notification.name
   role             = local.lambda_functions.notification.role
   handler          = "api.notification.handler"
-  source_code_hash = local.lambda_zip_hash
+  source_code_hash = local.lambda_zip_hash != "" ? local.lambda_zip_hash : null
   runtime          = var.lambda_runtime
   architectures    = [var.lambda_architecture]
   memory_size      = var.lambda_memory_mb
