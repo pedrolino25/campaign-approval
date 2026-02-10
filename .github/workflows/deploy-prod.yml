@@ -31,11 +31,21 @@ jobs:
         working-directory: api
         run: |
           set -e
-          npm run build
+          echo "Starting build..."
+          npm run build 2>&1 | tee /tmp/build.log
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "::error::Build command failed with exit code $BUILD_EXIT"
+            cat /tmp/build.log
+            exit $BUILD_EXIT
+          fi
           if [ ! -f dist/lambda.zip ]; then
             echo "::error::Build failed - lambda.zip not created"
+            echo "Build log:"
+            cat /tmp/build.log
             echo "Contents of dist directory:"
             ls -la dist/ || echo "dist directory does not exist"
+            echo "Current directory: $(pwd)"
             exit 1
           fi
           echo "Build successful: $(ls -lh dist/lambda.zip)"
