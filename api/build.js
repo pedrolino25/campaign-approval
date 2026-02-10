@@ -1,9 +1,9 @@
-import { build } from "esbuild"
-import { mkdir, writeFile, readFile } from "fs/promises"
-import { createWriteStream } from "fs"
-import { join, dirname } from "path"
-import { fileURLToPath } from "url"
 import archiver from "archiver"
+import { build } from "esbuild"
+import { createWriteStream, existsSync, statSync } from "fs"
+import { mkdir, readFile, writeFile } from "fs/promises"
+import { dirname, join } from "path"
+import { fileURLToPath } from "url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -74,11 +74,21 @@ async function buildLambda() {
   await archive.finalize()
 
   await new Promise((resolve, reject) => {
-    output.on("close", resolve)
+    output.on("close", () => {
+      if (!existsSync(zipPath)) {
+        reject(new Error(`Lambda zip file was not created at ${zipPath}`))
+        return
+      }
+      const stats = statSync(zipPath)
+      if (stats.size === 0) {
+        reject(new Error(`Lambda zip file is empty at ${zipPath}`))
+        return
+      }
+      console.log(`Lambda build complete: ${zipPath} (${stats.size} bytes)`)
+      resolve()
+    })
     output.on("error", reject)
   })
-
-  console.log("Lambda build complete:", zipPath)
 }
 
 buildLambda().catch((error) => {

@@ -31,6 +31,17 @@ jobs:
         working-directory: api
         run: npm run build
 
+      - name: Verify Lambda artifact exists
+        run: |
+          if [ ! -f api/dist/lambda.zip ]; then
+            echo "Error: Lambda artifact not found at api/dist/lambda.zip"
+            echo "Build output:"
+            ls -la api/dist/ || echo "dist directory does not exist"
+            exit 1
+          fi
+          echo "Lambda artifact verified: $(ls -lh api/dist/lambda.zip)"
+          echo "File size: $(stat -f%z api/dist/lambda.zip 2>/dev/null || stat -c%s api/dist/lambda.zip) bytes"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
