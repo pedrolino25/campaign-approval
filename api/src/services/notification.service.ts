@@ -9,7 +9,6 @@ import {
 import {
   ClientReviewerRepository,
   NotificationRepository,
-  ReviewItemRepository,
   UserRepository,
 } from '../repositories'
 
@@ -22,14 +21,12 @@ export class NotificationService {
   private readonly notificationRepository: NotificationRepository
   private readonly userRepository: UserRepository
   private readonly clientReviewerRepository: ClientReviewerRepository
-  private readonly reviewItemRepository: ReviewItemRepository
   private readonly sqsService: SQSService
 
   constructor() {
     this.notificationRepository = new NotificationRepository()
     this.userRepository = new UserRepository()
     this.clientReviewerRepository = new ClientReviewerRepository()
-    this.reviewItemRepository = new ReviewItemRepository()
     this.sqsService = new SQSService()
   }
 
