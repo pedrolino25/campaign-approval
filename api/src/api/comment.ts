@@ -1,17 +1,17 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
-
 import {
-  type AuthenticatedEvent,
   createHandler,
-  createRouteHandler,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  Router,
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handleGetComments = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleGetComments = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -19,20 +19,19 @@ const handleGetComments = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get review item comments',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePostComment = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handlePostComment = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -40,20 +39,28 @@ const handlePostComment = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Create comment',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const routes = {
-  'GET /review-items/{id}/comments': handleGetComments,
-  'POST /review-items/{id}/comments': handlePostComment,
-}
+const routes: RouteDefinition[] = [
+  {
+    method: 'GET',
+    path: '/review-items/:id/comments',
+    handler: handleGetComments,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/comments',
+    handler: handlePostComment,
+  },
+]
 
-const handlerFn = createRouteHandler(routes)
+const router = new Router(routes)
+const handlerFn = router.handle
 
 export const handler = createHandler(handlerFn)

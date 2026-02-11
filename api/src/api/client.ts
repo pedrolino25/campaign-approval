@@ -1,45 +1,43 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
-
 import {
-  type AuthenticatedEvent,
   createHandler,
-  createRouteHandler,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  Router,
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handleGetClients = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext } = event
+const handleGetClients = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get clients',
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePostClients = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext } = event
+const handlePostClients = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Create client',
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePatchClient = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const clientId = pathParameters?.['id']
+const handlePatchClient = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const clientId = request.params.id as string | undefined
 
   if (!clientId) {
     throw new NotFoundError('Client ID not found')
@@ -47,20 +45,19 @@ const handlePatchClient = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Update client',
       clientId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleArchiveClient = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const clientId = pathParameters?.['id']
+const handleArchiveClient = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const clientId = request.params.id as string | undefined
 
   if (!clientId) {
     throw new NotFoundError('Client ID not found')
@@ -68,20 +65,19 @@ const handleArchiveClient = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Archive client',
       clientId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleGetReviewers = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const clientId = pathParameters?.['id']
+const handleGetReviewers = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const clientId = request.params.id as string | undefined
 
   if (!clientId) {
     throw new NotFoundError('Client ID not found')
@@ -89,20 +85,19 @@ const handleGetReviewers = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get client reviewers',
       clientId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePostReviewer = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const clientId = pathParameters?.['id']
+const handlePostReviewer = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const clientId = request.params.id as string | undefined
 
   if (!clientId) {
     throw new NotFoundError('Client ID not found')
@@ -110,21 +105,20 @@ const handlePostReviewer = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Add client reviewer',
       clientId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleDeleteReviewer = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const clientId = pathParameters?.['id']
-  const reviewerId = pathParameters?.['reviewerId']
+const handleDeleteReviewer = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const clientId = request.params.id as string | undefined
+  const reviewerId = request.params.reviewerId as string | undefined
 
   if (!clientId || !reviewerId) {
     throw new NotFoundError('Client ID or Reviewer ID not found')
@@ -132,26 +126,54 @@ const handleDeleteReviewer = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Delete client reviewer',
       clientId,
       reviewerId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const routes = {
-  'GET /clients': handleGetClients,
-  'POST /clients': handlePostClients,
-  'PATCH /clients/{id}': handlePatchClient,
-  'POST /clients/{id}/archive': handleArchiveClient,
-  'GET /clients/{id}/reviewers': handleGetReviewers,
-  'POST /clients/{id}/reviewers': handlePostReviewer,
-  'DELETE /clients/{id}/reviewers/{reviewerId}': handleDeleteReviewer,
-}
+const routes: RouteDefinition[] = [
+  {
+    method: 'GET',
+    path: '/clients',
+    handler: handleGetClients,
+  },
+  {
+    method: 'POST',
+    path: '/clients',
+    handler: handlePostClients,
+  },
+  {
+    method: 'PATCH',
+    path: '/clients/:id',
+    handler: handlePatchClient,
+  },
+  {
+    method: 'POST',
+    path: '/clients/:id/archive',
+    handler: handleArchiveClient,
+  },
+  {
+    method: 'GET',
+    path: '/clients/:id/reviewers',
+    handler: handleGetReviewers,
+  },
+  {
+    method: 'POST',
+    path: '/clients/:id/reviewers',
+    handler: handlePostReviewer,
+  },
+  {
+    method: 'DELETE',
+    path: '/clients/:id/reviewers/:reviewerId',
+    handler: handleDeleteReviewer,
+  },
+]
 
-const handlerFn = createRouteHandler(routes)
+const router = new Router(routes)
+const handlerFn = router.handle
 
 export const handler = createHandler(handlerFn)

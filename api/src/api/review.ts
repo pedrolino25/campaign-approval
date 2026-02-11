@@ -1,45 +1,43 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
-
 import {
-  type AuthenticatedEvent,
   createHandler,
-  createRouteHandler,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  Router,
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handleGetReviewItems = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext } = event
+const handleGetReviewItems = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get review items',
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePostReviewItems = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext } = event
+const handlePostReviewItems = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Create review item',
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleGetReviewItem = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleGetReviewItem = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -47,20 +45,19 @@ const handleGetReviewItem = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get review item',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleSendReviewItem = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleSendReviewItem = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -68,20 +65,19 @@ const handleSendReviewItem = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Send review item',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleApproveReviewItem = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleApproveReviewItem = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -89,20 +85,19 @@ const handleApproveReviewItem = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Approve review item',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleRequestChanges = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleRequestChanges = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -110,20 +105,19 @@ const handleRequestChanges = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Request changes on review item',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleArchiveReviewItem = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleArchiveReviewItem = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -131,20 +125,19 @@ const handleArchiveReviewItem = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Archive review item',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleGetActivity = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleGetActivity = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -152,26 +145,58 @@ const handleGetActivity = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get review item activity',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const routes = {
-  'GET /review-items': handleGetReviewItems,
-  'POST /review-items': handlePostReviewItems,
-  'GET /review-items/{id}': handleGetReviewItem,
-  'POST /review-items/{id}/send': handleSendReviewItem,
-  'POST /review-items/{id}/approve': handleApproveReviewItem,
-  'POST /review-items/{id}/request-changes': handleRequestChanges,
-  'POST /review-items/{id}/archive': handleArchiveReviewItem,
-  'GET /review-items/{id}/activity': handleGetActivity,
-}
+const routes: RouteDefinition[] = [
+  {
+    method: 'GET',
+    path: '/review-items',
+    handler: handleGetReviewItems,
+  },
+  {
+    method: 'POST',
+    path: '/review-items',
+    handler: handlePostReviewItems,
+  },
+  {
+    method: 'GET',
+    path: '/review-items/:id',
+    handler: handleGetReviewItem,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/send',
+    handler: handleSendReviewItem,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/approve',
+    handler: handleApproveReviewItem,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/request-changes',
+    handler: handleRequestChanges,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/archive',
+    handler: handleArchiveReviewItem,
+  },
+  {
+    method: 'GET',
+    path: '/review-items/:id/activity',
+    handler: handleGetActivity,
+  },
+]
 
-const handlerFn = createRouteHandler(routes)
+const router = new Router(routes)
+const handlerFn = router.handle
 
 export const handler = createHandler(handlerFn)

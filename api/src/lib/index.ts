@@ -1,11 +1,29 @@
+export type {
+  HttpRequest,
+  HttpResponse,
+  RouteDefinition,
+  RouteHandler,
+} from '../models/index.js'
 export {
   type AuthContext,
   type AuthenticatedEvent,
   authMiddleware,
-} from './auth/auth-middleware.js'
-export { verifyJwt } from './auth/verify-jwt.js'
+  AuthService,
+  BearerTokenExtractor,
+  JwtVerifier,
+} from './auth/index.js'
 export { config } from './config.js'
-export { handleError } from './errors/error-handler.js'
-export { createHandler, createSQSHandler } from './handlers/response-handler.js'
-export { createRouteHandler } from './handlers/route-handler.js'
+export { ErrorService, handleError } from './errors/index.js'
+export {
+  ApiHandlerFactory,
+  createHandler,
+  createSQSHandler,
+  SqsHandlerFactory,
+} from './handlers/index.js'
 export { logger } from './logger.js'
+export {
+  PathMatcherFactory,
+  PathNormalizer,
+  RequestParser,
+  Router,
+} from './router/index.js'

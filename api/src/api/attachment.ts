@@ -1,31 +1,30 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
-
 import {
-  type AuthenticatedEvent,
   createHandler,
-  createRouteHandler,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  Router,
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handlePresign = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext } = event
+const handlePresign = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get presigned URL',
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handlePostAttachment = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handlePostAttachment = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -33,20 +32,19 @@ const handlePostAttachment = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Create attachment',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const handleGetAttachments = (
-  event: AuthenticatedEvent
-): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+const handleGetAttachments = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
 
   if (!reviewItemId) {
     throw new NotFoundError('Review item ID not found')
@@ -54,21 +52,33 @@ const handleGetAttachments = (
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       message: 'Get review item attachments',
       reviewItemId,
-      userId: authContext.userId,
-    }),
+      userId: request.auth.userId,
+    },
   }
 }
 
-const routes = {
-  'POST /attachments/presign': handlePresign,
-  'POST /review-items/{id}/attachments': handlePostAttachment,
-  'GET /review-items/{id}/attachments': handleGetAttachments,
-}
+const routes: RouteDefinition[] = [
+  {
+    method: 'POST',
+    path: '/attachments/presign',
+    handler: handlePresign,
+  },
+  {
+    method: 'POST',
+    path: '/review-items/:id/attachments',
+    handler: handlePostAttachment,
+  },
+  {
+    method: 'GET',
+    path: '/review-items/:id/attachments',
+    handler: handleGetAttachments,
+  },
+]
 
-const handlerFn = createRouteHandler(routes)
+const router = new Router(routes)
+const handlerFn = router.handle
 
 export const handler = createHandler(handlerFn)
