@@ -1,39 +1,47 @@
-
 import type { ActivityLog, ActivityLogAction, Prisma } from '@prisma/client'
 
 import { prisma } from '../lib/index'
 
 export type CreateActivityLogInput = {
   organizationId: string
+  reviewItemId?: string | null
+  actorUserId?: string | null
+  action: ActivityLogAction
+  metadata: Prisma.InputJsonValue
+}
+
+export type ListActivityLogsParams = {
+  organizationId: string
   reviewItemId?: string
   actorUserId?: string
-  action: ActivityLogAction
-  metadata: Prisma.JsonValue
+  limit?: number
+  offset?: number
 }
 
 export interface IActivityLogRepository {
-  create(data: CreateActivityLogInput): Promise<ActivityLog>
-  findById(id: string, organizationId: string): Promise<ActivityLog | null>
-  listByOrganization(organizationId: string): Promise<ActivityLog[]>
-  listByReviewItem(
-    reviewItemId: string,
+  create(
+    data: CreateActivityLogInput,
+    tx: Prisma.TransactionClient
+  ): Promise<ActivityLog>
+  findById(
+    id: string,
     organizationId: string
-  ): Promise<ActivityLog[]>
-  listByActor(
-    actorUserId: string,
-    organizationId: string
-  ): Promise<ActivityLog[]>
+  ): Promise<ActivityLog | null>
+  list(params: ListActivityLogsParams): Promise<ActivityLog[]>
 }
 
-export class ActivityLogRepository implements IActivityLogRepository {
-  async create(data: CreateActivityLogInput): Promise<ActivityLog> {
-    return await prisma.activityLog.create({
+class ActivityLogRepository implements IActivityLogRepository {
+  async create(
+    data: CreateActivityLogInput,
+    tx: Prisma.TransactionClient
+  ): Promise<ActivityLog> {
+    return await tx.activityLog.create({
       data: {
         organizationId: data.organizationId,
-        reviewItemId: data.reviewItemId,
-        actorUserId: data.actorUserId,
+        reviewItemId: data.reviewItemId ?? null,
+        actorUserId: data.actorUserId ?? null,
         action: data.action,
-        metadata: data.metadata as Prisma.InputJsonValue,
+        metadata: data.metadata,
       },
     })
   }
@@ -50,44 +58,30 @@ export class ActivityLogRepository implements IActivityLogRepository {
     })
   }
 
-  async listByOrganization(organizationId: string): Promise<ActivityLog[]> {
-    return await prisma.activityLog.findMany({
-      where: {
-        organizationId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-  }
+  async list(params: ListActivityLogsParams): Promise<ActivityLog[]> {
+    const { organizationId, reviewItemId, actorUserId, limit, offset } = params
 
-  async listByReviewItem(
-    reviewItemId: string,
-    organizationId: string
-  ): Promise<ActivityLog[]> {
-    return await prisma.activityLog.findMany({
-      where: {
-        reviewItemId,
-        organizationId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-  }
+    const where: Prisma.ActivityLogWhereInput = {
+      organizationId,
+    }
 
-  async listByActor(
-    actorUserId: string,
-    organizationId: string
-  ): Promise<ActivityLog[]> {
+    if (reviewItemId) {
+      where.reviewItemId = reviewItemId
+    }
+
+    if (actorUserId) {
+      where.actorUserId = actorUserId
+    }
+
     return await prisma.activityLog.findMany({
-      where: {
-        actorUserId,
-        organizationId,
-      },
+      where,
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
+      take: limit,
+      skip: offset,
     })
   }
 }
+
+export { ActivityLogRepository }

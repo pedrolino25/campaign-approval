@@ -1,5 +1,4 @@
 import {
-  ActivityLogAction,
   NotificationType,
   Prisma,
   type ReviewItem,
@@ -8,6 +7,10 @@ import {
 
 import { prisma } from '../lib'
 import { transition, WorkflowAction } from '../lib/index'
+import {
+  ActivityLogActionType,
+  type ActivityLogMetadataMap,
+} from '../models/activity-log'
 import {
   ConflictError,
   InvalidStateTransitionError,
@@ -19,12 +22,17 @@ import type {
   AttachmentRepository,
   ReviewItemRepository,
 } from '../repositories'
+import { ActivityLogService } from './activity-log.service'
 
-const ACTION_TO_ACTIVITY_LOG_MAP: Record<WorkflowAction, ActivityLogAction> = {
-  [WorkflowAction.SEND_FOR_REVIEW]: ActivityLogAction.REVIEW_UPDATED,
-  [WorkflowAction.APPROVE]: ActivityLogAction.REVIEW_APPROVED,
-  [WorkflowAction.REQUEST_CHANGES]: ActivityLogAction.REVIEW_CHANGES_REQUESTED,
-  [WorkflowAction.UPLOAD_NEW_VERSION]: ActivityLogAction.ATTACHMENT_UPLOADED,
+const ACTION_TO_ACTIVITY_LOG_MAP: Record<
+  WorkflowAction,
+  ActivityLogActionType
+> = {
+  [WorkflowAction.SEND_FOR_REVIEW]: ActivityLogActionType.REVIEW_SENT,
+  [WorkflowAction.APPROVE]: ActivityLogActionType.REVIEW_APPROVED,
+  [WorkflowAction.REQUEST_CHANGES]:
+    ActivityLogActionType.REVIEW_CHANGES_REQUESTED,
+  [WorkflowAction.UPLOAD_NEW_VERSION]: ActivityLogActionType.ATTACHMENT_UPLOADED,
 }
 
 const ACTION_TO_NOTIFICATION_MAP: Record<WorkflowAction, NotificationType> = {
@@ -36,7 +44,7 @@ const ACTION_TO_NOTIFICATION_MAP: Record<WorkflowAction, NotificationType> = {
 
 function mapWorkflowActionToActivityLogAction(
   action: WorkflowAction
-): ActivityLogAction {
+): ActivityLogActionType {
   return ACTION_TO_ACTIVITY_LOG_MAP[action]
 }
 
@@ -58,10 +66,14 @@ export interface IReviewWorkflowService {
 }
 
 export class ReviewWorkflowService implements IReviewWorkflowService {
+  private readonly activityLogService: ActivityLogService
+
   constructor(
     private readonly reviewItemRepository: ReviewItemRepository,
     private readonly attachmentRepository: AttachmentRepository
-  ) {}
+  ) {
+    this.activityLogService = new ActivityLogService()
+  }
 
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
     const { reviewItemId, action, actor, expectedVersion } = input
@@ -169,7 +181,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
       await this.createActivityLog(
         tx,
-        reviewItem,
+        updated,
         actor,
         action,
         previousStatus,
@@ -240,23 +252,41 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     newStatus: ReviewStatus
   ): Promise<void> {
     const activityLogAction = mapWorkflowActionToActivityLogAction(action)
-    const actorUserId =
-      actor.type === ActorType.Internal ? actor.userId : undefined
-    const metadata: Prisma.JsonValue = {
-      previousStatus,
-      newStatus,
-      action,
-    }
 
-    await tx.activityLog.create({
-      data: {
-        organizationId: reviewItem.organizationId,
+    if (
+      activityLogAction === ActivityLogActionType.REVIEW_SENT ||
+      activityLogAction === ActivityLogActionType.REVIEW_APPROVED ||
+      activityLogAction === ActivityLogActionType.REVIEW_CHANGES_REQUESTED
+    ) {
+      const metadata: ActivityLogMetadataMap[typeof activityLogAction] = {
         reviewItemId: reviewItem.id,
-        actorUserId,
+        previousStatus,
+        newStatus,
+      } as ActivityLogMetadataMap[typeof activityLogAction]
+
+      await this.activityLogService.log({
         action: activityLogAction,
-        metadata: metadata as Prisma.InputJsonValue,
-      },
-    })
+        organizationId: reviewItem.organizationId,
+        actor,
+        metadata,
+        reviewItemId: reviewItem.id,
+        tx,
+      })
+    } else if (activityLogAction === ActivityLogActionType.ATTACHMENT_UPLOADED) {
+      const metadata: ActivityLogMetadataMap[typeof activityLogAction] = {
+        reviewItemId: reviewItem.id,
+        version: reviewItem.version,
+      }
+
+      await this.activityLogService.log({
+        action: activityLogAction,
+        organizationId: reviewItem.organizationId,
+        actor,
+        metadata,
+        reviewItemId: reviewItem.id,
+        tx,
+      })
+    }
   }
 
   private async createNotification(

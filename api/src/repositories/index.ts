@@ -2,6 +2,7 @@ export {
   ActivityLogRepository,
   type CreateActivityLogInput,
   type IActivityLogRepository,
+  type ListActivityLogsParams,
 } from './activity-log-repository'
 export {
   AttachmentRepository,
