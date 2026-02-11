@@ -7,7 +7,7 @@ import {
   ApiVersion,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/attachment.js'
+import * as v1 from './v1/handlers/attachment.js'
 
 const routes: RouteDefinition[] = [
   RouteBuilder.post('/attachments/presign', v1.handlePresign, ApiVersion.V1),

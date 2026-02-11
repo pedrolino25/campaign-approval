@@ -7,7 +7,7 @@ import {
   ApiVersion,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/notification.js'
+import * as v1 from './v1/handlers/notification.js'
 
 const routes: RouteDefinition[] = [
   RouteBuilder.get('/notifications', v1.handleGetNotifications, ApiVersion.V1),

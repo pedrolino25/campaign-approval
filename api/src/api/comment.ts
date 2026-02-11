@@ -7,7 +7,7 @@ import {
   ApiVersion,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/comment.js'
+import * as v1 from './v1/handlers/comment.js'
 
 const routes: RouteDefinition[] = [
   RouteBuilder.get(

@@ -1,8 +1,8 @@
 import type {
   HttpRequest,
   HttpResponse,
-} from '../../lib/index.js'
-import { NotFoundError } from '../../models/index.js'
+} from '../../../lib/index.js'
+import { NotFoundError } from '../../../models/index.js'
 
 export const handlePresign = async (
   request: HttpRequest

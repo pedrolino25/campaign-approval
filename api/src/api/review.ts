@@ -7,7 +7,7 @@ import {
   ApiVersion,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/review.js'
+import * as v1 from './v1/handlers/review.js'
 
 const routes: RouteDefinition[] = [
   RouteBuilder.get('/review-items', v1.handleGetReviewItems, ApiVersion.V1),
