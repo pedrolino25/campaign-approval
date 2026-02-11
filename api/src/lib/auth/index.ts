@@ -1,7 +1,7 @@
-import { AuthService } from './auth-service'
-import { JwtVerifier } from './jwt-verifier'
-import { RBACService } from './rbac-service'
-import { BearerTokenExtractor } from './token-extractor'
+import { AuthService } from './auth.service'
+import { RBACService } from './rbac.service'
+import { JwtVerifier } from './utils/jwt-verifier'
+import { BearerTokenExtractor } from './utils/token-extractor'
 
 export type {
   AuthContext,
@@ -11,4 +11,4 @@ export type {
 } from '../../models'
 
 export { AuthService, BearerTokenExtractor, JwtVerifier, RBACService }
-export { can } from './rbac-policies'
+export { can } from './utils/rbac-policies'

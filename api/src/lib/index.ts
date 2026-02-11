@@ -11,9 +11,8 @@ export {
   BearerTokenExtractor,
   JwtVerifier,
 } from './auth'
-export { config } from './config'
-export { EmailService } from './email/email-service'
-export { ErrorService, handleError } from './errors'
+export { EmailService } from './email/email.service'
+export { ErrorService, handleError } from './errors/error.service'
 export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
@@ -21,16 +20,14 @@ export {
   createSQSHandler,
   SqsHandlerFactory,
 } from './handlers'
-export { logger } from './logger'
 export { prisma } from './prisma/client'
 export {
-  PathMatcherFactory,
-  PathNormalizer,
-  RequestParser,
   RouteBuilder,
   Router,
 } from './router'
-export { SQSService } from './sqs/sqs-service'
+export { SQSService } from './sqs/sqs.service'
+export { config } from './utils/config'
+export { logger } from './utils/logger'
 export {
   WorkflowEventDispatcher,
-} from './workflow-events/workflow-event-dispatcher'
+} from './workflow-events/workflow-event.dispatcher'

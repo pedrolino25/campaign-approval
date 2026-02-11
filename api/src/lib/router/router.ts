@@ -8,10 +8,10 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../../models'
-import { ErrorService } from '../errors'
-import { PathMatcherFactory } from './path-matcher'
-import { PathNormalizer } from './path-normalizer'
-import { RequestParser } from './request-parser'
+import { ErrorService } from '../errors/error.service'
+import { PathMatcherFactory } from './utils/path-matcher'
+import { PathNormalizer } from './utils/path-normalizer'
+import { RequestParser } from './utils/request-parser'
 
 interface CompiledRoute {
   method: string

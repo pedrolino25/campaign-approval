@@ -1,6 +1,6 @@
 import { SendMessageCommand,SQSClient } from '@aws-sdk/client-sqs'
 
-import { logger } from '../logger'
+import { logger } from '../utils/logger'
 
 export type EmailJobPayload = {
   notificationId: string

@@ -5,7 +5,7 @@ import type {
   AuthTokenExtractor,
   TokenVerifier,
 } from '../../models'
-import type { RBACService } from './rbac-service'
+import type { RBACService } from './rbac.service'
 
 export class AuthService {
   constructor(

@@ -120,6 +120,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform validate
         working-directory: infra/env/dev
@@ -129,6 +130,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform plan
         working-directory: infra/env/dev
@@ -138,6 +140,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform apply
         working-directory: infra/env/dev
@@ -147,3 +150,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}

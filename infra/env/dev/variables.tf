@@ -184,3 +184,25 @@ variable "database_url" {
   type        = string
   sensitive   = true
 }
+
+variable "sendgrid_template_ids" {
+  description = "Map of SendGrid template IDs for email notifications"
+  type = object({
+    REVIEW_SENT              = string
+    REVIEW_APPROVED          = string
+    REVIEW_CHANGES_REQUESTED = string
+    REVIEW_REOPENED          = string
+    ATTACHMENT_UPLOADED      = string
+    COMMENT_ADDED            = string
+    REVIEW_REMINDER          = string
+  })
+  default = {
+    REVIEW_SENT              = ""
+    REVIEW_APPROVED          = ""
+    REVIEW_CHANGES_REQUESTED = ""
+    REVIEW_REOPENED          = ""
+    ATTACHMENT_UPLOADED      = ""
+    COMMENT_ADDED            = ""
+    REVIEW_REMINDER          = ""
+  }
+}

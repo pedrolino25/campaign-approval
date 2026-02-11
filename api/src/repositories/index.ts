@@ -19,7 +19,7 @@ export {
   ClientReviewerRepository,
   type CreateClientReviewerInput,
   type IClientReviewerRepository,
-} from './client-reviewer-repository'
+} from './client-reviewer.repository'
 export {
   CommentRepository,
   type CreateCommentInput,
