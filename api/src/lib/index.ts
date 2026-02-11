@@ -1,8 +1,9 @@
-export type {
-  HttpRequest,
-  HttpResponse,
-  RouteDefinition,
-  RouteHandler,
+export {
+  ApiVersion,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  type RouteHandler,
 } from '../models/index.js'
 export {
   type AuthContext,
@@ -25,5 +26,7 @@ export {
   PathMatcherFactory,
   PathNormalizer,
   RequestParser,
+  RouteBuilder,
   Router,
+  VersionManager,
 } from './router/index.js'

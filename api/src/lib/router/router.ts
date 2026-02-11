@@ -1,6 +1,7 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
 import {
+  type ApiVersion,
   type AuthContext,
   type AuthenticatedEvent,
   type HttpRequest,
@@ -12,9 +13,11 @@ import { ErrorService } from '../errors/index.js'
 import { PathMatcherFactory } from './path-matcher.js'
 import { PathNormalizer } from './path-normalizer.js'
 import { RequestParser } from './request-parser.js'
+import { VersionManager } from './version-manager.js'
 
 interface CompiledRoute {
   method: string
+  version: ApiVersion
   matcher: ReturnType<PathMatcherFactory['create']>
   handler: RouteDefinition<AuthContext>['handler']
 }
@@ -24,6 +27,7 @@ export class Router {
   private readonly pathNormalizer: PathNormalizer
   private readonly requestParser: RequestParser
   private readonly pathMatcherFactory: PathMatcherFactory
+  private readonly versionManager: VersionManager
   private readonly errorService: ErrorService
 
   constructor(
@@ -33,6 +37,7 @@ export class Router {
     this.pathNormalizer = new PathNormalizer()
     this.requestParser = new RequestParser()
     this.pathMatcherFactory = new PathMatcherFactory()
+    this.versionManager = new VersionManager()
     this.errorService = errorService
 
     for (const route of routes) {
@@ -40,6 +45,7 @@ export class Router {
 
       this.compiledRoutes.push({
         method: route.method,
+        version: route.version,
         matcher,
         handler: route.handler,
       })
@@ -56,10 +62,27 @@ export class Router {
       const normalizedPath = this.pathNormalizer.normalize(event.path)
       const method = event.httpMethod
 
-      const matchedRoute = this.findMatchingRoute(method, normalizedPath)
+      const apiVersion = this.versionManager.extractVersionFromPath(normalizedPath)
+
+      if (!apiVersion) {
+        throw new NotFoundError(
+          `API version is required in path. Expected format: /v1/...`
+        )
+      }
+
+      const pathWithoutVersion =
+        this.versionManager.removeVersionFromPath(normalizedPath)
+
+      const matchedRoute = this.findMatchingRoute(
+        method,
+        pathWithoutVersion,
+        apiVersion
+      )
 
       if (!matchedRoute) {
-        throw new NotFoundError(`Route not found: ${method} ${normalizedPath}`)
+        throw new NotFoundError(
+          `Route not found: ${method} ${normalizedPath}`
+        )
       }
 
       const { params, handler } = matchedRoute
@@ -86,13 +109,18 @@ export class Router {
 
   private findMatchingRoute(
     method: string,
-    path: string
+    path: string,
+    apiVersion: ApiVersion
   ): {
     params: Record<string, string> | undefined
     handler: RouteDefinition<AuthContext>['handler']
   } | null {
     for (const route of this.compiledRoutes) {
       if (route.method !== method) {
+        continue
+      }
+
+      if (route.version !== apiVersion) {
         continue
       }
 
