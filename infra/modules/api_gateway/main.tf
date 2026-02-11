@@ -73,9 +73,89 @@ resource "aws_apigatewayv2_integration" "comment" {
   integration_uri    = var.lambda_invoke_arns.comment
 }
 
-resource "aws_apigatewayv2_route" "organization" {
+resource "aws_apigatewayv2_route" "organization_get" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /organization"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_patch" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PATCH /organization"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_onboarding" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /organization/onboarding"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_users_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /organization/users"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_users_invite" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /organization/users/invite"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_invitations_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /organization/invitations"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_invitations_accept" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /organization/invitations/{id}/accept"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_users_delete" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "DELETE /organization/users/{id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "organization_users_role_patch" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PATCH /organization/users/{id}/role"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -106,6 +186,46 @@ resource "aws_apigatewayv2_route" "clients_post" {
 resource "aws_apigatewayv2_route" "clients_patch" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "PATCH /clients/{id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "clients_archive" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /clients/{id}/archive"
+
+  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "clients_reviewers_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /clients/{id}/reviewers"
+
+  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "clients_reviewers_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /clients/{id}/reviewers"
+
+  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "DELETE /clients/{id}/reviewers/{reviewerId}"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -183,6 +303,16 @@ resource "aws_apigatewayv2_route" "review_items_archive" {
   authorization_type = "JWT"
 }
 
+resource "aws_apigatewayv2_route" "review_items_activity_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /review-items/{id}/activity"
+
+  target = "integrations/${aws_apigatewayv2_integration.review.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
 resource "aws_apigatewayv2_route" "attachments_presign" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /attachments/presign"
@@ -193,7 +323,7 @@ resource "aws_apigatewayv2_route" "attachments_presign" {
   authorization_type = "JWT"
 }
 
-resource "aws_apigatewayv2_route" "review_items_attachments" {
+resource "aws_apigatewayv2_route" "review_items_attachments_post" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /review-items/{id}/attachments"
 
@@ -203,9 +333,19 @@ resource "aws_apigatewayv2_route" "review_items_attachments" {
   authorization_type = "JWT"
 }
 
-resource "aws_apigatewayv2_route" "comments_get" {
+resource "aws_apigatewayv2_route" "review_items_attachments_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /comments"
+  route_key = "GET /review-items/{id}/attachments"
+
+  target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "review_items_comments_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /review-items/{id}/comments"
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
@@ -213,11 +353,31 @@ resource "aws_apigatewayv2_route" "comments_get" {
   authorization_type = "JWT"
 }
 
-resource "aws_apigatewayv2_route" "comments_post" {
+resource "aws_apigatewayv2_route" "review_items_comments_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /comments"
+  route_key = "POST /review-items/{id}/comments"
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "notifications_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /notifications"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "notifications_read_patch" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PATCH /notifications/{id}/read"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
   authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"

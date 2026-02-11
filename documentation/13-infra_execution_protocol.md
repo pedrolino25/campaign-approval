@@ -204,11 +204,23 @@ etc.
 
 Organization:
 GET    /organization
+PATCH  /organization
+POST   /organization/onboarding
+GET    /organization/users
+POST   /organization/users/invite
+GET    /organization/invitations
+POST   /organization/invitations/{id}/accept
+DELETE /organization/users/{id}
+PATCH  /organization/users/{id}/role
 
 Client:
 GET    /clients
 POST   /clients
 PATCH  /clients/{id}
+POST   /clients/{id}/archive
+GET    /clients/{id}/reviewers
+POST   /clients/{id}/reviewers
+DELETE /clients/{id}/reviewers/{reviewerId}
 
 Review:
 GET    /review-items
@@ -218,14 +230,21 @@ POST   /review-items/{id}/send
 POST   /review-items/{id}/approve
 POST   /review-items/{id}/request-changes
 POST   /review-items/{id}/archive
+GET    /review-items/{id}/activity
 
 Attachment:
 POST   /attachments/presign
 POST   /review-items/{id}/attachments
+GET    /review-items/{id}/attachments
 
 Comment:
-GET    /comments
-POST   /comments
+GET    /review-items/{id}/comments
+POST   /review-items/{id}/comments
+
+Notifications:
+GET    /notifications
+PATCH  /notifications/{id}/read
+
 
 Each route explicitly mapped to its Lambda.
 No proxy ANY integration.

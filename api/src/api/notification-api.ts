@@ -7,41 +7,34 @@ import {
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handleGetComments = async (
+const handleGetNotifications = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
-
   return {
     statusCode: 200,
     body: {
-      message: 'Get review item comments',
-      reviewItemId,
+      message: 'Get notifications',
       userId: request.auth.userId,
     },
   }
 }
 
-const handlePostComment = async (
+const handlePatchNotificationRead = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
+  const notificationId = request.params.id as string | undefined
 
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
+  if (!notificationId) {
+    throw new NotFoundError('Notification ID not found')
   }
 
   return {
     statusCode: 200,
     body: {
-      message: 'Create comment',
-      reviewItemId,
+      message: 'Mark notification as read',
+      notificationId,
       userId: request.auth.userId,
     },
   }
@@ -50,13 +43,13 @@ const handlePostComment = async (
 const routes: RouteDefinition[] = [
   {
     method: 'GET',
-    path: '/review-items/:id/comments',
-    handler: handleGetComments,
+    path: '/notifications',
+    handler: handleGetNotifications,
   },
   {
-    method: 'POST',
-    path: '/review-items/:id/comments',
-    handler: handlePostComment,
+    method: 'PATCH',
+    path: '/notifications/:id/read',
+    handler: handlePatchNotificationRead,
   },
 ]
 

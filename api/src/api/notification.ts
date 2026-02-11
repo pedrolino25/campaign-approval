@@ -1,10 +1,11 @@
-import type { SQSEvent, SQSHandler } from "aws-lambda"
+import type { SQSEvent } from 'aws-lambda'
 
-export const handler: SQSHandler = async (
-  event: SQSEvent
-): Promise<void> => {
+import { createSQSHandler } from '../lib/index.js'
+
+const handlerFn = async (event: SQSEvent): Promise<void> => {
   await Promise.resolve()
-  // Process notifications
   const recordCount = event.Records.length
   void recordCount
 }
+
+export const handler = createSQSHandler(handlerFn)
