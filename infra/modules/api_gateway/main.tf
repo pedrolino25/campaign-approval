@@ -75,7 +75,7 @@ resource "aws_apigatewayv2_integration" "comment" {
 
 resource "aws_apigatewayv2_route" "organization_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/organization"
+  route_key = "GET /organization"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -85,7 +85,7 @@ resource "aws_apigatewayv2_route" "organization_get" {
 
 resource "aws_apigatewayv2_route" "organization_patch" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PATCH /{api_version}/organization"
+  route_key = "PATCH /organization"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -95,7 +95,7 @@ resource "aws_apigatewayv2_route" "organization_patch" {
 
 resource "aws_apigatewayv2_route" "organization_onboarding" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/organization/onboarding"
+  route_key = "POST /organization/onboarding"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -105,7 +105,7 @@ resource "aws_apigatewayv2_route" "organization_onboarding" {
 
 resource "aws_apigatewayv2_route" "organization_users_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/organization/users"
+  route_key = "GET /organization/users"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -115,7 +115,7 @@ resource "aws_apigatewayv2_route" "organization_users_get" {
 
 resource "aws_apigatewayv2_route" "organization_users_invite" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/organization/users/invite"
+  route_key = "POST /organization/users/invite"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -125,7 +125,7 @@ resource "aws_apigatewayv2_route" "organization_users_invite" {
 
 resource "aws_apigatewayv2_route" "organization_invitations_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/organization/invitations"
+  route_key = "GET /organization/invitations"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -135,7 +135,7 @@ resource "aws_apigatewayv2_route" "organization_invitations_get" {
 
 resource "aws_apigatewayv2_route" "organization_invitations_accept" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/organization/invitations/{id}/accept"
+  route_key = "POST /organization/invitations/{id}/accept"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -145,7 +145,7 @@ resource "aws_apigatewayv2_route" "organization_invitations_accept" {
 
 resource "aws_apigatewayv2_route" "organization_users_delete" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "DELETE /{api_version}/organization/users/{id}"
+  route_key = "DELETE /organization/users/{id}"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -155,7 +155,7 @@ resource "aws_apigatewayv2_route" "organization_users_delete" {
 
 resource "aws_apigatewayv2_route" "organization_users_role_patch" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PATCH /{api_version}/organization/users/{id}/role"
+  route_key = "PATCH /organization/users/{id}/role"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -165,7 +165,7 @@ resource "aws_apigatewayv2_route" "organization_users_role_patch" {
 
 resource "aws_apigatewayv2_route" "clients_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/clients"
+  route_key = "GET /clients"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -175,7 +175,7 @@ resource "aws_apigatewayv2_route" "clients_get" {
 
 resource "aws_apigatewayv2_route" "clients_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/clients"
+  route_key = "POST /clients"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -185,7 +185,7 @@ resource "aws_apigatewayv2_route" "clients_post" {
 
 resource "aws_apigatewayv2_route" "clients_patch" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PATCH /{api_version}/clients/{id}"
+  route_key = "PATCH /clients/{id}"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -195,7 +195,7 @@ resource "aws_apigatewayv2_route" "clients_patch" {
 
 resource "aws_apigatewayv2_route" "clients_archive" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/clients/{id}/archive"
+  route_key = "POST /clients/{id}/archive"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -205,7 +205,7 @@ resource "aws_apigatewayv2_route" "clients_archive" {
 
 resource "aws_apigatewayv2_route" "clients_reviewers_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/clients/{id}/reviewers"
+  route_key = "GET /clients/{id}/reviewers"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -215,7 +215,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_get" {
 
 resource "aws_apigatewayv2_route" "clients_reviewers_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/clients/{id}/reviewers"
+  route_key = "POST /clients/{id}/reviewers"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -225,7 +225,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_post" {
 
 resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "DELETE /{api_version}/clients/{id}/reviewers/{reviewerId}"
+  route_key = "DELETE /clients/{id}/reviewers/{reviewerId}"
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
@@ -235,7 +235,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
 
 resource "aws_apigatewayv2_route" "review_items_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/review-items"
+  route_key = "GET /review-items"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -245,7 +245,7 @@ resource "aws_apigatewayv2_route" "review_items_get" {
 
 resource "aws_apigatewayv2_route" "review_items_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items"
+  route_key = "POST /review-items"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -255,7 +255,7 @@ resource "aws_apigatewayv2_route" "review_items_post" {
 
 resource "aws_apigatewayv2_route" "review_items_get_id" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/review-items/{id}"
+  route_key = "GET /review-items/{id}"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -265,7 +265,7 @@ resource "aws_apigatewayv2_route" "review_items_get_id" {
 
 resource "aws_apigatewayv2_route" "review_items_send" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/send"
+  route_key = "POST /review-items/{id}/send"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -275,7 +275,7 @@ resource "aws_apigatewayv2_route" "review_items_send" {
 
 resource "aws_apigatewayv2_route" "review_items_approve" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/approve"
+  route_key = "POST /review-items/{id}/approve"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -285,7 +285,7 @@ resource "aws_apigatewayv2_route" "review_items_approve" {
 
 resource "aws_apigatewayv2_route" "review_items_request_changes" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/request-changes"
+  route_key = "POST /review-items/{id}/request-changes"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -295,7 +295,7 @@ resource "aws_apigatewayv2_route" "review_items_request_changes" {
 
 resource "aws_apigatewayv2_route" "review_items_archive" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/archive"
+  route_key = "POST /review-items/{id}/archive"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -305,7 +305,7 @@ resource "aws_apigatewayv2_route" "review_items_archive" {
 
 resource "aws_apigatewayv2_route" "review_items_activity_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/review-items/{id}/activity"
+  route_key = "GET /review-items/{id}/activity"
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
@@ -315,7 +315,7 @@ resource "aws_apigatewayv2_route" "review_items_activity_get" {
 
 resource "aws_apigatewayv2_route" "attachments_presign" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/attachments/presign"
+  route_key = "POST /attachments/presign"
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
@@ -325,7 +325,7 @@ resource "aws_apigatewayv2_route" "attachments_presign" {
 
 resource "aws_apigatewayv2_route" "review_items_attachments_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/attachments"
+  route_key = "POST /review-items/{id}/attachments"
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
@@ -335,7 +335,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments_post" {
 
 resource "aws_apigatewayv2_route" "review_items_attachments_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/review-items/{id}/attachments"
+  route_key = "GET /review-items/{id}/attachments"
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
@@ -345,7 +345,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments_get" {
 
 resource "aws_apigatewayv2_route" "review_items_comments_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/review-items/{id}/comments"
+  route_key = "GET /review-items/{id}/comments"
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
@@ -355,7 +355,7 @@ resource "aws_apigatewayv2_route" "review_items_comments_get" {
 
 resource "aws_apigatewayv2_route" "review_items_comments_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /{api_version}/review-items/{id}/comments"
+  route_key = "POST /review-items/{id}/comments"
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
@@ -365,7 +365,7 @@ resource "aws_apigatewayv2_route" "review_items_comments_post" {
 
 resource "aws_apigatewayv2_route" "notifications_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /{api_version}/notifications"
+  route_key = "GET /notifications"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
@@ -375,7 +375,7 @@ resource "aws_apigatewayv2_route" "notifications_get" {
 
 resource "aws_apigatewayv2_route" "notifications_read_patch" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PATCH /{api_version}/notifications/{id}/read"
+  route_key = "PATCH /notifications/{id}/read"
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 

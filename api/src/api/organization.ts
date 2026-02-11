@@ -1,68 +1,229 @@
 import {
   createHandler,
+  type HttpRequest,
+  type HttpResponse,
   RouteBuilder,
   Router,
 } from '../lib/index.js'
 import {
-  ApiVersion,
+  NotFoundError,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/handlers/organization.js'
+
+const handleGetOrganization = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get organization',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePatchOrganization = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Update organization',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePostOnboarding = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Organization onboarding',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handleGetUsers = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get organization users',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePostInvite = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Invite user',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handleGetInvitations = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get invitations',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePostAcceptInvitation = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const invitationId = request.params.id as string | undefined
+
+  if (!invitationId) {
+    throw new NotFoundError('Invitation ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Accept invitation',
+      invitationId,
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handleDeleteUser = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const targetUserId = request.params.id as string | undefined
+
+  if (!targetUserId) {
+    throw new NotFoundError('User ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Delete user',
+      targetUserId,
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePatchUserRole = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const targetUserId = request.params.id as string | undefined
+
+  if (!targetUserId) {
+    throw new NotFoundError('User ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Update user role',
+      targetUserId,
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handleGetNotifications = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get notifications',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePatchNotificationRead = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const notificationId = request.params.id as string | undefined
+
+  if (!notificationId) {
+    throw new NotFoundError('Notification ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Mark notification as read',
+      notificationId,
+      userId: request.auth.userId,
+    },
+  }
+}
 
 const routes: RouteDefinition[] = [
   RouteBuilder.get('/organization', 
-    v1.handleGetOrganization, 
-    ApiVersion.V1
+    handleGetOrganization
   ),
   RouteBuilder.patch(
     '/organization', 
-    v1.handlePatchOrganization, 
-    ApiVersion.V1
+    handlePatchOrganization
   ),
   RouteBuilder.post(
     '/organization/onboarding',
-    v1.handlePostOnboarding,
-    ApiVersion.V1
+    handlePostOnboarding
   ),
   RouteBuilder.get(
     '/organization/users', 
-    v1.handleGetUsers, 
-    ApiVersion.V1
+    handleGetUsers
   ),
   RouteBuilder.post(
     '/organization/users/invite', 
-    v1.handlePostInvite, 
-    ApiVersion.V1
+    handlePostInvite
   ),
   RouteBuilder.get(
     '/organization/invitations',
-    v1.handleGetInvitations,
-    ApiVersion.V1
+    handleGetInvitations
   ),
   RouteBuilder.post(
     '/organization/invitations/:id/accept',
-    v1.handlePostAcceptInvitation,
-    ApiVersion.V1
+    handlePostAcceptInvitation
   ),
   RouteBuilder.delete(
     '/organization/users/:id', 
-    v1.handleDeleteUser, 
-    ApiVersion.V1
+    handleDeleteUser
   ),
   RouteBuilder.patch(
     '/organization/users/:id/role',
-    v1.handlePatchUserRole,
-    ApiVersion.V1
+    handlePatchUserRole
   ),
   RouteBuilder.get(
     '/notifications', 
-    v1.handleGetNotifications, 
-    ApiVersion.V1
+    handleGetNotifications
   ),
   RouteBuilder.patch(
     '/notifications/:id/read',
-    v1.handlePatchNotificationRead,
-    ApiVersion.V1
+    handlePatchNotificationRead
   ),
 ]
 

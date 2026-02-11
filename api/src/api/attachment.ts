@@ -1,29 +1,80 @@
 import {
   createHandler,
+  type HttpRequest,
+  type HttpResponse,
   RouteBuilder,
   Router,
 } from '../lib/index.js'
 import {
-  ApiVersion,
+  NotFoundError,
   type RouteDefinition,
 } from '../models/index.js'
-import * as v1 from './v1/handlers/attachment.js'
+
+const handlePresign = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get presigned URL',
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handlePostAttachment = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
+
+  if (!reviewItemId) {
+    throw new NotFoundError('Review item ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Create attachment',
+      reviewItemId,
+      userId: request.auth.userId,
+    },
+  }
+}
+
+const handleGetAttachments = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  await Promise.resolve()
+  const reviewItemId = request.params.id as string | undefined
+
+  if (!reviewItemId) {
+    throw new NotFoundError('Review item ID not found')
+  }
+
+  return {
+    statusCode: 200,
+    body: {
+      message: 'Get review item attachments',
+      reviewItemId,
+      userId: request.auth.userId,
+    },
+  }
+}
 
 const routes: RouteDefinition[] = [
   RouteBuilder.post(
     '/attachments/presign', 
-    v1.handlePresign, 
-    ApiVersion.V1
+    handlePresign
   ),
   RouteBuilder.post(
     '/review-items/:id/attachments',
-    v1.handlePostAttachment,
-    ApiVersion.V1
+    handlePostAttachment
   ),
   RouteBuilder.get(
     '/review-items/:id/attachments',
-    v1.handleGetAttachments,
-    ApiVersion.V1
+    handleGetAttachments
   ),
 ]
 

@@ -15,7 +15,6 @@ export {
   ValidationError,
 } from './errors.js'
 export {
-  ApiVersion,
   type HttpRequest,
   type HttpResponse,
   type RouteDefinition,
