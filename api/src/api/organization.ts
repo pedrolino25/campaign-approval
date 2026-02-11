@@ -237,6 +237,4 @@ const routes: RouteDefinition[] = [
 ]
 
 const router = new Router(routes)
-const handlerFn = router.handle
-
-export const handler = createHandler(handlerFn)
+export const handler = createHandler(router.handle)
