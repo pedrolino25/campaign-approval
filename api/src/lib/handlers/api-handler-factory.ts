@@ -3,9 +3,9 @@ import type {
   APIGatewayProxyResult,
 } from 'aws-lambda'
 
-import type { AuthenticatedEvent } from '../../models/index.js'
-import type { AuthService } from '../auth/index.js'
-import type { ErrorService } from '../errors/index.js'
+import type { AuthenticatedEvent } from '../../models/index'
+import type { AuthService } from '../auth/index'
+import type { ErrorService } from '../errors/index'
 
 export class ApiHandlerFactory {
   constructor(

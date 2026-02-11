@@ -3,7 +3,7 @@ export type {
   AuthenticatedEvent,
   AuthTokenExtractor,
   TokenVerifier,
-} from './auth.js'
+} from './auth'
 export {
   ConflictError,
   DomainError,
@@ -13,10 +13,10 @@ export {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from './errors.js'
+} from './errors'
 export {
   type HttpRequest,
   type HttpResponse,
   type RouteDefinition,
   type RouteHandler,
-} from './router.js'
+} from './router'

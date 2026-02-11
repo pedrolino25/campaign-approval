@@ -1,13 +1,13 @@
-import { AuthService } from './auth-service.js'
-import { JwtVerifier } from './jwt-verifier.js'
-import { BearerTokenExtractor } from './token-extractor.js'
+import { AuthService } from './auth-service'
+import { JwtVerifier } from './jwt-verifier'
+import { BearerTokenExtractor } from './token-extractor'
 
 export type {
   AuthContext,
   AuthenticatedEvent,
   AuthTokenExtractor,
   TokenVerifier,
-} from '../../models/index.js'
+} from '../../models/index'
 
 const tokenExtractor = new BearerTokenExtractor()
 const tokenVerifier = new JwtVerifier()

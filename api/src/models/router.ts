@@ -1,7 +1,7 @@
 import type {
   AuthContext,
   AuthenticatedEvent,
-} from './auth.js'
+} from './auth'
 
 export interface HttpRequest<
   TAuthContext extends AuthContext = AuthContext,

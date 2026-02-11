@@ -4,7 +4,7 @@ import type {
   AuthenticatedEvent,
   AuthTokenExtractor,
   TokenVerifier,
-} from '../../models/index.js'
+} from '../../models/index'
 
 export class AuthService {
   constructor(

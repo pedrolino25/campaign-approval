@@ -4,8 +4,8 @@ import {
   type AuthContext,
   type TokenVerifier,
   UnauthorizedError,
-} from '../../models/index.js'
-import { config } from '../config.js'
+} from '../../models/index'
+import { config } from '../config'
 
 export class JwtVerifier implements TokenVerifier {
   private readonly jwksCache = new Map<

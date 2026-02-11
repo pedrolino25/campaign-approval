@@ -1,7 +1,7 @@
-import { AuthService,BearerTokenExtractor, JwtVerifier } from '../auth/index.js'
-import { ErrorService } from '../errors/index.js'
-import { ApiHandlerFactory } from './api-handler-factory.js'
-import { SqsHandlerFactory } from './sqs-handler-factory.js'
+import { AuthService,BearerTokenExtractor, JwtVerifier } from '../auth/index'
+import { ErrorService } from '../errors/index'
+import { ApiHandlerFactory } from './api-handler-factory'
+import { SqsHandlerFactory } from './sqs-handler-factory'
 
 const tokenExtractor = new BearerTokenExtractor()
 const tokenVerifier = new JwtVerifier()
