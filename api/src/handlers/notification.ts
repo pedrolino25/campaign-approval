@@ -7,11 +7,11 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
-} from '../lib/index.js'
+} from '../lib/index'
 import {
   NotFoundError,
   type RouteDefinition,
-} from '../models/index.js'
+} from '../models/index'
 
 const handleSQSEvent = async (event: SQSEvent): Promise<void> => {
   await Promise.resolve()

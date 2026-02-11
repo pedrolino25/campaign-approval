@@ -2,7 +2,7 @@ import {
   type AuthContext,
   type RouteDefinition,
   type RouteHandler,
-} from '../../models/index.js'
+} from '../../models/index'
 
 export class RouteBuilder {
   static get(

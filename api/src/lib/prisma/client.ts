@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable no-var */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { PrismaClient } from '@prisma/client'
 

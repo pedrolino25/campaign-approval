@@ -1,6 +1,6 @@
 import type { SQSEvent } from 'aws-lambda'
 
-import { logger } from '../logger.js'
+import { logger } from '../logger'
 
 export class SqsHandlerFactory {
   create(handler: (event: SQSEvent) => Promise<void>): (

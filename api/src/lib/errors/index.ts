@@ -1,1 +1,1 @@
-export { ErrorService, handleError } from './error-service.js'
+export { ErrorService, handleError } from './error-service'

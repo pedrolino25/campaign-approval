@@ -7,11 +7,11 @@ import {
   type HttpResponse,
   NotFoundError,
   type RouteDefinition,
-} from '../../models/index.js'
-import { ErrorService } from '../errors/index.js'
-import { PathMatcherFactory } from './path-matcher.js'
-import { PathNormalizer } from './path-normalizer.js'
-import { RequestParser } from './request-parser.js'
+} from '../../models/index'
+import { ErrorService } from '../errors/index'
+import { PathMatcherFactory } from './path-matcher'
+import { PathNormalizer } from './path-normalizer'
+import { RequestParser } from './request-parser'
 
 interface CompiledRoute {
   method: string

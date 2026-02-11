@@ -3,9 +3,9 @@ export type {
   HttpResponse,
   RouteDefinition,
   RouteHandler,
-} from '../../models/index.js'
-export { PathMatcherFactory } from './path-matcher.js'
-export { PathNormalizer } from './path-normalizer.js'
-export { RequestParser } from './request-parser.js'
-export { RouteBuilder } from './route-builder.js'
-export { Router } from './router.js'
+} from '../../models/index'
+export { PathMatcherFactory } from './path-matcher'
+export { PathNormalizer } from './path-normalizer'
+export { RequestParser } from './request-parser'
+export { RouteBuilder } from './route-builder'
+export { Router } from './router'

@@ -1,11 +1,10 @@
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from 'jose'
 
 import {
-  type AuthContext,
   type TokenVerifier,
   UnauthorizedError,
-} from '../../models/index.js'
-import { config } from '../config.js'
+} from '../../models/index'
+import { config } from '../config'
 
 export class JwtVerifier implements TokenVerifier {
   private readonly jwksCache = new Map<
@@ -29,7 +28,7 @@ export class JwtVerifier implements TokenVerifier {
     return `https://cognito-idp.${config.AWS_REGION}.amazonaws.com/${config.COGNITO_USER_POOL_ID}`
   }
 
-  async verify(token: string): Promise<AuthContext> {
+  async verify(token: string): Promise<{ userId: string; rawToken: string }> {
     const jwks = this.getJWKS()
     const issuer = this.getIssuer()
 
