@@ -3,6 +3,7 @@ import type { SQSEvent, SQSRecord } from 'aws-lambda'
 import { z } from 'zod'
 
 import { EmailService,logger } from '../lib'
+import { WorkflowEventType } from '../models'
 import { NotificationRepository } from '../repositories'
 
 const EmailJobPayloadSchema = z.object({
@@ -62,7 +63,7 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
     await emailService.send({
       to,
       subject: getSubjectForTemplate(templateId, dynamicData),
-      templateId,
+      templateId: process.env[`SENDGRID_TEMPLATE_${templateId}`] || '',
       dynamicData,
     })
 
@@ -96,22 +97,18 @@ function getSubjectForTemplate(
   const reviewItemTitle = dynamicData.reviewItemTitle as string | undefined
   const defaultSubject = 'Worklient Notification'
 
-  const subjectPrefixes: Record<string, string> = {
-    'review-sent': 'Review Request',
-    'review-reopened': 'Review Request',
-    'review-approved': 'Review Approved',
-    'review-changes-requested': 'Changes Requested',
-    'comment-added': 'New Comment',
-    'attachment-uploaded': 'New Version',
-    'review-reminder': 'Reminder',
+  const subjectPrefixes: Record<WorkflowEventType, string> = {
+    [WorkflowEventType.REVIEW_SENT]: 'Review Request',
+    [WorkflowEventType.REVIEW_REOPENED]: 'Review Request',
+    [WorkflowEventType.REVIEW_APPROVED]: 'Review Approved',
+    [WorkflowEventType.REVIEW_CHANGES_REQUESTED]: 'Changes Requested',
+    [WorkflowEventType.COMMENT_ADDED]: 'New Comment',
+    [WorkflowEventType.ATTACHMENT_UPLOADED]: 'New Version',
+    [WorkflowEventType.REVIEW_REMINDER]: 'Reminder',
   }
 
-  const prefix = Object.keys(subjectPrefixes).find((key) =>
-    templateId.includes(key)
-  )
-
-  if (prefix && reviewItemTitle) {
-    return `${subjectPrefixes[prefix]}: ${reviewItemTitle}`
+  if (templateId && reviewItemTitle) {
+    return `${subjectPrefixes[templateId as WorkflowEventType]}: ${reviewItemTitle}`
   }
 
   return defaultSubject

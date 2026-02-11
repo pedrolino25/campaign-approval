@@ -207,7 +207,7 @@ export class NotificationService {
         notificationId: notification.id,
         organizationId: notification.organizationId,
         to: recipientEmail,
-        templateId: this.getTemplateIdForEventType(type),
+        templateId: type,
         dynamicData: {
           reviewItemId: reviewItem.id,
           reviewItemTitle: reviewItem.title,
@@ -267,19 +267,6 @@ export class NotificationService {
       [WorkflowEventType.REVIEW_REMINDER]: 'REVIEW_ASSIGNED',
     }
     return mapping[eventType]
-  }
-
-  private getTemplateIdForEventType(eventType: WorkflowEventType): string {
-    const templateMapping: Record<WorkflowEventType, string> = {
-      [WorkflowEventType.REVIEW_SENT]: process.env.SENDGRID_TEMPLATE_REVIEW_SENT || 'd-review-sent',
-      [WorkflowEventType.REVIEW_APPROVED]: process.env.SENDGRID_TEMPLATE_REVIEW_APPROVED || 'd-review-approved',
-      [WorkflowEventType.REVIEW_CHANGES_REQUESTED]: process.env.SENDGRID_TEMPLATE_REVIEW_CHANGES_REQUESTED || 'd-review-changes-requested',
-      [WorkflowEventType.REVIEW_REOPENED]: process.env.SENDGRID_TEMPLATE_REVIEW_REOPENED || 'd-review-reopened',
-      [WorkflowEventType.ATTACHMENT_UPLOADED]: process.env.SENDGRID_TEMPLATE_ATTACHMENT_UPLOADED || 'd-attachment-uploaded',
-      [WorkflowEventType.COMMENT_ADDED]: process.env.SENDGRID_TEMPLATE_COMMENT_ADDED || 'd-comment-added',
-      [WorkflowEventType.REVIEW_REMINDER]: process.env.SENDGRID_TEMPLATE_REVIEW_REMINDER || 'd-review-reminder',
-    }
-    return templateMapping[eventType]
   }
 
   private getDynamicDataForEventType(
