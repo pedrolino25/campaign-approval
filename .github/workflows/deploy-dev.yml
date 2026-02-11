@@ -13,10 +13,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: Development
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,6 +38,43 @@ jobs:
       - name: Run API lint
         working-directory: api
         run: npm run lint
+
+      - name: Generate Prisma migration
+        working-directory: api
+        run: |
+          set +e
+          MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
+          OUTPUT=$(npx prisma migrate dev --name "$MIGRATION_NAME" --create-only 2>&1)
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Migration generated: $MIGRATION_NAME"
+          elif echo "$OUTPUT" | grep -q "No schema changes"; then
+            echo "No schema changes detected, skipping migration generation"
+          else
+            echo "Migration generation failed: $OUTPUT"
+            exit $EXIT_CODE
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+
+      - name: Apply Prisma migrations
+        working-directory: api
+        run: |
+          set -e
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+
+      - name: Commit migration files
+        working-directory: api
+        run: |
+          if [ -n "$(git status --porcelain prisma/migrations)" ]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add prisma/migrations/
+            git commit -m "chore: auto-generate Prisma migration [skip ci]"
+            git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          fi
 
       - name: Build Lambda artifact
         working-directory: api
@@ -78,6 +119,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Terraform validate
         working-directory: infra/env/dev
@@ -86,6 +128,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Terraform plan
         working-directory: infra/env/dev
@@ -94,6 +137,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
 
       - name: Terraform apply
         working-directory: infra/env/dev
@@ -102,3 +146,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}

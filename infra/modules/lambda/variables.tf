@@ -60,6 +60,12 @@ variable "cognito_app_client_id" {
   type        = string
 }
 
+variable "database_url" {
+  description = "PostgreSQL database connection URL (from Neon)"
+  type        = string
+  sensitive   = true
+}
+
 variable "iam_roles" {
   description = "Map of Lambda function names to IAM role ARNs"
   type = object({

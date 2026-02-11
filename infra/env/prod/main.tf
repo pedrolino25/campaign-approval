@@ -113,6 +113,8 @@ module "lambdas" {
     notification = module.iam.notification_role_arn
   }
 
+  database_url = var.database_url
+
   tags = var.resource_tags
 }
 

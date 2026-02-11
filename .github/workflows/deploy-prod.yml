@@ -35,6 +35,14 @@ jobs:
         working-directory: api
         run: npm run lint
 
+      - name: Apply Prisma migrations
+        working-directory: api
+        run: |
+          set -e
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
       - name: Build Lambda artifact
         working-directory: api
         run: |
@@ -78,6 +86,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_PROD }}
 
       - name: Terraform validate
         working-directory: infra/env/prod
@@ -86,6 +95,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_PROD }}
 
       - name: Terraform plan
         working-directory: infra/env/prod
@@ -94,6 +104,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_PROD }}
 
       - name: Terraform apply
         working-directory: infra/env/prod
@@ -102,3 +113,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_database_url: ${{ secrets.DATABASE_URL_PROD }}

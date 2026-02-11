@@ -68,6 +68,7 @@ resource "aws_lambda_function" "api" {
       SQS_QUEUE_URL         = var.sqs_queue_url
       COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
       COGNITO_APP_CLIENT_ID = var.cognito_app_client_id
+      DATABASE_URL          = var.database_url
     }
   }
 
@@ -96,6 +97,7 @@ resource "aws_lambda_function" "notification" {
     variables = {
       ENVIRONMENT   = var.environment
       SQS_QUEUE_URL = var.sqs_queue_url
+      DATABASE_URL  = var.database_url
     }
   }
 
