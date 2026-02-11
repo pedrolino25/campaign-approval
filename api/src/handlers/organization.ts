@@ -4,11 +4,11 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
-} from '../lib/index'
+} from '../lib'
 import {
   NotFoundError,
   type RouteDefinition,
-} from '../models/index'
+} from '../models'
 
 const handleGetOrganization = async (
   request: HttpRequest

@@ -1,6 +1,6 @@
 import type { ActivityLog, ActivityLogAction, Prisma } from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateActivityLogInput = {
   organizationId: string

@@ -4,7 +4,7 @@ import type {
   AuthenticatedEvent,
   AuthTokenExtractor,
   TokenVerifier,
-} from '../../models/index'
+} from '../../models'
 import type { RBACService } from './rbac-service'
 
 export class AuthService {

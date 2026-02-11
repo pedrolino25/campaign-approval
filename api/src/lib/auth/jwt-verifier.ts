@@ -3,7 +3,7 @@ import { createRemoteJWKSet, type JWTPayload, jwtVerify } from 'jose'
 import {
   type TokenVerifier,
   UnauthorizedError,
-} from '../../models/index'
+} from '../../models'
 import { config } from '../config'
 
 export class JwtVerifier implements TokenVerifier {

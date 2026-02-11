@@ -31,3 +31,8 @@ export {
   type RouteDefinition,
   type RouteHandler,
 } from './router'
+export {
+  type WorkflowEvent,
+  type WorkflowEventPayloadMap,
+  WorkflowEventType,
+} from './workflow-event'

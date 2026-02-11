@@ -1,6 +1,6 @@
 import { ClientReviewerRepository, UserRepository } from '../../repositories'
-import { AuthService,BearerTokenExtractor, JwtVerifier, RBACService } from '../auth/index'
-import { ErrorService } from '../errors/index'
+import { AuthService,BearerTokenExtractor, JwtVerifier, RBACService } from '../auth'
+import { ErrorService } from '../errors'
 import { ApiHandlerFactory } from './api-handler-factory'
 import { SqsHandlerFactory } from './sqs-handler-factory'
 

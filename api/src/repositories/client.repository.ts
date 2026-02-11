@@ -1,7 +1,7 @@
 
 import type { Client } from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateClientInput = {
   organizationId: string

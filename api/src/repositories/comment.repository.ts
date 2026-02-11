@@ -1,7 +1,7 @@
 
 import type { Comment, CommentAuthorType } from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateCommentInput = {
   reviewItemId: string

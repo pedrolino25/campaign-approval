@@ -3,23 +3,24 @@ export {
   type HttpResponse,
   type RouteDefinition,
   type RouteHandler,
-} from '../models/index'
+} from '../models'
 export {
   type AuthContext,
   type AuthenticatedEvent,
   AuthService,
   BearerTokenExtractor,
   JwtVerifier,
-} from './auth/index'
+} from './auth'
 export { config } from './config'
-export { ErrorService, handleError } from './errors/index'
+export { EmailService } from './email/email-service'
+export { ErrorService, handleError } from './errors'
 export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
   createHandler,
   createSQSHandler,
   SqsHandlerFactory,
-} from './handlers/index'
+} from './handlers'
 export { logger } from './logger'
 export { prisma } from './prisma/client'
 export {
@@ -28,4 +29,8 @@ export {
   RequestParser,
   RouteBuilder,
   Router,
-} from './router/index'
+} from './router'
+export { SQSService } from './sqs/sqs-service'
+export {
+  WorkflowEventDispatcher,
+} from './workflow-events/workflow-event-dispatcher'

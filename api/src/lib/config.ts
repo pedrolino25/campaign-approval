@@ -6,6 +6,9 @@ const configSchema = z.object({
   AWS_REGION: z.string().min(1),
   ENVIRONMENT: z.enum(['dev', 'prod']),
   LOG_LEVEL: z.string().optional().default('info'),
+  SQS_QUEUE_URL: z.string().url().optional(),
+  SENDGRID_API_KEY: z.string().min(1).optional(),
+  SENDGRID_FROM_EMAIL: z.string().email().optional(),
 })
 
 type Config = z.infer<typeof configSchema>
@@ -17,6 +20,9 @@ const getConfig = (): Config => {
     AWS_REGION: process.env.AWS_REGION,
     ENVIRONMENT: process.env.ENVIRONMENT,
     LOG_LEVEL: process.env.LOG_LEVEL,
+    SQS_QUEUE_URL: process.env.SQS_QUEUE_URL,
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+    SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL,
   }
 
   const result = configSchema.safeParse(rawConfig)

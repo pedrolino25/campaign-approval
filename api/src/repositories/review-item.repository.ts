@@ -2,7 +2,7 @@
 
 import { type ReviewItem, ReviewStatus } from '@prisma/client';
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateDraftReviewItemInput = {
   organizationId: string

@@ -8,7 +8,7 @@ export type {
   AuthenticatedEvent,
   AuthTokenExtractor,
   TokenVerifier,
-} from '../../models/index'
+} from '../../models'
 
 export { AuthService, BearerTokenExtractor, JwtVerifier, RBACService }
 export { can } from './rbac-policies'

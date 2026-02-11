@@ -3,7 +3,7 @@ import type { APIGatewayProxyEvent } from 'aws-lambda'
 import {
   type AuthTokenExtractor,
   UnauthorizedError,
-} from '../../models/index'
+} from '../../models'
 
 export class BearerTokenExtractor implements AuthTokenExtractor {
   extract(event: APIGatewayProxyEvent): string {

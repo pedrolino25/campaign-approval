@@ -1,6 +1,6 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
-import { DomainError } from '../../models/index'
+import { DomainError } from '../../models'
 import { logger } from '../logger'
 
 interface ErrorResponse {

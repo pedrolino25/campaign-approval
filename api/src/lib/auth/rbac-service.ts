@@ -1,7 +1,7 @@
 import { UnauthorizedError } from '../../models/errors'
 import { type ActorContext, ActorType } from '../../models/rbac'
 import type { ClientReviewerRepository } from '../../repositories/client-reviewer-repository'
-import type { UserRepository } from '../../repositories/user-repository'
+import type { UserRepository } from '../../repositories/user.repository'
 
 export class RBACService {
   constructor(

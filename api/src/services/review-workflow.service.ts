@@ -1,28 +1,28 @@
 import {
-  NotificationType,
   Prisma,
   type ReviewItem,
   type ReviewStatus,
 } from '@prisma/client'
 
-import { prisma } from '../lib'
-import { transition, WorkflowAction } from '../lib/index'
-import {
-  ActivityLogActionType,
-  type ActivityLogMetadataMap,
-} from '../models/activity-log'
+import { prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
 import {
   ConflictError,
   InvalidStateTransitionError,
   NotFoundError,
   ValidationError,
-} from '../models/errors'
+} from '../models'
+import {
+  ActivityLogActionType,
+  type ActivityLogMetadataMap,
+} from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
+import { WorkflowEventType } from '../models/workflow-event'
 import type {
   AttachmentRepository,
   ReviewItemRepository,
 } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
+import { NotificationService } from './notification.service'
 
 const ACTION_TO_ACTIVITY_LOG_MAP: Record<
   WorkflowAction,
@@ -35,11 +35,11 @@ const ACTION_TO_ACTIVITY_LOG_MAP: Record<
   [WorkflowAction.UPLOAD_NEW_VERSION]: ActivityLogActionType.ATTACHMENT_UPLOADED,
 }
 
-const ACTION_TO_NOTIFICATION_MAP: Record<WorkflowAction, NotificationType> = {
-  [WorkflowAction.SEND_FOR_REVIEW]: NotificationType.REVIEW_ASSIGNED,
-  [WorkflowAction.APPROVE]: NotificationType.REVIEW_APPROVED,
-  [WorkflowAction.REQUEST_CHANGES]: NotificationType.REVIEW_CHANGES_REQUESTED,
-  [WorkflowAction.UPLOAD_NEW_VERSION]: NotificationType.REVIEW_ASSIGNED,
+const ACTION_TO_WORKFLOW_EVENT_MAP: Record<WorkflowAction, WorkflowEventType> = {
+  [WorkflowAction.SEND_FOR_REVIEW]: WorkflowEventType.REVIEW_SENT,
+  [WorkflowAction.APPROVE]: WorkflowEventType.REVIEW_APPROVED,
+  [WorkflowAction.REQUEST_CHANGES]: WorkflowEventType.REVIEW_CHANGES_REQUESTED,
+  [WorkflowAction.UPLOAD_NEW_VERSION]: WorkflowEventType.ATTACHMENT_UPLOADED,
 }
 
 function mapWorkflowActionToActivityLogAction(
@@ -48,10 +48,10 @@ function mapWorkflowActionToActivityLogAction(
   return ACTION_TO_ACTIVITY_LOG_MAP[action]
 }
 
-function mapWorkflowActionToNotificationType(
+function mapWorkflowActionToWorkflowEventType(
   action: WorkflowAction
-): NotificationType {
-  return ACTION_TO_NOTIFICATION_MAP[action]
+): WorkflowEventType | null {
+  return ACTION_TO_WORKFLOW_EVENT_MAP[action] || null
 }
 
 export type ApplyWorkflowActionInput = {
@@ -67,12 +67,16 @@ export interface IReviewWorkflowService {
 
 export class ReviewWorkflowService implements IReviewWorkflowService {
   private readonly activityLogService: ActivityLogService
+  private readonly workflowEventDispatcher: WorkflowEventDispatcher
 
   constructor(
     private readonly reviewItemRepository: ReviewItemRepository,
     private readonly attachmentRepository: AttachmentRepository
   ) {
     this.activityLogService = new ActivityLogService()
+    this.workflowEventDispatcher = new WorkflowEventDispatcher(
+      new NotificationService()
+    )
   }
 
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
@@ -188,14 +192,17 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
         newStatus
       )
 
-      if (shouldUpdateStatus) {
-        await this.createNotification(
+      const eventType = mapWorkflowActionToWorkflowEventType(action)
+      if (eventType && shouldUpdateStatus) {
+        await this.workflowEventDispatcher.dispatch({
+          type: eventType,
+          payload: {
+            reviewItemId: updated.id,
+            organizationId: updated.organizationId,
+          },
+          actor,
           tx,
-          reviewItem,
-          action,
-          previousStatus,
-          newStatus
-        )
+        })
       }
 
       return updated
@@ -289,29 +296,6 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     }
   }
 
-  private async createNotification(
-    tx: Prisma.TransactionClient,
-    reviewItem: ReviewItem,
-    action: WorkflowAction,
-    previousStatus: ReviewStatus,
-    newStatus: ReviewStatus
-  ): Promise<void> {
-    const notificationType = mapWorkflowActionToNotificationType(action)
-    const notificationPayload: Prisma.JsonValue = {
-      reviewItemId: reviewItem.id,
-      reviewItemTitle: reviewItem.title,
-      previousStatus,
-      newStatus,
-    }
-
-    await tx.notification.create({
-      data: {
-        organizationId: reviewItem.organizationId,
-        type: notificationType,
-        payload: notificationPayload as Prisma.InputJsonValue,
-      },
-    })
-  }
 
   private handleTransactionError(error: unknown): never {
     if (

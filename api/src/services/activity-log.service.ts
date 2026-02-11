@@ -1,15 +1,15 @@
 import type { Prisma } from '@prisma/client'
 
 import {
-  mapActionToPrismaAction,
-} from '../models/activity-log'
-import {
   type ActivityLogActionType,
   type ActivityLogMetadataMap,
   type ActorContext, 
   ActorType,
-} from '../models/index'
-import { ActivityLogRepository } from '../repositories/activity-log-repository'
+} from '../models'
+import {
+  mapActionToPrismaAction,
+} from '../models/activity-log'
+import { ActivityLogRepository } from '../repositories/activity-log.repository'
 
 export interface IActivityLogService {
   log<T extends ActivityLogActionType>(params: {

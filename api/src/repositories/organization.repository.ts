@@ -1,7 +1,7 @@
 
 import type { Organization, Prisma } from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateOrganizationInput = Prisma.OrganizationCreateInput
 
