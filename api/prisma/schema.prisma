@@ -114,15 +114,19 @@ model Client {
 }
 
 model ClientReviewer {
-  id        String   @id @default(uuid())
-  clientId  String   @map("client_id")
-  email     String
-  createdAt DateTime @default(now())
+  id            String    @id @default(uuid())
+  clientId      String    @map("client_id")
+  cognitoUserId String    @map("cognito_user_id")
+  email         String
+  createdAt     DateTime  @default(now())
+  archivedAt    DateTime? @map("archived_at")
 
   client Client @relation(fields: [clientId], references: [id])
 
   @@index([clientId])
+  @@index([cognitoUserId])
   @@index([email])
+  @@index([clientId, cognitoUserId])
   @@map("client_reviewers")
 }
 

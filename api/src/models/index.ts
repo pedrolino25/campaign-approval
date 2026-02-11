@@ -14,6 +14,7 @@ export {
   UnauthorizedError,
   ValidationError,
 } from './errors'
+export { Action, type ActorContext, type ResourceContext } from './rbac'
 export {
   type HttpRequest,
   type HttpResponse,
