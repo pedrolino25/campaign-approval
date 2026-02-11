@@ -7,51 +7,44 @@ import {
 } from '../lib/index.js'
 import { NotFoundError } from '../models/index.js'
 
-const handleGetComments = (
+const handleGetNotifications = (
   event: AuthenticatedEvent
 ): APIGatewayProxyResult => {
-  const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
-
+  const { authContext } = event
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: 'Get review item comments',
-      reviewItemId,
+      message: 'Get notifications',
       userId: authContext.userId,
     }),
   }
 }
 
-const handlePostComment = (
+const handlePatchNotificationRead = (
   event: AuthenticatedEvent
 ): APIGatewayProxyResult => {
   const { authContext, pathParameters } = event
-  const reviewItemId = pathParameters?.['id']
+  const notificationId = pathParameters?.['id']
 
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
+  if (!notificationId) {
+    throw new NotFoundError('Notification ID not found')
   }
 
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: 'Create comment',
-      reviewItemId,
+      message: 'Mark notification as read',
+      notificationId,
       userId: authContext.userId,
     }),
   }
 }
 
 const routes = {
-  'GET /review-items/{id}/comments': handleGetComments,
-  'POST /review-items/{id}/comments': handlePostComment,
+  'GET /notifications': handleGetNotifications,
+  'PATCH /notifications/{id}/read': handlePatchNotificationRead,
 }
 
 const handlerFn = createRouteHandler(routes)

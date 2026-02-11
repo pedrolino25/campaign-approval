@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from 'jose'
 
-import { UnauthorizedError } from '../../models/errors.js'
+import { UnauthorizedError } from '../../models/index.js'
 import { config } from '../config.js'
 
 interface VerifiedToken {

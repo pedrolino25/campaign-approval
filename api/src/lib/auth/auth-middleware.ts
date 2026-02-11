@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEvent } from 'aws-lambda'
 
-import { UnauthorizedError } from '../../models/errors.js'
+import { UnauthorizedError } from '../../models/index.js'
 import { verifyJwt } from './verify-jwt.js'
 
 export interface AuthContext {
