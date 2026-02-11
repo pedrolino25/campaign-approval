@@ -30,6 +30,12 @@ export interface IReviewItemRepository {
     organizationId: string,
     status: ReviewStatus
   ): Promise<ReviewItem>
+  updateStatusWithVersion(
+    id: string,
+    organizationId: string,
+    status: ReviewStatus,
+    expectedVersion: number
+  ): Promise<ReviewItem>
   findByIdScoped(id: string, organizationId: string): Promise<ReviewItem | null>
   listByOrganization(organizationId: string): Promise<ReviewItem[]>
   listByClient(clientId: string, organizationId: string): Promise<ReviewItem[]>
@@ -38,6 +44,12 @@ export interface IReviewItemRepository {
     status: ReviewStatus
   ): Promise<ReviewItem[]>
   incrementVersion(id: string, organizationId: string): Promise<ReviewItem>
+  incrementVersionWithStatus(
+    id: string,
+    organizationId: string,
+    status: ReviewStatus,
+    expectedVersion: number
+  ): Promise<ReviewItem>
   archive(id: string, organizationId: string): Promise<void>
 }
 
@@ -79,6 +91,24 @@ export class ReviewItemRepository implements IReviewItemRepository {
       where: {
         id,
         organizationId,
+      },
+      data: {
+        status,
+      },
+    })
+  }
+
+  async updateStatusWithVersion(
+    id: string,
+    organizationId: string,
+    status: ReviewStatus,
+    expectedVersion: number
+  ): Promise<ReviewItem> {
+    return await prisma.reviewItem.update({
+      where: {
+        id,
+        organizationId,
+        version: expectedVersion,
       },
       data: {
         status,
@@ -153,6 +183,27 @@ export class ReviewItemRepository implements IReviewItemRepository {
         organizationId,
       },
       data: {
+        version: {
+          increment: 1,
+        },
+      },
+    })
+  }
+
+  async incrementVersionWithStatus(
+    id: string,
+    organizationId: string,
+    status: ReviewStatus,
+    expectedVersion: number
+  ): Promise<ReviewItem> {
+    return await prisma.reviewItem.update({
+      where: {
+        id,
+        organizationId,
+        version: expectedVersion,
+      },
+      data: {
+        status,
         version: {
           increment: 1,
         },

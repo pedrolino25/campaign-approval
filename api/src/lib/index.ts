@@ -7,13 +7,13 @@ export {
 export {
   type AuthContext,
   type AuthenticatedEvent,
-  authMiddleware,
   AuthService,
   BearerTokenExtractor,
   JwtVerifier,
 } from './auth/index'
 export { config } from './config'
 export { ErrorService, handleError } from './errors/index'
+export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
   createHandler,
