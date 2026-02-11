@@ -178,3 +178,9 @@ variable "resource_tags" {
   description = "Resource tags"
   type        = map(string)
 }
+
+variable "database_url" {
+  description = "PostgreSQL database connection URL from Neon"
+  type        = string
+  sensitive   = true
+}

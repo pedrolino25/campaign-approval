@@ -63,7 +63,7 @@ Inside `/api`, create the following structure:
 
 api/  
   src/  
-    api/  
+    handlers/  
     services/  
     models/  
     repositories/  

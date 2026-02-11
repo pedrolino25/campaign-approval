@@ -1,0 +1,254 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ReviewStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  CHANGES_REQUESTED
+  ARCHIVED
+}
+
+enum CommentAuthorType {
+  INTERNAL
+  REVIEWER
+}
+
+enum NotificationType {
+  REVIEW_APPROVED
+  REVIEW_CHANGES_REQUESTED
+  REVIEW_COMMENT
+  REVIEW_ASSIGNED
+  INVITATION_SENT
+  INVITATION_ACCEPTED
+}
+
+enum ActivityLogAction {
+  REVIEW_CREATED
+  REVIEW_UPDATED
+  REVIEW_APPROVED
+  REVIEW_CHANGES_REQUESTED
+  REVIEW_ARCHIVED
+  COMMENT_ADDED
+  ATTACHMENT_UPLOADED
+  CLIENT_CREATED
+  CLIENT_UPDATED
+  USER_INVITED
+  USER_JOINED
+}
+
+enum InvitationRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  clients       Client[]
+  reviewItems   ReviewItem[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  invitations   Invitation[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  cognitoUserId String    @unique @map("cognito_user_id")
+  organizationId String   @map("organization_id")
+  email         String
+  role          UserRole
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime? @map("archived_at")
+
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  reviewItems      ReviewItem[]
+  comments         Comment[]
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+  sentInvitations  Invitation[]      @relation("InvitationInviter")
+
+  @@index([organizationId])
+  @@index([cognitoUserId])
+  @@index([email])
+  @@map("users")
+}
+
+model Client {
+  id            String    @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime? @map("archived_at")
+
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  reviewers      ClientReviewer[]
+  reviewItems    ReviewItem[]
+
+  @@index([organizationId])
+  @@map("clients")
+}
+
+model ClientReviewer {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  email     String
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@index([clientId])
+  @@index([email])
+  @@map("client_reviewers")
+}
+
+model ReviewItem {
+  id            String       @id @default(uuid())
+  organizationId String      @map("organization_id")
+  clientId      String       @map("client_id")
+  title         String
+  description   String?      @db.Text
+  status        ReviewStatus
+  version       Int          @default(1)
+  createdByUserId String     @map("created_by_user_id")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  archivedAt    DateTime?    @map("archived_at")
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  client       Client        @relation(fields: [clientId], references: [id])
+  createdBy    User          @relation(fields: [createdByUserId], references: [id])
+  attachments  Attachment[]
+  comments     Comment[]
+  activityLogs ActivityLog[]
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@map("review_items")
+}
+
+model Attachment {
+  id            String   @id @default(uuid())
+  reviewItemId String   @map("review_item_id")
+  fileName      String   @map("file_name")
+  fileType      String   @map("file_type")
+  fileSize      Int      @map("file_size")
+  s3Key         String   @map("s3_key")
+  version       Int
+  createdAt     DateTime @default(now())
+
+  reviewItem ReviewItem @relation(fields: [reviewItemId], references: [id])
+
+  @@index([reviewItemId])
+  @@map("attachments")
+}
+
+model Comment {
+  id              String            @id @default(uuid())
+  reviewItemId    String            @map("review_item_id")
+  authorType      CommentAuthorType @map("author_type")
+  authorUserId    String?           @map("author_user_id")
+  authorEmail     String?           @map("author_email")
+  content         String            @db.Text
+  xCoordinate     Float?            @map("x_coordinate")
+  yCoordinate     Float?            @map("y_coordinate")
+  timestampSeconds Float?           @map("timestamp_seconds")
+  createdAt       DateTime          @default(now())
+
+  reviewItem ReviewItem? @relation(fields: [reviewItemId], references: [id])
+  author     User?       @relation(fields: [authorUserId], references: [id])
+
+  @@index([reviewItemId])
+  @@map("comments")
+}
+
+model Notification {
+  id            String          @id @default(uuid())
+  organizationId String         @map("organization_id")
+  userId        String?         @map("user_id")
+  email         String?
+  type          NotificationType
+  payload       Json
+  readAt        DateTime?       @map("read_at")
+  createdAt     DateTime        @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([email])
+  @@index([readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id            String            @id @default(uuid())
+  organizationId String           @map("organization_id")
+  reviewItemId  String?           @map("review_item_id")
+  actorUserId   String?           @map("actor_user_id")
+  action        ActivityLogAction
+  metadata      Json
+  createdAt     DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  reviewItem   ReviewItem?  @relation(fields: [reviewItemId], references: [id])
+  actor        User?        @relation(fields: [actorUserId], references: [id])
+
+  @@index([organizationId])
+  @@index([reviewItemId])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Invitation {
+  id            String         @id @default(uuid())
+  organizationId String        @map("organization_id")
+  email         String
+  role          InvitationRole
+  token         String         @unique
+  expiresAt     DateTime       @map("expires_at")
+  acceptedAt    DateTime?      @map("accepted_at")
+  inviterUserId String?       @map("inviter_user_id")
+  createdAt     DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("invitations")
+}
