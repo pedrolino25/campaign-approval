@@ -2,8 +2,7 @@ import type { Notification } from '@prisma/client'
 import type { SQSEvent, SQSRecord } from 'aws-lambda'
 import { z } from 'zod'
 
-import { EmailService } from '../lib'
-import { logger } from '../lib/logger'
+import { EmailService,logger } from '../lib'
 import { NotificationRepository } from '../repositories'
 
 const EmailJobPayloadSchema = z.object({

@@ -1,12 +1,12 @@
 import type { Prisma } from '@prisma/client'
 
-import type { ActorContext } from '../../models/rbac'
-import type {
+import type { 
+  ActorContext,
   WorkflowEvent,
   WorkflowEventPayloadMap,
-  WorkflowEventType,
-} from '../../models/workflow-event'
-import type { NotificationService } from '../../services/notification.service'
+  WorkflowEventType
+} from '../../models'
+import type { NotificationService } from '../../services'
 
 export class WorkflowEventDispatcher {
   constructor(private readonly notificationService: NotificationService) {}

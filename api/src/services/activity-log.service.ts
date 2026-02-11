@@ -9,7 +9,7 @@ import {
 import {
   mapActionToPrismaAction,
 } from '../models/activity-log'
-import { ActivityLogRepository } from '../repositories/activity-log.repository'
+import { ActivityLogRepository } from '../repositories'
 
 export interface IActivityLogService {
   log<T extends ActivityLogActionType>(params: {
