@@ -95,16 +95,16 @@ resource "aws_lambda_function" "notification" {
 
   environment {
     variables = {
-      ENVIRONMENT                        = var.environment
-      SQS_QUEUE_URL                      = var.sqs_queue_url
-      DATABASE_URL                       = var.database_url
-      SENDGRID_TEMPLATE_REVIEW_SENT      = var.sendgrid_template_ids.REVIEW_SENT
-      SENDGRID_TEMPLATE_REVIEW_APPROVED  = var.sendgrid_template_ids.REVIEW_APPROVED
+      ENVIRONMENT                                = var.environment
+      SQS_QUEUE_URL                              = var.sqs_queue_url
+      DATABASE_URL                               = var.database_url
+      SENDGRID_TEMPLATE_REVIEW_SENT              = var.sendgrid_template_ids.REVIEW_SENT
+      SENDGRID_TEMPLATE_REVIEW_APPROVED          = var.sendgrid_template_ids.REVIEW_APPROVED
       SENDGRID_TEMPLATE_REVIEW_CHANGES_REQUESTED = var.sendgrid_template_ids.REVIEW_CHANGES_REQUESTED
-      SENDGRID_TEMPLATE_REVIEW_REOPENED  = var.sendgrid_template_ids.REVIEW_REOPENED
-      SENDGRID_TEMPLATE_ATTACHMENT_UPLOADED = var.sendgrid_template_ids.ATTACHMENT_UPLOADED
-      SENDGRID_TEMPLATE_COMMENT_ADDED    = var.sendgrid_template_ids.COMMENT_ADDED
-      SENDGRID_TEMPLATE_REVIEW_REMINDER  = var.sendgrid_template_ids.REVIEW_REMINDER
+      SENDGRID_TEMPLATE_REVIEW_REOPENED          = var.sendgrid_template_ids.REVIEW_REOPENED
+      SENDGRID_TEMPLATE_ATTACHMENT_UPLOADED      = var.sendgrid_template_ids.ATTACHMENT_UPLOADED
+      SENDGRID_TEMPLATE_COMMENT_ADDED            = var.sendgrid_template_ids.COMMENT_ADDED
+      SENDGRID_TEMPLATE_REVIEW_REMINDER          = var.sendgrid_template_ids.REVIEW_REMINDER
     }
   }
 
