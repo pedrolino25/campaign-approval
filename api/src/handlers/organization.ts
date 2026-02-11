@@ -1,10 +1,16 @@
-import type {
-  HttpRequest,
-  HttpResponse,
-} from '../../../lib/index.js'
-import { NotFoundError } from '../../../models/index.js'
+import {
+  createHandler,
+  type HttpRequest,
+  type HttpResponse,
+  RouteBuilder,
+  Router,
+} from '../lib/index.js'
+import {
+  NotFoundError,
+  type RouteDefinition,
+} from '../models/index.js'
 
-export const handleGetOrganization = async (
+const handleGetOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -17,7 +23,7 @@ export const handleGetOrganization = async (
   }
 }
 
-export const handlePatchOrganization = async (
+const handlePatchOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -30,7 +36,7 @@ export const handlePatchOrganization = async (
   }
 }
 
-export const handlePostOnboarding = async (
+const handlePostOnboarding = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -43,7 +49,7 @@ export const handlePostOnboarding = async (
   }
 }
 
-export const handleGetUsers = async (
+const handleGetUsers = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -56,7 +62,7 @@ export const handleGetUsers = async (
   }
 }
 
-export const handlePostInvite = async (
+const handlePostInvite = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -69,7 +75,7 @@ export const handlePostInvite = async (
   }
 }
 
-export const handleGetInvitations = async (
+const handleGetInvitations = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -82,7 +88,7 @@ export const handleGetInvitations = async (
   }
 }
 
-export const handlePostAcceptInvitation = async (
+const handlePostAcceptInvitation = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -102,7 +108,7 @@ export const handlePostAcceptInvitation = async (
   }
 }
 
-export const handleDeleteUser = async (
+const handleDeleteUser = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -122,7 +128,7 @@ export const handleDeleteUser = async (
   }
 }
 
-export const handlePatchUserRole = async (
+const handlePatchUserRole = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -142,7 +148,7 @@ export const handlePatchUserRole = async (
   }
 }
 
-export const handleGetNotifications = async (
+const handleGetNotifications = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -155,7 +161,7 @@ export const handleGetNotifications = async (
   }
 }
 
-export const handlePatchNotificationRead = async (
+const handlePatchNotificationRead = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -174,3 +180,52 @@ export const handlePatchNotificationRead = async (
     },
   }
 }
+
+const routes: RouteDefinition[] = [
+  RouteBuilder.get('/organization', 
+    handleGetOrganization
+  ),
+  RouteBuilder.patch(
+    '/organization', 
+    handlePatchOrganization
+  ),
+  RouteBuilder.post(
+    '/organization/onboarding',
+    handlePostOnboarding
+  ),
+  RouteBuilder.get(
+    '/organization/users', 
+    handleGetUsers
+  ),
+  RouteBuilder.post(
+    '/organization/users/invite', 
+    handlePostInvite
+  ),
+  RouteBuilder.get(
+    '/organization/invitations',
+    handleGetInvitations
+  ),
+  RouteBuilder.post(
+    '/organization/invitations/:id/accept',
+    handlePostAcceptInvitation
+  ),
+  RouteBuilder.delete(
+    '/organization/users/:id', 
+    handleDeleteUser
+  ),
+  RouteBuilder.patch(
+    '/organization/users/:id/role',
+    handlePatchUserRole
+  ),
+  RouteBuilder.get(
+    '/notifications', 
+    handleGetNotifications
+  ),
+  RouteBuilder.patch(
+    '/notifications/:id/read',
+    handlePatchNotificationRead
+  ),
+]
+
+const router = new Router(routes)
+export const handler = createHandler(router.handle)

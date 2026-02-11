@@ -1,5 +1,4 @@
 export {
-  ApiVersion,
   type HttpRequest,
   type HttpResponse,
   type RouteDefinition,
@@ -28,5 +27,4 @@ export {
   RequestParser,
   RouteBuilder,
   Router,
-  VersionManager,
 } from './router/index.js'

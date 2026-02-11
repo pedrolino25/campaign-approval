@@ -26,13 +26,8 @@ export type RouteHandler<TAuthContext extends AuthContext = AuthContext> = (
   request: HttpRequest<TAuthContext, unknown, Record<string, string>, Record<string, string>>
 ) => Promise<HttpResponse>
 
-export enum ApiVersion {
-  V1 = 'v1',
-}
-
 export interface RouteDefinition<TAuthContext extends AuthContext = AuthContext> {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   path: string
-  version: ApiVersion
   handler: RouteHandler<TAuthContext>
 }

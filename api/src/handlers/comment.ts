@@ -1,10 +1,16 @@
-import type {
-  HttpRequest,
-  HttpResponse,
-} from '../../../lib/index.js'
-import { NotFoundError } from '../../../models/index.js'
+import {
+  createHandler,
+  type HttpRequest,
+  type HttpResponse,
+  RouteBuilder,
+  Router,
+} from '../lib/index.js'
+import {
+  NotFoundError,
+  type RouteDefinition,
+} from '../models/index.js'
 
-export const handleGetComments = async (
+const handleGetComments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -24,7 +30,7 @@ export const handleGetComments = async (
   }
 }
 
-export const handlePostComment = async (
+const handlePostComment = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -43,3 +49,17 @@ export const handlePostComment = async (
     },
   }
 }
+
+const routes: RouteDefinition[] = [
+  RouteBuilder.get(
+    '/review-items/:id/comments',
+    handleGetComments
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/comments',
+    handlePostComment
+  ),
+]
+
+const router = new Router(routes)
+export const handler = createHandler(router.handle)

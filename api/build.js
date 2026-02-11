@@ -8,12 +8,12 @@ import { fileURLToPath } from "url"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const entryPoints = {
-  "api/organization": "src/api/organization.ts",
-  "api/client": "src/api/client.ts",
-  "api/review": "src/api/review.ts",
-  "api/attachment": "src/api/attachment.ts",
-  "api/comment": "src/api/comment.ts",
-  "api/notification": "src/api/notification.ts",
+  "api/organization": "src/handlers/organization.ts",
+  "api/client": "src/handlers/client.ts",
+  "api/review": "src/handlers/review.ts",
+  "api/attachment": "src/handlers/attachment.ts",
+  "api/comment": "src/handlers/comment.ts",
+  "api/notification": "src/handlers/notification.ts",
 }
 
 async function buildLambda() {

@@ -1,10 +1,16 @@
-import type {
-  HttpRequest,
-  HttpResponse,
-} from '../../../lib/index.js'
-import { NotFoundError } from '../../../models/index.js'
+import {
+  createHandler,
+  type HttpRequest,
+  type HttpResponse,
+  RouteBuilder,
+  Router,
+} from '../lib/index.js'
+import {
+  NotFoundError,
+  type RouteDefinition,
+} from '../models/index.js'
 
-export const handleGetClients = async (
+const handleGetClients = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -17,7 +23,7 @@ export const handleGetClients = async (
   }
 }
 
-export const handlePostClients = async (
+const handlePostClients = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -30,7 +36,7 @@ export const handlePostClients = async (
   }
 }
 
-export const handlePatchClient = async (
+const handlePatchClient = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -50,7 +56,7 @@ export const handlePatchClient = async (
   }
 }
 
-export const handleArchiveClient = async (
+const handleArchiveClient = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -70,7 +76,7 @@ export const handleArchiveClient = async (
   }
 }
 
-export const handleGetReviewers = async (
+const handleGetReviewers = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -90,7 +96,7 @@ export const handleGetReviewers = async (
   }
 }
 
-export const handlePostReviewer = async (
+const handlePostReviewer = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -110,7 +116,7 @@ export const handlePostReviewer = async (
   }
 }
 
-export const handleDeleteReviewer = async (
+const handleDeleteReviewer = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -131,3 +137,37 @@ export const handleDeleteReviewer = async (
     },
   }
 }
+
+const routes: RouteDefinition[] = [
+  RouteBuilder.get(
+    '/clients', 
+    handleGetClients
+  ),
+  RouteBuilder.post(
+    '/clients', 
+    handlePostClients
+  ),
+  RouteBuilder.patch(
+    '/clients/:id', 
+    handlePatchClient
+  ),
+  RouteBuilder.post(
+    '/clients/:id/archive', 
+    handleArchiveClient
+  ),
+  RouteBuilder.get(
+    '/clients/:id/reviewers', 
+    handleGetReviewers
+  ),
+  RouteBuilder.post(
+    '/clients/:id/reviewers', 
+    handlePostReviewer
+  ),
+  RouteBuilder.delete(
+    '/clients/:id/reviewers/:reviewerId',
+    handleDeleteReviewer
+  ),
+]
+
+const router = new Router(routes)
+export const handler = createHandler(router.handle)

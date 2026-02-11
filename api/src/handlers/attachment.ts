@@ -1,10 +1,16 @@
-import type {
-  HttpRequest,
-  HttpResponse,
-} from '../../../lib/index.js'
-import { NotFoundError } from '../../../models/index.js'
+import {
+  createHandler,
+  type HttpRequest,
+  type HttpResponse,
+  RouteBuilder,
+  Router,
+} from '../lib/index.js'
+import {
+  NotFoundError,
+  type RouteDefinition,
+} from '../models/index.js'
 
-export const handlePresign = async (
+const handlePresign = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -17,7 +23,7 @@ export const handlePresign = async (
   }
 }
 
-export const handlePostAttachment = async (
+const handlePostAttachment = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -37,7 +43,7 @@ export const handlePostAttachment = async (
   }
 }
 
-export const handleGetAttachments = async (
+const handleGetAttachments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -56,3 +62,21 @@ export const handleGetAttachments = async (
     },
   }
 }
+
+const routes: RouteDefinition[] = [
+  RouteBuilder.post(
+    '/attachments/presign', 
+    handlePresign
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/attachments',
+    handlePostAttachment
+  ),
+  RouteBuilder.get(
+    '/review-items/:id/attachments',
+    handleGetAttachments
+  ),
+]
+
+const router = new Router(routes)
+export const handler = createHandler(router.handle)

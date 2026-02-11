@@ -1,5 +1,4 @@
 import {
-  type ApiVersion,
   type AuthContext,
   type RouteDefinition,
   type RouteHandler,
@@ -8,46 +7,40 @@ import {
 export class RouteBuilder {
   static get(
     path: string,
-    handler: RouteHandler<AuthContext>,
-    version: ApiVersion
+    handler: RouteHandler<AuthContext>
   ): RouteDefinition<AuthContext> {
-    return RouteBuilder.createRoute('GET', path, handler, version)
+    return RouteBuilder.createRoute('GET', path, handler)
   }
 
   static post(
     path: string,
-    handler: RouteHandler<AuthContext>,
-    version: ApiVersion
+    handler: RouteHandler<AuthContext>
   ): RouteDefinition<AuthContext> {
-    return RouteBuilder.createRoute('POST', path, handler, version)
+    return RouteBuilder.createRoute('POST', path, handler)
   }
 
   static patch(
     path: string,
-    handler: RouteHandler<AuthContext>,
-    version: ApiVersion
+    handler: RouteHandler<AuthContext>
   ): RouteDefinition<AuthContext> {
-    return RouteBuilder.createRoute('PATCH', path, handler, version)
+    return RouteBuilder.createRoute('PATCH', path, handler)
   }
 
   static delete(
     path: string,
-    handler: RouteHandler<AuthContext>,
-    version: ApiVersion
+    handler: RouteHandler<AuthContext>
   ): RouteDefinition<AuthContext> {
-    return RouteBuilder.createRoute('DELETE', path, handler, version)
+    return RouteBuilder.createRoute('DELETE', path, handler)
   }
 
   private static createRoute(
     method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     path: string,
-    handler: RouteHandler<AuthContext>,
-    version: ApiVersion
+    handler: RouteHandler<AuthContext>
   ): RouteDefinition<AuthContext> {
     return {
       method,
       path,
-      version,
       handler,
     }
   }

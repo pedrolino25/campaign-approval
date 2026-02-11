@@ -18,10 +18,10 @@ Infrastructure must be final, stable, secure, and production-ready.
 
 Production:
 - https://worklient.com → Next.js (Vercel)
-- https://api.worklient.com/v1/... → AWS API
+- https://api.worklient.com/... → AWS API
 
 Development:
-- https://dev-api.worklient.com/v1/... → AWS API (dev)
+- https://dev-api.worklient.com/... → AWS API (dev)
 
 DNS managed in Route 53.
 
@@ -162,14 +162,10 @@ Prod:
 Dev:
 - dev-api.worklient.com
 
-Base Path Mapping:
-
-Base path: v1
-
 Resulting URLs:
 
-https://api.worklient.com/v1/...
-https://dev-api.worklient.com/v1/...
+https://api.worklient.com/...
+https://dev-api.worklient.com/...
 
 No catch-all proxy routes.
 Explicit route mapping required.

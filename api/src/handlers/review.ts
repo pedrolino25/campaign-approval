@@ -1,10 +1,16 @@
-import type {
-  HttpRequest,
-  HttpResponse,
-} from '../../../lib/index.js'
-import { NotFoundError } from '../../../models/index.js'
+import {
+  createHandler,
+  type HttpRequest,
+  type HttpResponse,
+  RouteBuilder,
+  Router,
+} from '../lib/index.js'
+import {
+  NotFoundError,
+  type RouteDefinition,
+} from '../models/index.js'
 
-export const handleGetReviewItems = async (
+const handleGetReviewItems = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -17,7 +23,7 @@ export const handleGetReviewItems = async (
   }
 }
 
-export const handlePostReviewItems = async (
+const handlePostReviewItems = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -30,7 +36,7 @@ export const handlePostReviewItems = async (
   }
 }
 
-export const handleGetReviewItem = async (
+const handleGetReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -50,7 +56,7 @@ export const handleGetReviewItem = async (
   }
 }
 
-export const handleSendReviewItem = async (
+const handleSendReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -70,7 +76,7 @@ export const handleSendReviewItem = async (
   }
 }
 
-export const handleApproveReviewItem = async (
+const handleApproveReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -90,7 +96,7 @@ export const handleApproveReviewItem = async (
   }
 }
 
-export const handleRequestChanges = async (
+const handleRequestChanges = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -110,7 +116,7 @@ export const handleRequestChanges = async (
   }
 }
 
-export const handleArchiveReviewItem = async (
+const handleArchiveReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -130,7 +136,7 @@ export const handleArchiveReviewItem = async (
   }
 }
 
-export const handleGetActivity = async (
+const handleGetActivity = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   await Promise.resolve()
@@ -149,3 +155,41 @@ export const handleGetActivity = async (
     },
   }
 }
+
+const routes: RouteDefinition[] = [
+  RouteBuilder.get(
+    '/review-items', 
+    handleGetReviewItems
+  ),
+  RouteBuilder.post(
+    '/review-items', 
+    handlePostReviewItems
+  ),
+  RouteBuilder.get(
+    '/review-items/:id', 
+    handleGetReviewItem
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/send', 
+    handleSendReviewItem
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/approve', 
+    handleApproveReviewItem
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/request-changes', 
+    handleRequestChanges
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/archive', 
+    handleArchiveReviewItem
+  ),
+  RouteBuilder.get(
+    '/review-items/:id/activity', 
+    handleGetActivity
+  ),
+]
+
+const router = new Router(routes)
+export const handler = createHandler(router.handle)
