@@ -1,7 +1,7 @@
 
 import type { Invitation, InvitationRole } from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateInvitationInput = {
   organizationId: string

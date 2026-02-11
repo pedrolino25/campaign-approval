@@ -7,8 +7,8 @@ import {
   type HttpResponse,
   NotFoundError,
   type RouteDefinition,
-} from '../../models/index'
-import { ErrorService } from '../errors/index'
+} from '../../models'
+import { ErrorService } from '../errors'
 import { PathMatcherFactory } from './path-matcher'
 import { PathNormalizer } from './path-normalizer'
 import { RequestParser } from './request-parser'

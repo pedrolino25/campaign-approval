@@ -1,5 +1,3 @@
-import type { SQSEvent } from 'aws-lambda'
-
 import {
   createHandler,
   createSQSHandler,
@@ -7,17 +5,12 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
-} from '../lib/index'
+} from '../lib'
 import {
   NotFoundError,
   type RouteDefinition,
-} from '../models/index'
-
-const handleSQSEvent = async (event: SQSEvent): Promise<void> => {
-  await Promise.resolve()
-  const recordCount = event.Records.length
-  void recordCount
-}
+} from '../models'
+import { handler as emailWorkerHandler } from '../workers/email.worker'
 
 const handleGetNotifications = async (
   request: HttpRequest
@@ -66,5 +59,5 @@ const routes: RouteDefinition[] = [
 const router = new Router(routes)
 const apiHandler = createHandler(router.handle)
 
-export const handler = createSQSHandler(handleSQSEvent)
+export const handler = createSQSHandler(emailWorkerHandler)
 export { apiHandler }

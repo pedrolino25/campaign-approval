@@ -1,7 +1,11 @@
 
-import type { Notification, NotificationType, Prisma } from '@prisma/client'
+import type {
+  Notification,
+  NotificationType,
+  Prisma,
+} from '@prisma/client'
 
-import { prisma } from '../lib/index'
+import { prisma } from '../lib'
 
 export type CreateNotificationInput = {
   organizationId: string
@@ -12,18 +16,30 @@ export type CreateNotificationInput = {
 }
 
 export interface INotificationRepository {
-  create(data: CreateNotificationInput): Promise<Notification>
-  findById(id: string, organizationId: string): Promise<Notification | null>
+  create(
+    data: CreateNotificationInput,
+    tx?: Prisma.TransactionClient
+  ): Promise<Notification>
+  findById(
+    id: string,
+    organizationId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<Notification | null>
   listByUser(userId: string, organizationId: string): Promise<Notification[]>
   listByEmail(email: string, organizationId: string): Promise<Notification[]>
   listUnreadByUser(userId: string, organizationId: string): Promise<Notification[]>
   markAsRead(id: string, organizationId: string): Promise<void>
+  markAsSent(id: string, organizationId: string): Promise<void>
   markAllAsReadByUser(userId: string, organizationId: string): Promise<void>
 }
 
 export class NotificationRepository implements INotificationRepository {
-  async create(data: CreateNotificationInput): Promise<Notification> {
-    return await prisma.notification.create({
+  async create(
+    data: CreateNotificationInput,
+    tx?: Prisma.TransactionClient
+  ): Promise<Notification> {
+    const client = tx || prisma
+    return await client.notification.create({
       data: {
         organizationId: data.organizationId,
         userId: data.userId,
@@ -36,15 +52,18 @@ export class NotificationRepository implements INotificationRepository {
 
   async findById(
     id: string,
-    organizationId: string
+    organizationId: string,
+    tx?: Prisma.TransactionClient
   ): Promise<Notification | null> {
-    return await prisma.notification.findFirst({
+    const client = tx || prisma
+    return await client.notification.findFirst({
       where: {
         id,
         organizationId,
       },
     })
   }
+
 
   async listByUser(
     userId: string,
@@ -100,6 +119,18 @@ export class NotificationRepository implements INotificationRepository {
       },
       data: {
         readAt: new Date(),
+      },
+    })
+  }
+
+  async markAsSent(id: string, organizationId: string): Promise<void> {
+    await prisma.notification.update({
+      where: {
+        id,
+        organizationId,
+      },
+      data: {
+        sentAt: new Date(),
       },
     })
   }

@@ -3,7 +3,7 @@ export type {
   HttpResponse,
   RouteDefinition,
   RouteHandler,
-} from '../../models/index'
+} from '../../models'
 export { PathMatcherFactory } from './path-matcher'
 export { PathNormalizer } from './path-normalizer'
 export { RequestParser } from './request-parser'
