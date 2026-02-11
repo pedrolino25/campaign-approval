@@ -1,7 +1,7 @@
 import type { Notification, NotificationType, Prisma, ReviewItem } from '@prisma/client'
 
+import { SQSService } from '../lib'
 import { logger } from '../lib/logger'
-import { SQSService } from '../lib/sqs'
 import {
   type ActorContext,ActorType,
   type WorkflowEventPayloadMap,
