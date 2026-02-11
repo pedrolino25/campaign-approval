@@ -5,24 +5,14 @@ function isApiVersion(value: string): value is ApiVersion {
 }
 
 export class VersionManager {
-  private readonly defaultVersion: ApiVersion = ApiVersion.V1
   private readonly supportedVersions: Set<ApiVersion> = new Set(Object.values(ApiVersion))
-
-  getDefaultVersion(): ApiVersion {
-    return this.defaultVersion
-  }
 
   isSupported(version: ApiVersion): boolean {
     return this.supportedVersions.has(version)
   }
 
-  normalizeVersion(version?: ApiVersion): ApiVersion {
-    return version || this.defaultVersion
-  }
-
-  buildVersionedPath(path: string, version: ApiVersion): string {
-    const cleanPath = path.startsWith('/') ? path : `/${path}`
-    return `/${version}${cleanPath}`
+  getSupportedVersions(): ApiVersion[] {
+    return Array.from(this.supportedVersions)
   }
 
   extractVersionFromPath(path: string): ApiVersion | null {

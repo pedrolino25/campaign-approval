@@ -62,11 +62,14 @@ export class Router {
       const normalizedPath = this.pathNormalizer.normalize(event.path)
       const method = event.httpMethod
 
-      const apiVersion = this.versionManager.extractVersionFromPath(normalizedPath)
+      const apiVersion = this.extractApiVersion(event)
 
       if (!apiVersion) {
+        const supportedVersions = this.versionManager
+          .getSupportedVersions()
+          .join(', ')
         throw new NotFoundError(
-          `API version is required in path. Expected format: /v1/...`
+          `API version is required in path. Supported versions: ${supportedVersions}`
         )
       }
 
@@ -87,13 +90,18 @@ export class Router {
 
       const { params, handler } = matchedRoute
 
+      const mergedParams = this.mergePathParameters(
+        event.pathParameters,
+        params
+      )
+
       const httpRequest: HttpRequest<AuthContext> = {
         auth: event.authContext,
         body: this.requestParser.parseBody(event.body),
         query: this.requestParser.parseQueryParameters(
           event.queryStringParameters
         ),
-        params: params || {},
+        params: mergedParams,
         rawEvent: event,
       }
 
@@ -105,6 +113,41 @@ export class Router {
         requestId,
       })
     }
+  }
+
+  private extractApiVersion(event: AuthenticatedEvent): ApiVersion | null {
+    const pathParamVersion = event.pathParameters?.api_version
+    if (
+      pathParamVersion &&
+      this.versionManager.isSupported(pathParamVersion as ApiVersion)
+    ) {
+      return pathParamVersion as ApiVersion
+    }
+
+    return this.versionManager.extractVersionFromPath(
+      this.pathNormalizer.normalize(event.path)
+    )
+  }
+
+  private mergePathParameters(
+    gatewayParams: Record<string, string | undefined> | null | undefined,
+    routeParams: Record<string, string> | undefined
+  ): Record<string, string> {
+    const merged: Record<string, string> = {}
+
+    if (gatewayParams) {
+      for (const [key, value] of Object.entries(gatewayParams)) {
+        if (key !== 'api_version' && value) {
+          merged[key] = value
+        }
+      }
+    }
+
+    if (routeParams) {
+      Object.assign(merged, routeParams)
+    }
+
+    return merged
   }
 
   private findMatchingRoute(
