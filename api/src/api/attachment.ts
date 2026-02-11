@@ -10,7 +10,11 @@ import {
 import * as v1 from './v1/handlers/attachment.js'
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.post('/attachments/presign', v1.handlePresign, ApiVersion.V1),
+  RouteBuilder.post(
+    '/attachments/presign', 
+    v1.handlePresign, 
+    ApiVersion.V1
+  ),
   RouteBuilder.post(
     '/review-items/:id/attachments',
     v1.handlePostAttachment,

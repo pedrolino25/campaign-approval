@@ -10,7 +10,11 @@ import {
 import * as v1 from './v1/handlers/notification.js'
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.get('/notifications', v1.handleGetNotifications, ApiVersion.V1),
+  RouteBuilder.get(
+    '/notifications', 
+    v1.handleGetNotifications, 
+    ApiVersion.V1
+  ),
   RouteBuilder.patch(
     '/notifications/:id/read',
     v1.handlePatchNotificationRead,
