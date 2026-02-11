@@ -283,7 +283,7 @@ export class NotificationService {
   }
 
   private getDynamicDataForEventType(
-    eventType: WorkflowEventType,
+    _eventType: WorkflowEventType,
     reviewItem: { id: string; title: string }
   ): Record<string, unknown> {
     return {
