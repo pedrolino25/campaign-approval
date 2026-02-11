@@ -23,7 +23,7 @@ const rbacService = new RBACService(
 )
 
 export const authMiddleware = authService.authenticate.bind(authService)
-export const resolveActor = rbacService.resolveFromAuthContext.bind(rbacService)
+export const resolveActor = rbacService.resolve.bind(rbacService)
 
 export { AuthService, BearerTokenExtractor, JwtVerifier, RBACService }
 export { can } from './rbac-policies'

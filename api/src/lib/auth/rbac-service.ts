@@ -5,7 +5,7 @@ import type { ClientReviewerRepository } from '../../repositories/client-reviewe
 import type { UserRepository } from '../../repositories/user-repository'
 
 export interface ActorResolver {
-  resolveFromAuthContext(authContext: AuthContext): Promise<ActorContext>
+  resolve(authContext: AuthContext): Promise<ActorContext>
 }
 
 export class RBACService implements ActorResolver {
@@ -14,7 +14,7 @@ export class RBACService implements ActorResolver {
     private readonly clientReviewerRepository: ClientReviewerRepository
   ) {}
 
-  async resolveFromAuthContext(authContext: AuthContext): Promise<ActorContext> {
+  async resolve(authContext: AuthContext): Promise<ActorContext> {
     const cognitoUserId = authContext.userId
 
     if (!cognitoUserId) {
