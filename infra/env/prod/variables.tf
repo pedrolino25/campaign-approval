@@ -194,7 +194,7 @@ variable "sendgrid_template_ids" {
     REVIEW_REOPENED          = string
     ATTACHMENT_UPLOADED      = string
     COMMENT_ADDED            = string
-    REVIEW_REMINDER         = string
+    REVIEW_REMINDER          = string
   })
   default = {
     REVIEW_SENT              = ""

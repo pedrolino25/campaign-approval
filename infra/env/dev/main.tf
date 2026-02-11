@@ -113,7 +113,7 @@ module "lambdas" {
     notification = module.iam.notification_role_arn
   }
 
-  database_url         = var.database_url
+  database_url          = var.database_url
   sendgrid_template_ids = var.sendgrid_template_ids
 
   tags = var.resource_tags
