@@ -1,6 +1,7 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
 import {
+  type ApiVersion,
   type AuthContext,
   type AuthenticatedEvent,
   type HttpRequest,
@@ -12,9 +13,11 @@ import { ErrorService } from '../errors/index.js'
 import { PathMatcherFactory } from './path-matcher.js'
 import { PathNormalizer } from './path-normalizer.js'
 import { RequestParser } from './request-parser.js'
+import { VersionManager } from './version-manager.js'
 
 interface CompiledRoute {
   method: string
+  version: ApiVersion
   matcher: ReturnType<PathMatcherFactory['create']>
   handler: RouteDefinition<AuthContext>['handler']
 }
@@ -24,6 +27,7 @@ export class Router {
   private readonly pathNormalizer: PathNormalizer
   private readonly requestParser: RequestParser
   private readonly pathMatcherFactory: PathMatcherFactory
+  private readonly versionManager: VersionManager
   private readonly errorService: ErrorService
 
   constructor(
@@ -33,6 +37,7 @@ export class Router {
     this.pathNormalizer = new PathNormalizer()
     this.requestParser = new RequestParser()
     this.pathMatcherFactory = new PathMatcherFactory()
+    this.versionManager = new VersionManager()
     this.errorService = errorService
 
     for (const route of routes) {
@@ -40,6 +45,7 @@ export class Router {
 
       this.compiledRoutes.push({
         method: route.method,
+        version: route.version,
         matcher,
         handler: route.handler,
       })
@@ -56,13 +62,38 @@ export class Router {
       const normalizedPath = this.pathNormalizer.normalize(event.path)
       const method = event.httpMethod
 
-      const matchedRoute = this.findMatchingRoute(method, normalizedPath)
+      const apiVersion = this.extractApiVersion(event)
+
+      if (!apiVersion) {
+        const supportedVersions = this.versionManager
+          .getSupportedVersions()
+          .join(', ')
+        throw new NotFoundError(
+          `API version is required in path. Supported versions: ${supportedVersions}`
+        )
+      }
+
+      const pathWithoutVersion =
+        this.versionManager.removeVersionFromPath(normalizedPath)
+
+      const matchedRoute = this.findMatchingRoute(
+        method,
+        pathWithoutVersion,
+        apiVersion
+      )
 
       if (!matchedRoute) {
-        throw new NotFoundError(`Route not found: ${method} ${normalizedPath}`)
+        throw new NotFoundError(
+          `Route not found: ${method} ${normalizedPath}`
+        )
       }
 
       const { params, handler } = matchedRoute
+
+      const mergedParams = this.mergePathParameters(
+        event.pathParameters,
+        params
+      )
 
       const httpRequest: HttpRequest<AuthContext> = {
         auth: event.authContext,
@@ -70,7 +101,7 @@ export class Router {
         query: this.requestParser.parseQueryParameters(
           event.queryStringParameters
         ),
-        params: params || {},
+        params: mergedParams,
         rawEvent: event,
       }
 
@@ -84,15 +115,55 @@ export class Router {
     }
   }
 
+  private extractApiVersion(event: AuthenticatedEvent): ApiVersion | null {
+    const pathParamVersion = event.pathParameters?.api_version
+    if (
+      pathParamVersion &&
+      this.versionManager.isSupported(pathParamVersion as ApiVersion)
+    ) {
+      return pathParamVersion as ApiVersion
+    }
+
+    return this.versionManager.extractVersionFromPath(
+      this.pathNormalizer.normalize(event.path)
+    )
+  }
+
+  private mergePathParameters(
+    gatewayParams: Record<string, string | undefined> | null | undefined,
+    routeParams: Record<string, string> | undefined
+  ): Record<string, string> {
+    const merged: Record<string, string> = {}
+
+    if (gatewayParams) {
+      for (const [key, value] of Object.entries(gatewayParams)) {
+        if (key !== 'api_version' && value) {
+          merged[key] = value
+        }
+      }
+    }
+
+    if (routeParams) {
+      Object.assign(merged, routeParams)
+    }
+
+    return merged
+  }
+
   private findMatchingRoute(
     method: string,
-    path: string
+    path: string,
+    apiVersion: ApiVersion
   ): {
     params: Record<string, string> | undefined
     handler: RouteDefinition<AuthContext>['handler']
   } | null {
     for (const route of this.compiledRoutes) {
       if (route.method !== method) {
+        continue
+      }
+
+      if (route.version !== apiVersion) {
         continue
       }
 

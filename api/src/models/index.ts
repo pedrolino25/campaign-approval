@@ -14,9 +14,10 @@ export {
   UnauthorizedError,
   ValidationError,
 } from './errors.js'
-export type {
-  HttpRequest,
-  HttpResponse,
-  RouteDefinition,
-  RouteHandler,
+export {
+  ApiVersion,
+  type HttpRequest,
+  type HttpResponse,
+  type RouteDefinition,
+  type RouteHandler,
 } from './router.js'

@@ -1,7 +1,6 @@
 export class PathNormalizer {
   normalize(path: string): string {
-    let normalized = path.replace(/^\/v1/, '')
-    normalized = normalized.replace(/\/$/, '')
+    const normalized = path.replace(/\/$/, '')
     return normalized || '/'
   }
 }

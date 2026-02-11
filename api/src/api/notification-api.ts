@@ -1,56 +1,25 @@
 import {
   createHandler,
-  type HttpRequest,
-  type HttpResponse,
-  type RouteDefinition,
+  RouteBuilder,
   Router,
 } from '../lib/index.js'
-import { NotFoundError } from '../models/index.js'
-
-const handleGetNotifications = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  await Promise.resolve()
-  return {
-    statusCode: 200,
-    body: {
-      message: 'Get notifications',
-      userId: request.auth.userId,
-    },
-  }
-}
-
-const handlePatchNotificationRead = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const notificationId = request.params.id as string | undefined
-
-  if (!notificationId) {
-    throw new NotFoundError('Notification ID not found')
-  }
-
-  return {
-    statusCode: 200,
-    body: {
-      message: 'Mark notification as read',
-      notificationId,
-      userId: request.auth.userId,
-    },
-  }
-}
+import {
+  ApiVersion,
+  type RouteDefinition,
+} from '../models/index.js'
+import * as v1 from './v1/handlers/notification.js'
 
 const routes: RouteDefinition[] = [
-  {
-    method: 'GET',
-    path: '/notifications',
-    handler: handleGetNotifications,
-  },
-  {
-    method: 'PATCH',
-    path: '/notifications/:id/read',
-    handler: handlePatchNotificationRead,
-  },
+  RouteBuilder.get(
+    '/notifications', 
+    v1.handleGetNotifications, 
+    ApiVersion.V1
+  ),
+  RouteBuilder.patch(
+    '/notifications/:id/read',
+    v1.handlePatchNotificationRead,
+    ApiVersion.V1
+  ),
 ]
 
 const router = new Router(routes)

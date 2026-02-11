@@ -1,63 +1,25 @@
 import {
   createHandler,
-  type HttpRequest,
-  type HttpResponse,
-  type RouteDefinition,
+  RouteBuilder,
   Router,
 } from '../lib/index.js'
-import { NotFoundError } from '../models/index.js'
-
-const handleGetComments = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
-
-  return {
-    statusCode: 200,
-    body: {
-      message: 'Get review item comments',
-      reviewItemId,
-      userId: request.auth.userId,
-    },
-  }
-}
-
-const handlePostComment = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
-
-  return {
-    statusCode: 200,
-    body: {
-      message: 'Create comment',
-      reviewItemId,
-      userId: request.auth.userId,
-    },
-  }
-}
+import {
+  ApiVersion,
+  type RouteDefinition,
+} from '../models/index.js'
+import * as v1 from './v1/handlers/comment.js'
 
 const routes: RouteDefinition[] = [
-  {
-    method: 'GET',
-    path: '/review-items/:id/comments',
-    handler: handleGetComments,
-  },
-  {
-    method: 'POST',
-    path: '/review-items/:id/comments',
-    handler: handlePostComment,
-  },
+  RouteBuilder.get(
+    '/review-items/:id/comments',
+    v1.handleGetComments,
+    ApiVersion.V1
+  ),
+  RouteBuilder.post(
+    '/review-items/:id/comments',
+    v1.handlePostComment,
+    ApiVersion.V1
+  ),
 ]
 
 const router = new Router(routes)
