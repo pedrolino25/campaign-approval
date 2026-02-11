@@ -5,7 +5,7 @@ import type {
 
 import type { AuthenticatedEvent } from '../../models'
 import type { AuthService } from '../auth'
-import type { ErrorService } from '../errors'
+import type { ErrorService } from '../errors/error.service'
 
 export class ApiHandlerFactory {
   constructor(

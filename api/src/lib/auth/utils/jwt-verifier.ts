@@ -3,8 +3,8 @@ import { createRemoteJWKSet, type JWTPayload, jwtVerify } from 'jose'
 import {
   type TokenVerifier,
   UnauthorizedError,
-} from '../../models'
-import { config } from '../config'
+} from '../../../models'
+import { config } from '../../utils/config'
 
 export class JwtVerifier implements TokenVerifier {
   private readonly jwksCache = new Map<

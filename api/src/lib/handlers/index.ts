@@ -1,8 +1,8 @@
 import { ClientReviewerRepository, UserRepository } from '../../repositories'
 import { AuthService,BearerTokenExtractor, JwtVerifier, RBACService } from '../auth'
-import { ErrorService } from '../errors'
-import { ApiHandlerFactory } from './api-handler-factory'
-import { SqsHandlerFactory } from './sqs-handler-factory'
+import { ErrorService } from '../errors/error.service'
+import { ApiHandlerFactory } from './api.handler'
+import { SqsHandlerFactory } from './sqs.handler'
 
 const tokenExtractor = new BearerTokenExtractor()
 const tokenVerifier = new JwtVerifier()

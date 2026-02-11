@@ -1,7 +1,7 @@
 import { UserRole } from '@prisma/client'
 
-import { ForbiddenError } from '../../models/errors'
-import { Action, type ActorContext, ActorType, type ResourceContext } from '../../models/rbac'
+import { ForbiddenError } from '../../../models/errors'
+import { Action, type ActorContext, ActorType, type ResourceContext } from '../../../models/rbac'
 
 type ActionHandler = (actor: ActorContext, action: Action) => void
 

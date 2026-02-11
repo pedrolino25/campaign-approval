@@ -1,6 +1,6 @@
 import sgMail from '@sendgrid/mail'
 
-import { logger } from '../logger'
+import { logger } from '../utils/logger'
 
 export class EmailService {
   private readonly apiKey: string
