@@ -1,4 +1,4 @@
-import type { Notification, NotificationType, Prisma, ReviewItem } from '@prisma/client'
+import type { Notification, NotificationType, Prisma } from '@prisma/client'
 
 import { logger,SQSService } from '../lib'
 import {
@@ -15,6 +15,13 @@ import {
 type Recipient = {
   userId?: string
   email?: string
+}
+
+type ReviewItemSelect = {
+  id: string
+  organizationId: string
+  clientId: string
+  title: string
 }
 
 export class NotificationService {
@@ -44,6 +51,12 @@ export class NotificationService {
         organizationId: payload.organizationId,
         archivedAt: null,
       },
+      select: {
+        id: true,
+        organizationId: true,
+        clientId: true,
+        title: true,
+      },
     })
 
     if (!reviewItem) {
@@ -56,7 +69,11 @@ export class NotificationService {
       return
     }
 
-    const recipients = await this.resolveRecipients(type, reviewItem, actor)
+    const recipients = await this.resolveRecipients(
+      type,
+      reviewItem as ReviewItemSelect,
+      actor
+    )
 
     for (const recipient of recipients) {
       await this.createNotificationForRecipient({
@@ -72,28 +89,28 @@ export class NotificationService {
 
   private async resolveRecipients(
     eventType: WorkflowEventType,
-    reviewItem: ReviewItem,
+    reviewItem: ReviewItemSelect,
     actor: ActorContext,
   ): Promise<Recipient[]> {
     switch (eventType) {
       case WorkflowEventType.REVIEW_SENT:
       case WorkflowEventType.REVIEW_REOPENED:
       case WorkflowEventType.REVIEW_REMINDER:
-        return await this.getReviewersForClient(reviewItem.clientId as string)
+        return await this.getReviewersForClient(reviewItem.clientId)
 
       case WorkflowEventType.REVIEW_APPROVED:
       case WorkflowEventType.REVIEW_CHANGES_REQUESTED:
-        return await this.getInternalUsers(reviewItem.organizationId as string)
+        return await this.getInternalUsers(reviewItem.organizationId)
 
       case WorkflowEventType.COMMENT_ADDED:
         if (actor.type === ActorType.Reviewer) {
-          return await this.getInternalUsers(reviewItem.organizationId as string)
+          return await this.getInternalUsers(reviewItem.organizationId)
         } else {
-          return await this.getReviewersForClient(reviewItem.clientId as string)
+          return await this.getReviewersForClient(reviewItem.clientId)
         }
 
       case WorkflowEventType.ATTACHMENT_UPLOADED:
-        return await this.getReviewersForClient(reviewItem.clientId as string)
+        return await this.getReviewersForClient(reviewItem.clientId)
 
       default:
         logger.warn({
