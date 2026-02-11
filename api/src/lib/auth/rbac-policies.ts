@@ -1,5 +1,7 @@
+import { UserRole } from '@prisma/client'
+
 import { ForbiddenError } from '../../models/errors'
-import { Action, type ActorContext, type ResourceContext } from '../../models/rbac'
+import { Action, type ActorContext, ActorType, type ResourceContext } from '../../models/rbac'
 
 type ActionHandler = (actor: ActorContext, action: Action) => void
 
@@ -67,7 +69,7 @@ function checkOrganizationScope(
   actor: ActorContext,
   resource: ResourceContext
 ): void {
-  if (actor.type !== 'INTERNAL') {
+  if (actor.type !== ActorType.Internal) {
     return
   }
 
@@ -85,7 +87,7 @@ function checkClientScope(
   actor: ActorContext,
   resource: ResourceContext
 ): void {
-  if (actor.type !== 'REVIEWER') {
+  if (actor.type !== ActorType.Reviewer) {
     return
   }
 
@@ -115,11 +117,11 @@ function checkSoftDeletion(
     return
   }
 
-  if (actor.type === 'INTERNAL' && actor.role === 'OWNER') {
+  if (actor.type === ActorType.Internal && actor.role === UserRole.OWNER) {
     return
   }
 
-  if (actor.type === 'INTERNAL') {
+  if (actor.type === ActorType.Internal) {
     throw new ForbiddenError(
       'Access denied: only owners can access soft-deleted resources'
     )
@@ -134,7 +136,7 @@ function checkOrganizationAction(
   actor: ActorContext,
   action: Action
 ): void {
-  if (actor.type === 'REVIEWER') {
+  if (actor.type === ActorType.Reviewer) {
     throw new ForbiddenError(
       'Access denied: reviewers cannot perform organization-level actions'
     )
@@ -157,7 +159,7 @@ function checkOrganizationAction(
 }
 
 function checkTeamAction(actor: ActorContext, action: Action): void {
-  if (actor.type === 'REVIEWER') {
+  if (actor.type === ActorType.Reviewer) {
     throw new ForbiddenError(
       'Access denied: reviewers cannot perform team management actions'
     )
@@ -187,7 +189,7 @@ function checkTeamAction(actor: ActorContext, action: Action): void {
 }
 
 function checkClientAction(actor: ActorContext, action: Action): void {
-  if (actor.type === 'REVIEWER') {
+  if (actor.type === ActorType.Reviewer) {
     throw new ForbiddenError(
       'Access denied: reviewers cannot perform client management actions'
     )
@@ -202,7 +204,7 @@ function checkClientAction(actor: ActorContext, action: Action): void {
     case Action.ARCHIVE_CLIENT:
     case Action.INVITE_CLIENT_REVIEWER:
     case Action.REMOVE_CLIENT_REVIEWER:
-      if (actor.role === 'OWNER' || actor.role === 'ADMIN') {
+      if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) {
         return
       }
       throw new ForbiddenError(
@@ -219,7 +221,7 @@ function checkReviewItemAction(actor: ActorContext, action: Action): void {
     case Action.CREATE_REVIEW_ITEM:
     case Action.EDIT_REVIEW_ITEM:
     case Action.SEND_FOR_REVIEW:
-      if (actor.type === 'REVIEWER') {
+      if (actor.type === ActorType.Reviewer) {
         throw new ForbiddenError(
           'Access denied: reviewers cannot create, edit, or send review items'
         )
@@ -227,7 +229,7 @@ function checkReviewItemAction(actor: ActorContext, action: Action): void {
       return
 
     case Action.DELETE_REVIEW_ITEM:
-      if (actor.type === 'REVIEWER') {
+      if (actor.type === ActorType.Reviewer) {
         throw new ForbiddenError(
           'Access denied: reviewers cannot delete review items'
         )
@@ -242,7 +244,7 @@ function checkReviewItemAction(actor: ActorContext, action: Action): void {
 }
 
 function checkReviewApprovalAction(actor: ActorContext, action: Action): void {
-  if (actor.type === 'INTERNAL') {
+  if (actor.type === ActorType.Internal) {
     throw new ForbiddenError(
       'Access denied: agency users cannot approve review items'
     )
@@ -262,7 +264,7 @@ function checkAttachmentAction(actor: ActorContext, action: Action): void {
 
     case Action.UPLOAD_ATTACHMENT:
     case Action.UPLOAD_NEW_VERSION:
-      if (actor.type === 'REVIEWER') {
+      if (actor.type === ActorType.Reviewer) {
         throw new ForbiddenError(
           'Access denied: reviewers cannot upload attachments'
         )
@@ -270,7 +272,7 @@ function checkAttachmentAction(actor: ActorContext, action: Action): void {
       return
 
     case Action.DELETE_ATTACHMENT:
-      if (actor.type === 'REVIEWER') {
+      if (actor.type === ActorType.Reviewer) {
         throw new ForbiddenError(
           'Access denied: reviewers cannot delete attachments'
         )
@@ -293,12 +295,12 @@ function checkCommentAction(actor: ActorContext, action: Action): void {
       return
 
     case Action.DELETE_OTHERS_COMMENT:
-      if (actor.type === 'REVIEWER') {
+      if (actor.type === ActorType.Reviewer) {
         throw new ForbiddenError(
           'Access denied: reviewers cannot delete others\' comments'
         )
       }
-      if (actor.role === 'OWNER' || actor.role === 'ADMIN') {
+      if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) {
         return
       }
       throw new ForbiddenError(
@@ -307,7 +309,7 @@ function checkCommentAction(actor: ActorContext, action: Action): void {
   }
 }
 
-function checkActivityLogAction(actor: ActorContext, action: Action): void {
+function checkActivityLogAction(_actor: ActorContext, action: Action): void {
   switch (action) {
     case Action.VIEW_ACTIVITY_LOG:
       return
