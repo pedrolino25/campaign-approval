@@ -17,11 +17,11 @@ resource "aws_cognito_user_pool" "main" {
     case_sensitive = false
   }
 
-  alias_attributes              = ["email"]
-  auto_verified_attributes      = ["email"]
+  alias_attributes         = ["email"]
+  auto_verified_attributes = ["email"]
 
   verification_message_template {
-    default_email_option = "CONFIRM_WITH_LINK"
+    default_email_option  = "CONFIRM_WITH_LINK"
     email_subject_by_link = "Worklient - Verify your email"
     email_message_by_link = "Please click the link below to verify your email address: {##Verify Email##}"
   }
