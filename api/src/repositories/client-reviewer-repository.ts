@@ -13,6 +13,10 @@ export interface IClientReviewerRepository {
   create(data: CreateClientReviewerInput): Promise<ClientReviewer>
   findById(id: string): Promise<ClientReviewer | null>
   findByCognitoId(cognitoUserId: string): Promise<ClientReviewer[]>
+  findByCognitoIdAndOrganization(
+    cognitoUserId: string,
+    organizationId: string
+  ): Promise<ClientReviewer | null>
   findByCognitoIdAndClient(
     cognitoUserId: string,
     clientId: string
@@ -45,6 +49,22 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
       where: {
         cognitoUserId,
         archivedAt: null,
+      },
+    })
+  }
+
+  async findByCognitoIdAndOrganization(
+    cognitoUserId: string,
+    organizationId: string
+  ): Promise<ClientReviewer | null> {
+    return await prisma.clientReviewer.findFirst({
+      where: {
+        cognitoUserId,
+        archivedAt: null,
+        client: {
+          organizationId,
+          archivedAt: null,
+        },
       },
     })
   }

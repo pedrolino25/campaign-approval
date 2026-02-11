@@ -5,11 +5,13 @@ import type {
   AuthTokenExtractor,
   TokenVerifier,
 } from '../../models/index'
+import type { RBACService } from './rbac-service'
 
 export class AuthService {
   constructor(
     private readonly tokenExtractor: AuthTokenExtractor,
-    private readonly tokenVerifier: TokenVerifier
+    private readonly tokenVerifier: TokenVerifier,
+    private readonly rbacService: RBACService
   ) {}
 
   async authenticate(
@@ -18,9 +20,20 @@ export class AuthService {
     const token = this.tokenExtractor.extract(event)
     const authContext = await this.tokenVerifier.verify(token)
 
+    const organizationId = event.queryStringParameters?.organizationId
+
+    const actor = await this.rbacService.resolve(
+      authContext.userId,
+      organizationId
+    )
+
     const authenticatedEvent: AuthenticatedEvent = {
       ...event,
-      authContext,
+      authContext: {
+        ...authContext,
+        actor,
+        organizationId,
+      },
     }
 
     return authenticatedEvent

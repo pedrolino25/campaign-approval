@@ -1,3 +1,5 @@
+import type { UserRole } from "@prisma/client"
+
 export enum Action {
   // Organization-level actions
   VIEW_ORGANIZATION,
@@ -38,15 +40,20 @@ export enum Action {
   VIEW_ACTIVITY_LOG,
 }
 
+export enum ActorType {
+  Internal = 'INTERNAL',
+  Reviewer = 'REVIEWER',
+}
+
 export type ActorContext =
   | {
-      type: 'INTERNAL'
+      type: ActorType.Internal
       userId: string
       organizationId: string
-      role: 'OWNER' | 'ADMIN' | 'MEMBER'
+      role: UserRole
     }
   | {
-      type: 'REVIEWER'
+      type: ActorType.Reviewer
       reviewerId: string
       clientId: string
     }
