@@ -8,12 +8,14 @@ import {
   validateParams,
   validateQuery,
 } from '../lib'
+import { authorizeOrThrow } from '../lib/auth/utils/authorize'
 import {
   CreateReviewItemSchema,
   CursorPaginationQuerySchema,
   ReviewItemParamsSchema,
 } from '../lib/schemas'
 import {
+  Action,
   ActorType,
   NotFoundError,
   type RouteDefinition,
@@ -31,6 +33,10 @@ const handleGetReviewItems = async (
   if (!organizationId) {
     throw new NotFoundError('Organization not found')
   }
+
+  authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
+    organizationId: organizationId,
+  })
 
   const repository = new ReviewItemRepository()
   const result = await repository.listByOrganization(organizationId, {
@@ -52,6 +58,17 @@ const handlePostReviewItems = async (
 ): Promise<HttpResponse> => {
   const validated = validateBody(CreateReviewItemSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  authorizeOrThrow(actor, Action.CREATE_REVIEW_ITEM, {
+    organizationId: organizationId,
+  })
+  
   await Promise.resolve()
   return {
     statusCode: 200,
@@ -68,8 +85,32 @@ const handleGetReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const reviewItemId = validated.params.id!
+  const repository = new ReviewItemRepository()
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
+  
   await Promise.resolve()
-  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -86,8 +127,32 @@ const handleSendReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const reviewItemId = validated.params.id!
+  const repository = new ReviewItemRepository()
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.SEND_FOR_REVIEW, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
+  
   await Promise.resolve()
-  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -104,8 +169,32 @@ const handleApproveReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const reviewItemId = validated.params.id!
+  const repository = new ReviewItemRepository()
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.APPROVE_REVIEW_ITEM, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
+  
   await Promise.resolve()
-  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -122,8 +211,32 @@ const handleRequestChanges = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const reviewItemId = validated.params.id!
+  const repository = new ReviewItemRepository()
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.REQUEST_CHANGES, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
+  
   await Promise.resolve()
-  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -140,8 +253,32 @@ const handleArchiveReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const reviewItemId = validated.params.id!
+  const repository = new ReviewItemRepository()
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.DELETE_REVIEW_ITEM, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
+  
   await Promise.resolve()
-  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -159,13 +296,30 @@ const handleGetActivity = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  const reviewItemId = validatedQuery.params.id
   const actor = request.auth.actor
   const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
   if (!organizationId) {
     throw new NotFoundError('Organization not found')
   }
+
+  const reviewItemId = validatedQuery.params.id!
+  const reviewItemRepository = new ReviewItemRepository()
+  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_ACTIVITY_LOG, {
+    organizationId: reviewItem.organizationId,
+    clientId: reviewItem.clientId,
+    deletedAt: reviewItem.archivedAt,
+  })
 
   const repository = new ActivityLogRepository()
   const result = await repository.list({
