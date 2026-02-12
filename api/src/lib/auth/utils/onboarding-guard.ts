@@ -1,4 +1,4 @@
-import { type AuthenticatedEvent,ForbiddenError } from '../../models'
+import { type AuthenticatedEvent,ForbiddenError } from '../../../models'
 
 const ALLOWED_ROUTES = new Set([
   'POST /onboarding/internal',

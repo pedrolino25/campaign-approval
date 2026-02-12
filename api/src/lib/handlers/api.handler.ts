@@ -5,7 +5,7 @@ import type {
 
 import type { AuthenticatedEvent } from '../../models'
 import type { AuthService } from '../auth'
-import { onboardingGuard } from '../auth/onboarding-guard'
+import { onboardingGuard } from '../auth/utils/onboarding-guard'
 import type { ErrorService } from '../errors/error.service'
 
 export class ApiHandlerFactory {

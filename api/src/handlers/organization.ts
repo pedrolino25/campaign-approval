@@ -1,7 +1,10 @@
+import { InvitationType } from '@prisma/client'
+
 import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
+  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -30,7 +33,6 @@ import {
   UserRepository,
 } from '../repositories'
 import { OnboardingService } from '../services/onboarding.service'
-import { InvitationType } from '@prisma/client'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -206,6 +208,84 @@ const handleGetInvitations = async (
   }
 }
 
+function validateInvitation(
+  invitation: Awaited<ReturnType<InvitationRepository['findById']>>,
+  authenticatedEmail: string | undefined
+): asserts invitation is NonNullable<typeof invitation> & {
+  type: typeof InvitationType.REVIEWER
+  clientId: string
+} {
+  if (!invitation) {
+    throw new NotFoundError('Invitation not found')
+  }
+
+  if (invitation.acceptedAt) {
+    throw new ForbiddenError('Invitation has already been accepted')
+  }
+
+  if (invitation.expiresAt < new Date()) {
+    throw new ForbiddenError('Invitation has expired')
+  }
+
+  if (invitation.type !== InvitationType.REVIEWER) {
+    throw new ForbiddenError('Unsupported invitation type')
+  }
+
+  if (!invitation.clientId) {
+    throw new NotFoundError('Client ID not found in invitation')
+  }
+
+  if (
+    authenticatedEmail &&
+    authenticatedEmail.toLowerCase() !== invitation.email.toLowerCase()
+  ) {
+    throw new ForbiddenError('Email does not match invitation')
+  }
+}
+
+async function acceptReviewerInvitation(
+  invitationId: string,
+  organizationId: string,
+  cognitoUserId: string,
+  email: string,
+  clientId: string,
+  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>>,
+  hasExistingLink: boolean
+): Promise<Awaited<ReturnType<ReviewerRepository['create']>>> {
+  return await prisma.$transaction(async (tx) => {
+    const finalReviewer =
+      reviewer ||
+      (await tx.reviewer.create({
+        data: {
+          cognitoUserId,
+          email,
+          name: null,
+        },
+      }))
+
+    if (!hasExistingLink) {
+      await tx.clientReviewer.create({
+        data: {
+          clientId,
+          reviewerId: finalReviewer.id,
+        },
+      })
+    }
+
+    await tx.invitation.update({
+      where: {
+        id: invitationId,
+        organizationId,
+      },
+      data: {
+        acceptedAt: new Date(),
+      },
+    })
+
+    return finalReviewer
+  })
+}
+
 const handlePostAcceptInvitation = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
@@ -232,60 +312,36 @@ const handlePostAcceptInvitation = async (
     organizationId
   )
 
-  if (!invitation) {
-    throw new NotFoundError('Invitation not found')
-  }
-
-  if (invitation.acceptedAt) {
-    throw new ForbiddenError('Invitation has already been accepted')
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    throw new ForbiddenError('Invitation has expired')
-  }
-
-  if (invitation.type !== InvitationType.REVIEWER) {
-    throw new ForbiddenError('Unsupported invitation type')
-  }
-
-  if (!invitation.clientId) {
-    throw new NotFoundError('Client ID not found in invitation')
-  }
+  validateInvitation(invitation, request.auth.email)
 
   const cognitoUserId = request.auth.userId
   const email = request.auth.email || invitation.email
 
-  let reviewer = await reviewerRepository.findByCognitoId(cognitoUserId)
+  const reviewer = await reviewerRepository.findByCognitoId(cognitoUserId)
 
-  if (!reviewer) {
-    reviewer = await reviewerRepository.create({
-      cognitoUserId,
-      email,
-      name: null,
-    })
-  }
+  const existingLink = reviewer
+    ? await clientReviewerRepository.findByReviewerIdAndClient(
+        reviewer.id,
+        invitation.clientId
+      )
+    : null
 
-  const existingLink =
-    await clientReviewerRepository.findByReviewerIdAndClient(
-      reviewer.id,
-      invitation.clientId
-    )
-
-  if (!existingLink) {
-    await clientReviewerRepository.create({
-      clientId: invitation.clientId,
-      reviewerId: reviewer.id,
-    })
-  }
-
-  await invitationRepository.markAccepted(invitationId, organizationId)
+  const result = await acceptReviewerInvitation(
+    invitationId,
+    organizationId,
+    cognitoUserId,
+    email,
+    invitation.clientId,
+    reviewer,
+    !!existingLink
+  )
 
   return {
     statusCode: 200,
     body: {
       reviewer: {
-        id: reviewer.id,
-        email: reviewer.email,
+        id: result.id,
+        email: result.email,
       },
     },
   }
@@ -369,45 +425,21 @@ const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
 }
 */
 const routes: RouteDefinition[] = [
-  // RouteBuilder.get('/api-docs', handleOpenAPI),
-  RouteBuilder.get('/organization', 
-    handleGetOrganization
-  ),
+  RouteBuilder.get('/organization', handleGetOrganization),
   RouteBuilder.patch('/organization', handlePatchOrganization),
   RouteBuilder.post('/onboarding/internal', handlePostInternalOnboarding),
   RouteBuilder.post('/onboarding/reviewer', handlePostReviewerOnboarding),
-  RouteBuilder.get(
-    '/organization/users', 
-    handleGetUsers
-  ),
-  RouteBuilder.post(
-    '/organization/users/invite', 
-    handlePostInvite
-  ),
-  RouteBuilder.get(
-    '/organization/invitations',
-    handleGetInvitations
-  ),
+  RouteBuilder.get('/organization/users', handleGetUsers),
+  RouteBuilder.post('/organization/users/invite', handlePostInvite),
+  RouteBuilder.get('/organization/invitations', handleGetInvitations),
   RouteBuilder.post(
     '/organization/invitations/:id/accept',
     handlePostAcceptInvitation
   ),
-  RouteBuilder.delete(
-    '/organization/users/:id', 
-    handleDeleteUser
-  ),
-  RouteBuilder.patch(
-    '/organization/users/:id/role',
-    handlePatchUserRole
-  ),
-  RouteBuilder.get(
-    '/notifications', 
-    handleGetNotifications
-  ),
-  RouteBuilder.patch(
-    '/notifications/:id/read',
-    handlePatchNotificationRead
-  ),
+  RouteBuilder.delete('/organization/users/:id', handleDeleteUser),
+  RouteBuilder.patch('/organization/users/:id/role', handlePatchUserRole),
+  RouteBuilder.get('/notifications', handleGetNotifications),
+  RouteBuilder.patch('/notifications/:id/read', handlePatchNotificationRead),
 ]
 
 const router = new Router(routes)
