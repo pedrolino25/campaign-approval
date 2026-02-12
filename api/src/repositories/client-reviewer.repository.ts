@@ -13,23 +13,21 @@ import {
 
 export type CreateClientReviewerInput = {
   clientId: string
-  cognitoUserId: string
-  email: string
+  reviewerId: string
 }
 
 export interface IClientReviewerRepository {
   create(data: CreateClientReviewerInput): Promise<ClientReviewer>
   findById(id: string): Promise<ClientReviewer | null>
-  findByCognitoId(cognitoUserId: string): Promise<ClientReviewer[]>
-  findByCognitoIdAndOrganization(
-    cognitoUserId: string,
+  findByReviewerId(reviewerId: string): Promise<ClientReviewer[]>
+  findByReviewerIdAndOrganization(
+    reviewerId: string,
     organizationId: string
   ): Promise<ClientReviewer | null>
-  findByCognitoIdAndClient(
-    cognitoUserId: string,
+  findByReviewerIdAndClient(
+    reviewerId: string,
     clientId: string
   ): Promise<ClientReviewer | null>
-  findByEmail(email: string): Promise<ClientReviewer | null>
   listByClient(
     clientId: string,
     pagination: CursorPaginationParams
@@ -43,8 +41,7 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
     return await prisma.clientReviewer.create({
       data: {
         clientId: data.clientId,
-        cognitoUserId: data.cognitoUserId,
-        email: data.email,
+        reviewerId: data.reviewerId,
       },
     })
   }
@@ -55,22 +52,22 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
     })
   }
 
-  async findByCognitoId(cognitoUserId: string): Promise<ClientReviewer[]> {
+  async findByReviewerId(reviewerId: string): Promise<ClientReviewer[]> {
     return await prisma.clientReviewer.findMany({
       where: {
-        cognitoUserId,
+        reviewerId,
         archivedAt: null,
       },
     })
   }
 
-  async findByCognitoIdAndOrganization(
-    cognitoUserId: string,
+  async findByReviewerIdAndOrganization(
+    reviewerId: string,
     organizationId: string
   ): Promise<ClientReviewer | null> {
     return await prisma.clientReviewer.findFirst({
       where: {
-        cognitoUserId,
+        reviewerId,
         archivedAt: null,
         client: {
           organizationId,
@@ -80,23 +77,14 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
     })
   }
 
-  async findByCognitoIdAndClient(
-    cognitoUserId: string,
+  async findByReviewerIdAndClient(
+    reviewerId: string,
     clientId: string
   ): Promise<ClientReviewer | null> {
     return await prisma.clientReviewer.findFirst({
       where: {
-        cognitoUserId,
+        reviewerId,
         clientId,
-        archivedAt: null,
-      },
-    })
-  }
-
-  async findByEmail(email: string): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findFirst({
-      where: {
-        email: email.toLowerCase().trim(),
         archivedAt: null,
       },
     })

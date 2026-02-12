@@ -14,6 +14,7 @@ export type CreateActivityLogInput = {
   organizationId: string
   reviewItemId?: string | null
   actorUserId?: string | null
+  actorReviewerId?: string | null
   action: ActivityLogAction
   metadata: Prisma.InputJsonValue
 }
@@ -22,6 +23,7 @@ export type ListActivityLogsParams = {
   organizationId: string
   reviewItemId?: string
   actorUserId?: string
+  actorReviewerId?: string
   pagination: CursorPaginationParams
 }
 
@@ -47,6 +49,7 @@ class ActivityLogRepository implements IActivityLogRepository {
         organizationId: data.organizationId,
         reviewItemId: data.reviewItemId ?? null,
         actorUserId: data.actorUserId ?? null,
+        actorReviewerId: data.actorReviewerId ?? null,
         action: data.action,
         metadata: data.metadata,
       },
@@ -66,7 +69,7 @@ class ActivityLogRepository implements IActivityLogRepository {
   }
 
   async list(params: ListActivityLogsParams): Promise<CursorPaginationResult<ActivityLog>> {
-    const { organizationId, reviewItemId, actorUserId, pagination } = params
+    const { organizationId, reviewItemId, actorUserId, actorReviewerId, pagination } = params
     const { cursor, limit } = normalizePaginationParams(pagination)
     const cursorWhere = createCursorWhereCondition(cursor)
 
@@ -81,6 +84,10 @@ class ActivityLogRepository implements IActivityLogRepository {
 
     if (actorUserId) {
       where.actorUserId = actorUserId
+    }
+
+    if (actorReviewerId) {
+      where.actorReviewerId = actorReviewerId
     }
 
     const items = await prisma.activityLog.findMany({

@@ -50,14 +50,8 @@ export class ActivityLogService implements IActivityLogService {
     const actorUserId =
       actor.type === ActorType.Internal ? actor.userId : null
 
-    let enrichedMetadata: Prisma.InputJsonValue = metadata as Prisma.InputJsonValue
-
-    if (actor.type === ActorType.Reviewer) {
-      enrichedMetadata = {
-        ...metadata,
-        reviewerId: actor.reviewerId,
-      } as Prisma.InputJsonValue
-    }
+    const actorReviewerId =
+      actor.type === ActorType.Reviewer ? actor.reviewerId : null
 
     const prismaAction = mapActionToPrismaAction(action)
 
@@ -66,8 +60,9 @@ export class ActivityLogService implements IActivityLogService {
         organizationId,
         reviewItemId: reviewItemId ?? null,
         actorUserId,
+        actorReviewerId,
         action: prismaAction,
-        metadata: enrichedMetadata,
+        metadata: metadata as Prisma.InputJsonValue,
       },
       tx
     )

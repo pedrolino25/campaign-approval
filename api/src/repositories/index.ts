@@ -48,6 +48,12 @@ export {
   type UpdateReviewItemInput,
 } from './review-item.repository'
 export {
+  type CreateReviewerInput,
+  type IReviewerRepository,
+  ReviewerRepository,
+  type UpdateReviewerInput,
+} from './reviewer.repository'
+export {
   type CreateUserInput,
   type IUserRepository,
   type UpdateUserInput,

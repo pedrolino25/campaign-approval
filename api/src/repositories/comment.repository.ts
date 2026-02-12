@@ -15,7 +15,7 @@ export type CreateCommentInput = {
   reviewItemId: string
   authorType: CommentAuthorType
   authorUserId?: string
-  authorEmail?: string
+  authorReviewerId?: string
   content: string
   xCoordinate?: number
   yCoordinate?: number
@@ -39,7 +39,7 @@ export class CommentRepository implements ICommentRepository {
         reviewItemId: data.reviewItemId,
         authorType: data.authorType,
         authorUserId: data.authorUserId,
-        authorEmail: data.authorEmail,
+        authorReviewerId: data.authorReviewerId,
         content: data.content,
         xCoordinate: data.xCoordinate,
         yCoordinate: data.yCoordinate,

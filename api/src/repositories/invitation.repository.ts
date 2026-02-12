@@ -1,4 +1,4 @@
-import type { Invitation, InvitationRole } from '@prisma/client'
+import type { Invitation, InvitationRole, InvitationType } from '@prisma/client'
 
 import {
   createCursorWhereCondition,
@@ -13,7 +13,9 @@ import {
 export type CreateInvitationInput = {
   organizationId: string
   email: string
-  role: InvitationRole
+  type: InvitationType
+  clientId?: string | null
+  role?: InvitationRole | null
   token: string
   expiresAt: Date
   inviterUserId?: string
@@ -41,7 +43,9 @@ export class InvitationRepository implements IInvitationRepository {
       data: {
         organizationId: data.organizationId,
         email: data.email,
-        role: data.role,
+        type: data.type,
+        clientId: data.clientId ?? null,
+        role: data.role ?? null,
         token: data.token,
         expiresAt: data.expiresAt,
         inviterUserId: data.inviterUserId,
