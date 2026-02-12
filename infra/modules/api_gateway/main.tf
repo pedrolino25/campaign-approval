@@ -73,6 +73,14 @@ resource "aws_apigatewayv2_integration" "comment" {
   integration_uri    = var.lambda_invoke_arns.comment
 }
 
+resource "aws_apigatewayv2_integration" "notification" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+
+  integration_method = "POST"
+  integration_uri    = var.lambda_invoke_arns.notification
+}
+
 resource "aws_apigatewayv2_route" "organization_get" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /organization"
@@ -367,7 +375,7 @@ resource "aws_apigatewayv2_route" "notifications_get" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /notifications"
 
-  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+  target = "integrations/${aws_apigatewayv2_integration.notification.id}"
 
   authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
@@ -377,7 +385,7 @@ resource "aws_apigatewayv2_route" "notifications_read_patch" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "PATCH /notifications/{id}/read"
 
-  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+  target = "integrations/${aws_apigatewayv2_integration.notification.id}"
 
   authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
   authorization_type = "JWT"
@@ -427,6 +435,14 @@ resource "aws_lambda_permission" "comment" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_arns.comment
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "notification" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_arns.notification
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }

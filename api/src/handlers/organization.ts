@@ -18,7 +18,6 @@ import {
   CompleteReviewerOnboardingSchema,
   CursorPaginationQuerySchema,
   InviteInternalUserSchema,
-  NotificationParamsSchema,
   UpdateOrganizationSettingsSchema,
 } from '../lib/schemas'
 import { UpdateUserRoleSchema } from '../lib/schemas/organization.schema'
@@ -32,7 +31,6 @@ import {
 } from '../models'
 import {
   InvitationRepository,
-  NotificationRepository,
   OrganizationRepository,
   ReviewerRepository,
   UserRepository,
@@ -457,120 +455,6 @@ const handlePatchUserRole = async (
   }
 }
 
-const handleGetNotifications = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
-  
-  const actor = request.auth.actor
-  const repository = new NotificationRepository()
-
-  if (actor.type === ActorType.Internal) {
-    const organizationId = actor.organizationId
-
-    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
-      organizationId,
-    })
-
-    const result = await repository.listByUser(actor.userId, organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
-
-    return {
-      statusCode: 200,
-      body: {
-        data: result.data,
-        nextCursor: result.nextCursor,
-      },
-    }
-  } else {
-    const reviewerId = actor.reviewerId
-    const organizationId = request.query?.organizationId as string | undefined
-
-    if (!organizationId) {
-      throw new NotFoundError('Organization ID is required for reviewers')
-    }
-
-    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
-      organizationId,
-    })
-
-    const result = await repository.listByReviewer(reviewerId, organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
-
-    return {
-      statusCode: 200,
-      body: {
-        data: result.data,
-        nextCursor: result.nextCursor,
-      },
-    }
-  }
-}
-
-const handlePatchNotificationRead = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  const validated = validateParams(NotificationParamsSchema)(request)
-  const notificationId = validated.params.id!
-  
-  const actor = request.auth.actor
-  const repository = new NotificationRepository()
-
-  let organizationId: string
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
-      organizationId,
-    })
-  } else {
-    const orgId = request.query?.organizationId as string | undefined
-    if (!orgId) {
-      throw new NotFoundError('Organization ID is required for reviewers')
-    }
-    organizationId = orgId
-    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
-      organizationId,
-    })
-  }
-
-  const notification = await repository.findById(notificationId, organizationId)
-
-  if (!notification) {
-    throw new NotFoundError('Notification not found')
-  }
-
-  const isOwner =
-    (actor.type === ActorType.Internal && notification.userId === actor.userId) ||
-    (actor.type === ActorType.Reviewer && notification.reviewerId === actor.reviewerId)
-
-  if (!isOwner) {
-    throw new NotFoundError('Notification not found')
-  }
-
-  if (notification.readAt !== null) {
-    return {
-      statusCode: 200,
-      body: notification,
-    }
-  }
-
-  await repository.markAsRead(notificationId, organizationId)
-
-  const updated = await repository.findById(notificationId, organizationId)
-
-  if (!updated) {
-    throw new NotFoundError('Notification not found after update')
-  }
-
-  return {
-    statusCode: 200,
-    body: updated,
-  }
-}
 /*
 const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
   return await Promise.resolve(handleOpenAPIJson())
@@ -590,8 +474,6 @@ const routes: RouteDefinition[] = [
   ),
   RouteBuilder.delete('/organization/users/:id', handleDeleteUser),
   RouteBuilder.patch('/organization/users/:id/role', handlePatchUserRole),
-  RouteBuilder.get('/notifications', handleGetNotifications),
-  RouteBuilder.patch('/notifications/:id/read', handlePatchNotificationRead),
 ]
 
 const router = new Router(routes)

@@ -15,28 +15,127 @@ import {
 import {
   Action,
   ActorType,
+  ForbiddenError,
   NotFoundError,
   type RouteDefinition,
+  UnauthorizedError,
 } from '../models'
-import { NotificationRepository } from '../repositories'
+import {
+  ClientReviewerRepository,
+  NotificationRepository,
+} from '../repositories'
+
+type SanitizedNotification = {
+  id: string
+  type: string
+  payload: unknown
+  readAt: Date | null
+  sentAt: Date | null
+  createdAt: Date
+}
+
+const sanitizeNotification = (
+  notification: {
+    id: string
+    type: string
+    payload: unknown
+    readAt: Date | null
+    sentAt: Date | null
+    createdAt: Date
+  }
+): SanitizedNotification => {
+  return {
+    id: notification.id,
+    type: notification.type,
+    payload: notification.payload,
+    readAt: notification.readAt,
+    sentAt: notification.sentAt,
+    createdAt: notification.createdAt,
+  }
+}
+
+const validateReviewerOrganizationLinkage = async (
+  reviewerId: string,
+  organizationId: string
+): Promise<void> => {
+  const clientReviewerRepository = new ClientReviewerRepository()
+  const clientReviewer =
+    await clientReviewerRepository.findByReviewerIdAndOrganization(
+      reviewerId,
+      organizationId
+    )
+
+  if (!clientReviewer) {
+    throw new ForbiddenError('Reviewer is not linked to this organization')
+  }
+}
+
+const validateNotificationOwnership = (
+  notification: {
+    userId: string | null
+    reviewerId: string | null
+    organizationId: string
+  },
+  actor: {
+    type: ActorType
+    userId?: string
+    reviewerId?: string
+    organizationId?: string
+  },
+  expectedOrganizationId: string
+): void => {
+  if (actor.type === ActorType.Internal) {
+    if (notification.userId !== actor.userId) {
+      throw new ForbiddenError('Cannot access another user\'s notification')
+    }
+    if (notification.organizationId !== actor.organizationId) {
+      throw new ForbiddenError(
+        'Notification belongs to a different organization'
+      )
+    }
+  } else {
+    if (notification.reviewerId !== actor.reviewerId) {
+      throw new ForbiddenError('Cannot access another reviewer\'s notification')
+    }
+    if (notification.organizationId !== expectedOrganizationId) {
+      throw new ForbiddenError(
+        'Notification belongs to a different organization'
+      )
+    }
+  }
+}
+
+const getOrganizationIdForActor = (
+  actor: { type: ActorType; organizationId?: string },
+  queryOrganizationId: string | undefined
+): string => {
+  if (actor.type === ActorType.Internal) {
+    return actor.organizationId!
+  }
+
+  if (!queryOrganizationId) {
+    throw new UnauthorizedError('Organization ID is required for reviewers')
+  }
+
+  return queryOrganizationId
+}
 
 const handleGetNotifications = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
-  
+
   const actor = request.auth.actor
   const repository = new NotificationRepository()
 
   if (actor.type === ActorType.Internal) {
     const organizationId = actor.organizationId
-    const userId = actor.userId
 
     authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
-      organizationId: organizationId,
+      organizationId,
     })
 
-    const result = await repository.listByUser(userId, organizationId, {
+    const result = await repository.listByUser(actor.userId, organizationId, {
       cursor: validatedQuery.query.cursor,
       limit: validatedQuery.query.limit as number | undefined,
     })
@@ -44,21 +143,23 @@ const handleGetNotifications = async (
     return {
       statusCode: 200,
       body: {
-        data: result.data,
+        data: result.data.map(sanitizeNotification),
         nextCursor: result.nextCursor,
       },
     }
   } else {
     const reviewerId = actor.reviewerId
-    const organizationId = request.query?.organizationId
+    const organizationId = request.query?.organizationId as string | undefined
 
     if (!organizationId) {
-      throw new NotFoundError('Organization not found')
+      throw new UnauthorizedError('Organization ID is required for reviewers')
     }
 
     authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
-      organizationId: organizationId,
+      organizationId,
     })
+
+    await validateReviewerOrganizationLinkage(reviewerId, organizationId)
 
     const result = await repository.listByReviewer(reviewerId, organizationId, {
       cursor: validatedQuery.query.cursor,
@@ -68,7 +169,7 @@ const handleGetNotifications = async (
     return {
       statusCode: 200,
       body: {
-        data: result.data,
+        data: result.data.map(sanitizeNotification),
         nextCursor: result.nextCursor,
       },
     }
@@ -80,18 +181,24 @@ const handlePatchNotificationRead = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(NotificationParamsSchema)(request)
   const notificationId = validated.params.id!
-  
+
   const actor = request.auth.actor
   const repository = new NotificationRepository()
 
-  let organizationId: string
+  const organizationId = getOrganizationIdForActor(
+    actor,
+    request.query?.organizationId as string | undefined
+  )
+
   if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
+    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
+      organizationId,
+    })
   } else {
-    if (!request.query?.organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    organizationId = request.query?.organizationId
+    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
+      organizationId,
+    })
+    await validateReviewerOrganizationLinkage(actor.reviewerId, organizationId)
   }
 
   const notification = await repository.findById(notificationId, organizationId)
@@ -100,45 +207,32 @@ const handlePatchNotificationRead = async (
     throw new NotFoundError('Notification not found')
   }
 
-  const isOwner =
-    (actor.type === ActorType.Internal && notification.userId === actor.userId) ||
-    (actor.type === ActorType.Reviewer && notification.reviewerId === actor.reviewerId)
+  validateNotificationOwnership(notification, actor, organizationId)
 
-  if (!isOwner) {
-    throw new NotFoundError('Notification not found')
+  if (notification.readAt !== null) {
+    return {
+      statusCode: 200,
+      body: sanitizeNotification(notification),
+    }
   }
 
-  if (actor.type === ActorType.Internal) {
-    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
-      organizationId: organizationId,
-    })
-  } else {
-    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
-      organizationId: organizationId,
-    })
-  }
+  await repository.markAsRead(notificationId, organizationId)
 
-  await Promise.resolve()
+  const updated = await repository.findById(notificationId, organizationId)
+
+  if (!updated) {
+    throw new NotFoundError('Notification not found after update')
+  }
 
   return {
     statusCode: 200,
-    body: {
-      message: 'Mark notification as read',
-      notificationId,
-      userId: request.auth.userId,
-    },
+    body: sanitizeNotification(updated),
   }
 }
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.get(
-    '/notifications', 
-    handleGetNotifications
-  ),
-  RouteBuilder.patch(
-    '/notifications/:id/read',
-    handlePatchNotificationRead
-  ),
+  RouteBuilder.get('/notifications', handleGetNotifications),
+  RouteBuilder.patch('/notifications/:id/read', handlePatchNotificationRead),
 ]
 
 const router = new Router(routes)
