@@ -20,10 +20,8 @@ import {
   type RouteDefinition,
   UnauthorizedError,
 } from '../models'
-import {
-  ClientReviewerRepository,
-  NotificationRepository,
-} from '../repositories'
+import { ClientReviewerRepository } from '../repositories'
+import { NotificationService } from '../services'
 
 type SanitizedNotification = {
   id: string
@@ -126,7 +124,7 @@ const handleGetNotifications = async (
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
 
   const actor = request.auth.actor
-  const repository = new NotificationRepository()
+  const notificationService = new NotificationService()
 
   if (actor.type === ActorType.Internal) {
     const organizationId = actor.organizationId
@@ -135,10 +133,14 @@ const handleGetNotifications = async (
       organizationId,
     })
 
-    const result = await repository.listByUser(actor.userId, organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
+    const result = await notificationService.listByUser(
+      actor.userId,
+      organizationId,
+      {
+        cursor: validatedQuery.query.cursor,
+        limit: validatedQuery.query.limit as number | undefined,
+      }
+    )
 
     return {
       statusCode: 200,
@@ -161,10 +163,14 @@ const handleGetNotifications = async (
 
     await validateReviewerOrganizationLinkage(reviewerId, organizationId)
 
-    const result = await repository.listByReviewer(reviewerId, organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
+    const result = await notificationService.listByReviewer(
+      reviewerId,
+      organizationId,
+      {
+        cursor: validatedQuery.query.cursor,
+        limit: validatedQuery.query.limit as number | undefined,
+      }
+    )
 
     return {
       statusCode: 200,
@@ -183,7 +189,7 @@ const handlePatchNotificationRead = async (
   const notificationId = validated.params.id!
 
   const actor = request.auth.actor
-  const repository = new NotificationRepository()
+  const notificationService = new NotificationService()
 
   const organizationId = getOrganizationIdForActor(
     actor,
@@ -201,7 +207,10 @@ const handlePatchNotificationRead = async (
     await validateReviewerOrganizationLinkage(actor.reviewerId, organizationId)
   }
 
-  const notification = await repository.findById(notificationId, organizationId)
+  const notification = await notificationService.findById(
+    notificationId,
+    organizationId
+  )
 
   if (!notification) {
     throw new NotFoundError('Notification not found')
@@ -216,9 +225,12 @@ const handlePatchNotificationRead = async (
     }
   }
 
-  await repository.markAsRead(notificationId, organizationId)
+  await notificationService.markAsRead(notificationId, organizationId)
 
-  const updated = await repository.findById(notificationId, organizationId)
+  const updated = await notificationService.findById(
+    notificationId,
+    organizationId
+  )
 
   if (!updated) {
     throw new NotFoundError('Notification not found after update')

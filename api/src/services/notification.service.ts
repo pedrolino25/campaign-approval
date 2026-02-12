@@ -1,7 +1,10 @@
 import type { ClientReviewer, Notification, NotificationType, Prisma, Reviewer, User } from '@prisma/client'
 
 import { logger, SQSService } from '../lib'
-import type { CursorPaginationResult } from '../lib/pagination/cursor-pagination'
+import type {
+  CursorPaginationParams,
+  CursorPaginationResult,
+} from '../lib/pagination/cursor-pagination'
 import {
   type ActorContext,
   ActorType,
@@ -462,5 +465,40 @@ export class NotificationService {
       })
       throw error
     }
+  }
+
+  async listByUser(
+    userId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>> {
+    return await this.notificationRepository.listByUser(
+      userId,
+      organizationId,
+      pagination
+    )
+  }
+
+  async listByReviewer(
+    reviewerId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>> {
+    return await this.notificationRepository.listByReviewer(
+      reviewerId,
+      organizationId,
+      pagination
+    )
+  }
+
+  async findById(
+    id: string,
+    organizationId: string
+  ): Promise<Notification | null> {
+    return await this.notificationRepository.findById(id, organizationId)
+  }
+
+  async markAsRead(id: string, organizationId: string): Promise<void> {
+    await this.notificationRepository.markAsRead(id, organizationId)
   }
 }
