@@ -14,6 +14,8 @@ export enum ActivityLogActionType {
   CLIENT_UPDATED = 'CLIENT_UPDATED',
   USER_INVITED = 'USER_INVITED',
   USER_JOINED = 'USER_JOINED',
+  USER_UPDATED = 'USER_UPDATED',
+  ORGANIZATION_UPDATED = 'ORGANIZATION_UPDATED',
   REMINDER_SENT = 'REMINDER_SENT',
 }
 
@@ -67,6 +69,16 @@ export type ActivityLogMetadataMap = {
     clientId?: string
   }
   [ActivityLogActionType.USER_JOINED]: { userId: string }
+  [ActivityLogActionType.USER_UPDATED]: {
+    userId: string
+    removedUserId?: string
+    oldRole?: string
+    newRole?: string
+  }
+  [ActivityLogActionType.ORGANIZATION_UPDATED]: {
+    organizationId: string
+    changes?: Record<string, unknown>
+  }
   [ActivityLogActionType.REMINDER_SENT]: { reviewItemId: string }
 }
 
@@ -88,6 +100,8 @@ export function mapActionToPrismaAction(
     [ActivityLogActionType.CLIENT_UPDATED]: 'CLIENT_UPDATED',
     [ActivityLogActionType.USER_INVITED]: 'USER_INVITED',
     [ActivityLogActionType.USER_JOINED]: 'USER_JOINED',
+    [ActivityLogActionType.USER_UPDATED]: 'USER_UPDATED',
+    [ActivityLogActionType.ORGANIZATION_UPDATED]: 'ORGANIZATION_UPDATED',
     [ActivityLogActionType.REMINDER_SENT]: 'REMINDER_SENT',
   }
   return mapping[action]

@@ -34,6 +34,13 @@ export {
 export { NotificationService } from './notification.service'
 export { OnboardingService } from './onboarding.service'
 export {
+  type IOrganizationService,
+  OrganizationService,
+  type RemoveUserParams,
+  type UpdateOrganizationParams,
+  type UpdateUserRoleParams,
+} from './organization.service'
+export {
   type ArchiveReviewItemInput,
   type CreateReviewItemInput,
   type IReviewItemService,

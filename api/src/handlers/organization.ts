@@ -5,6 +5,7 @@ import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
+  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -17,10 +18,13 @@ import {
   CompleteReviewerOnboardingSchema,
   CursorPaginationQuerySchema,
   InviteInternalUserSchema,
+  NotificationParamsSchema,
   UpdateOrganizationSettingsSchema,
 } from '../lib/schemas'
+import { UpdateUserRoleSchema } from '../lib/schemas/organization.schema'
 import {
   Action,
+  ActivityLogActionType,
   ActorType,
   ForbiddenError,
   NotFoundError,
@@ -28,23 +32,49 @@ import {
 } from '../models'
 import {
   InvitationRepository,
+  NotificationRepository,
   OrganizationRepository,
   ReviewerRepository,
-  type UpdateOrganizationInput,
   UserRepository,
 } from '../repositories'
-import { InvitationService } from '../services'
+import {
+  ActivityLogService,
+  InvitationService,
+  OrganizationService,
+} from '../services'
 import { OnboardingService } from '../services/onboarding.service'
 
 const handleGetOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can view organization')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
+    organizationId: actor.organizationId,
+  })
+
+  const organizationRepository = new OrganizationRepository()
+  const organization = await organizationRepository.findById(
+    actor.organizationId
+  )
+
+  if (!organization) {
+    throw new NotFoundError('Organization not found')
+  }
+
   return {
     statusCode: 200,
     body: {
-      message: 'Get organization',
-      userId: request.auth.userId,
+      id: organization.id,
+      name: organization.name,
+      reminderEnabled: organization.reminderEnabled,
+      reminderIntervalDays: organization.reminderIntervalDays,
+      createdAt: organization.createdAt.toISOString(),
+      updatedAt: organization.updatedAt.toISOString(),
     },
   }
 }
@@ -65,20 +95,22 @@ const handlePatchOrganization = async (
     organizationId,
   })
 
-  const organizationRepository = new OrganizationRepository()
-  const updated = await organizationRepository.update(
+  const organizationService = new OrganizationService()
+  const updated = await organizationService.updateOrganization({
     organizationId,
-    validated.body as UpdateOrganizationInput
-  )
+    name: validated.body.name,
+    reminderEnabled: validated.body.reminderEnabled,
+    reminderIntervalDays: validated.body.reminderIntervalDays,
+    actor,
+  })
 
   return {
     statusCode: 200,
     body: {
       id: updated.id,
       name: updated.name,
-      reminderEnabled: (updated as { reminderEnabled?: boolean }).reminderEnabled,
-      reminderIntervalDays: (updated as { reminderIntervalDays?: number })
-        .reminderIntervalDays,
+      reminderEnabled: updated.reminderEnabled,
+      reminderIntervalDays: updated.reminderIntervalDays,
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
     },
@@ -92,6 +124,10 @@ const handlePostInternalOnboarding = async (
 
   if (actor.type !== ActorType.Internal) {
     throw new ForbiddenError('This endpoint is only available for internal users')
+  }
+
+  if (actor.onboardingCompleted) {
+    throw new ForbiddenError('Onboarding has already been completed')
   }
 
   const validated = validateBody(CompleteInternalOnboardingSchema)(request)
@@ -133,6 +169,10 @@ const handlePostReviewerOnboarding = async (
     throw new ForbiddenError('This endpoint is only available for reviewers')
   }
 
+  if (actor.onboardingCompleted) {
+    throw new ForbiddenError('Onboarding has already been completed')
+  }
+
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
   const onboardingService = new OnboardingService(
     new UserRepository(),
@@ -160,12 +200,41 @@ const handlePostReviewerOnboarding = async (
 const handleGetUsers = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
+  
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can view users')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_INTERNAL_USERS, {
+    organizationId: actor.organizationId,
+  })
+
+  const userRepository = new UserRepository()
+  const result = await userRepository.listByOrganization(
+    actor.organizationId,
+    {
+      cursor: validatedQuery.query.cursor,
+      limit: validatedQuery.query.limit as number | undefined,
+    }
+  )
+
+  const data = result.data.map((user) => ({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+  }))
+
   return {
     statusCode: 200,
     body: {
-      message: 'Get organization users',
-      userId: request.auth.userId,
+      data,
+      nextCursor: result.nextCursor,
     },
   }
 }
@@ -200,8 +269,21 @@ const handlePostInvite = async (
     role: validated.body.role,
   })
 
+  const activityLogService = new ActivityLogService()
+  await prisma.$transaction(async (tx) => {
+    await activityLogService.log({
+      action: ActivityLogActionType.USER_INVITED,
+      organizationId,
+      actor,
+      metadata: {
+        invitedUserEmail: validated.body.email,
+      },
+      tx,
+    })
+  })
+
   return {
-    statusCode: 200,
+    statusCode: 201,
     body: {
       id: invitation.id,
       email: invitation.email,
@@ -220,11 +302,20 @@ const handleGetInvitations = async (
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can view invitations')
   }
+
+  const organizationId = actor.organizationId
+
+  if (actor.role !== 'OWNER' && actor.role !== 'ADMIN') {
+    throw new ForbiddenError('Only OWNER or ADMIN can view invitations')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_INTERNAL_USERS, {
+    organizationId,
+  })
 
   const repository = new InvitationRepository()
   const result = await repository.listPendingByOrganization(organizationId, {
@@ -232,10 +323,20 @@ const handleGetInvitations = async (
     limit: validatedQuery.query.limit as number | undefined,
   })
 
+  const data = result.data.map((invitation) => ({
+    id: invitation.id,
+    email: invitation.email,
+    role: invitation.role,
+    type: invitation.type,
+    expiresAt: invitation.expiresAt.toISOString(),
+    acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
+    createdAt: invitation.createdAt.toISOString(),
+  }))
+
   return {
     statusCode: 200,
     body: {
-      data: result.data,
+      data,
       nextCursor: result.nextCursor,
     },
   }
@@ -284,39 +385,74 @@ const handlePostAcceptInvitation = async (
 const handleDeleteUser = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const targetUserId = request.params.id as string | undefined
+  const validated = validateParams(
+    z.object({ id: z.string().uuid() }).strict()
+  )(request)
+  
+  const actor = request.auth.actor
 
-  if (!targetUserId) {
-    throw new NotFoundError('User ID not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can remove users')
   }
 
+  const organizationId = actor.organizationId
+
+  authorizeOrThrow(actor, Action.REMOVE_INTERNAL_USER, {
+    organizationId,
+  })
+
+  const targetUserId = validated.params.id!
+  const organizationService = new OrganizationService()
+  await organizationService.removeUser({
+    organizationId,
+    targetUserId,
+    actor,
+  })
+
   return {
-    statusCode: 200,
-    body: {
-      message: 'Delete user',
-      targetUserId,
-      userId: request.auth.userId,
-    },
+    statusCode: 204,
+    body: undefined,
   }
 }
 
 const handlePatchUserRole = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const targetUserId = request.params.id as string | undefined
+  const withParams = validateParams(
+    z.object({ id: z.string().uuid() }).strict()
+  )(request)
+  const validated = validateBody(UpdateUserRoleSchema)(withParams)
+  
+  const actor = request.auth.actor
 
-  if (!targetUserId) {
-    throw new NotFoundError('User ID not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can update user roles')
   }
+
+  const organizationId = actor.organizationId
+
+  authorizeOrThrow(actor, Action.CHANGE_USER_ROLE, {
+    organizationId,
+  })
+
+  const targetUserId = validated.params.id!
+  const organizationService = new OrganizationService()
+  const updated = await organizationService.updateUserRole({
+    organizationId,
+    targetUserId,
+    newRole: validated.body.role,
+    actor,
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Update user role',
-      targetUserId,
-      userId: request.auth.userId,
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
     },
   }
 }
@@ -324,33 +460,115 @@ const handlePatchUserRole = async (
 const handleGetNotifications = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
-  return {
-    statusCode: 200,
-    body: {
-      message: 'Get notifications',
-      userId: request.auth.userId,
-    },
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
+  
+  const actor = request.auth.actor
+  const repository = new NotificationRepository()
+
+  if (actor.type === ActorType.Internal) {
+    const organizationId = actor.organizationId
+
+    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
+      organizationId,
+    })
+
+    const result = await repository.listByUser(actor.userId, organizationId, {
+      cursor: validatedQuery.query.cursor,
+      limit: validatedQuery.query.limit as number | undefined,
+    })
+
+    return {
+      statusCode: 200,
+      body: {
+        data: result.data,
+        nextCursor: result.nextCursor,
+      },
+    }
+  } else {
+    const reviewerId = actor.reviewerId
+    const organizationId = request.query?.organizationId as string | undefined
+
+    if (!organizationId) {
+      throw new NotFoundError('Organization ID is required for reviewers')
+    }
+
+    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
+      organizationId,
+    })
+
+    const result = await repository.listByReviewer(reviewerId, organizationId, {
+      cursor: validatedQuery.query.cursor,
+      limit: validatedQuery.query.limit as number | undefined,
+    })
+
+    return {
+      statusCode: 200,
+      body: {
+        data: result.data,
+        nextCursor: result.nextCursor,
+      },
+    }
   }
 }
 
 const handlePatchNotificationRead = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
-  const notificationId = request.params.id as string | undefined
+  const validated = validateParams(NotificationParamsSchema)(request)
+  const notificationId = validated.params.id!
+  
+  const actor = request.auth.actor
+  const repository = new NotificationRepository()
 
-  if (!notificationId) {
-    throw new NotFoundError('Notification ID not found')
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+    authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {
+      organizationId,
+    })
+  } else {
+    const orgId = request.query?.organizationId as string | undefined
+    if (!orgId) {
+      throw new NotFoundError('Organization ID is required for reviewers')
+    }
+    organizationId = orgId
+    authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
+      organizationId,
+    })
+  }
+
+  const notification = await repository.findById(notificationId, organizationId)
+
+  if (!notification) {
+    throw new NotFoundError('Notification not found')
+  }
+
+  const isOwner =
+    (actor.type === ActorType.Internal && notification.userId === actor.userId) ||
+    (actor.type === ActorType.Reviewer && notification.reviewerId === actor.reviewerId)
+
+  if (!isOwner) {
+    throw new NotFoundError('Notification not found')
+  }
+
+  if (notification.readAt !== null) {
+    return {
+      statusCode: 200,
+      body: notification,
+    }
+  }
+
+  await repository.markAsRead(notificationId, organizationId)
+
+  const updated = await repository.findById(notificationId, organizationId)
+
+  if (!updated) {
+    throw new NotFoundError('Notification not found after update')
   }
 
   return {
     statusCode: 200,
-    body: {
-      message: 'Mark notification as read',
-      notificationId,
-      userId: request.auth.userId,
-    },
+    body: updated,
   }
 }
 /*

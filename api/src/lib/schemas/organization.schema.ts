@@ -2,6 +2,12 @@ import { z } from 'zod'
 
 export const UpdateOrganizationSettingsSchema = z
   .object({
+    name: z
+      .string()
+      .min(1, 'Name must be at least 1 character')
+      .max(255, 'Name must be at most 255 characters')
+      .trim()
+      .optional(),
     reminderEnabled: z.boolean().optional(),
     reminderIntervalDays: z
       .number()
@@ -31,3 +37,13 @@ export const InviteInternalUserSchema = z
   .strict()
 
 export type InviteInternalUserRequest = z.infer<typeof InviteInternalUserSchema>
+
+export const UpdateUserRoleSchema = z
+  .object({
+    role: z.enum(['OWNER', 'ADMIN', 'MEMBER'], {
+      errorMap: () => ({ message: 'Role must be OWNER, ADMIN, or MEMBER' }),
+    }),
+  })
+  .strict()
+
+export type UpdateUserRoleRequest = z.infer<typeof UpdateUserRoleSchema>
