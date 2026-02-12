@@ -364,14 +364,11 @@ export class OrganizationService implements IOrganizationService {
     newRole: UserRole
   ): Promise<void> {
     if (oldRole === UserRole.OWNER && newRole !== UserRole.OWNER) {
-      const currentOwnerCount = await tx.user.count({
-        where: {
-          organizationId,
-          role: UserRole.OWNER,
-          archivedAt: null,
-        },
-      })
-
+      const currentOwnerCount = await this.userRepository.countActiveOwnersWithLock(
+        tx,
+        organizationId
+      )
+      
       if (currentOwnerCount <= 1) {
         throw new ForbiddenError(
           'Cannot demote the last OWNER from the organization'

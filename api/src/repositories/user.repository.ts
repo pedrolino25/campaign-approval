@@ -39,6 +39,10 @@ export interface IUserRepository {
     organizationId: string,
     role: UserRole
   ): Promise<number>
+  countActiveOwnersWithLock(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string
+  ): Promise<number>
 }
 
 export class UserRepository implements IUserRepository {
@@ -146,5 +150,21 @@ export class UserRepository implements IUserRepository {
         archivedAt: null,
       },
     })
+  }
+
+  async countActiveOwnersWithLock(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string
+  ): Promise<number> {
+    const result = await tx.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE organization_id = ${organizationId}
+        AND role = 'OWNER'
+        AND archived_at IS NULL
+      FOR UPDATE
+    `
+    
+    return Number(result[0]?.count ?? 0)
   }
 }

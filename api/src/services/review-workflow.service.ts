@@ -171,8 +171,9 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     newStatus: ReviewStatus,
     expectedVersion: number
   ): Promise<ReviewItem> {
-    const shouldIncrementVersion = action === WorkflowAction.UPLOAD_NEW_VERSION
     const shouldUpdateStatus = newStatus !== previousStatus
+    const shouldIncrementVersion = 
+      action === WorkflowAction.UPLOAD_NEW_VERSION || shouldUpdateStatus
 
     return await prisma.$transaction(async (tx) => {
       const updated = await this.updateReviewItem(
