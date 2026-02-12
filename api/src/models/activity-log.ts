@@ -55,9 +55,17 @@ export type ActivityLogMetadataMap = {
   [ActivityLogActionType.COMMENT_DELETED]: {
     commentId: string
   }
-  [ActivityLogActionType.CLIENT_CREATED]: { clientId: string }
-  [ActivityLogActionType.CLIENT_UPDATED]: { clientId: string }
-  [ActivityLogActionType.USER_INVITED]: { invitedUserEmail: string }
+  [ActivityLogActionType.CLIENT_CREATED]: { clientId: string; name?: string }
+  [ActivityLogActionType.CLIENT_UPDATED]: {
+    clientId: string
+    oldName?: string
+    newName?: string
+    archived?: boolean
+  }
+  [ActivityLogActionType.USER_INVITED]: {
+    invitedUserEmail: string
+    clientId?: string
+  }
   [ActivityLogActionType.USER_JOINED]: { userId: string }
   [ActivityLogActionType.REMINDER_SENT]: { reviewItemId: string }
 }

@@ -11,6 +11,15 @@ export {
   type IAttachmentService,
 } from './attachment.service'
 export {
+  type ArchiveClientParams,
+  ClientService,
+  type CreateClientParams,
+  type IClientService,
+  type InviteReviewerParams,
+  type RemoveReviewerParams,
+  type UpdateClientParams,
+} from './client.service'
+export {
   type AddCommentParams,
   CommentService,
   type DeleteCommentParams,
