@@ -227,7 +227,7 @@ resource "aws_iam_role_policy" "comment" {
 }
 
 resource "aws_iam_role" "notification" {
-  name = "${local.environment_prefix}notification-worker-role"
+  name = "${local.environment_prefix}notification-api-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -246,8 +246,46 @@ resource "aws_iam_role" "notification" {
 }
 
 resource "aws_iam_role_policy" "notification" {
-  name = "${local.environment_prefix}notification-worker-policy"
+  name = "${local.environment_prefix}notification-api-policy"
   role = aws_iam_role.notification.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "email_worker" {
+  name = "${local.environment_prefix}email-worker-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "email_worker" {
+  name = "${local.environment_prefix}email-worker-policy"
+  role = aws_iam_role.email_worker.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -264,6 +302,53 @@ resource "aws_iam_role_policy" "notification" {
       {
         Effect = "Allow"
         Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "review_reminder" {
+  name = "${local.environment_prefix}review-reminder-worker-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "review_reminder" {
+  name = "${local.environment_prefix}review-reminder-worker-policy"
+  role = aws_iam_role.review_reminder.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage"
+        ]
+        Resource = var.sqs_queue_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]

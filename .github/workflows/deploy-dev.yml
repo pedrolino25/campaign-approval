@@ -44,16 +44,34 @@ jobs:
         run: |
           set +e
           MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
-          OUTPUT=$(npx prisma migrate dev --name "$MIGRATION_NAME" --create-only 2>&1)
+          MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
+          
+          # Generate migration SQL using migrate diff (non-interactive)
+          # Compare current database state to desired schema
+          MIGRATION_SQL=$(npx prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --script 2>&1)
           EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "Migration generated: $MIGRATION_NAME"
-          elif echo "$OUTPUT" | grep -q "No schema changes"; then
-            echo "No schema changes detected, skipping migration generation"
-          else
-            echo "Migration generation failed: $OUTPUT"
+          
+          # Check for errors (but allow empty migrations)
+          if [ $EXIT_CODE -ne 0 ] && ! echo "$MIGRATION_SQL" | grep -qi "no.*change"; then
+            echo "Migration generation failed: $MIGRATION_SQL"
             exit $EXIT_CODE
           fi
+          
+          # Check if migration SQL is empty or just whitespace/comments
+          CLEAN_SQL=$(echo "$MIGRATION_SQL" | grep -v "^\s*--" | tr -d '[:space:]')
+          if [ -z "$CLEAN_SQL" ]; then
+            echo "No schema changes detected, skipping migration generation"
+            exit 0
+          fi
+          
+          # Create migration directory and file
+          mkdir -p "$MIGRATION_DIR"
+          echo "$MIGRATION_SQL" > "$MIGRATION_DIR/migration.sql"
+          
+          echo "Migration generated: $MIGRATION_NAME"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
@@ -68,12 +86,22 @@ jobs:
       - name: Commit migration files
         working-directory: api
         run: |
+          # Remove any empty migrations before committing
+          find prisma/migrations -name "migration.sql" -type f | while read file; do
+            if grep -q "This is an empty migration" "$file" 2>/dev/null; then
+              echo "Removing empty migration: $(dirname "$file")"
+              rm -rf "$(dirname "$file")"
+            fi
+          done
+          # Only commit if there are actual migration changes
           if [ -n "$(git status --porcelain prisma/migrations)" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
             git add prisma/migrations/
             git commit -m "chore: auto-generate Prisma migration [skip ci]"
             git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          else
+            echo "No migration changes to commit"
           fi
 
       - name: Build Lambda artifact
@@ -120,6 +148,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_api_key: ${{ secrets.SENDGRID_API_KEY }}
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform validate
@@ -130,6 +159,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_api_key: ${{ secrets.SENDGRID_API_KEY }}
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform plan
@@ -140,6 +170,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_api_key: ${{ secrets.SENDGRID_API_KEY }}
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
 
       - name: Terraform apply
@@ -150,4 +181,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           TF_VAR_database_url: ${{ secrets.DATABASE_URL_DEV }}
+          TF_VAR_sendgrid_api_key: ${{ secrets.SENDGRID_API_KEY }}
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}

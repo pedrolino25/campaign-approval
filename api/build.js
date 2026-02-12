@@ -14,6 +14,8 @@ const entryPoints = {
   "api/attachment": "src/handlers/attachment.ts",
   "api/comment": "src/handlers/comment.ts",
   "api/notification": "src/handlers/notification.ts",
+  "api/workers/email.worker": "src/workers/email.worker.ts",
+  "api/workers/review-reminder.worker": "src/workers/review-reminder.worker.ts",
 }
 
 async function buildLambda() {

@@ -4,11 +4,19 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
 } from '../lib'
+import { can } from '../lib/auth'
 import {
+  UpdateOrganizationSettingsSchema,
+} from '../lib/schemas'
+import {
+  Action,
+  ActorType,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
+import { OrganizationRepository, type UpdateOrganizationInput } from '../repositories'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -26,12 +34,35 @@ const handleGetOrganization = async (
 const handlePatchOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validated = validateBody(UpdateOrganizationSettingsSchema)(request)
+  
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  can(actor, Action.UPDATE_ORGANIZATION, {
+    organizationId,
+  })
+
+  const organizationRepository = new OrganizationRepository()
+  const updated = await organizationRepository.update(
+    organizationId,
+    validated.body as UpdateOrganizationInput
+  )
+
   return {
     statusCode: 200,
     body: {
-      message: 'Update organization',
-      userId: request.auth.userId,
+      id: updated.id,
+      name: updated.name,
+      reminderEnabled: (updated as { reminderEnabled?: boolean }).reminderEnabled,
+      reminderIntervalDays: (updated as { reminderIntervalDays?: number })
+        .reminderIntervalDays,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
     },
   }
 }
@@ -185,10 +216,7 @@ const routes: RouteDefinition[] = [
   RouteBuilder.get('/organization', 
     handleGetOrganization
   ),
-  RouteBuilder.patch(
-    '/organization', 
-    handlePatchOrganization
-  ),
+  RouteBuilder.patch('/organization', handlePatchOrganization),
   RouteBuilder.post(
     '/organization/onboarding',
     handlePostOnboarding

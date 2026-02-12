@@ -179,6 +179,12 @@ variable "resource_tags" {
   type        = map(string)
 }
 
+variable "sendgrid_api_key" {
+  description = "SendGrid API key for email sending"
+  type        = string
+  sensitive   = true
+}
+
 variable "database_url" {
   description = "PostgreSQL database connection URL from Neon"
   type        = string

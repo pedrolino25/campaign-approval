@@ -1,6 +1,6 @@
 
 
-import { type ReviewItem, ReviewStatus } from '@prisma/client';
+import { type Prisma, type ReviewItem, ReviewStatus } from '@prisma/client';
 
 import { prisma } from '../lib'
 
@@ -51,6 +51,16 @@ export interface IReviewItemRepository {
     expectedVersion: number
   ): Promise<ReviewItem>
   archive(id: string, organizationId: string): Promise<void>
+  findEligibleForReminder(
+    organizationId: string,
+    cutoffDate: Date
+  ): Promise<ReviewItem[]>
+  updateLastReminderSentAtIfEligible(
+    id: string,
+    organizationId: string,
+    cutoffDate: Date,
+    tx: Prisma.TransactionClient
+  ): Promise<boolean>
 }
 
 export class ReviewItemRepository implements IReviewItemRepository {
@@ -222,5 +232,65 @@ export class ReviewItemRepository implements IReviewItemRepository {
         status: ReviewStatus.ARCHIVED,
       },
     })
+  }
+
+  async findEligibleForReminder(
+    organizationId: string,
+    cutoffDate: Date
+  ): Promise<ReviewItem[]> {
+    return await prisma.reviewItem.findMany({
+      where: {
+        organizationId,
+        status: ReviewStatus.PENDING_REVIEW,
+        archivedAt: null,
+        updatedAt: {
+          lt: cutoffDate,
+        },
+        OR: [
+          {
+            lastReminderSentAt: null,
+          },
+          {
+            lastReminderSentAt: {
+              lt: cutoffDate,
+            },
+          },
+        ],
+      },
+    })
+  }
+
+  async updateLastReminderSentAtIfEligible(
+    id: string,
+    organizationId: string,
+    cutoffDate: Date,
+    tx: Prisma.TransactionClient
+  ): Promise<boolean> {
+    const result = await tx.reviewItem.updateMany({
+      where: {
+        id,
+        organizationId,
+        status: ReviewStatus.PENDING_REVIEW,
+        archivedAt: null,
+        updatedAt: {
+          lt: cutoffDate,
+        },
+        OR: [
+          {
+            lastReminderSentAt: null,
+          },
+          {
+            lastReminderSentAt: {
+              lt: cutoffDate,
+            },
+          },
+        ],
+      },
+      data: {
+        lastReminderSentAt: new Date(),
+      },
+    })
+
+    return result.count > 0
   }
 }

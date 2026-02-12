@@ -71,7 +71,7 @@ export function mapActionToPrismaAction(
     [ActivityLogActionType.CLIENT_UPDATED]: 'CLIENT_UPDATED',
     [ActivityLogActionType.USER_INVITED]: 'USER_INVITED',
     [ActivityLogActionType.USER_JOINED]: 'USER_JOINED',
-    [ActivityLogActionType.REMINDER_SENT]: 'REVIEW_UPDATED',
+    [ActivityLogActionType.REMINDER_SENT]: 'REMINDER_SENT',
   }
   return mapping[action]
 }

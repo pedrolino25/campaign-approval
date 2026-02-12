@@ -1,12 +1,51 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
-import { DomainError } from '../../models'
+import { DomainError, ValidationError as BaseValidationError } from '../../models/errors'
 import { logger } from '../utils/logger'
+
+export interface ValidationErrorDetail {
+  field: string
+  message: string
+}
+
+export class ValidationError extends BaseValidationError {
+  public readonly details: ValidationErrorDetail[]
+
+  constructor(
+    message: string = 'Invalid request payload',
+    details: ValidationErrorDetail[] = []
+  ) {
+    super(message)
+    this.details = details
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+
+  static fromZodError(zodError: {
+    issues: Array<{
+      path: (string | number)[]
+      message: string
+    }>
+  }): ValidationError {
+    const details: ValidationErrorDetail[] = zodError.issues.map((issue) => {
+      const field = issue.path.length > 0 ? issue.path.join('.') : 'root'
+      return {
+        field,
+        message: issue.message,
+      }
+    })
+
+    return new ValidationError('Invalid request payload', details)
+  }
+}
 
 interface ErrorResponse {
   error: {
     code: string
     message: string
+    details?: Array<{
+      field: string
+      message: string
+    }>
   }
 }
 
@@ -20,12 +59,17 @@ export class ErrorService {
   private createErrorResponse(
     code: string,
     message: string,
-    statusCode: number
+    statusCode: number,
+    details?: Array<{
+      field: string
+      message: string
+    }>
   ): APIGatewayProxyResult {
     const response: ErrorResponse = {
       error: {
         code,
         message,
+        ...(details && details.length > 0 ? { details } : {}),
       },
     }
 
@@ -42,19 +86,28 @@ export class ErrorService {
     error: DomainError,
     context?: ErrorContext
   ): APIGatewayProxyResult {
-    logger.error(
-      {
-        errorCode: error.code,
-        errorMessage: error.message,
-        statusCode: error.statusCode,
-        requestId: context?.requestId,
-        userId: context?.userId,
-        organizationId: context?.organizationId,
-      },
-      'Domain error occurred'
-    )
+    const logData: Record<string, unknown> = {
+      errorCode: error.code,
+      errorMessage: error.message,
+      statusCode: error.statusCode,
+      requestId: context?.requestId,
+      userId: context?.userId,
+      organizationId: context?.organizationId,
+    }
 
-    return this.createErrorResponse(error.code, error.message, error.statusCode)
+    if (error instanceof ValidationError && error.details.length > 0) {
+      logData.validationDetails = error.details
+    }
+
+    logger.error(logData, 'Domain error occurred')
+
+    const details = error instanceof ValidationError ? error.details : undefined
+    return this.createErrorResponse(
+      error.code,
+      error.message,
+      error.statusCode,
+      details
+    )
   }
 
   private handleGenericError(

@@ -147,6 +147,13 @@ function checkOrganizationAction(
       return
 
     case Action.UPDATE_ORGANIZATION:
+      if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) {
+        return
+      }
+      throw new ForbiddenError(
+        `Access denied: ${actor.role} cannot perform ${Action[action]}`
+      )
+
     case Action.MANAGE_BILLING:
     case Action.DELETE_ORGANIZATION:
       if (actor.role === 'OWNER') {
@@ -277,7 +284,7 @@ function checkAttachmentAction(actor: ActorContext, action: Action): void {
           'Access denied: reviewers cannot delete attachments'
         )
       }
-      if (actor.role === 'OWNER' || actor.role === 'ADMIN') {
+      if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) {
         return
       }
       throw new ForbiddenError(

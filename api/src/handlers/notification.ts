@@ -1,6 +1,5 @@
 import {
   createHandler,
-  createSQSHandler,
   type HttpRequest,
   type HttpResponse,
   RouteBuilder,
@@ -10,7 +9,6 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { handler as emailWorkerHandler } from '../workers/email.worker'
 
 const handleGetNotifications = async (
   request: HttpRequest
@@ -57,7 +55,4 @@ const routes: RouteDefinition[] = [
 ]
 
 const router = new Router(routes)
-const apiHandler = createHandler(router.handle)
-
-export const handler = createSQSHandler(emailWorkerHandler)
-export { apiHandler }
+export const handler = createHandler(router.handle)

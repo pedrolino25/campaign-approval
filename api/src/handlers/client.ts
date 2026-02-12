@@ -4,9 +4,17 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
+  validateParams,
 } from '../lib'
 import {
-  NotFoundError,
+  ClientParamsSchema,
+  ClientReviewerParamsSchema,
+  CreateClientSchema,
+  InviteReviewerSchema,
+  UpdateClientSchema,
+} from '../lib/schemas'
+import {
   type RouteDefinition,
 } from '../models'
 
@@ -26,12 +34,15 @@ const handleGetClients = async (
 const handlePostClients = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateBody(CreateClientSchema)(request)
+  
   await Promise.resolve()
   return {
     statusCode: 200,
     body: {
       message: 'Create client',
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -39,12 +50,11 @@ const handlePostClients = async (
 const handlePatchClient = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const withParams = validateParams(ClientParamsSchema)(request)
+  const validated = validateBody(UpdateClientSchema)(withParams)
+  
   await Promise.resolve()
-  const clientId = request.params.id as string | undefined
-
-  if (!clientId) {
-    throw new NotFoundError('Client ID not found')
-  }
+  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -52,6 +62,7 @@ const handlePatchClient = async (
       message: 'Update client',
       clientId,
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -59,12 +70,10 @@ const handlePatchClient = async (
 const handleArchiveClient = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ClientParamsSchema)(request)
+  
   await Promise.resolve()
-  const clientId = request.params.id as string | undefined
-
-  if (!clientId) {
-    throw new NotFoundError('Client ID not found')
-  }
+  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -79,12 +88,10 @@ const handleArchiveClient = async (
 const handleGetReviewers = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ClientParamsSchema)(request)
+  
   await Promise.resolve()
-  const clientId = request.params.id as string | undefined
-
-  if (!clientId) {
-    throw new NotFoundError('Client ID not found')
-  }
+  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -99,12 +106,11 @@ const handleGetReviewers = async (
 const handlePostReviewer = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const withParams = validateParams(ClientParamsSchema)(request)
+  const validated = validateBody(InviteReviewerSchema)(withParams)
+  
   await Promise.resolve()
-  const clientId = request.params.id as string | undefined
-
-  if (!clientId) {
-    throw new NotFoundError('Client ID not found')
-  }
+  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -112,6 +118,7 @@ const handlePostReviewer = async (
       message: 'Add client reviewer',
       clientId,
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -119,13 +126,11 @@ const handlePostReviewer = async (
 const handleDeleteReviewer = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ClientReviewerParamsSchema)(request)
+  
   await Promise.resolve()
-  const clientId = request.params.id as string | undefined
-  const reviewerId = request.params.reviewerId as string | undefined
-
-  if (!clientId || !reviewerId) {
-    throw new NotFoundError('Client ID or Reviewer ID not found')
-  }
+  const clientId = validated.params.id
+  const reviewerId = validated.params.reviewerId
 
   return {
     statusCode: 200,
@@ -139,34 +144,13 @@ const handleDeleteReviewer = async (
 }
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.get(
-    '/clients', 
-    handleGetClients
-  ),
-  RouteBuilder.post(
-    '/clients', 
-    handlePostClients
-  ),
-  RouteBuilder.patch(
-    '/clients/:id', 
-    handlePatchClient
-  ),
-  RouteBuilder.post(
-    '/clients/:id/archive', 
-    handleArchiveClient
-  ),
-  RouteBuilder.get(
-    '/clients/:id/reviewers', 
-    handleGetReviewers
-  ),
-  RouteBuilder.post(
-    '/clients/:id/reviewers', 
-    handlePostReviewer
-  ),
-  RouteBuilder.delete(
-    '/clients/:id/reviewers/:reviewerId',
-    handleDeleteReviewer
-  ),
+  RouteBuilder.get('/clients', handleGetClients),
+  RouteBuilder.post('/clients', handlePostClients),
+  RouteBuilder.patch('/clients/:id', handlePatchClient),
+  RouteBuilder.post('/clients/:id/archive', handleArchiveClient),
+  RouteBuilder.get('/clients/:id/reviewers', handleGetReviewers),
+  RouteBuilder.post('/clients/:id/reviewers', handlePostReviewer),
+  RouteBuilder.delete('/clients/:id/reviewers/:reviewerId', handleDeleteReviewer),
 ]
 
 const router = new Router(routes)
