@@ -1,4 +1,4 @@
-import type { Invitation, InvitationRole, InvitationType } from '@prisma/client'
+import type { Invitation, InvitationRole, InvitationType, Prisma } from '@prisma/client'
 
 import {
   createCursorWhereCondition,
@@ -22,7 +22,7 @@ export type CreateInvitationInput = {
 }
 
 export interface IInvitationRepository {
-  create(data: CreateInvitationInput): Promise<Invitation>
+  create(data: CreateInvitationInput, tx?: Prisma.TransactionClient): Promise<Invitation>
   findById(id: string, organizationId: string): Promise<Invitation | null>
   findByToken(token: string): Promise<Invitation | null>
   listByOrganization(
@@ -38,8 +38,9 @@ export interface IInvitationRepository {
 }
 
 export class InvitationRepository implements IInvitationRepository {
-  async create(data: CreateInvitationInput): Promise<Invitation> {
-    return await prisma.invitation.create({
+  async create(data: CreateInvitationInput, tx?: Prisma.TransactionClient): Promise<Invitation> {
+    const client = tx || prisma
+    return await client.invitation.create({
       data: {
         organizationId: data.organizationId,
         email: data.email,

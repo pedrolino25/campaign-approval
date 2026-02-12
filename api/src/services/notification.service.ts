@@ -541,4 +541,58 @@ export class NotificationService {
 
     return notification
   }
+
+  async createForInvitation(params: {
+    organizationId: string
+    email: string
+    invitationId: string
+    token: string
+    type: string
+    clientId: string | null
+    tx: Prisma.TransactionClient
+  }): Promise<Notification> {
+    const { organizationId, email, invitationId, token, type, clientId, tx } = params
+
+    return await this.notificationRepository.create(
+      {
+        organizationId,
+        email,
+        type: 'INVITATION_CREATED' as NotificationType,
+        payload: {
+          invitationId,
+          token,
+          type,
+          organizationId,
+          clientId,
+        },
+      },
+      tx
+    )
+  }
+
+  async enqueueEmailJobForInvitation(params: {
+    notificationId: string
+    organizationId: string
+    email: string
+    invitationId: string
+    token: string
+    type: string
+    clientId: string | null
+  }): Promise<void> {
+    const { notificationId, organizationId, email, invitationId, token, type, clientId } = params
+
+    await this.enqueueEmailJob({
+      notificationId,
+      organizationId,
+      to: email,
+      templateId: 'INVITATION_CREATED',
+      dynamicData: {
+        invitationId,
+        token,
+        type,
+        organizationId,
+        clientId,
+      },
+    })
+  }
 }
