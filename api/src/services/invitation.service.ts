@@ -77,8 +77,8 @@ export class InvitationService {
       organizationId: params.organizationId,
       email: params.email.toLowerCase().trim(),
       type: params.type,
-      clientId: params.clientId ?? null,
-      role: params.role ?? null,
+      clientId: params.clientId,
+      role: params.role,
       token,
       expiresAt,
       inviterUserId: params.inviterUserId,
@@ -86,7 +86,6 @@ export class InvitationService {
 
     const invitation = await this.invitationRepository.create(createInput)
 
-    // Dispatch notification and enqueue email (non-blocking)
     try {
       await this.dispatchInvitationNotification(invitation)
     } catch (error) {
@@ -95,7 +94,6 @@ export class InvitationService {
         invitationId: invitation.id,
         error: error instanceof Error ? error.message : String(error),
       })
-      // Do not throw - invitation creation should succeed even if email fails
     }
 
     return invitation
