@@ -193,7 +193,7 @@ model ReviewItem {
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
   @@index([clientId, createdAt])
-  @@index([organizationId, status, updatedAt])
+  @@index([organizationId, status, archivedAt, createdAt])
   @@index([organizationId, status, lastReminderSentAt])
   @@index([clientId, archivedAt])
   @@index([clientId, status])
@@ -266,6 +266,10 @@ model Notification {
   @@index([organizationId, createdAt])
   @@index([userId, readAt])
   @@index([organizationId, readAt])
+  @@index([userId, organizationId, createdAt])
+  @@index([userId, organizationId, readAt, createdAt])
+  @@index([reviewerId, organizationId, createdAt])
+  @@index([reviewerId, organizationId, readAt, createdAt])
   @@map("notifications")
 }
 
