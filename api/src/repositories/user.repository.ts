@@ -29,6 +29,7 @@ export interface IUserRepository {
   update(id: string, organizationId: string, data: UpdateUserInput): Promise<User>
   findById(id: string, organizationId: string): Promise<User | null>
   findByCognitoId(cognitoUserId: string): Promise<User | null>
+  findByEmailCaseInsensitive(email: string): Promise<User | null>
   listByOrganization(
     organizationId: string,
     pagination: CursorPaginationParams
@@ -37,6 +38,10 @@ export interface IUserRepository {
   countActiveByRole(
     organizationId: string,
     role: UserRole
+  ): Promise<number>
+  countActiveOwnersWithLock(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string
   ): Promise<number>
 }
 
@@ -81,6 +86,16 @@ export class UserRepository implements IUserRepository {
     return await prisma.user.findFirst({
       where: {
         cognitoUserId,
+        archivedAt: null,
+      },
+    })
+  }
+
+  async findByEmailCaseInsensitive(email: string): Promise<User | null> {
+    const normalizedEmail = email.toLowerCase().trim()
+    return await prisma.user.findFirst({
+      where: {
+        email: normalizedEmail,
         archivedAt: null,
       },
     })
@@ -135,5 +150,21 @@ export class UserRepository implements IUserRepository {
         archivedAt: null,
       },
     })
+  }
+
+  async countActiveOwnersWithLock(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string
+  ): Promise<number> {
+    const result = await tx.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE organization_id = ${organizationId}
+        AND role = 'OWNER'
+        AND archived_at IS NULL
+      FOR UPDATE
+    `
+    
+    return Number(result[0]?.count ?? 0)
   }
 }

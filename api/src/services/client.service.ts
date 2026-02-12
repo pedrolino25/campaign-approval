@@ -1,4 +1,4 @@
-import { type Client, type Invitation, InvitationType } from '@prisma/client'
+import { type Client, type Invitation } from '@prisma/client'
 
 import { prisma, ValidationError } from '../lib'
 import {
@@ -199,10 +199,6 @@ export class ClientService implements IClientService {
         throw new NotFoundError('Client not found')
       }
 
-      if (client.archivedAt !== null) {
-        return client
-      }
-
       const activeReviewItemsCount =
         await this.reviewItemRepository.countActiveByClient(
           clientId,
@@ -215,29 +211,41 @@ export class ClientService implements IClientService {
         )
       }
 
-      const archivedClient = await tx.client.update({
+      const result = await tx.client.updateMany({
         where: {
           id: clientId,
           organizationId: actor.organizationId,
+          archivedAt: null,
         },
         data: {
           archivedAt: new Date(),
         },
       })
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
-        {
-          clientId: archivedClient.id,
-          archived: true,
-        }
 
-      await this.activityLogService.log({
-        action: ActivityLogActionType.CLIENT_UPDATED,
-        organizationId: archivedClient.organizationId,
-        actor,
-        metadata,
-        tx,
+      const archivedClient = await tx.client.findUnique({
+        where: { id: clientId },
       })
+
+      if (!archivedClient) {
+        throw new NotFoundError('Client not found')
+      }
+
+      if (result.count > 0) {
+        const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
+          {
+            clientId: archivedClient.id,
+            archived: true,
+          }
+
+        await this.activityLogService.log({
+          action: ActivityLogActionType.CLIENT_UPDATED,
+          organizationId: archivedClient.organizationId,
+          actor,
+          metadata,
+          tx,
+        })
+      }
 
       return archivedClient
     })
@@ -246,54 +254,12 @@ export class ClientService implements IClientService {
   async inviteReviewer(params: InviteReviewerParams): Promise<Invitation> {
     const { clientId, email, actor } = params
 
-    if (actor.type !== ActorType.Internal) {
-      throw new ForbiddenError('Only internal users can invite reviewers')
-    }
-
-    const client = await this.clientRepository.findById(
+    // Delegate fully to InvitationService
+    return await this.invitationService.createReviewerInvitation({
       clientId,
-      actor.organizationId
-    )
-
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-
-    const existingLink = await this.clientReviewerRepository.findByClientIdAndEmail(
-      clientId,
-      email
-    )
-
-    if (existingLink) {
-      throw new BusinessRuleViolationError(
-        'Reviewer is already linked to this client'
-      )
-    }
-
-    const invitation = await this.invitationService.createInvitation({
-      organizationId: client.organizationId,
-      inviterUserId: actor.userId,
       email,
-      type: InvitationType.REVIEWER,
-      clientId,
+      actor,
     })
-
-    const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
-      invitedUserEmail: email,
-      clientId,
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await this.activityLogService.log({
-        action: ActivityLogActionType.USER_INVITED,
-        organizationId: client.organizationId,
-        actor,
-        metadata,
-        tx,
-      })
-    })
-
-    return invitation
   }
 
   async removeReviewer(params: RemoveReviewerParams): Promise<void> {

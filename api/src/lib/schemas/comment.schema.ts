@@ -14,12 +14,14 @@ export const AddCommentSchema = z
     content: nonEmptyString(1, 5000),
     xCoordinate: z
       .number()
-      .nonnegative('X coordinate must be non-negative')
+      .min(0, 'X coordinate must be between 0 and 1')
+      .max(1, 'X coordinate must be between 0 and 1')
       .finite('X coordinate must be finite')
       .optional(),
     yCoordinate: z
       .number()
-      .nonnegative('Y coordinate must be non-negative')
+      .min(0, 'Y coordinate must be between 0 and 1')
+      .max(1, 'Y coordinate must be between 0 and 1')
       .finite('Y coordinate must be finite')
       .optional(),
     timestampSeconds: z

@@ -193,7 +193,7 @@ model ReviewItem {
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
   @@index([clientId, createdAt])
-  @@index([organizationId, status, updatedAt])
+  @@index([organizationId, status, archivedAt, createdAt])
   @@index([organizationId, status, lastReminderSentAt])
   @@index([clientId, archivedAt])
   @@index([clientId, status])
@@ -247,6 +247,7 @@ model Notification {
   email          String?
   type           NotificationType
   payload        Json
+  idempotencyKey String?          @unique @map("idempotency_key")
   readAt         DateTime?        @map("read_at")
   sentAt         DateTime?        @map("sent_at")
   createdAt      DateTime         @default(now()) @map("created_at")
@@ -265,6 +266,10 @@ model Notification {
   @@index([organizationId, createdAt])
   @@index([userId, readAt])
   @@index([organizationId, readAt])
+  @@index([userId, organizationId, createdAt])
+  @@index([userId, organizationId, readAt, createdAt])
+  @@index([reviewerId, organizationId, createdAt])
+  @@index([reviewerId, organizationId, readAt, createdAt])
   @@map("notifications")
 }
 
@@ -311,6 +316,7 @@ model Invitation {
   inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
   client       Client?      @relation(fields: [clientId], references: [id])
 
+  @@unique([organizationId, clientId, email, type])
   @@index([organizationId])
   @@index([clientId])
   @@index([email])

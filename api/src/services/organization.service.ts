@@ -1,4 +1,4 @@
-import { type Organization, type User, type UserRole } from '@prisma/client'
+import { type Organization, type User,UserRole } from '@prisma/client'
 
 import { prisma, ValidationError } from '../lib'
 import {
@@ -6,6 +6,7 @@ import {
   type ActivityLogMetadataMap,
   type ActorContext,
   ActorType,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
 } from '../models'
@@ -284,63 +285,180 @@ export class OrganizationService implements IOrganizationService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      const targetUser = await this.userRepository.findById(
+      const targetUser = await this.loadAndValidateUserForRoleUpdate(
         targetUserId,
-        organizationId
+        organizationId,
+        newRole
       )
 
       if (!targetUser) {
         throw new NotFoundError('User not found')
       }
 
-      if (targetUser.archivedAt !== null) {
-        throw new ForbiddenError('Cannot change role of archived user')
-      }
-
-      if (targetUser.role === newRole) {
-        return targetUser
-      }
-
-      if (targetUser.role === 'OWNER' && newRole !== 'OWNER') {
-        const ownerCount = await this.userRepository.countActiveByRole(
-          organizationId,
-          'OWNER'
-        )
-
-        if (ownerCount <= 1) {
-          throw new ForbiddenError(
-            'Cannot demote the last OWNER from the organization'
-          )
-        }
-      }
-
       const oldRole = targetUser.role
-      const updated = await tx.user.update({
-        where: {
-          id: targetUserId,
-          organizationId,
-        },
-        data: {
-          role: newRole,
-        },
-      })
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_UPDATED] =
-        {
-          userId: targetUserId,
-          oldRole,
-          newRole,
-        }
-
-      await this.activityLogService.log({
-        action: ActivityLogActionType.USER_UPDATED,
-        organizationId,
-        actor,
-        metadata,
+      await this.validateOwnerDemotion(
         tx,
-      })
+        organizationId,
+        oldRole,
+        newRole
+      )
+
+      const updated = await this.updateUserRoleWithLocking(
+        tx,
+        targetUserId,
+        organizationId,
+        oldRole,
+        newRole
+      )
+
+      await this.verifyOwnerCountAfterDemotion(
+        tx,
+        organizationId,
+        oldRole,
+        newRole
+      )
+
+      await this.logUserRoleUpdate(
+        tx,
+        organizationId,
+        targetUserId,
+        oldRole,
+        newRole,
+        actor
+      )
 
       return updated
+    })
+  }
+
+  private async loadAndValidateUserForRoleUpdate(
+    targetUserId: string,
+    organizationId: string,
+    newRole: UserRole
+  ): Promise<User | null> {
+    const targetUser = await this.userRepository.findById(
+      targetUserId,
+      organizationId
+    )
+
+    if (!targetUser) {
+      return null
+    }
+
+    if (targetUser.archivedAt !== null) {
+      throw new ForbiddenError('Cannot change role of archived user')
+    }
+
+    if (targetUser.role === newRole) {
+      return targetUser
+    }
+
+    return targetUser
+  }
+
+  private async validateOwnerDemotion(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string,
+    oldRole: UserRole,
+    newRole: UserRole
+  ): Promise<void> {
+    if (oldRole === UserRole.OWNER && newRole !== UserRole.OWNER) {
+      const currentOwnerCount = await this.userRepository.countActiveOwnersWithLock(
+        tx,
+        organizationId
+      )
+      
+      if (currentOwnerCount <= 1) {
+        throw new ForbiddenError(
+          'Cannot demote the last OWNER from the organization'
+        )
+      }
+    }
+  }
+
+  private async updateUserRoleWithLocking(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    targetUserId: string,
+    organizationId: string,
+    oldRole: UserRole,
+    newRole: UserRole
+  ): Promise<User> {
+    const updateResult = await tx.user.updateMany({
+      where: {
+        id: targetUserId,
+        organizationId,
+        role: oldRole,
+        archivedAt: null,
+      },
+      data: {
+        role: newRole,
+      },
+    })
+
+    if (updateResult.count === 0) {
+      throw new ConflictError(
+        'User role has changed or user has been archived. Please refresh and try again.'
+      )
+    }
+
+    const updated = await tx.user.findUnique({
+      where: {
+        id: targetUserId,
+      },
+    })
+
+    if (!updated) {
+      throw new NotFoundError('User not found after update')
+    }
+
+    return updated
+  }
+
+  private async verifyOwnerCountAfterDemotion(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string,
+    oldRole: UserRole,
+    newRole: UserRole
+  ): Promise<void> {
+    if (oldRole === UserRole.OWNER && newRole !== UserRole.OWNER) {
+      const remainingOwners = await tx.user.count({
+        where: {
+          organizationId,
+          role: UserRole.OWNER,
+          archivedAt: null,
+        },
+      })
+
+      if (remainingOwners === 0) {
+        throw new ForbiddenError(
+          'Cannot demote the last OWNER from the organization'
+        )
+      }
+    }
+  }
+
+  private async logUserRoleUpdate(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string,
+    targetUserId: string,
+    oldRole: UserRole,
+    newRole: UserRole,
+    actor: ActorContext
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_UPDATED] =
+      {
+        userId: targetUserId,
+        oldRole,
+        newRole,
+      }
+
+    await this.activityLogService.log({
+      action: ActivityLogActionType.USER_UPDATED,
+      organizationId,
+      actor,
+      metadata,
+      tx,
     })
   }
 }

@@ -10,6 +10,7 @@ import {
   WorkflowAction,
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
+import { enrichReviewerActorFromOrganization } from '../lib/auth/utils/enrich-reviewer-actor'
 import {
   ApproveReviewSchema,
   CreateReviewItemSchema,
@@ -27,6 +28,7 @@ import {
 import {
   ActivityLogRepository,
   AttachmentRepository,
+  ClientReviewerRepository,
   ReviewItemRepository,
 } from '../repositories'
 import {
@@ -112,19 +114,29 @@ const handleGetReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
-  const actor = request.auth.actor
-  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
-
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
-  }
-
+  let actor = request.auth.actor
   const reviewItemId = validated.params.id!
   const repository = new ReviewItemRepository()
-  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+  
+  let reviewItem: Awaited<ReturnType<typeof repository.findByIdScoped>> | null
+  
+  if (actor.type === ActorType.Internal) {
+    reviewItem = await repository.findByIdScoped(reviewItemId, actor.organizationId)
+  } else {
+    reviewItem = await repository.findById(reviewItemId)
+  }
 
   if (!reviewItem) {
     throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer) {
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      reviewItem.organizationId,
+      clientReviewerRepository
+    )
   }
 
   // Validate scoping
@@ -157,15 +169,32 @@ const handleSendReviewItem = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(SendForReviewSchema)(validatedParams)
   
-  const actor = request.auth.actor
+  let actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
+
+  const reviewItemRepository = new ReviewItemRepository()
+  
+  // For reviewers, enrich actor from resource context
+  if (actor.type === ActorType.Reviewer) {
+    // Load reviewItem to get organizationId
+    const reviewItem = await reviewItemRepository.findById(reviewItemId)
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+    
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      reviewItem.organizationId,
+      clientReviewerRepository
+    )
+  }
 
   authorizeOrThrow(actor, Action.SEND_FOR_REVIEW, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
-  const reviewItemRepository = new ReviewItemRepository()
   const attachmentRepository = new AttachmentRepository()
   const workflowService = new ReviewWorkflowService(
     reviewItemRepository,
@@ -191,15 +220,32 @@ const handleApproveReviewItem = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(ApproveReviewSchema)(validatedParams)
   
-  const actor = request.auth.actor
+  let actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
+
+  const reviewItemRepository = new ReviewItemRepository()
+  
+  // For reviewers, enrich actor from resource context
+  if (actor.type === ActorType.Reviewer) {
+    // Load reviewItem to get organizationId
+    const reviewItem = await reviewItemRepository.findById(reviewItemId)
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+    
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      reviewItem.organizationId,
+      clientReviewerRepository
+    )
+  }
 
   authorizeOrThrow(actor, Action.APPROVE_REVIEW_ITEM, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
-  const reviewItemRepository = new ReviewItemRepository()
   const attachmentRepository = new AttachmentRepository()
   const workflowService = new ReviewWorkflowService(
     reviewItemRepository,
@@ -225,15 +271,32 @@ const handleRequestChanges = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(RequestChangesSchema)(validatedParams)
   
-  const actor = request.auth.actor
+  let actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
+
+  const reviewItemRepository = new ReviewItemRepository()
+  
+  // For reviewers, enrich actor from resource context
+  if (actor.type === ActorType.Reviewer) {
+    // Load reviewItem to get organizationId
+    const reviewItem = await reviewItemRepository.findById(reviewItemId)
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+    
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      reviewItem.organizationId,
+      clientReviewerRepository
+    )
+  }
 
   authorizeOrThrow(actor, Action.REQUEST_CHANGES, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
-  const reviewItemRepository = new ReviewItemRepository()
   const attachmentRepository = new AttachmentRepository()
   const workflowService = new ReviewWorkflowService(
     reviewItemRepository,

@@ -1,7 +1,7 @@
 import { type ReviewItem, ReviewStatus } from '@prisma/client'
 
 import { prisma } from '../lib'
-import { NotFoundError } from '../models'
+import { ConflictError, NotFoundError } from '../models'
 import { ActivityLogActionType, type ActivityLogMetadataMap } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
 import { ClientRepository } from '../repositories'
@@ -113,15 +113,20 @@ export class ReviewItemService implements IReviewItemService {
       }
 
       // Soft delete (do not update status - archive is not a workflow action)
-      await tx.reviewItem.update({
+      const result = await tx.reviewItem.updateMany({
         where: {
           id: reviewItemId,
           organizationId,
+          archivedAt: null,
         },
         data: {
           archivedAt: new Date(),
         },
       })
+
+      if (result.count === 0) {
+        throw new ConflictError('Review item has already been archived')
+      }
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.REVIEW_ARCHIVED] = {
         reviewItemId: reviewItem.id,

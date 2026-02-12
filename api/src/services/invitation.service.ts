@@ -1,19 +1,25 @@
-import { type Invitation, type InvitationRole, InvitationType, type Reviewer, type User } from '@prisma/client'
+import { type Invitation, type InvitationRole, InvitationType, type Notification, Prisma, type Reviewer, type User } from '@prisma/client'
 import { randomBytes } from 'crypto'
 
 import { logger, prisma } from '../lib'
 import {
   ActivityLogActionType,
+  type ActivityLogMetadataMap,
   type ActorContext,
   ActorType,
   BusinessRuleViolationError,
+  ConflictError,
+  ForbiddenError,
   InternalError,
   InvariantViolationError,
   NotFoundError,
 } from '../models'
 import {
   ClientRepository,
+  ClientReviewerRepository,
   InvitationRepository,
+  ReviewerRepository,
+  UserRepository,
 } from '../repositories'
 import type { CreateInvitationInput } from '../repositories/invitation.repository'
 import { ActivityLogService } from './activity-log.service'
@@ -42,11 +48,17 @@ export interface AcceptInvitationResult {
 export class InvitationService {
   private readonly invitationRepository: InvitationRepository
   private readonly clientRepository: ClientRepository
+  private readonly clientReviewerRepository: ClientReviewerRepository
+  private readonly userRepository: UserRepository
+  private readonly reviewerRepository: ReviewerRepository
   private readonly activityLogService: ActivityLogService
 
   constructor() {
     this.invitationRepository = new InvitationRepository()
     this.clientRepository = new ClientRepository()
+    this.clientReviewerRepository = new ClientReviewerRepository()
+    this.userRepository = new UserRepository()
+    this.reviewerRepository = new ReviewerRepository()
     this.activityLogService = new ActivityLogService()
   }
 
@@ -98,6 +110,203 @@ export class InvitationService {
     }
 
     return invitation
+  }
+
+  async createReviewerInvitation(params: {
+    clientId: string
+    email: string
+    actor: ActorContext
+  }): Promise<Invitation> {
+    const { clientId, email, actor } = params
+
+    if (actor.type !== ActorType.Internal) {
+      throw new ForbiddenError('Only internal users can invite reviewers')
+    }
+
+    const organizationId = actor.organizationId
+
+    await this.validateReviewerInvitationPreconditions(
+      clientId,
+      email,
+      organizationId
+    )
+
+    const token = await this.generateToken()
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7)
+
+    let notificationId: string | undefined
+
+    try {
+      const invitation = await prisma.$transaction(async (tx) => {
+        const createdInvitation = await this.createInvitationInTransaction(
+          organizationId,
+          email,
+          clientId,
+          token,
+          expiresAt,
+          actor.userId,
+          tx
+        )
+
+        await this.createActivityLogInTransaction(
+          organizationId,
+          email,
+          clientId,
+          actor,
+          tx
+        )
+
+        const notification = await this.createNotificationInTransaction(
+          organizationId,
+          createdInvitation,
+          tx
+        )
+
+        notificationId = notification.id
+
+        return createdInvitation
+      })
+
+      await this.enqueueInvitationEmail(invitation, notificationId, organizationId)
+
+      return invitation
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictError(
+          'An invitation for this email and client already exists'
+        )
+      }
+      throw error
+    }
+  }
+
+  private async validateReviewerInvitationPreconditions(
+    clientId: string,
+    email: string,
+    organizationId: string
+  ): Promise<void> {
+    const client = await this.clientRepository.findById(clientId, organizationId)
+
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+
+    const existingLink = await this.clientReviewerRepository.findByClientIdAndEmail(
+      clientId,
+      email
+    )
+
+    if (existingLink) {
+      throw new BusinessRuleViolationError(
+        'Reviewer is already linked to this client'
+      )
+    }
+
+    await this.validateEmailNotExists(email, InvitationType.REVIEWER)
+  }
+
+  private async createInvitationInTransaction(
+    organizationId: string,
+    email: string,
+    clientId: string,
+    token: string,
+    expiresAt: Date,
+    inviterUserId: string,
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+  ): Promise<Invitation> {
+    const createInput: CreateInvitationInput = {
+      organizationId,
+      email: email.toLowerCase().trim(),
+      type: InvitationType.REVIEWER,
+      clientId,
+      token,
+      expiresAt,
+      inviterUserId,
+    }
+
+    return await this.invitationRepository.create(createInput, tx)
+  }
+
+  private async createActivityLogInTransaction(
+    organizationId: string,
+    email: string,
+    clientId: string,
+    actor: ActorContext,
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
+      invitedUserEmail: email,
+      clientId,
+    }
+
+    await this.activityLogService.log({
+      action: ActivityLogActionType.USER_INVITED,
+      organizationId,
+      actor,
+      metadata,
+      tx,
+    })
+  }
+
+  private async createNotificationInTransaction(
+    organizationId: string,
+    invitation: Invitation,
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+  ): Promise<Notification> {
+    const notificationService = new NotificationService()
+    return await notificationService.createForInvitation({
+      organizationId,
+      email: invitation.email,
+      invitationId: invitation.id,
+      token: invitation.token,
+      type: invitation.type,
+      clientId: invitation.clientId ?? null,
+      tx,
+    })
+  }
+
+  private async enqueueInvitationEmail(
+    invitation: Invitation,
+    notificationId: string | undefined,
+    organizationId: string
+  ): Promise<void> {
+    if (!notificationId) {
+      logger.warn({
+        message: 'Notification ID not available for enqueueing',
+        invitationId: invitation.id,
+      })
+      return
+    }
+
+    try {
+      const notificationService = new NotificationService()
+      await notificationService.enqueueEmailJobForInvitation({
+        notificationId,
+        organizationId,
+        email: invitation.email,
+        invitationId: invitation.id,
+        token: invitation.token,
+        type: invitation.type,
+        clientId: invitation.clientId ?? null,
+      })
+
+      logger.info({
+        message: 'Invitation notification created and enqueued',
+        invitationId: invitation.id,
+        notificationId,
+      })
+    } catch (error) {
+      logger.error({
+        message: 'Failed to enqueue invitation notification',
+        invitationId: invitation.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      // Don't throw - invitation is already created
+    }
   }
 
   async generateToken(): Promise<string> {
@@ -348,14 +557,19 @@ export class InvitationService {
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     invitationId: string
   ): Promise<void> {
-    await tx.invitation.update({
+    const result = await tx.invitation.updateMany({
       where: {
         id: invitationId,
+        acceptedAt: null,
       },
       data: {
         acceptedAt: new Date(),
       },
     })
+
+    if (result.count === 0) {
+      throw new ConflictError('Invitation has already been accepted')
+    }
   }
 
   private async createReviewerActivityLog(
@@ -428,15 +642,8 @@ export class InvitationService {
     email: string,
     type: InvitationType
   ): Promise<void> {
-    const normalizedEmail = email.toLowerCase().trim()
-
     if (type === InvitationType.INTERNAL_USER) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email: normalizedEmail,
-          archivedAt: null,
-        },
-      })
+      const existingUser = await this.userRepository.findByEmailCaseInsensitive(email)
 
       if (existingUser) {
         throw new InvariantViolationError(
@@ -444,12 +651,7 @@ export class InvitationService {
         )
       }
     } else if (type === InvitationType.REVIEWER) {
-      const existingReviewer = await prisma.reviewer.findFirst({
-        where: {
-          email: normalizedEmail,
-          archivedAt: null,
-        },
-      })
+      const existingReviewer = await this.reviewerRepository.findByEmail(email)
 
       if (existingReviewer) {
         throw new InvariantViolationError(

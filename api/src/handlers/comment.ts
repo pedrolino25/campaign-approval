@@ -9,6 +9,7 @@ import {
   validateQuery,
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
+import { enrichReviewerActorFromOrganization } from '../lib/auth/utils/enrich-reviewer-actor'
 import {
   AddCommentSchema,
   CommentParamsSchema,
@@ -21,7 +22,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { CommentRepository, ReviewItemRepository } from '../repositories'
+import { ClientReviewerRepository, CommentRepository, ReviewItemRepository } from '../repositories'
 import { CommentService } from '../services'
 
 const handleGetComments = async (
@@ -65,15 +66,30 @@ const handlePostComment = async (
   const withParams = validateParams(CommentParamsSchema)(request)
   const validated = validateBody(AddCommentSchema)(withParams)
   
-  const actor = request.auth.actor
+  let actor = request.auth.actor
   const reviewItemId = validated.params.id!
+
+  const reviewItemRepository = new ReviewItemRepository()
+  
+  if (actor.type === ActorType.Reviewer) {
+    const reviewItem = await reviewItemRepository.findById(reviewItemId)
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+    
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      reviewItem.organizationId,
+      clientReviewerRepository
+    )
+  }
 
   authorizeOrThrow(actor, Action.ADD_COMMENT, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
   const commentRepository = new CommentRepository()
-  const reviewItemRepository = new ReviewItemRepository()
   const commentService = new CommentService(commentRepository, reviewItemRepository)
 
   const comment = await commentService.addComment({
