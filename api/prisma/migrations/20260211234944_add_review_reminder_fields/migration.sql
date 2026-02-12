@@ -12,13 +12,15 @@ ALTER TABLE "review_items" ADD COLUMN "last_reminder_sent_at" TIMESTAMP(3);
 CREATE INDEX "organizations_reminder_enabled_idx" ON "organizations"("reminder_enabled");
 
 -- CreateIndex
-CREATE INDEX "review_items_updated_at_idx" ON "review_items"("updated_at");
+-- Note: Using "updatedAt" (camelCase) because column rename happens in later migration
+CREATE INDEX "review_items_updatedAt_idx" ON "review_items"("updatedAt");
 
 -- CreateIndex
 CREATE INDEX "review_items_last_reminder_sent_at_idx" ON "review_items"("last_reminder_sent_at");
 
 -- CreateIndex
-CREATE INDEX "review_items_organization_id_status_updated_at_idx" ON "review_items"("organization_id", "status", "updated_at");
+-- Note: Using "updatedAt" (camelCase) because column rename happens in later migration
+CREATE INDEX "review_items_organization_id_status_updatedAt_idx" ON "review_items"("organization_id", "status", "updatedAt");
 
 -- CreateIndex
 CREATE INDEX "review_items_organization_id_status_last_reminder_sent_at_idx" ON "review_items"("organization_id", "status", "last_reminder_sent_at");
