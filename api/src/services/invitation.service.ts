@@ -166,7 +166,7 @@ export class InvitationService {
       )
     } else {
       throw new InvariantViolationError(
-        `Unknown invitation type: ${invitation.type}`
+        `Unknown invitation type: ${String(invitation.type)}`
       )
     }
   }
