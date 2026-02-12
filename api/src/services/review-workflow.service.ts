@@ -218,37 +218,50 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     shouldUpdateStatus: boolean,
     expectedVersion: number
   ): Promise<ReviewItem> {
+    if (!shouldIncrementVersion && !shouldUpdateStatus) {
+      return reviewItem
+    }
+
     const where = {
       id: reviewItem.id,
       organizationId: reviewItem.organizationId,
       version: expectedVersion,
+      archivedAt: null,
     }
 
-    if (shouldIncrementVersion && shouldUpdateStatus) {
-      return await tx.reviewItem.update({
-        where,
-        data: {
-          status: newStatus,
-          version: { increment: 1 },
-        },
-      })
+    const data: {
+      status?: ReviewStatus
+      version?: { increment: number }
+    } = {}
+
+    if (shouldUpdateStatus) {
+      data.status = newStatus
     }
 
     if (shouldIncrementVersion) {
-      return await tx.reviewItem.update({
-        where,
-        data: { version: { increment: 1 } },
-      })
+      data.version = { increment: 1 }
     }
 
-    if (shouldUpdateStatus) {
-      return await tx.reviewItem.update({
-        where,
-        data: { status: newStatus },
-      })
+    const result = await tx.reviewItem.updateMany({
+      where,
+      data,
+    })
+
+    if (result.count === 0) {
+      throw new ConflictError(
+        'Review item version mismatch or item has been archived. Please refresh and try again.'
+      )
     }
 
-    return reviewItem
+    const updated = await tx.reviewItem.findUnique({
+      where: { id: reviewItem.id },
+    })
+
+    if (!updated) {
+      throw new NotFoundError('Review item not found after update')
+    }
+
+    return updated
   }
 
   private async createActivityLog(

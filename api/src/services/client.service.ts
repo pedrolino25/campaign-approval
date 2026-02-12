@@ -199,10 +199,6 @@ export class ClientService implements IClientService {
         throw new NotFoundError('Client not found')
       }
 
-      if (client.archivedAt !== null) {
-        return client
-      }
-
       const activeReviewItemsCount =
         await this.reviewItemRepository.countActiveByClient(
           clientId,
@@ -215,29 +211,41 @@ export class ClientService implements IClientService {
         )
       }
 
-      const archivedClient = await tx.client.update({
+      const result = await tx.client.updateMany({
         where: {
           id: clientId,
           organizationId: actor.organizationId,
+          archivedAt: null,
         },
         data: {
           archivedAt: new Date(),
         },
       })
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
-        {
-          clientId: archivedClient.id,
-          archived: true,
-        }
 
-      await this.activityLogService.log({
-        action: ActivityLogActionType.CLIENT_UPDATED,
-        organizationId: archivedClient.organizationId,
-        actor,
-        metadata,
-        tx,
+      const archivedClient = await tx.client.findUnique({
+        where: { id: clientId },
       })
+
+      if (!archivedClient) {
+        throw new NotFoundError('Client not found')
+      }
+
+      if (result.count > 0) {
+        const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
+          {
+            clientId: archivedClient.id,
+            archived: true,
+          }
+
+        await this.activityLogService.log({
+          action: ActivityLogActionType.CLIENT_UPDATED,
+          organizationId: archivedClient.organizationId,
+          actor,
+          metadata,
+          tx,
+        })
+      }
 
       return archivedClient
     })

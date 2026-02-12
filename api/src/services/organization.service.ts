@@ -1,4 +1,4 @@
-import { type Organization, type User, type UserRole } from '@prisma/client'
+import { type Organization, type User,UserRole } from '@prisma/client'
 
 import { prisma, ValidationError } from '../lib'
 import {
@@ -301,20 +301,8 @@ export class OrganizationService implements IOrganizationService {
         return targetUser
       }
 
-      if (targetUser.role === 'OWNER' && newRole !== 'OWNER') {
-        const ownerCount = await this.userRepository.countActiveByRole(
-          organizationId,
-          'OWNER'
-        )
-
-        if (ownerCount <= 1) {
-          throw new ForbiddenError(
-            'Cannot demote the last OWNER from the organization'
-          )
-        }
-      }
-
       const oldRole = targetUser.role
+
       const updated = await tx.user.update({
         where: {
           id: targetUserId,
@@ -324,6 +312,22 @@ export class OrganizationService implements IOrganizationService {
           role: newRole,
         },
       })
+
+      if (oldRole === UserRole.OWNER && newRole !== UserRole.OWNER) {
+        const remainingOwners = await tx.user.count({
+          where: {
+            organizationId,
+            role: UserRole.OWNER,
+            archivedAt: null,
+          },
+        })
+
+        if (remainingOwners === 0) {
+          throw new ForbiddenError(
+            'Cannot demote the last OWNER from the organization'
+          )
+        }
+      }
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_UPDATED] =
         {

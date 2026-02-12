@@ -247,6 +247,7 @@ model Notification {
   email          String?
   type           NotificationType
   payload        Json
+  idempotencyKey String?          @unique @map("idempotency_key")
   readAt         DateTime?        @map("read_at")
   sentAt         DateTime?        @map("sent_at")
   createdAt      DateTime         @default(now()) @map("created_at")
@@ -311,6 +312,7 @@ model Invitation {
   inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
   client       Client?      @relation(fields: [clientId], references: [id])
 
+  @@unique([organizationId, clientId, email, type])
   @@index([organizationId])
   @@index([clientId])
   @@index([email])

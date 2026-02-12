@@ -210,17 +210,21 @@ export class NotificationService {
     }
 
     const recipientId = recipient.userId || recipient.reviewerId || recipient.email || ''
-    const idempotencyKey = this.generateIdempotencyKey(type, reviewItem.id, recipientId)
+    const idempotencyKey = this.generateIdempotencyKey(
+      reviewItem.organizationId,
+      type,
+      reviewItem.id,
+      recipientId
+    )
 
-    if (await this.hasExistingNotification(type, reviewItem, recipient, tx)) {
-      logger.info({
-        message: 'Notification already exists, skipping duplicate',
-        idempotencyKey,
-      })
-      return
-    }
+    const notification = await this.upsertNotification(
+      reviewItem,
+      recipient,
+      type,
+      idempotencyKey,
+      tx
+    )
 
-    const notification = await this.createNotification(reviewItem, recipient, type, tx)
     await this.sendEmailIfNeeded(notification, recipient, reviewItem, type)
   }
 
@@ -228,28 +232,11 @@ export class NotificationService {
     return !!(recipient.userId || recipient.reviewerId || recipient.email)
   }
 
-  private async hasExistingNotification(
-    type: WorkflowEventType,
-    reviewItem: { id: string; organizationId: string },
-    recipient: Recipient,
-    tx: Prisma.TransactionClient
-  ): Promise<boolean> {
-    const existing = await this.findExistingNotification(
-      type,
-      reviewItem.organizationId,
-      recipient.userId,
-      recipient.reviewerId,
-      recipient.email,
-      reviewItem.id,
-      tx
-    )
-    return !!existing
-  }
-
-  private async createNotification(
+  private async upsertNotification(
     reviewItem: { id: string; title: string; organizationId: string },
     recipient: Recipient,
     type: WorkflowEventType,
+    idempotencyKey: string,
     tx: Prisma.TransactionClient
   ): Promise<Notification> {
     this.validateRecipientInvariant(recipient)
@@ -265,17 +252,23 @@ export class NotificationService {
       eventType: type,
     }
 
-    return await this.notificationRepository.create(
-      {
+    const notificationType = this.mapEventTypeToNotificationType(type)
+
+    return await tx.notification.upsert({
+      where: {
+        idempotencyKey,
+      },
+      create: {
         organizationId: reviewItem.organizationId,
         userId: recipient.userId,
         reviewerId: recipient.reviewerId,
         email: recipient.email,
-        type: this.mapEventTypeToNotificationType(type),
+        type: notificationType,
         payload: notificationPayload,
+        idempotencyKey,
       },
-      tx
-    )
+      update: {},
+    })
   }
 
   private validateRecipientInvariant(recipient: Recipient): void {
@@ -368,40 +361,6 @@ export class NotificationService {
     return null
   }
 
-  private async findExistingNotification(
-    eventType: WorkflowEventType,
-    organizationId: string,
-    userId: string | undefined,
-    reviewerId: string | undefined,
-    email: string | undefined,
-    reviewItemId: string,
-    tx: Prisma.TransactionClient
-  ): Promise<Notification | null> {
-    const where: Prisma.NotificationWhereInput = {
-      organizationId,
-      type: this.mapEventTypeToNotificationType(eventType),
-      payload: {
-        path: ['reviewItemId'],
-        equals: reviewItemId,
-      },
-    }
-
-    if (userId) {
-      where.userId = userId
-    } else if (reviewerId) {
-      where.reviewerId = reviewerId
-    } else if (email) {
-      where.email = email
-    }
-
-    const notifications = await tx.notification.findMany({
-      where,
-      take: 1,
-    })
-
-    return notifications[0] || null
-  }
-
   private async getEmailForUserId(
     userId: string,
     organizationId: string
@@ -416,11 +375,12 @@ export class NotificationService {
   }
 
   private generateIdempotencyKey(
+    organizationId: string,
     eventType: WorkflowEventType,
     reviewItemId: string,
     recipientId: string
   ): string {
-    return `${eventType}:${reviewItemId}:${recipientId}`
+    return `${organizationId}:${eventType}:${reviewItemId}:${recipientId}`
   }
 
   private mapEventTypeToNotificationType(

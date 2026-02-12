@@ -1,4 +1,4 @@
-import { type Invitation, type InvitationRole, InvitationType, type Notification, type Reviewer, type User } from '@prisma/client'
+import { type Invitation, type InvitationRole, InvitationType, type Notification, Prisma, type Reviewer, type User } from '@prisma/client'
 import { randomBytes } from 'crypto'
 
 import { logger, prisma } from '../lib'
@@ -8,6 +8,7 @@ import {
   type ActorContext,
   ActorType,
   BusinessRuleViolationError,
+  ConflictError,
   ForbiddenError,
   InternalError,
   InvariantViolationError,
@@ -136,39 +137,51 @@ export class InvitationService {
 
     let notificationId: string | undefined
 
-    const invitation = await prisma.$transaction(async (tx) => {
-      const createdInvitation = await this.createInvitationInTransaction(
-        organizationId,
-        email,
-        clientId,
-        token,
-        expiresAt,
-        actor.userId,
-        tx
-      )
+    try {
+      const invitation = await prisma.$transaction(async (tx) => {
+        const createdInvitation = await this.createInvitationInTransaction(
+          organizationId,
+          email,
+          clientId,
+          token,
+          expiresAt,
+          actor.userId,
+          tx
+        )
 
-      await this.createActivityLogInTransaction(
-        organizationId,
-        email,
-        clientId,
-        actor,
-        tx
-      )
+        await this.createActivityLogInTransaction(
+          organizationId,
+          email,
+          clientId,
+          actor,
+          tx
+        )
 
-      const notification = await this.createNotificationInTransaction(
-        organizationId,
-        createdInvitation,
-        tx
-      )
+        const notification = await this.createNotificationInTransaction(
+          organizationId,
+          createdInvitation,
+          tx
+        )
 
-      notificationId = notification.id
+        notificationId = notification.id
 
-      return createdInvitation
-    })
+        return createdInvitation
+      })
 
-    await this.enqueueInvitationEmail(invitation, notificationId, organizationId)
+      await this.enqueueInvitationEmail(invitation, notificationId, organizationId)
 
-    return invitation
+      return invitation
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictError(
+          'An invitation for this email and client already exists'
+        )
+      }
+      throw error
+    }
   }
 
   private async validateReviewerInvitationPreconditions(
@@ -544,14 +557,19 @@ export class InvitationService {
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     invitationId: string
   ): Promise<void> {
-    await tx.invitation.update({
+    const result = await tx.invitation.updateMany({
       where: {
         id: invitationId,
+        acceptedAt: null,
       },
       data: {
         acceptedAt: new Date(),
       },
     })
+
+    if (result.count === 0) {
+      throw new ConflictError('Invitation has already been accepted')
+    }
   }
 
   private async createReviewerActivityLog(
