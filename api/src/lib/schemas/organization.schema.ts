@@ -15,3 +15,19 @@ export const UpdateOrganizationSettingsSchema = z
 export type UpdateOrganizationSettingsRequest = z.infer<
   typeof UpdateOrganizationSettingsSchema
 >
+
+export const InviteInternalUserSchema = z
+  .object({
+    email: z
+      .string()
+      .email('Invalid email format')
+      .max(255, 'Email must be at most 255 characters')
+      .trim()
+      .toLowerCase(),
+    role: z.enum(['OWNER', 'ADMIN', 'MEMBER'], {
+      errorMap: () => ({ message: 'Role must be OWNER, ADMIN, or MEMBER' }),
+    }),
+  })
+  .strict()
+
+export type InviteInternalUserRequest = z.infer<typeof InviteInternalUserSchema>

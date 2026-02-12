@@ -39,6 +39,8 @@ export {
   CompleteReviewerOnboardingSchema,
 } from './onboarding.schema'
 export {
+  type InviteInternalUserRequest,
+  InviteInternalUserSchema,
   type UpdateOrganizationSettingsRequest,
   UpdateOrganizationSettingsSchema,
 } from './organization.schema'
