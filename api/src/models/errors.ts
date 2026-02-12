@@ -70,3 +70,9 @@ export class InvariantViolationError extends DomainError {
     super(ErrorCode.INVARIANT_VIOLATION, message, 400)
   }
 }
+
+export class InternalError extends DomainError {
+  constructor(message: string) {
+    super(ErrorCode.INTERNAL_ERROR, message, 500)
+  }
+}

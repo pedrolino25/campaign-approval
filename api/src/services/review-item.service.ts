@@ -4,6 +4,7 @@ import { prisma } from '../lib'
 import { NotFoundError } from '../models'
 import { ActivityLogActionType, type ActivityLogMetadataMap } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
+import { ClientRepository } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 
 export type CreateReviewItemInput = {
@@ -138,15 +139,13 @@ export class ReviewItemService implements IReviewItemService {
   }
 
   private async getOrganizationIdFromClient(clientId: string): Promise<string> {
-    const client = await prisma.client.findUnique({
-      where: { id: clientId },
-      select: { organizationId: true },
-    })
+    const clientRepository = new ClientRepository()
+    const organizationId = await clientRepository.getOrganizationId(clientId)
 
-    if (!client) {
+    if (!organizationId) {
       throw new NotFoundError('Client not found')
     }
 
-    return client.organizationId
+    return organizationId
   }
 }

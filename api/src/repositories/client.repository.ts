@@ -122,4 +122,12 @@ export class ClientRepository implements IClientRepository {
       },
     })
   }
+
+  async getOrganizationId(clientId: string): Promise<string | null> {
+    const client = await prisma.client.findUnique({
+      where: { id: clientId },
+      select: { organizationId: true },
+    })
+    return client?.organizationId ?? null
+  }
 }
