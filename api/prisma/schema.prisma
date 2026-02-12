@@ -64,8 +64,8 @@ model Organization {
   name      String
   reminderEnabled Boolean @default(true) @map("reminder_enabled")
   reminderIntervalDays Int @default(3) @map("reminder_interval_days")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   users         User[]
   clients       Client[]
@@ -84,8 +84,8 @@ model User {
   organizationId String   @map("organization_id")
   email         String
   role          UserRole
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
   archivedAt    DateTime? @map("archived_at")
 
   organization     Organization      @relation(fields: [organizationId], references: [id])
@@ -105,8 +105,8 @@ model Client {
   id            String    @id @default(uuid())
   organizationId String   @map("organization_id")
   name          String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
   archivedAt    DateTime? @map("archived_at")
 
   organization   Organization      @relation(fields: [organizationId], references: [id])
@@ -122,7 +122,7 @@ model ClientReviewer {
   clientId      String    @map("client_id")
   cognitoUserId String    @map("cognito_user_id")
   email         String
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now()) @map("created_at")
   archivedAt    DateTime? @map("archived_at")
 
   client Client @relation(fields: [clientId], references: [id])
@@ -143,8 +143,8 @@ model ReviewItem {
   status        ReviewStatus
   version       Int          @default(1)
   createdByUserId String     @map("created_by_user_id")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
   archivedAt    DateTime?    @map("archived_at")
   lastReminderSentAt DateTime? @map("last_reminder_sent_at")
 
@@ -176,7 +176,7 @@ model Attachment {
   fileSize      Int      @map("file_size")
   s3Key         String   @map("s3_key")
   version       Int
-  createdAt     DateTime @default(now())
+  createdAt     DateTime @default(now()) @map("created_at")
 
   reviewItem ReviewItem @relation(fields: [reviewItemId], references: [id])
 
@@ -194,7 +194,7 @@ model Comment {
   xCoordinate     Float?            @map("x_coordinate")
   yCoordinate     Float?            @map("y_coordinate")
   timestampSeconds Float?           @map("timestamp_seconds")
-  createdAt       DateTime          @default(now())
+  createdAt       DateTime          @default(now()) @map("created_at")
 
   reviewItem ReviewItem? @relation(fields: [reviewItemId], references: [id])
   author     User?       @relation(fields: [authorUserId], references: [id])
@@ -212,7 +212,7 @@ model Notification {
   payload       Json
   readAt        DateTime?       @map("read_at")
   sentAt        DateTime?       @map("sent_at")
-  createdAt     DateTime        @default(now())
+  createdAt     DateTime        @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User?        @relation(fields: [userId], references: [id])
@@ -233,7 +233,7 @@ model ActivityLog {
   actorUserId   String?           @map("actor_user_id")
   action        ActivityLogAction
   metadata      Json
-  createdAt     DateTime          @default(now())
+  createdAt     DateTime          @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   reviewItem   ReviewItem?  @relation(fields: [reviewItemId], references: [id])
@@ -256,7 +256,7 @@ model Invitation {
   expiresAt     DateTime       @map("expires_at")
   acceptedAt    DateTime?      @map("accepted_at")
   inviterUserId String?       @map("inviter_user_id")
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime       @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
