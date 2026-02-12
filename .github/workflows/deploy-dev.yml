@@ -47,7 +47,17 @@ jobs:
           OUTPUT=$(npx prisma migrate dev --name "$MIGRATION_NAME" --create-only 2>&1)
           EXIT_CODE=$?
           if [ $EXIT_CODE -eq 0 ]; then
-            echo "Migration generated: $MIGRATION_NAME"
+            # Check if the migration is empty
+            MIGRATION_FILE=$(find prisma/migrations -name "$MIGRATION_NAME" -type d | head -1)/migration.sql
+            if [ -f "$MIGRATION_FILE" ]; then
+              if grep -q "This is an empty migration" "$MIGRATION_FILE" || [ ! -s "$MIGRATION_FILE" ] || [ "$(wc -l < "$MIGRATION_FILE" | tr -d ' ')" -le 1 ]; then
+                echo "Empty migration detected, removing: $MIGRATION_NAME"
+                rm -rf "$(dirname "$MIGRATION_FILE")"
+                echo "No schema changes detected, skipping migration generation"
+              else
+                echo "Migration generated: $MIGRATION_NAME"
+              fi
+            fi
           elif echo "$OUTPUT" | grep -q "No schema changes"; then
             echo "No schema changes detected, skipping migration generation"
           else
@@ -68,12 +78,22 @@ jobs:
       - name: Commit migration files
         working-directory: api
         run: |
+          # Remove any empty migrations before committing
+          find prisma/migrations -name "migration.sql" -type f | while read file; do
+            if grep -q "This is an empty migration" "$file" 2>/dev/null; then
+              echo "Removing empty migration: $(dirname "$file")"
+              rm -rf "$(dirname "$file")"
+            fi
+          done
+          # Only commit if there are actual migration changes
           if [ -n "$(git status --porcelain prisma/migrations)" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
             git add prisma/migrations/
             git commit -m "chore: auto-generate Prisma migration [skip ci]"
             git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          else
+            echo "No migration changes to commit"
           fi
 
       - name: Build Lambda artifact
