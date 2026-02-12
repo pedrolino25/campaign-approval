@@ -87,6 +87,7 @@ model User {
   id             String    @id @default(uuid())
   cognitoUserId  String    @unique @map("cognito_user_id")
   organizationId String    @map("organization_id")
+  name           String?
   email          String
   role           UserRole
   createdAt      DateTime  @default(now()) @map("created_at")

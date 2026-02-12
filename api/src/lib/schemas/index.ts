@@ -25,6 +25,12 @@ export {
   CommentParamsSchema,
 } from './comment.schema'
 export {
+  type CompleteInternalOnboardingRequest,
+  CompleteInternalOnboardingSchema,
+  type CompleteReviewerOnboardingRequest,
+  CompleteReviewerOnboardingSchema,
+} from './onboarding.schema'
+export {
   type UpdateOrganizationSettingsRequest,
   UpdateOrganizationSettingsSchema,
 } from './organization.schema'

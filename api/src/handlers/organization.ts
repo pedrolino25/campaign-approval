@@ -9,16 +9,28 @@ import {
 } from '../lib'
 import { can } from '../lib/auth'
 import {
+  CompleteInternalOnboardingSchema,
+  CompleteReviewerOnboardingSchema,
   CursorPaginationQuerySchema,
   UpdateOrganizationSettingsSchema,
 } from '../lib/schemas'
 import {
   Action,
   ActorType,
+  ForbiddenError,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { InvitationRepository, OrganizationRepository, type UpdateOrganizationInput } from '../repositories'
+import {
+  ClientReviewerRepository,
+  InvitationRepository,
+  OrganizationRepository,
+  ReviewerRepository,
+  type UpdateOrganizationInput,
+  UserRepository,
+} from '../repositories'
+import { OnboardingService } from '../services/onboarding.service'
+import { InvitationType } from '@prisma/client'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -69,15 +81,74 @@ const handlePatchOrganization = async (
   }
 }
 
-const handlePostOnboarding = async (
+function createOnboardingService(): OnboardingService {
+  return new OnboardingService(
+    new UserRepository(),
+    new ReviewerRepository(),
+    new OrganizationRepository()
+  )
+}
+
+const handlePostInternalOnboarding = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('This endpoint is only available for internal users')
+  }
+
+  const validated = validateBody(CompleteInternalOnboardingSchema)(request)
+  const onboardingService = createOnboardingService()
+
+  const result = await onboardingService.completeInternalOnboarding({
+    userId: actor.userId,
+    organizationId: actor.organizationId,
+    userName: validated.body.userName,
+    organizationName: validated.body.organizationName,
+  })
+
   return {
     statusCode: 200,
     body: {
-      message: 'Organization onboarding',
-      userId: request.auth.userId,
+      user: {
+        id: result.user.id,
+        name: (result.user as { name?: string }).name,
+        email: result.user.email,
+      },
+      organization: {
+        id: result.organization.id,
+        name: result.organization.name,
+      },
+    },
+  }
+}
+
+const handlePostReviewerOnboarding = async (
+  request: HttpRequest
+): Promise<HttpResponse> => {
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Reviewer) {
+    throw new ForbiddenError('This endpoint is only available for reviewers')
+  }
+
+  const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
+  const onboardingService = createOnboardingService()
+
+  const reviewer = await onboardingService.completeReviewerOnboarding({
+    reviewerId: actor.reviewerId,
+    name: validated.body.name,
+  })
+
+  return {
+    statusCode: 200,
+    body: {
+      reviewer: {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+      },
     },
   }
 }
@@ -138,19 +209,84 @@ const handleGetInvitations = async (
 const handlePostAcceptInvitation = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
   const invitationId = request.params.id as string | undefined
 
   if (!invitationId) {
     throw new NotFoundError('Invitation ID not found')
   }
 
+  const actor = request.auth.actor
+  const organizationId =
+    actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const invitationRepository = new InvitationRepository()
+  const reviewerRepository = new ReviewerRepository()
+  const clientReviewerRepository = new ClientReviewerRepository()
+
+  const invitation = await invitationRepository.findById(
+    invitationId,
+    organizationId
+  )
+
+  if (!invitation) {
+    throw new NotFoundError('Invitation not found')
+  }
+
+  if (invitation.acceptedAt) {
+    throw new ForbiddenError('Invitation has already been accepted')
+  }
+
+  if (invitation.expiresAt < new Date()) {
+    throw new ForbiddenError('Invitation has expired')
+  }
+
+  if (invitation.type !== InvitationType.REVIEWER) {
+    throw new ForbiddenError('Unsupported invitation type')
+  }
+
+  if (!invitation.clientId) {
+    throw new NotFoundError('Client ID not found in invitation')
+  }
+
+  const cognitoUserId = request.auth.userId
+  const email = request.auth.email || invitation.email
+
+  let reviewer = await reviewerRepository.findByCognitoId(cognitoUserId)
+
+  if (!reviewer) {
+    reviewer = await reviewerRepository.create({
+      cognitoUserId,
+      email,
+      name: null,
+    })
+  }
+
+  const existingLink =
+    await clientReviewerRepository.findByReviewerIdAndClient(
+      reviewer.id,
+      invitation.clientId
+    )
+
+  if (!existingLink) {
+    await clientReviewerRepository.create({
+      clientId: invitation.clientId,
+      reviewerId: reviewer.id,
+    })
+  }
+
+  await invitationRepository.markAccepted(invitationId, organizationId)
+
   return {
     statusCode: 200,
     body: {
-      message: 'Accept invitation',
-      invitationId,
-      userId: request.auth.userId,
+      reviewer: {
+        id: reviewer.id,
+        email: reviewer.email,
+      },
     },
   }
 }
@@ -238,10 +374,8 @@ const routes: RouteDefinition[] = [
     handleGetOrganization
   ),
   RouteBuilder.patch('/organization', handlePatchOrganization),
-  RouteBuilder.post(
-    '/organization/onboarding',
-    handlePostOnboarding
-  ),
+  RouteBuilder.post('/onboarding/internal', handlePostInternalOnboarding),
+  RouteBuilder.post('/onboarding/reviewer', handlePostReviewerOnboarding),
   RouteBuilder.get(
     '/organization/users', 
     handleGetUsers

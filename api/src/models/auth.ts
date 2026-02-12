@@ -4,6 +4,7 @@ import type { ActorContext } from './rbac'
 
 export interface AuthContext {
   userId: string
+  email: string
   rawToken: string
   actor: ActorContext
   organizationId?: string
@@ -14,7 +15,7 @@ export interface AuthenticatedEvent extends APIGatewayProxyEvent {
 }
 
 export interface TokenVerifier {
-  verify(token: string): Promise<{ userId: string; rawToken: string }>
+  verify(token: string): Promise<{ userId: string; email: string; rawToken: string }>
 }
 
 export interface AuthTokenExtractor {

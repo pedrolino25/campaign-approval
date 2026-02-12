@@ -51,11 +51,13 @@ export type ActorContext =
       userId: string
       organizationId: string
       role: UserRole
+      onboardingCompleted: boolean
     }
   | {
       type: ActorType.Reviewer
       reviewerId: string
       clientId: string
+      onboardingCompleted: boolean
     }
 
 export type ResourceContext = {
