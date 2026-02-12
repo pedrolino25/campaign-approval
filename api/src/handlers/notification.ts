@@ -32,7 +32,7 @@ const handleGetNotifications = async (
   const repository = new NotificationRepository()
   const result = await repository.listByUser(userId, organizationId, {
     cursor: validatedQuery.query.cursor,
-    limit: validatedQuery.query.limit,
+    limit: validatedQuery.query.limit as number | undefined,
   })
 
   return {
