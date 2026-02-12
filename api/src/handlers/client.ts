@@ -38,7 +38,7 @@ const handleGetClients = async (
   const repository = new ClientRepository()
   const result = await repository.listByOrganization(organizationId, {
     cursor: validatedQuery.query.cursor,
-    limit: validatedQuery.query.limit,
+    limit: validatedQuery.query.limit as number | undefined,
   })
 
   return {
@@ -110,12 +110,12 @@ const handleGetReviewers = async (
   const validatedParams = validateParams(ClientParamsSchema)(request)
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  const clientId = validatedQuery.params.id
+  const clientId = validatedParams.params.id!
 
   const repository = new ClientReviewerRepository()
   const result = await repository.listByClient(clientId, {
     cursor: validatedQuery.query.cursor,
-    limit: validatedQuery.query.limit,
+    limit: validatedQuery.query.limit as number | undefined,
   })
 
   return {
