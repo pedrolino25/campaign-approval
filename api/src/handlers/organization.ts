@@ -227,8 +227,13 @@ const handlePatchNotificationRead = async (
     },
   }
 }
-
+/*
+const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
+  return await Promise.resolve(handleOpenAPIJson())
+}
+*/
 const routes: RouteDefinition[] = [
+  // RouteBuilder.get('/api-docs', handleOpenAPI),
   RouteBuilder.get('/organization', 
     handleGetOrganization
   ),
