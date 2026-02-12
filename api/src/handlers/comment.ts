@@ -24,12 +24,12 @@ const handleGetComments = async (
   const validatedParams = validateParams(CommentParamsSchema)(request)
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  const reviewItemId = validatedQuery.params.id
+  const reviewItemId = validatedParams.params.id!
 
   const repository = new CommentRepository()
   const result = await repository.listByReviewItem(reviewItemId, {
     cursor: validatedQuery.query.cursor,
-    limit: validatedQuery.query.limit,
+    limit: validatedQuery.query.limit as number | undefined,
   })
 
   return {
