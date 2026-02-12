@@ -1,7 +1,7 @@
-import { type Invitation, type InvitationRole, InvitationType, type Reviewer, type User } from '@prisma/client'
+import { type Invitation, type InvitationRole, InvitationType, NotificationType, type Reviewer, type User } from '@prisma/client'
 import { randomBytes } from 'crypto'
 
-import { prisma } from '../lib'
+import { logger, prisma, SQSService } from '../lib'
 import {
   ActivityLogActionType,
   type ActorContext,
@@ -13,6 +13,7 @@ import {
 import {
   ClientRepository,
   InvitationRepository,
+  NotificationRepository,
 } from '../repositories'
 import type { CreateInvitationInput } from '../repositories/invitation.repository'
 import { ActivityLogService } from './activity-log.service'
@@ -83,7 +84,21 @@ export class InvitationService {
       inviterUserId: params.inviterUserId,
     }
 
-    return await this.invitationRepository.create(createInput)
+    const invitation = await this.invitationRepository.create(createInput)
+
+    // Dispatch notification and enqueue email (non-blocking)
+    try {
+      await this.dispatchInvitationNotification(invitation)
+    } catch (error) {
+      logger.error({
+        message: 'Failed to dispatch invitation notification',
+        invitationId: invitation.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      // Do not throw - invitation creation should succeed even if email fails
+    }
+
+    return invitation
   }
 
   async generateToken(): Promise<string> {
@@ -459,5 +474,51 @@ export class InvitationService {
         'Client does not belong to the specified organization'
       )
     }
+  }
+
+  private async dispatchInvitationNotification(
+    invitation: Invitation
+  ): Promise<void> {
+    const notificationRepository = new NotificationRepository()
+    const sqsService = new SQSService()
+
+    const notification = await notificationRepository.create({
+      organizationId: invitation.organizationId,
+      email: invitation.email,
+      type: NotificationType.INVITATION_CREATED,
+      payload: {
+        invitationId: invitation.id,
+        token: invitation.token,
+        type: invitation.type,
+        organizationId: invitation.organizationId,
+        clientId: invitation.clientId ?? null,
+      },
+    })
+
+    logger.info({
+      message: 'Invitation notification created',
+      invitationId: invitation.id,
+      notificationId: notification.id,
+    })
+
+    await sqsService.enqueueEmailJob({
+      notificationId: notification.id,
+      organizationId: invitation.organizationId,
+      to: invitation.email,
+      templateId: NotificationType.INVITATION_CREATED,
+      dynamicData: {
+        invitationId: invitation.id,
+        token: invitation.token,
+        type: invitation.type,
+        organizationId: invitation.organizationId,
+        clientId: invitation.clientId ?? null,
+      },
+    })
+
+    logger.info({
+      message: 'Invitation email job enqueued',
+      invitationId: invitation.id,
+      notificationId: notification.id,
+    })
   }
 }

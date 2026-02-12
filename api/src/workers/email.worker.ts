@@ -1,8 +1,8 @@
-import type { Notification } from '@prisma/client'
+import { type Notification,NotificationType } from '@prisma/client'
 import type { SQSEvent, SQSRecord } from 'aws-lambda'
 import { z } from 'zod'
 
-import { EmailService,logger } from '../lib'
+import { EmailService, logger } from '../lib'
 import { WorkflowEventType } from '../models'
 import { NotificationRepository } from '../repositories'
 
@@ -59,24 +59,48 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
     return
   }
 
-  try {
-    await emailService.send({
-      to,
-      subject: getSubjectForTemplate(templateId, dynamicData),
-      templateId: process.env[`SENDGRID_TEMPLATE_${templateId}`] || '',
-      dynamicData,
-    })
+  await sendEmailForNotification(
+    emailService,
+    notificationRepository,
+    notification,
+    to,
+    templateId,
+    dynamicData,
+    notificationId,
+    organizationId
+  )
+}
 
-    await notificationRepository.markAsSent(
-      notificationId,
-      organizationId
-    )
+async function sendEmailForNotification(
+  emailService: EmailService,
+  notificationRepository: NotificationRepository,
+  notification: Notification,
+  to: string,
+  templateId: string,
+  dynamicData: Record<string, unknown>,
+  notificationId: string,
+  organizationId: string
+): Promise<void> {
+  try {
+    if ((notification.type as string) === NotificationType.INVITATION_CREATED) {
+      await sendInvitationEmail(emailService, notification, to, dynamicData)
+    } else {
+      await emailService.send({
+        to,
+        subject: getSubjectForTemplate(templateId, dynamicData),
+        templateId: process.env[`SENDGRID_TEMPLATE_${templateId}`] || '',
+        dynamicData,
+      })
+    }
+
+    await notificationRepository.markAsSent(notificationId, organizationId)
 
     logger.info({
       message: 'Email sent successfully',
       notificationId,
       to,
       templateId,
+      notificationType: notification.type,
     })
   } catch (error) {
     logger.error({
@@ -88,6 +112,45 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
     })
     throw error
   }
+}
+
+async function sendInvitationEmail(
+  emailService: EmailService,
+  notification: Notification,
+  to: string,
+  dynamicData: Record<string, unknown>
+): Promise<void> {
+  const payload = notification.payload as {
+    token?: string
+    invitationId?: string
+    type?: string
+    organizationId?: string
+    clientId?: string | null
+  }
+
+  const token = payload.token
+  if (!token) {
+    throw new Error('Invitation token not found in notification payload')
+  }
+
+  const appBaseUrl = process.env.APP_BASE_URL || 'https://worklient.com'
+  const invitationUrl = `${appBaseUrl}/organization/invitations/${token}/accept`
+
+  const sendGridTemplateId = process.env.SENDGRID_TEMPLATE_INVITATION
+  if (!sendGridTemplateId) {
+    throw new Error('SENDGRID_TEMPLATE_INVITATION environment variable is not set')
+  }
+
+  await emailService.send({
+    to,
+    subject: 'You\'ve been invited to join Worklient',
+    templateId: sendGridTemplateId,
+    dynamicData: {
+      ...dynamicData,
+      invitationUrl,
+      token,
+    },
+  })
 }
 
 function getSubjectForTemplate(
@@ -108,7 +171,10 @@ function getSubjectForTemplate(
   }
 
   if (templateId && reviewItemTitle) {
-    return `${subjectPrefixes[templateId as WorkflowEventType]}: ${reviewItemTitle}`
+    const prefix = subjectPrefixes[templateId as WorkflowEventType]
+    if (prefix) {
+      return `${prefix}: ${reviewItemTitle}`
+    }
   }
 
   return defaultSubject

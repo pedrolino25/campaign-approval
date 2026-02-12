@@ -36,6 +36,7 @@ enum NotificationType {
   REVIEW_ASSIGNED
   INVITATION_SENT
   INVITATION_ACCEPTED
+  INVITATION_CREATED
 }
 
 enum ActivityLogAction {
