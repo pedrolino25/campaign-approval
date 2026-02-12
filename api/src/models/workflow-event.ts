@@ -32,6 +32,9 @@ export type WorkflowEventPayloadMap = {
   [WorkflowEventType.COMMENT_ADDED]: {
     reviewItemId: string
     organizationId: string
+    clientId: string
+    actorType: 'INTERNAL' | 'REVIEWER'
+    actorId: string
   }
   [WorkflowEventType.REVIEW_REMINDER]: {
     reviewItemId: string

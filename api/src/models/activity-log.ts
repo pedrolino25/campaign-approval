@@ -9,6 +9,7 @@ export enum ActivityLogActionType {
   REVIEW_ARCHIVED = 'REVIEW_ARCHIVED',
   ATTACHMENT_UPLOADED = 'ATTACHMENT_UPLOADED',
   COMMENT_ADDED = 'COMMENT_ADDED',
+  COMMENT_DELETED = 'COMMENT_DELETED',
   CLIENT_CREATED = 'CLIENT_CREATED',
   CLIENT_UPDATED = 'CLIENT_UPDATED',
   USER_INVITED = 'USER_INVITED',
@@ -46,6 +47,11 @@ export type ActivityLogMetadataMap = {
   [ActivityLogActionType.COMMENT_ADDED]: {
     reviewItemId: string
     commentId: string
+    hasCoordinates: boolean
+    hasTimestamp: boolean
+  }
+  [ActivityLogActionType.COMMENT_DELETED]: {
+    commentId: string
   }
   [ActivityLogActionType.CLIENT_CREATED]: { clientId: string }
   [ActivityLogActionType.CLIENT_UPDATED]: { clientId: string }
@@ -67,6 +73,7 @@ export function mapActionToPrismaAction(
     [ActivityLogActionType.REVIEW_ARCHIVED]: 'REVIEW_ARCHIVED',
     [ActivityLogActionType.ATTACHMENT_UPLOADED]: 'ATTACHMENT_UPLOADED',
     [ActivityLogActionType.COMMENT_ADDED]: 'COMMENT_ADDED',
+    [ActivityLogActionType.COMMENT_DELETED]: 'COMMENT_DELETED',
     [ActivityLogActionType.CLIENT_CREATED]: 'CLIENT_CREATED',
     [ActivityLogActionType.CLIENT_UPDATED]: 'CLIENT_UPDATED',
     [ActivityLogActionType.USER_INVITED]: 'USER_INVITED',

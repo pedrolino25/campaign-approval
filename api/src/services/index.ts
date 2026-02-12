@@ -3,8 +3,11 @@ export {
   type IActivityLogService,
 } from './activity-log.service'
 export {
+  type AddCommentParams,
   CommentService,
-  type CreateCommentParams,
+  type DeleteCommentParams,
+  type ICommentService,
+  type ListCommentsParams,
 } from './comment.service'
 export {
   type AcceptInvitationParams,
