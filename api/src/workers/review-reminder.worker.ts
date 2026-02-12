@@ -20,6 +20,7 @@ function createSystemActor(organizationId: string): ActorContext {
     userId: 'system',
     organizationId,
     role: 'OWNER',
+    onboardingCompleted: true,
   }
 }
 
