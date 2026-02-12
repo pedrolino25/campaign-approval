@@ -49,7 +49,7 @@ export class OnboardingService {
     return await prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
-          name: null as unknown as string,
+          name: null,
         },
       })
 

@@ -66,7 +66,7 @@ enum InvitationType {
 
 model Organization {
   id                   String   @id @default(uuid())
-  name                 String
+  name                 String?
   reminderEnabled      Boolean  @default(true) @map("reminder_enabled")
   reminderIntervalDays Int      @default(3) @map("reminder_interval_days")
   createdAt            DateTime @default(now()) @map("created_at")
