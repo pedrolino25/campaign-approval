@@ -1,7 +1,7 @@
 export {
   ActivityLogActionType,
-  mapActionToPrismaAction,
   type ActivityLogMetadataMap,
+  mapActionToPrismaAction,
 } from './activity-log'
 export type {
   AuthContext,
