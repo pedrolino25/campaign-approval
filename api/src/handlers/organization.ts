@@ -85,14 +85,6 @@ const handlePatchOrganization = async (
   }
 }
 
-function createOnboardingService(): OnboardingService {
-  return new OnboardingService(
-    new UserRepository(),
-    new ReviewerRepository(),
-    new OrganizationRepository()
-  )
-}
-
 const handlePostInternalOnboarding = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
@@ -103,7 +95,11 @@ const handlePostInternalOnboarding = async (
   }
 
   const validated = validateBody(CompleteInternalOnboardingSchema)(request)
-  const onboardingService = createOnboardingService()
+  const onboardingService = new OnboardingService(
+    new UserRepository(),
+    new ReviewerRepository(),
+    new OrganizationRepository()
+  )
 
   const result = await onboardingService.completeInternalOnboarding({
     userId: actor.userId,
@@ -138,7 +134,11 @@ const handlePostReviewerOnboarding = async (
   }
 
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
-  const onboardingService = createOnboardingService()
+  const onboardingService = new OnboardingService(
+    new UserRepository(),
+    new ReviewerRepository(),
+    new OrganizationRepository()
+  )
 
   const reviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
