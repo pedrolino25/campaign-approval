@@ -1,20 +1,22 @@
 import { InvitationType } from '@prisma/client'
+import { z } from 'zod'
 
 import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
-  prisma,
   RouteBuilder,
   Router,
   validateBody,
+  validateParams,
   validateQuery,
 } from '../lib'
-import { can } from '../lib/auth'
+import { authorizeOrThrow } from '../lib/auth/utils/authorize'
 import {
   CompleteInternalOnboardingSchema,
   CompleteReviewerOnboardingSchema,
   CursorPaginationQuerySchema,
+  InviteInternalUserSchema,
   UpdateOrganizationSettingsSchema,
 } from '../lib/schemas'
 import {
@@ -25,13 +27,13 @@ import {
   type RouteDefinition,
 } from '../models'
 import {
-  ClientReviewerRepository,
   InvitationRepository,
   OrganizationRepository,
   ReviewerRepository,
   type UpdateOrganizationInput,
   UserRepository,
 } from '../repositories'
+import { InvitationService } from '../services'
 import { OnboardingService } from '../services/onboarding.service'
 
 const handleGetOrganization = async (
@@ -59,7 +61,7 @@ const handlePatchOrganization = async (
     throw new NotFoundError('Organization not found')
   }
 
-  can(actor, Action.UPDATE_ORGANIZATION, {
+  authorizeOrThrow(actor, Action.UPDATE_ORGANIZATION, {
     organizationId,
   })
 
@@ -171,12 +173,43 @@ const handleGetUsers = async (
 const handlePostInvite = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validated = validateBody(InviteInternalUserSchema)(request)
+
+  const actor = request.auth.actor
+  const organizationId =
+    actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  if (actor.type !== ActorType.Internal) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  authorizeOrThrow(actor, Action.INVITE_INTERNAL_USER, {
+    organizationId,
+  })
+
+  const invitationService = new InvitationService()
+  const invitation = await invitationService.createInvitation({
+    organizationId,
+    inviterUserId: actor.userId,
+    email: validated.body.email,
+    type: InvitationType.INTERNAL_USER,
+    role: validated.body.role,
+  })
+
   return {
     statusCode: 200,
     body: {
-      message: 'Invite user',
-      userId: request.auth.userId,
+      id: invitation.id,
+      email: invitation.email,
+      type: invitation.type,
+      role: invitation.role,
+      organizationId: invitation.organizationId,
+      expiresAt: invitation.expiresAt.toISOString(),
+      createdAt: invitation.createdAt.toISOString(),
     },
   }
 }
@@ -208,141 +241,42 @@ const handleGetInvitations = async (
   }
 }
 
-function validateInvitation(
-  invitation: Awaited<ReturnType<InvitationRepository['findById']>>,
-  authenticatedEmail: string | undefined
-): asserts invitation is NonNullable<typeof invitation> & {
-  type: typeof InvitationType.REVIEWER
-  clientId: string
-} {
-  if (!invitation) {
-    throw new NotFoundError('Invitation not found')
-  }
-
-  if (invitation.acceptedAt) {
-    throw new ForbiddenError('Invitation has already been accepted')
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    throw new ForbiddenError('Invitation has expired')
-  }
-
-  if (invitation.type !== InvitationType.REVIEWER) {
-    throw new ForbiddenError('Unsupported invitation type')
-  }
-
-  if (!invitation.clientId) {
-    throw new NotFoundError('Client ID not found in invitation')
-  }
-
-  if (
-    authenticatedEmail &&
-    authenticatedEmail.toLowerCase() !== invitation.email.toLowerCase()
-  ) {
-    throw new ForbiddenError('Email does not match invitation')
-  }
-}
-
-async function acceptReviewerInvitation(
-  invitationId: string,
-  organizationId: string,
-  cognitoUserId: string,
-  email: string,
-  clientId: string,
-  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>>,
-  hasExistingLink: boolean
-): Promise<Awaited<ReturnType<ReviewerRepository['create']>>> {
-  return await prisma.$transaction(async (tx) => {
-    const finalReviewer =
-      reviewer ||
-      (await tx.reviewer.create({
-        data: {
-          cognitoUserId,
-          email,
-          name: null,
-        },
-      }))
-
-    if (!hasExistingLink) {
-      await tx.clientReviewer.create({
-        data: {
-          clientId,
-          reviewerId: finalReviewer.id,
-        },
-      })
-    }
-
-    await tx.invitation.update({
-      where: {
-        id: invitationId,
-        organizationId,
-      },
-      data: {
-        acceptedAt: new Date(),
-      },
-    })
-
-    return finalReviewer
-  })
-}
-
 const handlePostAcceptInvitation = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const invitationId = request.params.id as string | undefined
+  const validated = validateParams(
+    z.object({ token: z.string() }).strict()
+  )(request)
 
-  if (!invitationId) {
-    throw new NotFoundError('Invitation ID not found')
+  const token = validated.params.token
+
+  if (!token) {
+    throw new NotFoundError('Invitation token not found')
   }
-
-  const actor = request.auth.actor
-  const organizationId =
-    actor?.type === ActorType.Internal ? actor.organizationId : undefined
-
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
-  }
-
-  const invitationRepository = new InvitationRepository()
-  const reviewerRepository = new ReviewerRepository()
-  const clientReviewerRepository = new ClientReviewerRepository()
-
-  const invitation = await invitationRepository.findById(
-    invitationId,
-    organizationId
-  )
-
-  validateInvitation(invitation, request.auth.email)
 
   const cognitoUserId = request.auth.userId
-  const email = request.auth.email || invitation.email
 
-  const reviewer = await reviewerRepository.findByCognitoId(cognitoUserId)
+  if (!cognitoUserId) {
+    throw new NotFoundError('User ID not found')
+  }
 
-  const existingLink = reviewer
-    ? await clientReviewerRepository.findByReviewerIdAndClient(
-        reviewer.id,
-        invitation.clientId
-      )
-    : null
+  const email = request.auth.email
 
-  const result = await acceptReviewerInvitation(
-    invitationId,
-    organizationId,
+  if (!email) {
+    throw new NotFoundError('Email not found')
+  }
+
+  const invitationService = new InvitationService()
+  await invitationService.acceptInvitation({
+    token,
     cognitoUserId,
     email,
-    invitation.clientId,
-    reviewer,
-    !!existingLink
-  )
+  })
 
   return {
     statusCode: 200,
     body: {
-      reviewer: {
-        id: result.id,
-        email: result.email,
-      },
+      status: 'accepted',
     },
   }
 }
@@ -433,7 +367,7 @@ const routes: RouteDefinition[] = [
   RouteBuilder.post('/organization/users/invite', handlePostInvite),
   RouteBuilder.get('/organization/invitations', handleGetInvitations),
   RouteBuilder.post(
-    '/organization/invitations/:id/accept',
+    '/organization/invitations/:token/accept',
     handlePostAcceptInvitation
   ),
   RouteBuilder.delete('/organization/users/:id', handleDeleteUser),

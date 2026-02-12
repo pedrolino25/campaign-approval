@@ -96,6 +96,7 @@ variable "sendgrid_template_ids" {
     ATTACHMENT_UPLOADED      = string
     COMMENT_ADDED            = string
     REVIEW_REMINDER          = string
+    INVITATION               = string
   })
   default = {
     REVIEW_SENT              = ""
@@ -105,7 +106,14 @@ variable "sendgrid_template_ids" {
     ATTACHMENT_UPLOADED      = ""
     COMMENT_ADDED            = ""
     REVIEW_REMINDER          = ""
+    INVITATION               = ""
   }
+}
+
+variable "app_base_url" {
+  description = "Base URL for the application (used for invitation links)"
+  type        = string
+  default     = "https://worklient.com"
 }
 
 variable "tags" {

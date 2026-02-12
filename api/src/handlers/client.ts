@@ -1,3 +1,5 @@
+import { InvitationType } from '@prisma/client'
+
 import {
   createHandler,
   type HttpRequest,
@@ -24,6 +26,7 @@ import {
   type RouteDefinition,
 } from '../models'
 import { ClientRepository, ClientReviewerRepository } from '../repositories'
+import { InvitationService } from '../services'
 
 const handleGetClients = async (
   request: HttpRequest
@@ -205,11 +208,16 @@ const handlePostReviewer = async (
 ): Promise<HttpResponse> => {
   const withParams = validateParams(ClientParamsSchema)(request)
   const validated = validateBody(InviteReviewerSchema)(withParams)
-  
+
   const actor = request.auth.actor
-  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+  const organizationId =
+    actor.type === ActorType.Internal ? actor.organizationId : undefined
 
   if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  if (actor.type !== ActorType.Internal) {
     throw new NotFoundError('Organization not found')
   }
 
@@ -225,16 +233,26 @@ const handlePostReviewer = async (
     organizationId: client.organizationId,
     deletedAt: client.archivedAt,
   })
-  
-  await Promise.resolve()
+
+  const invitationService = new InvitationService()
+  const invitation = await invitationService.createInvitation({
+    organizationId: client.organizationId,
+    inviterUserId: actor.userId,
+    email: validated.body.email,
+    type: InvitationType.REVIEWER,
+    clientId,
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Add client reviewer',
-      clientId,
-      userId: request.auth.userId,
-      data: validated.body,
+      id: invitation.id,
+      email: invitation.email,
+      type: invitation.type,
+      clientId: invitation.clientId,
+      organizationId: invitation.organizationId,
+      expiresAt: invitation.expiresAt.toISOString(),
+      createdAt: invitation.createdAt.toISOString(),
     },
   }
 }
