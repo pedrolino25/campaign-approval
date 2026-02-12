@@ -1,7 +1,14 @@
-
 import type { User, UserRole } from '@prisma/client'
 
-import { prisma } from '../lib'
+import {
+  createCursorWhereCondition,
+  CURSOR_ORDER_BY,
+  type CursorPaginationParams,
+  type CursorPaginationResult,
+  determineNextCursor,
+  normalizePaginationParams,
+  prisma,
+} from '../lib'
 
 export type CreateUserInput = {
   cognitoUserId: string
@@ -20,7 +27,10 @@ export interface IUserRepository {
   update(id: string, organizationId: string, data: UpdateUserInput): Promise<User>
   findById(id: string, organizationId: string): Promise<User | null>
   findByCognitoId(cognitoUserId: string): Promise<User | null>
-  listByOrganization(organizationId: string): Promise<User[]>
+  listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<User>>
   archive(id: string, organizationId: string): Promise<void>
 }
 
@@ -69,16 +79,30 @@ export class UserRepository implements IUserRepository {
     })
   }
 
-  async listByOrganization(organizationId: string): Promise<User[]> {
-    return await prisma.user.findMany({
+  async listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<User>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.user.findMany({
       where: {
         organizationId,
         archivedAt: null,
+        ...cursorWhere,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: User[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 
   async archive(id: string, organizationId: string): Promise<void> {

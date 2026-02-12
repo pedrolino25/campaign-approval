@@ -1,7 +1,15 @@
 
 import type { Client } from '@prisma/client'
 
-import { prisma } from '../lib'
+import {
+  createCursorWhereCondition,
+  CURSOR_ORDER_BY,
+  type CursorPaginationParams,
+  type CursorPaginationResult,
+  determineNextCursor,
+  normalizePaginationParams,
+  prisma
+} from '../lib'
 
 export type CreateClientInput = {
   organizationId: string
@@ -16,7 +24,10 @@ export interface IClientRepository {
   create(data: CreateClientInput): Promise<Client>
   update(id: string, organizationId: string, data: UpdateClientInput): Promise<Client>
   findById(id: string, organizationId: string): Promise<Client | null>
-  listByOrganization(organizationId: string): Promise<Client[]>
+  listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Client>>
   archive(id: string, organizationId: string): Promise<void>
 }
 
@@ -54,16 +65,30 @@ export class ClientRepository implements IClientRepository {
     })
   }
 
-  async listByOrganization(organizationId: string): Promise<Client[]> {
-    return await prisma.client.findMany({
+  async listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Client>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.client.findMany({
       where: {
         organizationId,
         archivedAt: null,
+        ...cursorWhere,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: Client[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 
   async archive(id: string, organizationId: string): Promise<void> {

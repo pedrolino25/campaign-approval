@@ -1,7 +1,14 @@
-
 import type { Attachment } from '@prisma/client'
 
-import { prisma } from '../lib'
+import {
+  createCursorWhereCondition,
+  CURSOR_ORDER_BY,
+  type CursorPaginationParams,
+  type CursorPaginationResult,
+  determineNextCursor,
+  normalizePaginationParams,
+  prisma,
+} from '../lib'
 
 export type CreateAttachmentInput = {
   reviewItemId: string
@@ -15,7 +22,11 @@ export type CreateAttachmentInput = {
 export interface IAttachmentRepository {
   create(data: CreateAttachmentInput): Promise<Attachment>
   findById(id: string): Promise<Attachment | null>
-  listByReviewItem(reviewItemId: string): Promise<Attachment[]>
+  listByReviewItem(
+    reviewItemId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Attachment>>
+  hasAnyByReviewItem(reviewItemId: string): Promise<boolean>
   deleteScoped(id: string, reviewItemId: string): Promise<void>
 }
 
@@ -39,13 +50,34 @@ export class AttachmentRepository implements IAttachmentRepository {
     })
   }
 
-  async listByReviewItem(reviewItemId: string): Promise<Attachment[]> {
-    return await prisma.attachment.findMany({
-      where: { reviewItemId },
-      orderBy: {
-        createdAt: 'desc',
+  async listByReviewItem(
+    reviewItemId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Attachment>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.attachment.findMany({
+      where: {
+        reviewItemId,
+        ...cursorWhere,
       },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: Attachment[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
+  }
+
+  async hasAnyByReviewItem(reviewItemId: string): Promise<boolean> {
+    const result = await this.listByReviewItem(reviewItemId, { limit: 1 })
+    return result.data.length > 0
   }
 
   async deleteScoped(id: string, reviewItemId: string): Promise<void> {

@@ -1,8 +1,15 @@
 
+import { type Prisma, type ReviewItem, ReviewStatus } from '@prisma/client'
 
-import { type Prisma, type ReviewItem, ReviewStatus } from '@prisma/client';
-
-import { prisma } from '../lib'
+import {
+  createCursorWhereCondition,
+  CURSOR_ORDER_BY,
+  type CursorPaginationParams,
+  type CursorPaginationResult,
+  determineNextCursor,
+  normalizePaginationParams,
+  prisma,
+} from '../lib'
 
 export type CreateDraftReviewItemInput = {
   organizationId: string
@@ -37,12 +44,20 @@ export interface IReviewItemRepository {
     expectedVersion: number
   ): Promise<ReviewItem>
   findByIdScoped(id: string, organizationId: string): Promise<ReviewItem | null>
-  listByOrganization(organizationId: string): Promise<ReviewItem[]>
-  listByClient(clientId: string, organizationId: string): Promise<ReviewItem[]>
+  listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>>
+  listByClient(
+    clientId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>>
   listByStatus(
     organizationId: string,
-    status: ReviewStatus
-  ): Promise<ReviewItem[]>
+    status: ReviewStatus,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>>
   incrementVersion(id: string, organizationId: string): Promise<ReviewItem>
   incrementVersionWithStatus(
     id: string,
@@ -139,48 +154,86 @@ export class ReviewItemRepository implements IReviewItemRepository {
     })
   }
 
-  async listByOrganization(organizationId: string): Promise<ReviewItem[]> {
-    return await prisma.reviewItem.findMany({
+  async listByOrganization(
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.reviewItem.findMany({
       where: {
         organizationId,
         archivedAt: null,
+        ...cursorWhere,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: ReviewItem[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 
   async listByClient(
     clientId: string,
-    organizationId: string
-  ): Promise<ReviewItem[]> {
-    return await prisma.reviewItem.findMany({
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.reviewItem.findMany({
       where: {
         clientId,
         organizationId,
         archivedAt: null,
+        ...cursorWhere,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: ReviewItem[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 
   async listByStatus(
     organizationId: string,
-    status: ReviewStatus
-  ): Promise<ReviewItem[]> {
-    return await prisma.reviewItem.findMany({
+    status: ReviewStatus,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<ReviewItem>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.reviewItem.findMany({
       where: {
         organizationId,
         status,
         archivedAt: null,
+        ...cursorWhere,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: ReviewItem[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 
   async incrementVersion(

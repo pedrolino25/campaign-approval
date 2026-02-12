@@ -1,6 +1,14 @@
 import type { ActivityLog, ActivityLogAction, Prisma } from '@prisma/client'
 
-import { prisma } from '../lib'
+import {
+  createCursorWhereCondition,
+  CURSOR_ORDER_BY,
+  type CursorPaginationParams,
+  type CursorPaginationResult,
+  determineNextCursor,
+  normalizePaginationParams,
+  prisma,
+} from '../lib'
 
 export type CreateActivityLogInput = {
   organizationId: string
@@ -14,8 +22,7 @@ export type ListActivityLogsParams = {
   organizationId: string
   reviewItemId?: string
   actorUserId?: string
-  limit?: number
-  offset?: number
+  pagination: CursorPaginationParams
 }
 
 export interface IActivityLogRepository {
@@ -27,7 +34,7 @@ export interface IActivityLogRepository {
     id: string,
     organizationId: string
   ): Promise<ActivityLog | null>
-  list(params: ListActivityLogsParams): Promise<ActivityLog[]>
+  list(params: ListActivityLogsParams): Promise<CursorPaginationResult<ActivityLog>>
 }
 
 class ActivityLogRepository implements IActivityLogRepository {
@@ -58,11 +65,14 @@ class ActivityLogRepository implements IActivityLogRepository {
     })
   }
 
-  async list(params: ListActivityLogsParams): Promise<ActivityLog[]> {
-    const { organizationId, reviewItemId, actorUserId, limit, offset } = params
+  async list(params: ListActivityLogsParams): Promise<CursorPaginationResult<ActivityLog>> {
+    const { organizationId, reviewItemId, actorUserId, pagination } = params
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
 
     const where: Prisma.ActivityLogWhereInput = {
       organizationId,
+      ...cursorWhere,
     }
 
     if (reviewItemId) {
@@ -73,14 +83,19 @@ class ActivityLogRepository implements IActivityLogRepository {
       where.actorUserId = actorUserId
     }
 
-    return await prisma.activityLog.findMany({
+    const items = await prisma.activityLog.findMany({
       where,
-      orderBy: {
-        createdAt: 'asc',
-      },
-      take: limit,
-      skip: offset,
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
     })
+
+    const hasMore = items.length > limit
+    const data: ActivityLog[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
   }
 }
 

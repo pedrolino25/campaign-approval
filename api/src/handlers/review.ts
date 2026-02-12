@@ -6,24 +6,43 @@ import {
   Router,
   validateBody,
   validateParams,
+  validateQuery,
 } from '../lib'
 import {
   CreateReviewItemSchema,
+  CursorPaginationQuerySchema,
   ReviewItemParamsSchema,
 } from '../lib/schemas'
 import {
+  ActorType,
+  NotFoundError,
   type RouteDefinition,
 } from '../models'
+import { ActivityLogRepository, ReviewItemRepository } from '../repositories'
 
 const handleGetReviewItems = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
+  
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const repository = new ReviewItemRepository()
+  const result = await repository.listByOrganization(organizationId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit as number | undefined,
+  })
+
   return {
     statusCode: 200,
     body: {
-      message: 'Get review items',
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }
@@ -137,17 +156,32 @@ const handleArchiveReviewItem = async (
 const handleGetActivity = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const validated = validateParams(ReviewItemParamsSchema)(request)
+  const validatedParams = validateParams(ReviewItemParamsSchema)(request)
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  await Promise.resolve()
-  const reviewItemId = validated.params.id
+  const reviewItemId = validatedQuery.params.id
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const repository = new ActivityLogRepository()
+  const result = await repository.list({
+    organizationId,
+    reviewItemId,
+    pagination: {
+      cursor: validatedQuery.query.cursor,
+      limit: validatedQuery.query.limit as number | undefined,
+    },
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Get review item activity',
-      reviewItemId,
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }

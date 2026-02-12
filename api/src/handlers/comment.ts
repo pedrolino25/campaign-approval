@@ -6,29 +6,37 @@ import {
   Router,
   validateBody,
   validateParams,
+  validateQuery,
 } from '../lib'
 import {
   AddCommentSchema,
   CommentParamsSchema,
+  CursorPaginationQuerySchema,
 } from '../lib/schemas'
 import {
   type RouteDefinition,
 } from '../models'
+import { CommentRepository } from '../repositories'
 
 const handleGetComments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const validated = validateParams(CommentParamsSchema)(request)
+  const validatedParams = validateParams(CommentParamsSchema)(request)
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  await Promise.resolve()
-  const reviewItemId = validated.params.id
+  const reviewItemId = validatedParams.params.id!
+
+  const repository = new CommentRepository()
+  const result = await repository.listByReviewItem(reviewItemId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit as number | undefined,
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Get review item comments',
-      reviewItemId,
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }

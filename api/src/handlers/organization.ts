@@ -5,9 +5,11 @@ import {
   RouteBuilder,
   Router,
   validateBody,
+  validateQuery,
 } from '../lib'
 import { can } from '../lib/auth'
 import {
+  CursorPaginationQuerySchema,
   UpdateOrganizationSettingsSchema,
 } from '../lib/schemas'
 import {
@@ -16,7 +18,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { OrganizationRepository, type UpdateOrganizationInput } from '../repositories'
+import { InvitationRepository, OrganizationRepository, type UpdateOrganizationInput } from '../repositories'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -109,12 +111,26 @@ const handlePostInvite = async (
 const handleGetInvitations = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
+  
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const repository = new InvitationRepository()
+  const result = await repository.listPendingByOrganization(organizationId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit as number | undefined,
+  })
+
   return {
     statusCode: 200,
     body: {
-      message: 'Get invitations',
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }
@@ -211,8 +227,13 @@ const handlePatchNotificationRead = async (
     },
   }
 }
-
+/*
+const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
+  return await Promise.resolve(handleOpenAPIJson())
+}
+*/
 const routes: RouteDefinition[] = [
+  // RouteBuilder.get('/api-docs', handleOpenAPI),
   RouteBuilder.get('/organization', 
     handleGetOrganization
   ),

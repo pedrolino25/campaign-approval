@@ -114,6 +114,7 @@ model Client {
   reviewItems    ReviewItem[]
 
   @@index([organizationId])
+  @@index([organizationId, createdAt])
   @@map("clients")
 }
 
@@ -163,6 +164,7 @@ model ReviewItem {
   @@index([lastReminderSentAt])
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
+  @@index([clientId, createdAt])
   @@index([organizationId, status, updatedAt])
   @@index([organizationId, status, lastReminderSentAt])
   @@map("review_items")
@@ -200,6 +202,7 @@ model Comment {
   author     User?       @relation(fields: [authorUserId], references: [id])
 
   @@index([reviewItemId])
+  @@index([reviewItemId, createdAt])
   @@map("comments")
 }
 
@@ -223,6 +226,9 @@ model Notification {
   @@index([readAt])
   @@index([sentAt])
   @@index([createdAt])
+  @@index([organizationId, createdAt])
+  @@index([userId, readAt])
+  @@index([organizationId, readAt])
   @@map("notifications")
 }
 
@@ -244,6 +250,8 @@ model ActivityLog {
   @@index([actorUserId])
   @@index([action])
   @@index([createdAt])
+  @@index([organizationId, createdAt])
+  @@index([reviewItemId, createdAt])
   @@map("activity_logs")
 }
 
