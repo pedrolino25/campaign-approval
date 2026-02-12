@@ -121,6 +121,8 @@ resource "aws_lambda_function" "email_worker" {
       SENDGRID_TEMPLATE_ATTACHMENT_UPLOADED      = var.sendgrid_template_ids.ATTACHMENT_UPLOADED
       SENDGRID_TEMPLATE_COMMENT_ADDED            = var.sendgrid_template_ids.COMMENT_ADDED
       SENDGRID_TEMPLATE_REVIEW_REMINDER          = var.sendgrid_template_ids.REVIEW_REMINDER
+      SENDGRID_TEMPLATE_INVITATION               = var.sendgrid_template_ids.INVITATION
+      APP_BASE_URL                               = var.app_base_url
     }
   }
 

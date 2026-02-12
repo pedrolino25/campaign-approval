@@ -119,6 +119,7 @@ module "lambdas" {
 
   database_url          = var.database_url
   sendgrid_template_ids = var.sendgrid_template_ids
+  app_base_url          = var.app_base_url
 
   tags = var.resource_tags
 }
