@@ -1,7 +1,11 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
-import { DomainError, ValidationError as BaseValidationError } from '../../models/errors'
+import {
+  DomainError,
+  ValidationError as BaseValidationError,
+} from '../../models/errors'
 import { logger } from '../utils/logger'
+
 
 export interface ValidationErrorDetail {
   field: string

@@ -3,8 +3,9 @@ import type { Prisma } from '@prisma/client'
 import {
   type ActivityLogActionType,
   type ActivityLogMetadataMap,
-  type ActorContext, 
+  type ActorContext,
   ActorType,
+  InvariantViolationError,
 } from '../models'
 import {
   mapActionToPrismaAction,
@@ -53,6 +54,12 @@ export class ActivityLogService implements IActivityLogService {
     const actorReviewerId =
       actor.type === ActorType.Reviewer ? actor.reviewerId : null
 
+    this.validateActorInvariant(actorUserId, actorReviewerId)
+
+    if (reviewItemId) {
+      await this.validateOrganizationMatch(reviewItemId, organizationId, tx)
+    }
+
     const prismaAction = mapActionToPrismaAction(action)
 
     await this.repository.create(
@@ -66,5 +73,40 @@ export class ActivityLogService implements IActivityLogService {
       },
       tx
     )
+  }
+
+  private validateActorInvariant(
+    actorUserId: string | null,
+    actorReviewerId: string | null
+  ): void {
+    const hasUserId = !!actorUserId
+    const hasReviewerId = !!actorReviewerId
+
+    if (hasUserId && hasReviewerId) {
+      throw new InvariantViolationError('INVALID_ACTIVITY_ACTOR')
+    }
+
+    if (!hasUserId && !hasReviewerId) {
+      throw new InvariantViolationError('INVALID_ACTIVITY_ACTOR')
+    }
+  }
+
+  private async validateOrganizationMatch(
+    reviewItemId: string,
+    organizationId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    const reviewItem = await tx.reviewItem.findUnique({
+      where: { id: reviewItemId },
+      select: { organizationId: true },
+    })
+
+    if (!reviewItem) {
+      throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
+    }
+
+    if (reviewItem.organizationId !== organizationId) {
+      throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
+    }
   }
 }

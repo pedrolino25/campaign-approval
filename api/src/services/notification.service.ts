@@ -5,6 +5,7 @@ import type { CursorPaginationResult } from '../lib/pagination/cursor-pagination
 import {
   type ActorContext,
   ActorType,
+  InvariantViolationError,
   type WorkflowEventPayloadMap,
   WorkflowEventType,
 } from '../models'
@@ -248,6 +249,13 @@ export class NotificationService {
     type: WorkflowEventType,
     tx: Prisma.TransactionClient
   ): Promise<Notification> {
+    this.validateRecipientInvariant(recipient)
+    await this.validateOrganizationConsistency(
+      recipient,
+      reviewItem.organizationId,
+      tx
+    )
+
     const notificationPayload: Prisma.JsonValue = {
       reviewItemId: reviewItem.id,
       reviewItemTitle: reviewItem.title,
@@ -265,6 +273,52 @@ export class NotificationService {
       },
       tx
     )
+  }
+
+  private validateRecipientInvariant(recipient: Recipient): void {
+    const hasUserId = !!recipient.userId
+    const hasReviewerId = !!recipient.reviewerId
+    const hasEmail = !!recipient.email
+
+    const count = [hasUserId, hasReviewerId, hasEmail].filter(Boolean).length
+
+    if (count !== 1) {
+      throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+    }
+  }
+
+  private async validateOrganizationConsistency(
+    recipient: Recipient,
+    organizationId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    if (recipient.userId) {
+      const user = await tx.user.findUnique({
+        where: { id: recipient.userId },
+        select: { organizationId: true },
+      })
+
+      if (!user || user.organizationId !== organizationId) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
+    }
+
+    if (recipient.reviewerId) {
+      const clientReviewer = await tx.clientReviewer.findFirst({
+        where: {
+          reviewerId: recipient.reviewerId,
+          archivedAt: null,
+          client: {
+            organizationId,
+            archivedAt: null,
+          },
+        },
+      })
+
+      if (!clientReviewer) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
+    }
   }
 
   private async sendEmailIfNeeded(

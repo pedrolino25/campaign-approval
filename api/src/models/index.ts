@@ -10,11 +10,13 @@ export type {
   TokenVerifier,
 } from './auth'
 export {
+  BusinessRuleViolationError,
   ConflictError,
   DomainError,
   ErrorCode,
   ForbiddenError,
   InvalidStateTransitionError,
+  InvariantViolationError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
