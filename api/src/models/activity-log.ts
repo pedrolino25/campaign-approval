@@ -42,6 +42,8 @@ export type ActivityLogMetadataMap = {
   [ActivityLogActionType.REVIEW_ARCHIVED]: { reviewItemId: string }
   [ActivityLogActionType.ATTACHMENT_UPLOADED]: {
     reviewItemId: string
+    attachmentId?: string
+    fileName?: string
     version: number
   }
   [ActivityLogActionType.COMMENT_ADDED]: {

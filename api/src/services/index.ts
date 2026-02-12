@@ -3,6 +3,14 @@ export {
   type IActivityLogService,
 } from './activity-log.service'
 export {
+  AttachmentService,
+  type ConfirmUploadParams,
+  type DeleteAttachmentParams,
+  type GeneratePresignedUploadParams,
+  type GeneratePresignedUploadResult,
+  type IAttachmentService,
+} from './attachment.service'
+export {
   type AddCommentParams,
   CommentService,
   type DeleteCommentParams,

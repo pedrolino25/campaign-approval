@@ -34,6 +34,7 @@ export {
   RouteBuilder,
   Router,
 } from './router'
+export { IS3Service, S3Service } from './s3'
 export { SQSService } from './sqs/sqs.service'
 export { config } from './utils/config'
 export { logger } from './utils/logger'
