@@ -4,9 +4,14 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
+  validateParams,
 } from '../lib'
 import {
-  NotFoundError,
+  CreateReviewItemSchema,
+  ReviewItemParamsSchema,
+} from '../lib/schemas'
+import {
   type RouteDefinition,
 } from '../models'
 
@@ -26,12 +31,15 @@ const handleGetReviewItems = async (
 const handlePostReviewItems = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateBody(CreateReviewItemSchema)(request)
+  
   await Promise.resolve()
   return {
     statusCode: 200,
     body: {
       message: 'Create review item',
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -39,12 +47,10 @@ const handlePostReviewItems = async (
 const handleGetReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -59,12 +65,10 @@ const handleGetReviewItem = async (
 const handleSendReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -79,12 +83,10 @@ const handleSendReviewItem = async (
 const handleApproveReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -99,12 +101,10 @@ const handleApproveReviewItem = async (
 const handleRequestChanges = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -119,12 +119,10 @@ const handleRequestChanges = async (
 const handleArchiveReviewItem = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -139,12 +137,10 @@ const handleArchiveReviewItem = async (
 const handleGetActivity = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(ReviewItemParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -157,38 +153,14 @@ const handleGetActivity = async (
 }
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.get(
-    '/review-items', 
-    handleGetReviewItems
-  ),
-  RouteBuilder.post(
-    '/review-items', 
-    handlePostReviewItems
-  ),
-  RouteBuilder.get(
-    '/review-items/:id', 
-    handleGetReviewItem
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/send', 
-    handleSendReviewItem
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/approve', 
-    handleApproveReviewItem
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/request-changes', 
-    handleRequestChanges
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/archive', 
-    handleArchiveReviewItem
-  ),
-  RouteBuilder.get(
-    '/review-items/:id/activity', 
-    handleGetActivity
-  ),
+  RouteBuilder.get('/review-items', handleGetReviewItems),
+  RouteBuilder.post('/review-items', handlePostReviewItems),
+  RouteBuilder.get('/review-items/:id', handleGetReviewItem),
+  RouteBuilder.post('/review-items/:id/send', handleSendReviewItem),
+  RouteBuilder.post('/review-items/:id/approve', handleApproveReviewItem),
+  RouteBuilder.post('/review-items/:id/request-changes', handleRequestChanges),
+  RouteBuilder.post('/review-items/:id/archive', handleArchiveReviewItem),
+  RouteBuilder.get('/review-items/:id/activity', handleGetActivity),
 ]
 
 const router = new Router(routes)

@@ -4,21 +4,30 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
+  validateParams,
 } from '../lib'
 import {
-  NotFoundError,
+  AttachmentParamsSchema,
+  ConfirmUploadSchema,
+  CreatePresignedUploadSchema,
+} from '../lib/schemas'
+import {
   type RouteDefinition,
 } from '../models'
 
 const handlePresign = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateBody(CreatePresignedUploadSchema)(request)
+  
   await Promise.resolve()
   return {
     statusCode: 200,
     body: {
       message: 'Get presigned URL',
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -26,12 +35,11 @@ const handlePresign = async (
 const handlePostAttachment = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const withParams = validateParams(AttachmentParamsSchema)(request)
+  const validated = validateBody(ConfirmUploadSchema)(withParams)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -39,6 +47,7 @@ const handlePostAttachment = async (
       message: 'Create attachment',
       reviewItemId,
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
@@ -46,12 +55,10 @@ const handlePostAttachment = async (
 const handleGetAttachments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(AttachmentParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -64,18 +71,9 @@ const handleGetAttachments = async (
 }
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.post(
-    '/attachments/presign', 
-    handlePresign
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/attachments',
-    handlePostAttachment
-  ),
-  RouteBuilder.get(
-    '/review-items/:id/attachments',
-    handleGetAttachments
-  ),
+  RouteBuilder.post('/attachments/presign', handlePresign),
+  RouteBuilder.post('/review-items/:id/attachments', handlePostAttachment),
+  RouteBuilder.get('/review-items/:id/attachments', handleGetAttachments),
 ]
 
 const router = new Router(routes)

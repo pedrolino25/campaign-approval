@@ -1,13 +1,15 @@
-import { z } from 'zod'
-
 import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
 } from '../lib'
 import { can } from '../lib/auth'
+import {
+  UpdateOrganizationSettingsSchema,
+} from '../lib/schemas'
 import {
   Action,
   ActorType,
@@ -29,14 +31,11 @@ const handleGetOrganization = async (
   }
 }
 
-const UpdateOrganizationSchema = z.object({
-  reminderEnabled: z.boolean().optional(),
-  reminderIntervalDays: z.number().int().min(1).optional(),
-}).strict()
-
 const handlePatchOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateBody(UpdateOrganizationSettingsSchema)(request)
+  
   const actor = request.auth.actor
   const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
@@ -48,14 +47,10 @@ const handlePatchOrganization = async (
     organizationId,
   })
 
-  const body = UpdateOrganizationSchema.parse(
-    typeof request.body === 'string' ? JSON.parse(request.body) : request.body
-  )
-
   const organizationRepository = new OrganizationRepository()
   const updated = await organizationRepository.update(
     organizationId,
-    body as UpdateOrganizationInput
+    validated.body as UpdateOrganizationInput
   )
 
   return {
@@ -221,10 +216,7 @@ const routes: RouteDefinition[] = [
   RouteBuilder.get('/organization', 
     handleGetOrganization
   ),
-  RouteBuilder.patch(
-    '/organization', 
-    handlePatchOrganization
-  ),
+  RouteBuilder.patch('/organization', handlePatchOrganization),
   RouteBuilder.post(
     '/organization/onboarding',
     handlePostOnboarding

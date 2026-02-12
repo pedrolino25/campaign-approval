@@ -32,6 +32,10 @@ export {
   type RouteHandler,
 } from './router'
 export {
+  type ValidationMiddleware,
+  type ValidationResult,
+} from './validation'
+export {
   type WorkflowEvent,
   type WorkflowEventPayloadMap,
   WorkflowEventType,

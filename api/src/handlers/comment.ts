@@ -4,21 +4,24 @@ import {
   type HttpResponse,
   RouteBuilder,
   Router,
+  validateBody,
+  validateParams,
 } from '../lib'
 import {
-  NotFoundError,
+  AddCommentSchema,
+  CommentParamsSchema,
+} from '../lib/schemas'
+import {
   type RouteDefinition,
 } from '../models'
 
 const handleGetComments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const validated = validateParams(CommentParamsSchema)(request)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -33,12 +36,11 @@ const handleGetComments = async (
 const handlePostComment = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
+  const withParams = validateParams(CommentParamsSchema)(request)
+  const validated = validateBody(AddCommentSchema)(withParams)
+  
   await Promise.resolve()
-  const reviewItemId = request.params.id as string | undefined
-
-  if (!reviewItemId) {
-    throw new NotFoundError('Review item ID not found')
-  }
+  const reviewItemId = validated.params.id
 
   return {
     statusCode: 200,
@@ -46,19 +48,14 @@ const handlePostComment = async (
       message: 'Create comment',
       reviewItemId,
       userId: request.auth.userId,
+      data: validated.body,
     },
   }
 }
 
 const routes: RouteDefinition[] = [
-  RouteBuilder.get(
-    '/review-items/:id/comments',
-    handleGetComments
-  ),
-  RouteBuilder.post(
-    '/review-items/:id/comments',
-    handlePostComment
-  ),
+  RouteBuilder.get('/review-items/:id/comments', handleGetComments),
+  RouteBuilder.post('/review-items/:id/comments', handlePostComment),
 ]
 
 const router = new Router(routes)

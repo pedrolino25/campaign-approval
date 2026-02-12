@@ -12,7 +12,8 @@ export {
   JwtVerifier,
 } from './auth'
 export { EmailService } from './email/email.service'
-export { ErrorService, handleError } from './errors/error.service'
+export type { ValidationErrorDetail } from './errors/error.service'
+export { ErrorService, handleError, ValidationError } from './errors/error.service'
 export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
@@ -26,6 +27,11 @@ export {
 export { SQSService } from './sqs/sqs.service'
 export { config } from './utils/config'
 export { logger } from './utils/logger'
+export {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from './validation/validation.middleware'
 export {
   WorkflowEventDispatcher,
 } from './workflow-events/workflow-event.dispatcher'
