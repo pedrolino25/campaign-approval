@@ -15,6 +15,7 @@ export {
   DomainError,
   ErrorCode,
   ForbiddenError,
+  InternalError,
   InvalidStateTransitionError,
   InvariantViolationError,
   NotFoundError,

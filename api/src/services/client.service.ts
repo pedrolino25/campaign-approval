@@ -215,7 +215,7 @@ export class ClientService implements IClientService {
         )
       }
 
-      await tx.client.update({
+      const archivedClient = await tx.client.update({
         where: {
           id: clientId,
           organizationId: actor.organizationId,
@@ -224,15 +224,6 @@ export class ClientService implements IClientService {
           archivedAt: new Date(),
         },
       })
-
-      const archivedClient = await this.clientRepository.findById(
-        clientId,
-        actor.organizationId
-      )
-
-      if (!archivedClient) {
-        throw new NotFoundError('Client not found after archive')
-      }
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
         {

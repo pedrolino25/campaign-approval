@@ -17,10 +17,7 @@ import {
 } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
 import { WorkflowEventType } from '../models/workflow-event'
-import type {
-  AttachmentRepository,
-  ReviewItemRepository,
-} from '../repositories'
+import { type AttachmentRepository, ClientRepository, type ReviewItemRepository  } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 import { NotificationService } from './notification.service'
 
@@ -348,15 +345,13 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   private async getOrganizationIdFromClient(
     clientId: string
   ): Promise<string> {
-    const client = await prisma.client.findUnique({
-      where: { id: clientId },
-      select: { organizationId: true },
-    })
+    const clientRepository = new ClientRepository()
+    const organizationId = await clientRepository.getOrganizationId(clientId)
 
-    if (!client) {
+    if (!organizationId) {
       throw new NotFoundError('Client not found')
     }
 
-    return client.organizationId
+    return organizationId
   }
 }

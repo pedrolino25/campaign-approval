@@ -501,4 +501,44 @@ export class NotificationService {
   async markAsRead(id: string, organizationId: string): Promise<void> {
     await this.notificationRepository.markAsRead(id, organizationId)
   }
+
+  async createAndEnqueueInvitationNotification(params: {
+    organizationId: string
+    email: string
+    invitationId: string
+    token: string
+    type: string
+    clientId: string | null
+  }): Promise<Notification> {
+    const { organizationId, email, invitationId, token, type, clientId } = params
+
+    const notification = await this.notificationRepository.create({
+      organizationId,
+      email,
+      type: 'INVITATION_CREATED' as NotificationType,
+      payload: {
+        invitationId,
+        token,
+        type,
+        organizationId,
+        clientId,
+      },
+    })
+
+    await this.enqueueEmailJob({
+      notificationId: notification.id,
+      organizationId,
+      to: email,
+      templateId: 'INVITATION_CREATED',
+      dynamicData: {
+        invitationId,
+        token,
+        type,
+        organizationId,
+        clientId,
+      },
+    })
+
+    return notification
+  }
 }

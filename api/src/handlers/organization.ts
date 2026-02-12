@@ -5,7 +5,6 @@ import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
-  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -23,7 +22,6 @@ import {
 import { UpdateUserRoleSchema } from '../lib/schemas/organization.schema'
 import {
   Action,
-  ActivityLogActionType,
   ActorType,
   ForbiddenError,
   NotFoundError,
@@ -36,7 +34,6 @@ import {
   UserRepository,
 } from '../repositories'
 import {
-  ActivityLogService,
   InvitationService,
   OrganizationService,
 } from '../services'
@@ -267,18 +264,6 @@ const handlePostInvite = async (
     role: validated.body.role,
   })
 
-  const activityLogService = new ActivityLogService()
-  await prisma.$transaction(async (tx) => {
-    await activityLogService.log({
-      action: ActivityLogActionType.USER_INVITED,
-      organizationId,
-      actor,
-      metadata: {
-        invitedUserEmail: validated.body.email,
-      },
-      tx,
-    })
-  })
 
   return {
     statusCode: 201,
