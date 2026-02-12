@@ -17,8 +17,6 @@ export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
   createHandler,
-  createSQSHandler,
-  SqsHandlerFactory,
 } from './handlers'
 export { prisma } from './prisma/client'
 export {

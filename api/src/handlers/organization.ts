@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import {
   createHandler,
   type HttpRequest,
@@ -5,10 +7,14 @@ import {
   RouteBuilder,
   Router,
 } from '../lib'
+import { can } from '../lib/auth'
 import {
+  Action,
+  ActorType,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
+import { OrganizationRepository, type UpdateOrganizationInput } from '../repositories'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -23,15 +29,45 @@ const handleGetOrganization = async (
   }
 }
 
+const UpdateOrganizationSchema = z.object({
+  reminderEnabled: z.boolean().optional(),
+  reminderIntervalDays: z.number().int().min(1).optional(),
+}).strict()
+
 const handlePatchOrganization = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  can(actor, Action.UPDATE_ORGANIZATION, {
+    organizationId,
+  })
+
+  const body = UpdateOrganizationSchema.parse(
+    typeof request.body === 'string' ? JSON.parse(request.body) : request.body
+  )
+
+  const organizationRepository = new OrganizationRepository()
+  const updated = await organizationRepository.update(
+    organizationId,
+    body as UpdateOrganizationInput
+  )
+
   return {
     statusCode: 200,
     body: {
-      message: 'Update organization',
-      userId: request.auth.userId,
+      id: updated.id,
+      name: updated.name,
+      reminderEnabled: (updated as { reminderEnabled?: boolean }).reminderEnabled,
+      reminderIntervalDays: (updated as { reminderIntervalDays?: number })
+        .reminderIntervalDays,
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
     },
   }
 }

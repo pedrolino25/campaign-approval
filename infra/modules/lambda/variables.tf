@@ -69,13 +69,21 @@ variable "database_url" {
 variable "iam_roles" {
   description = "Map of Lambda function names to IAM role ARNs"
   type = object({
-    organization = string
-    client       = string
-    review       = string
-    attachment   = string
-    comment      = string
-    notification = string
+    organization    = string
+    client          = string
+    review          = string
+    attachment      = string
+    comment         = string
+    notification    = string
+    email_worker    = string
+    review_reminder = string
   })
+}
+
+variable "sendgrid_api_key" {
+  description = "SendGrid API key for email sending"
+  type        = string
+  sensitive   = true
 }
 
 variable "sendgrid_template_ids" {

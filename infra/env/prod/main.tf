@@ -105,13 +105,17 @@ module "lambdas" {
   cognito_app_client_id = module.cognito.app_client_id
 
   iam_roles = {
-    organization = module.iam.organization_role_arn
-    client       = module.iam.client_role_arn
-    review       = module.iam.review_role_arn
-    attachment   = module.iam.attachment_role_arn
-    comment      = module.iam.comment_role_arn
-    notification = module.iam.notification_role_arn
+    organization    = module.iam.organization_role_arn
+    client          = module.iam.client_role_arn
+    review          = module.iam.review_role_arn
+    attachment      = module.iam.attachment_role_arn
+    comment         = module.iam.comment_role_arn
+    notification    = module.iam.notification_role_arn
+    email_worker    = module.iam.email_worker_role_arn
+    review_reminder = module.iam.review_reminder_role_arn
   }
+
+  sendgrid_api_key = var.sendgrid_api_key
 
   database_url          = var.database_url
   sendgrid_template_ids = var.sendgrid_template_ids

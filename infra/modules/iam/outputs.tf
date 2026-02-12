@@ -24,6 +24,16 @@ output "comment_role_arn" {
 }
 
 output "notification_role_arn" {
-  description = "Notification Worker Lambda IAM role ARN"
+  description = "Notification API Lambda IAM role ARN"
   value       = aws_iam_role.notification.arn
+}
+
+output "email_worker_role_arn" {
+  description = "Email Worker Lambda IAM role ARN"
+  value       = aws_iam_role.email_worker.arn
+}
+
+output "review_reminder_role_arn" {
+  description = "Review Reminder Worker Lambda IAM role ARN"
+  value       = aws_iam_role.review_reminder.arn
 }
