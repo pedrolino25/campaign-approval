@@ -40,3 +40,12 @@ export const CommentParamsSchema = z
   .strict()
 
 export type CommentParams = z.infer<typeof CommentParamsSchema>
+
+export const DeleteCommentParamsSchema = z
+  .object({
+    id: uuidSchema,
+    commentId: uuidSchema,
+  })
+  .strict()
+
+export type DeleteCommentParams = z.infer<typeof DeleteCommentParamsSchema>

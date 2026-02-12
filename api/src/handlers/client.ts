@@ -8,6 +8,7 @@ import {
   validateParams,
   validateQuery,
 } from '../lib'
+import { authorizeOrThrow } from '../lib/auth/utils/authorize'
 import {
   ClientParamsSchema,
   ClientReviewerParamsSchema,
@@ -17,6 +18,7 @@ import {
   UpdateClientSchema,
 } from '../lib/schemas'
 import {
+  Action,
   ActorType,
   NotFoundError,
   type RouteDefinition,
@@ -29,11 +31,15 @@ const handleGetClients = async (
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
 
   if (!organizationId) {
     throw new NotFoundError('Organization not found')
   }
+
+  authorizeOrThrow(actor, Action.VIEW_CLIENT_LIST, {
+    organizationId: organizationId,
+  })
 
   const repository = new ClientRepository()
   const result = await repository.listByOrganization(organizationId, {
@@ -55,6 +61,17 @@ const handlePostClients = async (
 ): Promise<HttpResponse> => {
   const validated = validateBody(CreateClientSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  authorizeOrThrow(actor, Action.CREATE_CLIENT, {
+    organizationId: organizationId,
+  })
+  
   await Promise.resolve()
   return {
     statusCode: 200,
@@ -72,8 +89,27 @@ const handlePatchClient = async (
   const withParams = validateParams(ClientParamsSchema)(request)
   const validated = validateBody(UpdateClientSchema)(withParams)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const clientId = validated.params.id!
+  const repository = new ClientRepository()
+  const client = await repository.findById(clientId, organizationId)
+
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
+  authorizeOrThrow(actor, Action.EDIT_CLIENT, {
+    organizationId: client.organizationId,
+    deletedAt: client.archivedAt,
+  })
+  
   await Promise.resolve()
-  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -91,8 +127,27 @@ const handleArchiveClient = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ClientParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const clientId = validated.params.id!
+  const repository = new ClientRepository()
+  const client = await repository.findById(clientId, organizationId)
+
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
+  authorizeOrThrow(actor, Action.ARCHIVE_CLIENT, {
+    organizationId: client.organizationId,
+    deletedAt: client.archivedAt,
+  })
+  
   await Promise.resolve()
-  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -110,7 +165,25 @@ const handleGetReviewers = async (
   const validatedParams = validateParams(ClientParamsSchema)(request)
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
   const clientId = validatedParams.params.id!
+  const clientRepository = new ClientRepository()
+  const client = await clientRepository.findById(clientId, organizationId)
+
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
+  authorizeOrThrow(actor, Action.VIEW_CLIENT_LIST, {
+    organizationId: client.organizationId,
+    deletedAt: client.archivedAt,
+  })
 
   const repository = new ClientReviewerRepository()
   const result = await repository.listByClient(clientId, {
@@ -133,8 +206,27 @@ const handlePostReviewer = async (
   const withParams = validateParams(ClientParamsSchema)(request)
   const validated = validateBody(InviteReviewerSchema)(withParams)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const clientId = validated.params.id!
+  const repository = new ClientRepository()
+  const client = await repository.findById(clientId, organizationId)
+
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
+  authorizeOrThrow(actor, Action.INVITE_CLIENT_REVIEWER, {
+    organizationId: client.organizationId,
+    deletedAt: client.archivedAt,
+  })
+  
   await Promise.resolve()
-  const clientId = validated.params.id
 
   return {
     statusCode: 200,
@@ -152,8 +244,27 @@ const handleDeleteReviewer = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ClientReviewerParamsSchema)(request)
   
+  const actor = request.auth.actor
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const clientId = validated.params.id!
+  const repository = new ClientRepository()
+  const client = await repository.findById(clientId, organizationId)
+
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
+  authorizeOrThrow(actor, Action.REMOVE_CLIENT_REVIEWER, {
+    organizationId: client.organizationId,
+    deletedAt: client.archivedAt,
+  })
+  
   await Promise.resolve()
-  const clientId = validated.params.id
   const reviewerId = validated.params.reviewerId
 
   return {

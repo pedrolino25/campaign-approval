@@ -18,6 +18,7 @@ import {
 export type CreateNotificationInput = {
   organizationId: string
   userId?: string
+  reviewerId?: string
   email?: string
   type: NotificationType
   payload: Prisma.JsonValue
@@ -48,9 +49,20 @@ export interface INotificationRepository {
     organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Notification>>
+  listByReviewer(
+    reviewerId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>>
+  listUnreadByReviewer(
+    reviewerId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>>
   markAsRead(id: string, organizationId: string): Promise<void>
   markAsSent(id: string, organizationId: string): Promise<void>
   markAllAsReadByUser(userId: string, organizationId: string): Promise<void>
+  markAllAsReadByReviewer(reviewerId: string, organizationId: string): Promise<void>
 }
 
 export class NotificationRepository implements INotificationRepository {
@@ -63,6 +75,7 @@ export class NotificationRepository implements INotificationRepository {
       data: {
         organizationId: data.organizationId,
         userId: data.userId,
+        reviewerId: data.reviewerId,
         email: data.email,
         type: data.type,
         payload: data.payload ?? {},
@@ -198,6 +211,77 @@ export class NotificationRepository implements INotificationRepository {
     await prisma.notification.updateMany({
       where: {
         userId,
+        organizationId,
+        readAt: null,
+      },
+      data: {
+        readAt: new Date(),
+      },
+    })
+  }
+
+  async listByReviewer(
+    reviewerId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.notification.findMany({
+      where: {
+        reviewerId,
+        organizationId,
+        ...cursorWhere,
+      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
+    })
+
+    const hasMore = items.length > limit
+    const data: Notification[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
+  }
+
+  async listUnreadByReviewer(
+    reviewerId: string,
+    organizationId: string,
+    pagination: CursorPaginationParams
+  ): Promise<CursorPaginationResult<Notification>> {
+    const { cursor, limit } = normalizePaginationParams(pagination)
+    const cursorWhere = createCursorWhereCondition(cursor)
+
+    const items = await prisma.notification.findMany({
+      where: {
+        reviewerId,
+        organizationId,
+        readAt: null,
+        ...cursorWhere,
+      },
+      orderBy: CURSOR_ORDER_BY,
+      take: limit + 1,
+    })
+
+    const hasMore = items.length > limit
+    const data: Notification[] = hasMore ? items.slice(0, limit) : items
+
+    return {
+      data,
+      nextCursor: determineNextCursor(data, limit),
+    }
+  }
+
+  async markAllAsReadByReviewer(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<void> {
+    await prisma.notification.updateMany({
+      where: {
+        reviewerId,
         organizationId,
         readAt: null,
       },

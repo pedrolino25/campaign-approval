@@ -3,8 +3,9 @@ import type { Prisma } from '@prisma/client'
 import {
   type ActivityLogActionType,
   type ActivityLogMetadataMap,
-  type ActorContext, 
+  type ActorContext,
   ActorType,
+  InvariantViolationError,
 } from '../models'
 import {
   mapActionToPrismaAction,
@@ -50,13 +51,13 @@ export class ActivityLogService implements IActivityLogService {
     const actorUserId =
       actor.type === ActorType.Internal ? actor.userId : null
 
-    let enrichedMetadata: Prisma.InputJsonValue = metadata as Prisma.InputJsonValue
+    const actorReviewerId =
+      actor.type === ActorType.Reviewer ? actor.reviewerId : null
 
-    if (actor.type === ActorType.Reviewer) {
-      enrichedMetadata = {
-        ...metadata,
-        reviewerId: actor.reviewerId,
-      } as Prisma.InputJsonValue
+    this.validateActorInvariant(actorUserId, actorReviewerId)
+
+    if (reviewItemId) {
+      await this.validateOrganizationMatch(reviewItemId, organizationId, tx)
     }
 
     const prismaAction = mapActionToPrismaAction(action)
@@ -66,10 +67,46 @@ export class ActivityLogService implements IActivityLogService {
         organizationId,
         reviewItemId: reviewItemId ?? null,
         actorUserId,
+        actorReviewerId,
         action: prismaAction,
-        metadata: enrichedMetadata,
+        metadata: metadata as Prisma.InputJsonValue,
       },
       tx
     )
+  }
+
+  private validateActorInvariant(
+    actorUserId: string | null,
+    actorReviewerId: string | null
+  ): void {
+    const hasUserId = !!actorUserId
+    const hasReviewerId = !!actorReviewerId
+
+    if (hasUserId && hasReviewerId) {
+      throw new InvariantViolationError('INVALID_ACTIVITY_ACTOR')
+    }
+
+    if (!hasUserId && !hasReviewerId) {
+      throw new InvariantViolationError('INVALID_ACTIVITY_ACTOR')
+    }
+  }
+
+  private async validateOrganizationMatch(
+    reviewItemId: string,
+    organizationId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    const reviewItem = await tx.reviewItem.findUnique({
+      where: { id: reviewItemId },
+      select: { organizationId: true },
+    })
+
+    if (!reviewItem) {
+      throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
+    }
+
+    if (reviewItem.organizationId !== organizationId) {
+      throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
+    }
   }
 }

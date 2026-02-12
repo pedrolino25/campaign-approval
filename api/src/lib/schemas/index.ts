@@ -5,6 +5,8 @@ export {
   ConfirmUploadSchema,
   type CreatePresignedUploadRequest,
   CreatePresignedUploadSchema,
+  type DeleteAttachmentParams,
+  DeleteAttachmentParamsSchema,
 } from './attachment.schema'
 export {
   type ClientParams,
@@ -23,7 +25,19 @@ export {
   AddCommentSchema,
   type CommentParams,
   CommentParamsSchema,
+  type DeleteCommentParams,
+  DeleteCommentParamsSchema,
 } from './comment.schema'
+export {
+  type NotificationParams,
+  NotificationParamsSchema,
+} from './notification.schema'
+export {
+  type CompleteInternalOnboardingRequest,
+  CompleteInternalOnboardingSchema,
+  type CompleteReviewerOnboardingRequest,
+  CompleteReviewerOnboardingSchema,
+} from './onboarding.schema'
 export {
   type UpdateOrganizationSettingsRequest,
   UpdateOrganizationSettingsSchema,

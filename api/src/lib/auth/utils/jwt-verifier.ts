@@ -28,7 +28,7 @@ export class JwtVerifier implements TokenVerifier {
     return `https://cognito-idp.${config.AWS_REGION}.amazonaws.com/${config.COGNITO_USER_POOL_ID}`
   }
 
-  async verify(token: string): Promise<{ userId: string; rawToken: string }> {
+  async verify(token: string): Promise<{ userId: string; email: string; rawToken: string }> {
     const jwks = this.getJWKS()
     const issuer = this.getIssuer()
 
@@ -50,8 +50,15 @@ export class JwtVerifier implements TokenVerifier {
       throw new UnauthorizedError('Token missing subject claim')
     }
 
+    const email = typeof payload.email === 'string' ? payload.email : ''
+
+    if (!email) {
+      throw new UnauthorizedError('Token missing email claim')
+    }
+
     return {
       userId: payload.sub,
+      email,
       rawToken: token,
     }
   }

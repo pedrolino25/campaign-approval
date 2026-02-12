@@ -15,11 +15,13 @@ export type CreateUserInput = {
   organizationId: string
   email: string
   role: UserRole
+  name?: string | null
 }
 
 export type UpdateUserInput = {
   email?: string
   role?: UserRole
+  name?: string | null
 }
 
 export interface IUserRepository {
@@ -42,6 +44,7 @@ export class UserRepository implements IUserRepository {
         organizationId: data.organizationId,
         email: data.email,
         role: data.role,
+        ...(data.name !== undefined && { name: data.name }),
       },
     })
   }

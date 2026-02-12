@@ -11,6 +11,7 @@ const nonEmptyString = (min: number = 1, max: number = 255): z.ZodString =>
 
 export const CreatePresignedUploadSchema = z
   .object({
+    reviewItemId: uuidSchema,
     fileName: nonEmptyString(1, 255),
     fileType: nonEmptyString(1, 100),
     fileSize: z
@@ -47,3 +48,12 @@ export const AttachmentParamsSchema = z
   .strict()
 
 export type AttachmentParams = z.infer<typeof AttachmentParamsSchema>
+
+export const DeleteAttachmentParamsSchema = z
+  .object({
+    id: uuidSchema, // review item id
+    attachmentId: uuidSchema,
+  })
+  .strict()
+
+export type DeleteAttachmentParams = z.infer<typeof DeleteAttachmentParamsSchema>

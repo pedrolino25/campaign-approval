@@ -1,21 +1,28 @@
-import { type ActorContext, ActorType,UnauthorizedError } from '../../models'
-import { type ClientReviewerRepository,type UserRepository } from '../../repositories'
+import type { Reviewer, User } from '@prisma/client'
+
+import {
+  type ActorContext,
+  ActorType,
+  UnauthorizedError,
+} from '../../models'
+import {
+  type ClientReviewerRepository,
+} from '../../repositories'
 
 export class RBACService {
   constructor(
-    private readonly userRepository: UserRepository,
     private readonly clientReviewerRepository: ClientReviewerRepository
   ) {}
 
   async resolve(
     cognitoUserId: string,
-    organizationId?: string
-  ): Promise<ActorContext> {
+    organizationId: string | undefined,
+    user?: User | null,
+    reviewer?: Reviewer | null
+  ): Promise<Omit<ActorContext, 'onboardingCompleted'>> {
     if (!cognitoUserId) {
       throw new UnauthorizedError('Missing userId in auth context')
     }
-
-    const user = await this.userRepository.findByCognitoId(cognitoUserId)
 
     if (user) {
       return {
@@ -23,7 +30,14 @@ export class RBACService {
         userId: user.id,
         organizationId: user.organizationId,
         role: user.role,
-      }
+      } as Omit<ActorContext, 'onboardingCompleted'>
+    }
+
+
+    if (!reviewer) {
+      throw new UnauthorizedError(
+        'Unable to resolve actor: user or reviewer not found'
+      )
     }
 
     if (!organizationId) {
@@ -32,12 +46,13 @@ export class RBACService {
       )
     }
 
-    const reviewer = await this.clientReviewerRepository.findByCognitoIdAndOrganization(
-      cognitoUserId,
-      organizationId
-    )
+    const clientReviewer =
+      await this.clientReviewerRepository.findByReviewerIdAndOrganization(
+        reviewer.id,
+        organizationId
+      )
 
-    if (!reviewer) {
+    if (!clientReviewer) {
       throw new UnauthorizedError(
         'Unable to resolve actor: reviewer not found for this organization'
       )
@@ -46,7 +61,7 @@ export class RBACService {
     return {
       type: ActorType.Reviewer,
       reviewerId: reviewer.id,
-      clientId: reviewer.clientId,
-    }
+      clientId: clientReviewer.clientId,
+    } as Omit<ActorContext, 'onboardingCompleted'>
   }
 }

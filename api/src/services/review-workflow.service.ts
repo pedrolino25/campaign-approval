@@ -6,10 +6,10 @@ import {
 
 import { prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
 import {
+  BusinessRuleViolationError,
   ConflictError,
   InvalidStateTransitionError,
   NotFoundError,
-  ValidationError,
 } from '../models'
 import {
   ActivityLogActionType,
@@ -82,12 +82,14 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
     const { reviewItemId, action, actor, expectedVersion } = input
 
-    const reviewItem = await this.loadAndValidateReviewItem(
-      reviewItemId,
-      actor,
-      expectedVersion
-    )
+    const actorOrganizationId =
+      actor.type === ActorType.Internal
+        ? actor.organizationId
+        : await this.getOrganizationIdFromClient(actor.clientId)
 
+    const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
+
+    this.validateHardConstraints(reviewItem, actor, actorOrganizationId, expectedVersion)
     this.validateActorPermissions(actor, action)
     await this.validateBusinessRules(action, reviewItemId)
 
@@ -108,16 +110,10 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     }
   }
 
-  private async loadAndValidateReviewItem(
+  private async loadReviewItem(
     reviewItemId: string,
-    actor: ActorContext,
-    expectedVersion: number
+    actorOrganizationId: string
   ): Promise<ReviewItem> {
-    const actorOrganizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
-
     const reviewItem = await this.reviewItemRepository.findByIdScoped(
       reviewItemId,
       actorOrganizationId
@@ -127,25 +123,34 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       throw new NotFoundError('Review item not found')
     }
 
-    if (actor.type === ActorType.Reviewer) {
-      if (reviewItem.clientId !== actor.clientId) {
-        throw new NotFoundError('Review item not found')
-      }
-    }
+    return reviewItem
+  }
 
+  private validateHardConstraints(
+    reviewItem: ReviewItem,
+    actor: ActorContext,
+    actorOrganizationId: string,
+    expectedVersion: number
+  ): void {
     if (reviewItem.archivedAt !== null) {
       throw new InvalidStateTransitionError(
         'Cannot perform transitions on archived review item'
       )
     }
 
-    if (reviewItem.version !== expectedVersion) {
-      throw new ConflictError(
-        'Review item version mismatch. Please refresh and try again.'
-      )
+    if (reviewItem.organizationId !== actorOrganizationId) {
+      throw new NotFoundError('Review item not found')
     }
 
-    return reviewItem
+    if (actor.type === ActorType.Reviewer) {
+      if (reviewItem.clientId !== actor.clientId) {
+        throw new NotFoundError('Review item not found')
+      }
+    }
+
+    if (reviewItem.version !== expectedVersion) {
+      throw new BusinessRuleViolationError('VERSION_CONFLICT')
+    }
   }
 
   private async validateBusinessRules(
@@ -157,7 +162,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
         reviewItemId
       )
       if (!hasAttachments) {
-        throw new ValidationError('Cannot send for review without attachments')
+        throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
       }
     }
   }

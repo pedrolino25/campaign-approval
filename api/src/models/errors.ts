@@ -6,6 +6,8 @@ export enum ErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   CONFLICT = 'CONFLICT',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
+  BUSINESS_RULE_VIOLATION = 'BUSINESS_RULE_VIOLATION',
+  INVARIANT_VIOLATION = 'INVARIANT_VIOLATION',
 }
 
 export abstract class DomainError extends Error {
@@ -54,5 +56,17 @@ export class ValidationError extends DomainError {
 export class ConflictError extends DomainError {
   constructor(message: string) {
     super(ErrorCode.CONFLICT, message, 409)
+  }
+}
+
+export class BusinessRuleViolationError extends DomainError {
+  constructor(message: string) {
+    super(ErrorCode.BUSINESS_RULE_VIOLATION, message, 400)
+  }
+}
+
+export class InvariantViolationError extends DomainError {
+  constructor(message: string) {
+    super(ErrorCode.INVARIANT_VIOLATION, message, 400)
   }
 }

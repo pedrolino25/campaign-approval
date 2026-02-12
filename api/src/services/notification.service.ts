@@ -1,20 +1,24 @@
-import type { ClientReviewer, Notification, NotificationType, Prisma, User } from '@prisma/client'
+import type { ClientReviewer, Notification, NotificationType, Prisma, Reviewer, User } from '@prisma/client'
 
 import { logger, SQSService } from '../lib'
 import type { CursorPaginationResult } from '../lib/pagination/cursor-pagination'
 import {
-  type ActorContext,ActorType,
+  type ActorContext,
+  ActorType,
+  InvariantViolationError,
   type WorkflowEventPayloadMap,
   WorkflowEventType,
 } from '../models'
 import {
   ClientReviewerRepository,
   NotificationRepository,
+  ReviewerRepository,
   UserRepository,
 } from '../repositories'
 
 type Recipient = {
   userId?: string
+  reviewerId?: string
   email?: string
 }
 
@@ -28,12 +32,14 @@ type ReviewItemSelect = {
 export class NotificationService {
   private readonly notificationRepository: NotificationRepository
   private readonly userRepository: UserRepository
+  private readonly reviewerRepository: ReviewerRepository
   private readonly clientReviewerRepository: ClientReviewerRepository
   private readonly sqsService: SQSService
 
   constructor() {
     this.notificationRepository = new NotificationRepository()
     this.userRepository = new UserRepository()
+    this.reviewerRepository = new ReviewerRepository()
     this.clientReviewerRepository = new ClientReviewerRepository()
     this.sqsService = new SQSService()
   }
@@ -125,19 +131,37 @@ export class NotificationService {
   private async getReviewersForClient(
     clientId: string
   ): Promise<Recipient[]> {
-    const allReviewers: ClientReviewer[] = []
+    const allClientReviewers: ClientReviewer[] = []
     let cursor: string | undefined = undefined
 
     do {
-      const result: CursorPaginationResult<ClientReviewer> = await this.clientReviewerRepository.listByClient(clientId, {
-        cursor,
-        limit: 100,
-      })
-      allReviewers.push(...result.data)
+      const result: CursorPaginationResult<ClientReviewer> =
+        await this.clientReviewerRepository.listByClient(clientId, {
+          cursor,
+          limit: 100,
+        })
+      allClientReviewers.push(...result.data)
       cursor = result.nextCursor ?? undefined
     } while (cursor)
 
-    return allReviewers.map((reviewer) => ({
+    // Collect reviewerIds
+    const reviewerIds = allClientReviewers.map((cr) => cr.reviewerId)
+
+    if (reviewerIds.length === 0) {
+      return []
+    }
+
+    // Query Reviewer records to get emails
+    const reviewers = await Promise.all(
+      reviewerIds.map((id) => this.reviewerRepository.findById(id))
+    )
+
+    const validReviewers = reviewers.filter(
+      (r): r is Reviewer => r !== null
+    )
+
+    return validReviewers.map((reviewer) => ({
+      reviewerId: reviewer.id,
       email: reviewer.email,
     }))
   }
@@ -173,38 +197,64 @@ export class NotificationService {
   }): Promise<void> {
     const { type, recipient, reviewItem, tx } = params
 
-    if (!recipient.userId && !recipient.email) {
+    if (!this.isValidRecipient(recipient)) {
       logger.warn({
-        message: 'Recipient has neither userId nor email',
+        message: 'Recipient has neither userId, reviewerId, nor email',
         reviewItemId: reviewItem.id,
         eventType: type,
       })
       return
     }
 
-    const idempotencyKey = this.generateIdempotencyKey(
-      type,
-      reviewItem.id,
-      recipient.userId || recipient.email || ''
-    )
+    const recipientId = recipient.userId || recipient.reviewerId || recipient.email || ''
+    const idempotencyKey = this.generateIdempotencyKey(type, reviewItem.id, recipientId)
 
-    const existingNotification = await this.findExistingNotification(
-      type,
-      reviewItem.organizationId,
-      recipient.userId,
-      recipient.email,
-      reviewItem.id,
-      tx
-    )
-
-    if (existingNotification) {
+    if (await this.hasExistingNotification(type, reviewItem, recipient, tx)) {
       logger.info({
         message: 'Notification already exists, skipping duplicate',
-        notificationId: existingNotification.id,
         idempotencyKey,
       })
       return
     }
+
+    const notification = await this.createNotification(reviewItem, recipient, type, tx)
+    await this.sendEmailIfNeeded(notification, recipient, reviewItem, type)
+  }
+
+  private isValidRecipient(recipient: Recipient): boolean {
+    return !!(recipient.userId || recipient.reviewerId || recipient.email)
+  }
+
+  private async hasExistingNotification(
+    type: WorkflowEventType,
+    reviewItem: { id: string; organizationId: string },
+    recipient: Recipient,
+    tx: Prisma.TransactionClient
+  ): Promise<boolean> {
+    const existing = await this.findExistingNotification(
+      type,
+      reviewItem.organizationId,
+      recipient.userId,
+      recipient.reviewerId,
+      recipient.email,
+      reviewItem.id,
+      tx
+    )
+    return !!existing
+  }
+
+  private async createNotification(
+    reviewItem: { id: string; title: string; organizationId: string },
+    recipient: Recipient,
+    type: WorkflowEventType,
+    tx: Prisma.TransactionClient
+  ): Promise<Notification> {
+    this.validateRecipientInvariant(recipient)
+    await this.validateOrganizationConsistency(
+      recipient,
+      reviewItem.organizationId,
+      tx
+    )
 
     const notificationPayload: Prisma.JsonValue = {
       reviewItemId: reviewItem.id,
@@ -212,61 +262,154 @@ export class NotificationService {
       eventType: type,
     }
 
-    const notification = await this.notificationRepository.create(
+    return await this.notificationRepository.create(
       {
         organizationId: reviewItem.organizationId,
         userId: recipient.userId,
+        reviewerId: recipient.reviewerId,
         email: recipient.email,
         type: this.mapEventTypeToNotificationType(type),
         payload: notificationPayload,
       },
       tx
     )
+  }
 
-    const recipientEmail = recipient.email || (await this.getEmailForUserId(recipient.userId!, reviewItem.organizationId))
+  private validateRecipientInvariant(recipient: Recipient): void {
+    const hasUserId = !!recipient.userId
+    const hasReviewerId = !!recipient.reviewerId
+    const hasEmail = !!recipient.email
 
-    if (recipientEmail) {
-      await this.enqueueEmailJob({
-        notificationId: notification.id,
-        organizationId: notification.organizationId,
-        to: recipientEmail,
-        templateId: type,
-        dynamicData: {
-          reviewItemId: reviewItem.id,
-          reviewItemTitle: reviewItem.title,
-          ...this.getDynamicDataForEventType(type, reviewItem),
+    const count = [hasUserId, hasReviewerId, hasEmail].filter(Boolean).length
+
+    if (count !== 1) {
+      throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+    }
+  }
+
+  private async validateOrganizationConsistency(
+    recipient: Recipient,
+    organizationId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    if (recipient.userId) {
+      const user = await tx.user.findUnique({
+        where: { id: recipient.userId },
+        select: { organizationId: true },
+      })
+
+      if (!user || user.organizationId !== organizationId) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
+    }
+
+    if (recipient.reviewerId) {
+      const clientReviewer = await tx.clientReviewer.findFirst({
+        where: {
+          reviewerId: recipient.reviewerId,
+          archivedAt: null,
+          client: {
+            organizationId,
+            archivedAt: null,
+          },
         },
       })
+
+      if (!clientReviewer) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
     }
+  }
+
+  private async sendEmailIfNeeded(
+    notification: Notification,
+    recipient: Recipient,
+    reviewItem: { id: string; title: string },
+    type: WorkflowEventType
+  ): Promise<void> {
+    const recipientEmail = await this.resolveRecipientEmail(recipient, notification.organizationId)
+
+    if (!recipientEmail) {
+      return
+    }
+
+    await this.enqueueEmailJob({
+      notificationId: notification.id,
+      organizationId: notification.organizationId,
+      to: recipientEmail,
+      templateId: type,
+      dynamicData: {
+        reviewItemId: reviewItem.id,
+        reviewItemTitle: reviewItem.title,
+        ...this.getDynamicDataForEventType(type, reviewItem),
+      },
+    })
+  }
+
+  private async resolveRecipientEmail(
+    recipient: Recipient,
+    organizationId: string
+  ): Promise<string | null> {
+    if (recipient.email) {
+      return recipient.email
+    }
+
+    if (recipient.userId) {
+      return await this.getEmailForUserId(recipient.userId, organizationId)
+    }
+
+    if (recipient.reviewerId) {
+      return await this.getEmailForReviewerId(recipient.reviewerId)
+    }
+
+    return null
   }
 
   private async findExistingNotification(
     eventType: WorkflowEventType,
     organizationId: string,
     userId: string | undefined,
+    reviewerId: string | undefined,
     email: string | undefined,
     reviewItemId: string,
     tx: Prisma.TransactionClient
   ): Promise<Notification | null> {
-    const notifications = await tx.notification.findMany({
-      where: {
-        organizationId,
-        ...(userId ? { userId } : { email }),
-        type: this.mapEventTypeToNotificationType(eventType),
-        payload: {
-          path: ['reviewItemId'],
-          equals: reviewItemId,
-        },
+    const where: Prisma.NotificationWhereInput = {
+      organizationId,
+      type: this.mapEventTypeToNotificationType(eventType),
+      payload: {
+        path: ['reviewItemId'],
+        equals: reviewItemId,
       },
+    }
+
+    if (userId) {
+      where.userId = userId
+    } else if (reviewerId) {
+      where.reviewerId = reviewerId
+    } else if (email) {
+      where.email = email
+    }
+
+    const notifications = await tx.notification.findMany({
+      where,
       take: 1,
     })
 
     return notifications[0] || null
   }
 
-  private async getEmailForUserId(userId: string, organizationId: string): Promise<string | null> {
+  private async getEmailForUserId(
+    userId: string,
+    organizationId: string
+  ): Promise<string | null> {
     const user = await this.userRepository.findById(userId, organizationId)
     return user?.email || null
+  }
+
+  private async getEmailForReviewerId(reviewerId: string): Promise<string | null> {
+    const reviewer = await this.reviewerRepository.findById(reviewerId)
+    return reviewer?.email || null
   }
 
   private generateIdempotencyKey(

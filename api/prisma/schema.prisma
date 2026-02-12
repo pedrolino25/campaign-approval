@@ -59,13 +59,18 @@ enum InvitationRole {
   MEMBER
 }
 
+enum InvitationType {
+  INTERNAL_USER
+  REVIEWER
+}
+
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  reminderEnabled Boolean @default(true) @map("reminder_enabled")
-  reminderIntervalDays Int @default(3) @map("reminder_interval_days")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                   String   @id @default(uuid())
+  name                 String?
+  reminderEnabled      Boolean  @default(true) @map("reminder_enabled")
+  reminderIntervalDays Int      @default(3) @map("reminder_interval_days")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   users         User[]
   clients       Client[]
@@ -79,21 +84,22 @@ model Organization {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  cognitoUserId String    @unique @map("cognito_user_id")
-  organizationId String   @map("organization_id")
-  email         String
-  role          UserRole
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  archivedAt    DateTime? @map("archived_at")
+  id             String    @id @default(uuid())
+  cognitoUserId  String    @unique @map("cognito_user_id")
+  organizationId String    @map("organization_id")
+  name           String?
+  email          String
+  role           UserRole
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  archivedAt     DateTime? @map("archived_at")
 
-  organization     Organization      @relation(fields: [organizationId], references: [id])
-  reviewItems      ReviewItem[]
-  comments         Comment[]
-  notifications    Notification[]
-  activityLogs     ActivityLog[]
-  sentInvitations  Invitation[]      @relation("InvitationInviter")
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  reviewItems     ReviewItem[]
+  comments        Comment[]      @relation("CommentAuthorUser")
+  notifications   Notification[]
+  activityLogs    ActivityLog[]  @relation("ActivityLogActorUser")
+  sentInvitations Invitation[]   @relation("InvitationInviter")
 
   @@index([organizationId])
   @@index([cognitoUserId])
@@ -101,17 +107,36 @@ model User {
   @@map("users")
 }
 
-model Client {
+model Reviewer {
   id            String    @id @default(uuid())
-  organizationId String   @map("organization_id")
-  name          String
+  cognitoUserId String    @unique @map("cognito_user_id")
+  email         String    @unique
+  name          String?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   archivedAt    DateTime? @map("archived_at")
 
-  organization   Organization      @relation(fields: [organizationId], references: [id])
-  reviewers      ClientReviewer[]
-  reviewItems    ReviewItem[]
+  clientLinks   ClientReviewer[]
+  comments      Comment[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@index([email])
+  @@map("reviewers")
+}
+
+model Client {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  name           String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  archivedAt     DateTime? @map("archived_at")
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  reviewers    ClientReviewer[]
+  reviewItems  ReviewItem[]
+  invitations  Invitation[]
 
   @@index([organizationId])
   @@index([organizationId, createdAt])
@@ -119,35 +144,34 @@ model Client {
 }
 
 model ClientReviewer {
-  id            String    @id @default(uuid())
-  clientId      String    @map("client_id")
-  cognitoUserId String    @map("cognito_user_id")
-  email         String
-  createdAt     DateTime  @default(now()) @map("created_at")
-  archivedAt    DateTime? @map("archived_at")
+  id         String    @id @default(uuid())
+  clientId   String    @map("client_id")
+  reviewerId String    @map("reviewer_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  archivedAt DateTime? @map("archived_at")
 
-  client Client @relation(fields: [clientId], references: [id])
+  client   Client   @relation(fields: [clientId], references: [id])
+  reviewer Reviewer @relation(fields: [reviewerId], references: [id])
 
+  @@unique([clientId, reviewerId])
   @@index([clientId])
-  @@index([cognitoUserId])
-  @@index([email])
-  @@index([clientId, cognitoUserId])
+  @@index([reviewerId])
   @@map("client_reviewers")
 }
 
 model ReviewItem {
-  id            String       @id @default(uuid())
-  organizationId String      @map("organization_id")
-  clientId      String       @map("client_id")
-  title         String
-  description   String?      @db.Text
-  status        ReviewStatus
-  version       Int          @default(1)
-  createdByUserId String     @map("created_by_user_id")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  archivedAt    DateTime?    @map("archived_at")
-  lastReminderSentAt DateTime? @map("last_reminder_sent_at")
+  id                 String       @id @default(uuid())
+  organizationId     String       @map("organization_id")
+  clientId           String       @map("client_id")
+  title              String
+  description        String?      @db.Text
+  status             ReviewStatus
+  version            Int          @default(1)
+  createdByUserId    String       @map("created_by_user_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  archivedAt         DateTime?    @map("archived_at")
+  lastReminderSentAt DateTime?    @map("last_reminder_sent_at")
 
   organization Organization  @relation(fields: [organizationId], references: [id])
   client       Client        @relation(fields: [clientId], references: [id])
@@ -167,18 +191,20 @@ model ReviewItem {
   @@index([clientId, createdAt])
   @@index([organizationId, status, updatedAt])
   @@index([organizationId, status, lastReminderSentAt])
+  @@index([clientId, archivedAt])
+  @@index([clientId, status])
   @@map("review_items")
 }
 
 model Attachment {
-  id            String   @id @default(uuid())
+  id           String   @id @default(uuid())
   reviewItemId String   @map("review_item_id")
-  fileName      String   @map("file_name")
-  fileType      String   @map("file_type")
-  fileSize      Int      @map("file_size")
-  s3Key         String   @map("s3_key")
-  version       Int
-  createdAt     DateTime @default(now()) @map("created_at")
+  fileName     String   @map("file_name")
+  fileType     String   @map("file_type")
+  fileSize     Int      @map("file_size")
+  s3Key        String   @map("s3_key")
+  version      Int
+  createdAt    DateTime @default(now()) @map("created_at")
 
   reviewItem ReviewItem @relation(fields: [reviewItemId], references: [id])
 
@@ -187,41 +213,47 @@ model Attachment {
 }
 
 model Comment {
-  id              String            @id @default(uuid())
-  reviewItemId    String            @map("review_item_id")
-  authorType      CommentAuthorType @map("author_type")
-  authorUserId    String?           @map("author_user_id")
-  authorEmail     String?           @map("author_email")
-  content         String            @db.Text
-  xCoordinate     Float?            @map("x_coordinate")
-  yCoordinate     Float?            @map("y_coordinate")
-  timestampSeconds Float?           @map("timestamp_seconds")
-  createdAt       DateTime          @default(now()) @map("created_at")
+  id               String            @id @default(uuid())
+  reviewItemId     String            @map("review_item_id")
+  authorType       CommentAuthorType @map("author_type")
+  authorUserId     String?           @map("author_user_id")
+  authorReviewerId String?           @map("author_reviewer_id")
+  content          String            @db.Text
+  xCoordinate      Float?            @map("x_coordinate")
+  yCoordinate      Float?            @map("y_coordinate")
+  timestampSeconds Float?            @map("timestamp_seconds")
+  createdAt        DateTime          @default(now()) @map("created_at")
 
-  reviewItem ReviewItem? @relation(fields: [reviewItemId], references: [id])
-  author     User?       @relation(fields: [authorUserId], references: [id])
+  reviewItem     ReviewItem? @relation(fields: [reviewItemId], references: [id])
+  authorUser     User?       @relation("CommentAuthorUser", fields: [authorUserId], references: [id])
+  authorReviewer Reviewer?   @relation(fields: [authorReviewerId], references: [id])
 
   @@index([reviewItemId])
   @@index([reviewItemId, createdAt])
+  @@index([authorReviewerId])
+  @@index([authorUserId])
   @@map("comments")
 }
 
 model Notification {
-  id            String          @id @default(uuid())
-  organizationId String         @map("organization_id")
-  userId        String?         @map("user_id")
-  email         String?
-  type          NotificationType
-  payload       Json
-  readAt        DateTime?       @map("read_at")
-  sentAt        DateTime?       @map("sent_at")
-  createdAt     DateTime        @default(now()) @map("created_at")
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  userId         String?          @map("user_id")
+  reviewerId     String?          @map("reviewer_id")
+  email          String?
+  type           NotificationType
+  payload        Json
+  readAt         DateTime?        @map("read_at")
+  sentAt         DateTime?        @map("sent_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User?        @relation(fields: [userId], references: [id])
+  reviewer     Reviewer?    @relation(fields: [reviewerId], references: [id])
 
   @@index([organizationId])
   @@index([userId])
+  @@index([reviewerId])
   @@index([email])
   @@index([readAt])
   @@index([sentAt])
@@ -233,21 +265,24 @@ model Notification {
 }
 
 model ActivityLog {
-  id            String            @id @default(uuid())
-  organizationId String           @map("organization_id")
-  reviewItemId  String?           @map("review_item_id")
-  actorUserId   String?           @map("actor_user_id")
-  action        ActivityLogAction
-  metadata      Json
-  createdAt     DateTime          @default(now()) @map("created_at")
+  id              String            @id @default(uuid())
+  organizationId  String            @map("organization_id")
+  reviewItemId    String?           @map("review_item_id")
+  actorUserId     String?           @map("actor_user_id")
+  actorReviewerId String?           @map("actor_reviewer_id")
+  action          ActivityLogAction
+  metadata        Json
+  createdAt       DateTime          @default(now()) @map("created_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  reviewItem   ReviewItem?  @relation(fields: [reviewItemId], references: [id])
-  actor        User?        @relation(fields: [actorUserId], references: [id])
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  reviewItem    ReviewItem?  @relation(fields: [reviewItemId], references: [id])
+  actorUser     User?        @relation("ActivityLogActorUser", fields: [actorUserId], references: [id])
+  actorReviewer Reviewer?    @relation(fields: [actorReviewerId], references: [id])
 
   @@index([organizationId])
   @@index([reviewItemId])
   @@index([actorUserId])
+  @@index([actorReviewerId])
   @@index([action])
   @@index([createdAt])
   @@index([organizationId, createdAt])
@@ -256,20 +291,24 @@ model ActivityLog {
 }
 
 model Invitation {
-  id            String         @id @default(uuid())
-  organizationId String        @map("organization_id")
-  email         String
-  role          InvitationRole
-  token         String         @unique
-  expiresAt     DateTime       @map("expires_at")
-  acceptedAt    DateTime?      @map("accepted_at")
-  inviterUserId String?       @map("inviter_user_id")
-  createdAt     DateTime       @default(now()) @map("created_at")
+  id             String          @id @default(uuid())
+  organizationId String          @map("organization_id")
+  clientId       String?         @map("client_id")
+  email          String
+  role           InvitationRole?
+  type           InvitationType
+  token          String          @unique
+  expiresAt      DateTime        @map("expires_at")
+  acceptedAt     DateTime?       @map("accepted_at")
+  inviterUserId  String?         @map("inviter_user_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
+  client       Client?      @relation(fields: [clientId], references: [id])
 
   @@index([organizationId])
+  @@index([clientId])
   @@index([email])
   @@index([token])
   @@index([expiresAt])

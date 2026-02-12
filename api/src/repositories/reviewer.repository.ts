@@ -1,0 +1,78 @@
+import type { Reviewer } from '@prisma/client'
+
+import { prisma } from '../lib'
+
+export type CreateReviewerInput = {
+  cognitoUserId: string
+  email: string
+  name?: string | null
+}
+
+export type UpdateReviewerInput = {
+  email?: string
+  name?: string | null
+}
+
+export interface IReviewerRepository {
+  create(data: CreateReviewerInput): Promise<Reviewer>
+  findById(id: string): Promise<Reviewer | null>
+  findByCognitoId(cognitoUserId: string): Promise<Reviewer | null>
+  findByEmail(email: string): Promise<Reviewer | null>
+  update(id: string, data: UpdateReviewerInput): Promise<Reviewer>
+  archive(id: string): Promise<void>
+}
+
+export class ReviewerRepository implements IReviewerRepository {
+  async create(data: CreateReviewerInput): Promise<Reviewer> {
+    return await prisma.reviewer.create({
+      data: {
+        cognitoUserId: data.cognitoUserId,
+        email: data.email,
+        name: data.name,
+      },
+    })
+  }
+
+  async findById(id: string): Promise<Reviewer | null> {
+    return await prisma.reviewer.findFirst({
+      where: {
+        id,
+        archivedAt: null,
+      },
+    })
+  }
+
+  async findByCognitoId(cognitoUserId: string): Promise<Reviewer | null> {
+    return await prisma.reviewer.findFirst({
+      where: {
+        cognitoUserId,
+        archivedAt: null,
+      },
+    })
+  }
+
+  async findByEmail(email: string): Promise<Reviewer | null> {
+    return await prisma.reviewer.findFirst({
+      where: {
+        email: email.toLowerCase().trim(),
+        archivedAt: null,
+      },
+    })
+  }
+
+  async update(id: string, data: UpdateReviewerInput): Promise<Reviewer> {
+    return await prisma.reviewer.update({
+      where: { id },
+      data,
+    })
+  }
+
+  async archive(id: string): Promise<void> {
+    await prisma.reviewer.update({
+      where: { id },
+      data: {
+        archivedAt: new Date(),
+      },
+    })
+  }
+}
