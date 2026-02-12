@@ -29,6 +29,10 @@ export interface IClientRepository {
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Client>>
   archive(id: string, organizationId: string): Promise<void>
+  findByNameCaseInsensitive(
+    name: string,
+    organizationId: string
+  ): Promise<Client | null>
 }
 
 export class ClientRepository implements IClientRepository {
@@ -99,6 +103,22 @@ export class ClientRepository implements IClientRepository {
       },
       data: {
         archivedAt: new Date(),
+      },
+    })
+  }
+
+  async findByNameCaseInsensitive(
+    name: string,
+    organizationId: string
+  ): Promise<Client | null> {
+    return await prisma.client.findFirst({
+      where: {
+        organizationId,
+        archivedAt: null,
+        name: {
+          equals: name,
+          mode: 'insensitive',
+        },
       },
     })
   }

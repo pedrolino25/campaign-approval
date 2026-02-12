@@ -76,6 +76,7 @@ export interface IReviewItemRepository {
     cutoffDate: Date,
     tx: Prisma.TransactionClient
   ): Promise<boolean>
+  countActiveByClient(clientId: string, organizationId: string): Promise<number>
 }
 
 export class ReviewItemRepository implements IReviewItemRepository {
@@ -345,5 +346,21 @@ export class ReviewItemRepository implements IReviewItemRepository {
     })
 
     return result.count > 0
+  }
+
+  async countActiveByClient(
+    clientId: string,
+    organizationId: string
+  ): Promise<number> {
+    return await prisma.reviewItem.count({
+      where: {
+        clientId,
+        organizationId,
+        archivedAt: null,
+        status: {
+          not: ReviewStatus.ARCHIVED,
+        },
+      },
+    })
   }
 }

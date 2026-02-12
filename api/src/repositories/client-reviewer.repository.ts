@@ -34,6 +34,14 @@ export interface IClientReviewerRepository {
   ): Promise<CursorPaginationResult<ClientReviewer>>
   archive(id: string): Promise<void>
   delete(id: string): Promise<void>
+  findByClientIdAndEmail(
+    clientId: string,
+    email: string
+  ): Promise<ClientReviewer | null>
+  findByIdScopedByOrganization(
+    id: string,
+    organizationId: string
+  ): Promise<ClientReviewer | null>
 }
 
 export class ClientReviewerRepository implements IClientReviewerRepository {
@@ -128,6 +136,38 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
   async delete(id: string): Promise<void> {
     await prisma.clientReviewer.delete({
       where: { id },
+    })
+  }
+
+  async findByClientIdAndEmail(
+    clientId: string,
+    email: string
+  ): Promise<ClientReviewer | null> {
+    return await prisma.clientReviewer.findFirst({
+      where: {
+        clientId,
+        archivedAt: null,
+        reviewer: {
+          email: email.toLowerCase().trim(),
+          archivedAt: null,
+        },
+      },
+    })
+  }
+
+  async findByIdScopedByOrganization(
+    id: string,
+    organizationId: string
+  ): Promise<ClientReviewer | null> {
+    return await prisma.clientReviewer.findFirst({
+      where: {
+        id,
+        archivedAt: null,
+        client: {
+          organizationId,
+          archivedAt: null,
+        },
+      },
     })
   }
 }

@@ -25,7 +25,7 @@ export type CreateReviewItemRequest = z.infer<typeof CreateReviewItemSchema>
 
 export const SendForReviewSchema = z
   .object({
-    id: uuidSchema,
+    expectedVersion: z.number().int().positive('Expected version must be a positive integer'),
   })
   .strict()
 
@@ -33,7 +33,7 @@ export type SendForReviewRequest = z.infer<typeof SendForReviewSchema>
 
 export const ApproveReviewSchema = z
   .object({
-    id: uuidSchema,
+    expectedVersion: z.number().int().positive('Expected version must be a positive integer'),
   })
   .strict()
 
@@ -41,7 +41,7 @@ export type ApproveReviewRequest = z.infer<typeof ApproveReviewSchema>
 
 export const RequestChangesSchema = z
   .object({
-    id: uuidSchema,
+    expectedVersion: z.number().int().positive('Expected version must be a positive integer'),
   })
   .strict()
 

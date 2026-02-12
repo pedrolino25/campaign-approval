@@ -32,6 +32,7 @@ variable "lambda_invoke_arns" {
     review       = string
     attachment   = string
     comment      = string
+    notification = string
   })
 }
 
@@ -43,6 +44,7 @@ variable "lambda_function_arns" {
     review       = string
     attachment   = string
     comment      = string
+    notification = string
   })
 }
 

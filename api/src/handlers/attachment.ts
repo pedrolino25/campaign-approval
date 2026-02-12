@@ -2,26 +2,29 @@ import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
-  prisma,
   RouteBuilder,
   Router,
   validateBody,
   validateParams,
+  validateQuery,
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
 import {
   AttachmentParamsSchema,
   ConfirmUploadSchema,
   CreatePresignedUploadSchema,
+  CursorPaginationQuerySchema,
   DeleteAttachmentParamsSchema,
 } from '../lib/schemas'
 import {
   Action,
   ActorType,
+  ForbiddenError,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ReviewItemRepository } from '../repositories'
+import { AttachmentRepository, ReviewItemRepository } from '../repositories'
+import { AttachmentService } from '../services'
 
 const handlePresign = async (
   request: HttpRequest
@@ -29,38 +32,30 @@ const handlePresign = async (
   const validated = validateBody(CreatePresignedUploadSchema)(request)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
-  }
-
-  const reviewItemId = validated.body.reviewItemId
-  const reviewItemRepository = new ReviewItemRepository()
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
-    throw new NotFoundError('Review item not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can presign uploads')
   }
 
   authorizeOrThrow(actor, Action.UPLOAD_ATTACHMENT, {
-    organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
-    deletedAt: reviewItem.archivedAt,
+    organizationId: actor.organizationId,
   })
-  
-  await Promise.resolve()
+
+  const reviewItemRepository = new ReviewItemRepository()
+  const attachmentService = new AttachmentService(
+    reviewItemRepository
+  )
+
+  const result = await attachmentService.generatePresignedUpload({
+    reviewItemId: validated.body.reviewItemId,
+    fileName: validated.body.fileName,
+    fileType: validated.body.fileType,
+    actor,
+  })
+
   return {
     statusCode: 200,
-    body: {
-      message: 'Get presigned URL',
-      userId: request.auth.userId,
-      data: validated.body,
-    },
+    body: result,
   }
 }
 
@@ -71,56 +66,49 @@ const handlePostAttachment = async (
   const validated = validateBody(ConfirmUploadSchema)(withParams)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
-  }
-
-  const reviewItemId = validated.params.id!
-  const reviewItemRepository = new ReviewItemRepository()
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
-    throw new NotFoundError('Review item not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can confirm uploads')
   }
 
   authorizeOrThrow(actor, Action.UPLOAD_ATTACHMENT, {
-    organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
-    deletedAt: reviewItem.archivedAt,
+    organizationId: actor.organizationId,
   })
-  
-  await Promise.resolve()
+
+  const reviewItemRepository = new ReviewItemRepository()
+  const attachmentService = new AttachmentService(
+    reviewItemRepository
+  )
+
+  const attachment = await attachmentService.confirmUpload({
+    reviewItemId: validated.params.id!,
+    fileName: validated.body.fileName,
+    fileType: validated.body.fileType,
+    fileSize: validated.body.fileSize,
+    s3Key: validated.body.s3Key,
+    actor,
+  })
 
   return {
-    statusCode: 200,
-    body: {
-      message: 'Create attachment',
-      reviewItemId,
-      userId: request.auth.userId,
-      data: validated.body,
-    },
+    statusCode: 201,
+    body: attachment,
   }
 }
 
 const handleGetAttachments = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const validated = validateParams(AttachmentParamsSchema)(request)
+  const validatedParams = validateParams(AttachmentParamsSchema)(request)
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
 
   if (!organizationId) {
     throw new NotFoundError('Organization not found')
   }
 
-  const reviewItemId = validated.params.id!
+  const reviewItemId = validatedParams.params.id!
   const reviewItemRepository = new ReviewItemRepository()
   const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
 
@@ -128,8 +116,14 @@ const handleGetAttachments = async (
     throw new NotFoundError('Review item not found')
   }
 
-  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
-    throw new NotFoundError('Review item not found')
+  if (actor.type === ActorType.Reviewer) {
+    if (reviewItem.clientId !== actor.clientId) {
+      throw new NotFoundError('Review item not found')
+    }
+  } else {
+    if (reviewItem.organizationId !== actor.organizationId) {
+      throw new NotFoundError('Review item not found')
+    }
   }
 
   authorizeOrThrow(actor, Action.VIEW_ATTACHMENT, {
@@ -137,15 +131,18 @@ const handleGetAttachments = async (
     clientId: reviewItem.clientId,
     deletedAt: reviewItem.archivedAt,
   })
-  
-  await Promise.resolve()
+
+  const attachmentRepository = new AttachmentRepository()
+  const result = await attachmentRepository.listByReviewItem(reviewItemId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit as number | undefined,
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Get review item attachments',
-      reviewItemId,
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }
@@ -156,50 +153,29 @@ const handleDeleteAttachment = async (
   const validated = validateParams(DeleteAttachmentParamsSchema)(request)
   
   const actor = request.auth.actor
-  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
 
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
-  }
-
-  const reviewItemId = validated.params.id!
-  const attachmentId = validated.params.attachmentId
-  const reviewItemRepository = new ReviewItemRepository()
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  // Verify attachment belongs to review item
-  const attachment = await prisma.attachment.findUnique({
-    where: { id: attachmentId },
-  })
-
-  if (!attachment || attachment.reviewItemId !== reviewItemId) {
-    throw new NotFoundError('Attachment not found')
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can delete attachments')
   }
 
   authorizeOrThrow(actor, Action.DELETE_ATTACHMENT, {
-    organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
-    deletedAt: reviewItem.archivedAt,
+    organizationId: actor.organizationId,
   })
-  
-  await Promise.resolve()
+
+  const reviewItemRepository = new ReviewItemRepository()
+  const attachmentService = new AttachmentService(
+    reviewItemRepository
+  )
+
+  await attachmentService.deleteAttachment({
+    reviewItemId: validated.params.id!,
+    attachmentId: validated.params.attachmentId!,
+    actor,
+  })
 
   return {
-    statusCode: 200,
-    body: {
-      message: 'Delete attachment',
-      attachmentId,
-      reviewItemId,
-      userId: request.auth.userId,
-    },
+    statusCode: 204,
+    body: undefined,
   }
 }
 

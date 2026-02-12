@@ -34,6 +34,10 @@ export interface IUserRepository {
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<User>>
   archive(id: string, organizationId: string): Promise<void>
+  countActiveByRole(
+    organizationId: string,
+    role: UserRole
+  ): Promise<number>
 }
 
 export class UserRepository implements IUserRepository {
@@ -116,6 +120,19 @@ export class UserRepository implements IUserRepository {
       },
       data: {
         archivedAt: new Date(),
+      },
+    })
+  }
+
+  async countActiveByRole(
+    organizationId: string,
+    role: UserRole
+  ): Promise<number> {
+    return await prisma.user.count({
+      where: {
+        organizationId,
+        role,
+        archivedAt: null,
       },
     })
   }

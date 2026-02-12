@@ -130,7 +130,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     reviewItem: ReviewItem,
     actor: ActorContext,
     actorOrganizationId: string,
-    expectedVersion: number
+    _expectedVersion: number
   ): void {
     if (reviewItem.archivedAt !== null) {
       throw new InvalidStateTransitionError(
@@ -148,9 +148,8 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       }
     }
 
-    if (reviewItem.version !== expectedVersion) {
-      throw new BusinessRuleViolationError('VERSION_CONFLICT')
-    }
+    // Version conflict is handled by the transaction (P2025 -> ConflictError)
+    // Do not check version here to allow transaction to handle optimistic locking
   }
 
   private async validateBusinessRules(

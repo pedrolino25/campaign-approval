@@ -1,5 +1,3 @@
-import { InvitationType } from '@prisma/client'
-
 import {
   createHandler,
   type HttpRequest,
@@ -26,7 +24,7 @@ import {
   type RouteDefinition,
 } from '../models'
 import { ClientRepository, ClientReviewerRepository } from '../repositories'
-import { InvitationService } from '../services'
+import { ClientService } from '../services'
 
 const handleGetClients = async (
   request: HttpRequest
@@ -74,15 +72,16 @@ const handlePostClients = async (
   authorizeOrThrow(actor, Action.CREATE_CLIENT, {
     organizationId: organizationId,
   })
+
+  const clientService = new ClientService()
+  const client = await clientService.createClient({
+    name: validated.body.name,
+    actor,
+  })
   
-  await Promise.resolve()
   return {
-    statusCode: 200,
-    body: {
-      message: 'Create client',
-      userId: request.auth.userId,
-      data: validated.body,
-    },
+    statusCode: 201,
+    body: client,
   }
 }
 
@@ -111,17 +110,17 @@ const handlePatchClient = async (
     organizationId: client.organizationId,
     deletedAt: client.archivedAt,
   })
-  
-  await Promise.resolve()
+
+  const clientService = new ClientService()
+  const updatedClient = await clientService.updateClient({
+    clientId,
+    name: validated.body.name,
+    actor,
+  })
 
   return {
     statusCode: 200,
-    body: {
-      message: 'Update client',
-      clientId,
-      userId: request.auth.userId,
-      data: validated.body,
-    },
+    body: updatedClient,
   }
 }
 
@@ -149,16 +148,16 @@ const handleArchiveClient = async (
     organizationId: client.organizationId,
     deletedAt: client.archivedAt,
   })
-  
-  await Promise.resolve()
+
+  const clientService = new ClientService()
+  const archivedClient = await clientService.archiveClient({
+    clientId,
+    actor,
+  })
 
   return {
     statusCode: 200,
-    body: {
-      message: 'Archive client',
-      clientId,
-      userId: request.auth.userId,
-    },
+    body: archivedClient,
   }
 }
 
@@ -234,17 +233,15 @@ const handlePostReviewer = async (
     deletedAt: client.archivedAt,
   })
 
-  const invitationService = new InvitationService()
-  const invitation = await invitationService.createInvitation({
-    organizationId: client.organizationId,
-    inviterUserId: actor.userId,
-    email: validated.body.email,
-    type: InvitationType.REVIEWER,
+  const clientService = new ClientService()
+  const invitation = await clientService.inviteReviewer({
     clientId,
+    email: validated.body.email,
+    actor,
   })
 
   return {
-    statusCode: 200,
+    statusCode: 201,
     body: {
       id: invitation.id,
       email: invitation.email,
@@ -281,18 +278,18 @@ const handleDeleteReviewer = async (
     organizationId: client.organizationId,
     deletedAt: client.archivedAt,
   })
-  
-  await Promise.resolve()
-  const reviewerId = validated.params.reviewerId
+
+  const reviewerId = validated.params.reviewerId!
+  const clientService = new ClientService()
+  await clientService.removeReviewer({
+    clientId,
+    reviewerId,
+    actor,
+  })
 
   return {
-    statusCode: 200,
-    body: {
-      message: 'Delete client reviewer',
-      clientId,
-      reviewerId,
-      userId: request.auth.userId,
-    },
+    statusCode: 204,
+    body: undefined,
   }
 }
 
