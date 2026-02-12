@@ -14,6 +14,12 @@ export {
 export { NotificationService } from './notification.service'
 export { OnboardingService } from './onboarding.service'
 export {
+  type ArchiveReviewItemInput,
+  type CreateReviewItemInput,
+  type IReviewItemService,
+  ReviewItemService,
+} from './review-item.service'
+export {
   type ApplyWorkflowActionInput,
   type IReviewWorkflowService,
   ReviewWorkflowService,
