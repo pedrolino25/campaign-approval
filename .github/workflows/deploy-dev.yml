@@ -44,26 +44,34 @@ jobs:
         run: |
           set +e
           MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
-          OUTPUT=$(npx prisma migrate dev --name "$MIGRATION_NAME" --create-only 2>&1)
+          MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
+          
+          # Generate migration SQL using migrate diff (non-interactive)
+          # Compare current database state to desired schema
+          MIGRATION_SQL=$(npx prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --script 2>&1)
           EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 0 ]; then
-            # Check if the migration is empty
-            MIGRATION_FILE=$(find prisma/migrations -name "$MIGRATION_NAME" -type d | head -1)/migration.sql
-            if [ -f "$MIGRATION_FILE" ]; then
-              if grep -q "This is an empty migration" "$MIGRATION_FILE" || [ ! -s "$MIGRATION_FILE" ] || [ "$(wc -l < "$MIGRATION_FILE" | tr -d ' ')" -le 1 ]; then
-                echo "Empty migration detected, removing: $MIGRATION_NAME"
-                rm -rf "$(dirname "$MIGRATION_FILE")"
-                echo "No schema changes detected, skipping migration generation"
-              else
-                echo "Migration generated: $MIGRATION_NAME"
-              fi
-            fi
-          elif echo "$OUTPUT" | grep -q "No schema changes"; then
-            echo "No schema changes detected, skipping migration generation"
-          else
-            echo "Migration generation failed: $OUTPUT"
+          
+          # Check for errors (but allow empty migrations)
+          if [ $EXIT_CODE -ne 0 ] && ! echo "$MIGRATION_SQL" | grep -qi "no.*change"; then
+            echo "Migration generation failed: $MIGRATION_SQL"
             exit $EXIT_CODE
           fi
+          
+          # Check if migration SQL is empty or just whitespace/comments
+          CLEAN_SQL=$(echo "$MIGRATION_SQL" | grep -v "^\s*--" | tr -d '[:space:]')
+          if [ -z "$CLEAN_SQL" ]; then
+            echo "No schema changes detected, skipping migration generation"
+            exit 0
+          fi
+          
+          # Create migration directory and file
+          mkdir -p "$MIGRATION_DIR"
+          echo "$MIGRATION_SQL" > "$MIGRATION_DIR/migration.sql"
+          
+          echo "Migration generated: $MIGRATION_NAME"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
