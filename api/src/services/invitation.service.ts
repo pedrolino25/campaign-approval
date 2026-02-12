@@ -17,6 +17,8 @@ import {
   ClientRepository,
   ClientReviewerRepository,
   InvitationRepository,
+  ReviewerRepository,
+  UserRepository,
 } from '../repositories'
 import type { CreateInvitationInput } from '../repositories/invitation.repository'
 import { ActivityLogService } from './activity-log.service'
@@ -46,12 +48,16 @@ export class InvitationService {
   private readonly invitationRepository: InvitationRepository
   private readonly clientRepository: ClientRepository
   private readonly clientReviewerRepository: ClientReviewerRepository
+  private readonly userRepository: UserRepository
+  private readonly reviewerRepository: ReviewerRepository
   private readonly activityLogService: ActivityLogService
 
   constructor() {
     this.invitationRepository = new InvitationRepository()
     this.clientRepository = new ClientRepository()
     this.clientReviewerRepository = new ClientReviewerRepository()
+    this.userRepository = new UserRepository()
+    this.reviewerRepository = new ReviewerRepository()
     this.activityLogService = new ActivityLogService()
   }
 
@@ -618,15 +624,8 @@ export class InvitationService {
     email: string,
     type: InvitationType
   ): Promise<void> {
-    const normalizedEmail = email.toLowerCase().trim()
-
     if (type === InvitationType.INTERNAL_USER) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email: normalizedEmail,
-          archivedAt: null,
-        },
-      })
+      const existingUser = await this.userRepository.findByEmailCaseInsensitive(email)
 
       if (existingUser) {
         throw new InvariantViolationError(
@@ -634,12 +633,7 @@ export class InvitationService {
         )
       }
     } else if (type === InvitationType.REVIEWER) {
-      const existingReviewer = await prisma.reviewer.findFirst({
-        where: {
-          email: normalizedEmail,
-          archivedAt: null,
-        },
-      })
+      const existingReviewer = await this.reviewerRepository.findByEmail(email)
 
       if (existingReviewer) {
         throw new InvariantViolationError(

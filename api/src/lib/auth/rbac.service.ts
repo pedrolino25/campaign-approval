@@ -41,9 +41,12 @@ export class RBACService {
     }
 
     if (!organizationId) {
-      throw new UnauthorizedError(
-        'Missing organizationId in request. Reviewers must provide organizationId as a query parameter.'
-      )
+
+      return {
+        type: ActorType.Reviewer,
+        reviewerId: reviewer.id,
+        clientId: null,
+      } as Omit<ActorContext, 'onboardingCompleted'>
     }
 
     const clientReviewer =
@@ -61,6 +64,29 @@ export class RBACService {
     return {
       type: ActorType.Reviewer,
       reviewerId: reviewer.id,
+      clientId: clientReviewer.clientId,
+    } as Omit<ActorContext, 'onboardingCompleted'>
+  }
+
+  async resolveReviewerFromOrganization(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<Omit<ActorContext, 'onboardingCompleted'>> {
+    const clientReviewer =
+      await this.clientReviewerRepository.findByReviewerIdAndOrganization(
+        reviewerId,
+        organizationId
+      )
+
+    if (!clientReviewer) {
+      throw new UnauthorizedError(
+        'Unable to resolve actor: reviewer not found for this organization'
+      )
+    }
+
+    return {
+      type: ActorType.Reviewer,
+      reviewerId,
       clientId: clientReviewer.clientId,
     } as Omit<ActorContext, 'onboardingCompleted'>
   }
