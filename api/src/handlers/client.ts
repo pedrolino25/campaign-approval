@@ -6,27 +6,46 @@ import {
   Router,
   validateBody,
   validateParams,
+  validateQuery,
 } from '../lib'
 import {
   ClientParamsSchema,
   ClientReviewerParamsSchema,
   CreateClientSchema,
+  CursorPaginationQuerySchema,
   InviteReviewerSchema,
   UpdateClientSchema,
 } from '../lib/schemas'
 import {
+  ActorType,
+  NotFoundError,
   type RouteDefinition,
 } from '../models'
+import { ClientRepository, ClientReviewerRepository } from '../repositories'
 
 const handleGetClients = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  await Promise.resolve()
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
+  
+  const actor = request.auth.actor
+  const organizationId = actor?.type === ActorType.Internal ? actor.organizationId : undefined
+
+  if (!organizationId) {
+    throw new NotFoundError('Organization not found')
+  }
+
+  const repository = new ClientRepository()
+  const result = await repository.listByOrganization(organizationId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit,
+  })
+
   return {
     statusCode: 200,
     body: {
-      message: 'Get clients',
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }
@@ -88,17 +107,22 @@ const handleArchiveClient = async (
 const handleGetReviewers = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const validated = validateParams(ClientParamsSchema)(request)
+  const validatedParams = validateParams(ClientParamsSchema)(request)
+  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
-  await Promise.resolve()
-  const clientId = validated.params.id
+  const clientId = validatedQuery.params.id
+
+  const repository = new ClientReviewerRepository()
+  const result = await repository.listByClient(clientId, {
+    cursor: validatedQuery.query.cursor,
+    limit: validatedQuery.query.limit,
+  })
 
   return {
     statusCode: 200,
     body: {
-      message: 'Get client reviewers',
-      clientId,
-      userId: request.auth.userId,
+      data: result.data,
+      nextCursor: result.nextCursor,
     },
   }
 }

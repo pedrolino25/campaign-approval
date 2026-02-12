@@ -153,10 +153,10 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     reviewItemId: string
   ): Promise<void> {
     if (action === WorkflowAction.SEND_FOR_REVIEW) {
-      const attachments = await this.attachmentRepository.listByReviewItem(
+      const hasAttachments = await this.attachmentRepository.hasAnyByReviewItem(
         reviewItemId
       )
-      if (attachments.length === 0) {
+      if (!hasAttachments) {
         throw new ValidationError('Cannot send for review without attachments')
       }
     }

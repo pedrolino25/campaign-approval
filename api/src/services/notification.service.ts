@@ -1,6 +1,7 @@
-import type { Notification, NotificationType, Prisma } from '@prisma/client'
+import type { ClientReviewer, Notification, NotificationType, Prisma, User } from '@prisma/client'
 
-import { logger,SQSService } from '../lib'
+import { logger, SQSService } from '../lib'
+import type { CursorPaginationResult } from '../lib/pagination/cursor-pagination'
 import {
   type ActorContext,ActorType,
   type WorkflowEventPayloadMap,
@@ -124,8 +125,19 @@ export class NotificationService {
   private async getReviewersForClient(
     clientId: string
   ): Promise<Recipient[]> {
-    const reviewers = await this.clientReviewerRepository.listByClient(clientId)
-    return reviewers.map((reviewer) => ({
+    const allReviewers: ClientReviewer[] = []
+    let cursor: string | undefined = undefined
+
+    do {
+      const result: CursorPaginationResult<ClientReviewer> = await this.clientReviewerRepository.listByClient(clientId, {
+        cursor,
+        limit: 100,
+      })
+      allReviewers.push(...result.data)
+      cursor = result.nextCursor ?? undefined
+    } while (cursor)
+
+    return allReviewers.map((reviewer) => ({
       email: reviewer.email,
     }))
   }
@@ -133,8 +145,19 @@ export class NotificationService {
   private async getInternalUsers(
     organizationId: string
   ): Promise<Recipient[]> {
-    const users = await this.userRepository.listByOrganization(organizationId)
-    return users.map((user) => ({
+    const allUsers: User[] = []
+    let cursor: string | undefined = undefined
+
+    do {
+      const result: CursorPaginationResult<User> = await this.userRepository.listByOrganization(organizationId, {
+        cursor,
+        limit: 100,
+      })
+      allUsers.push(...result.data)
+      cursor = result.nextCursor ?? undefined
+    } while (cursor)
+
+    return allUsers.map((user) => ({
       userId: user.id,
       email: user.email,
     }))
