@@ -3,7 +3,6 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 import {
-  config,
   type HttpRequest,
   type HttpResponse,
   RouteBuilder,
@@ -97,12 +96,7 @@ export const handler = async (
     event.requestContext?.requestId || event.headers?.['x-request-id'] || 'unknown'
 
   try {
-    let isProd = false
-    try {
-      isProd = config.ENVIRONMENT === 'prod'
-    } catch {
-      isProd = false
-    }
+    const isProd = process.env.ENVIRONMENT === 'prod'
 
     if (isProd) {
       return {
