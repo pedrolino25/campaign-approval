@@ -19,7 +19,6 @@ import {
 const handleOpenApiSpec = (
   _request: HttpRequest
 ): Promise<HttpResponse> => {
-  // In Lambda, the working directory is /var/task and files are at the root
   const possiblePaths = [
     '/var/task/openapi/worklient.v1.json',
     join(process.cwd(), 'openapi', 'worklient.v1.json'),
@@ -38,11 +37,10 @@ const handleOpenApiSpec = (
         body: spec,
       })
     } catch (error) {
-      // If file doesn't exist, try next path
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         continue
       }
-      // If it's a parse error, we found the file but it's invalid
+
       throw new NotFoundError(
         `OpenAPI specification invalid: ${error instanceof Error ? error.message : String(error)}`
       )
