@@ -2,16 +2,14 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-import {
-  type HttpRequest,
-  type HttpResponse,
-  RouteBuilder,
-  Router,
-} from '../lib'
 import { createPublicAuthContext } from '../lib/auth/utils/create-public-auth-context'
 import { ErrorService } from '../lib/errors/error.service'
+import { Router } from '../lib/router/router'
+import { RouteBuilder } from '../lib/router/utils/route-builder'
 import {
   type AuthenticatedEvent,
+  type HttpRequest,
+  type HttpResponse,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
