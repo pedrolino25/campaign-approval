@@ -48,10 +48,17 @@ const handleApiDocs = async (): Promise<APIGatewayProxyResult> => {
           filter: true,
           showExtensions: true,
           showCommonExtensions: true,
-          tryItOutEnabled: true
+          tryItOutEnabled: true,
+          defaultModelsExpandDepth: -1,
+          defaultModelExpandDepth: -1
         });
       };
     </script>
+    <style>
+      .swagger-ui .topbar {
+        display: none !important;
+      }
+    </style>
   </body>
 </html>`
 
