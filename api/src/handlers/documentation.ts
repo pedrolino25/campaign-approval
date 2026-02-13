@@ -58,6 +58,9 @@ const handleApiDocs = async (): Promise<APIGatewayProxyResult> => {
       .swagger-ui .topbar {
         display: none !important;
       }
+      .swagger-ui .information-container {
+        display: none !important;
+      }
     </style>
   </body>
 </html>`
