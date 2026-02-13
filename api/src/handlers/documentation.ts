@@ -42,21 +42,22 @@ const handleOpenApiSpec = (
 }
 
 const handleApiDocs = (_request: HttpRequest): Promise<HttpResponse> => {
-  const html = `<!DOCTYPE html>
-<html>
-  <head>
-    <title>Worklient API Docs</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      body { margin: 0; padding: 0; }
-    </style>
-  </head>
-  <body>
-    <redoc spec-url="/openapi/worklient.v1.json"></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-  </body>
-</html>`
+  const html = 
+    `<!DOCTYPE html>
+      <html>
+        <head>
+          <title>Worklient API Docs</title>
+          <meta charset="utf-8"/>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { margin: 0; padding: 0; }
+          </style>
+        </head>
+        <body>
+          <redoc spec-url="/openapi/worklient.v1.json"></redoc>
+          <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+        </body>
+      </html>`
 
   return Promise.resolve({
     statusCode: 200,

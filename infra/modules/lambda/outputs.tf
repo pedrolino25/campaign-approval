@@ -1,13 +1,13 @@
 output "lambda_invoke_arns" {
   description = "Map of Lambda function names to invoke ARNs"
   value = {
-    organization   = aws_lambda_function.api["organization"].invoke_arn
-    client         = aws_lambda_function.api["client"].invoke_arn
-    review         = aws_lambda_function.api["review"].invoke_arn
-    attachment     = aws_lambda_function.api["attachment"].invoke_arn
-    comment        = aws_lambda_function.api["comment"].invoke_arn
-    notification   = aws_lambda_function.api["notification"].invoke_arn
-    documentation  = aws_lambda_function.api["documentation"].invoke_arn
+    organization  = aws_lambda_function.api["organization"].invoke_arn
+    client        = aws_lambda_function.api["client"].invoke_arn
+    review        = aws_lambda_function.api["review"].invoke_arn
+    attachment    = aws_lambda_function.api["attachment"].invoke_arn
+    comment       = aws_lambda_function.api["comment"].invoke_arn
+    notification  = aws_lambda_function.api["notification"].invoke_arn
+    documentation = aws_lambda_function.api["documentation"].invoke_arn
   }
 }
 
