@@ -148,13 +148,19 @@ export class Router {
   private buildApiGatewayResponse(
     response: HttpResponse
   ): APIGatewayProxyResult {
+    const contentType = response.headers?.['Content-Type'] || response.headers?.['content-type'] || 'application/json'
+
+    const body = typeof response.body === 'string' && contentType === 'text/html'
+      ? response.body
+      : JSON.stringify(response.body)
+
     return {
       statusCode: response.statusCode,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': contentType,
         ...response.headers,
       },
-      body: JSON.stringify(response.body),
+      body,
     }
   }
 }

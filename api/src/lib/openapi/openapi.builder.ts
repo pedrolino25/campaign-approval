@@ -1,4 +1,4 @@
-import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
+import { OpenAPIGenerator, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
 
 import {
@@ -39,9 +39,17 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerComponent('schemas', 'ConflictErrorResponse', ConflictErrorResponseSchema)
   registry.registerComponent('schemas', 'InternalErrorResponse', InternalErrorResponseSchema)
 
+  // Register security scheme
+  registry.registerComponent('securitySchemes', 'bearerAuth', {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description: 'JWT token obtained from Cognito authentication',
+  })
+
   // Common response schemas
   const paginatedResponseSchema = z.object({
-    data: z.array(z.any()),
+    data: z.array(z.any().openapi({ type: 'object' })),
     nextCursor: z.string().nullable(),
   })
 
@@ -268,7 +276,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -325,7 +333,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               message: z.string(),
               clientId: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -390,7 +398,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               message: z.string(),
               clientId: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -502,7 +510,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -675,7 +683,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -732,7 +740,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               message: z.string(),
               reviewItemId: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -801,7 +809,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               message: z.string(),
               reviewItemId: z.string(),
               userId: z.string(),
-              data: z.any(),
+              data: z.any().openapi({ type: 'object' }),
             }),
           },
         },
@@ -891,10 +899,9 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   // Generate the OpenAPI document
-  // Note: The exact API may vary - this will need to be adjusted based on the actual library version
-  // Once the library is installed, check the actual exports and methods available
-  return (registry as any).generateDocument({
-    openapi: '3.1.0',
+  const generator = new OpenAPIGenerator(registry.definitions, '3.1.0')
+  
+  const document = generator.generateDocument({
     info: {
       title: 'Worklient API',
       version: '1.0.0',
@@ -913,20 +920,12 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Development server',
       },
     ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'JWT token obtained from Cognito authentication',
-        },
-      },
-    },
     security: [
       {
         bearerAuth: [],
       },
     ],
-  }) as Record<string, unknown>
+  })
+  
+  return document as unknown as Record<string, unknown>
 }

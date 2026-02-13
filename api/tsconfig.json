@@ -20,6 +20,6 @@
     "declarationMap": true,
     "sourceMap": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

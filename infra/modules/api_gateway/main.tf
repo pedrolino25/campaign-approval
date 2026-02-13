@@ -81,6 +81,25 @@ resource "aws_apigatewayv2_integration" "notification" {
   integration_uri    = var.lambda_invoke_arns.notification
 }
 
+# Public routes - no authentication required
+resource "aws_apigatewayv2_route" "api_docs" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /api-docs"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "openapi_spec" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /openapi/worklient.v1.json"
+
+  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+
+  authorization_type = "NONE"
+}
+
 resource "aws_apigatewayv2_route" "organization_get" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /organization"

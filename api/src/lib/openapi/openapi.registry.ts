@@ -12,7 +12,6 @@ import {
   CreateClientSchema,
   CreatePresignedUploadSchema,
   CreateReviewItemSchema,
-  CursorPaginationQuerySchema,
   InviteReviewerSchema,
   ReviewItemParamsSchema,
   UpdateClientSchema,
@@ -123,13 +122,24 @@ export const InternalErrorResponseSchema = (BaseErrorResponseSchema).openapi({
 // Pagination Schemas
 // ============================================================================
 
-export const CursorPaginationQueryOpenAPISchema = (CursorPaginationQuerySchema as any).openapi({
-  description: 'Cursor-based pagination query parameters',
-  example: {
-    cursor: 'eyJpZCI6IjEyMzQ1Njc4LTkwYWItY2RlZi0xMjM0LTU2Nzg5MGFiY2RlZiIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
-    limit: 20,
-  },
-})
+
+export const CursorPaginationQueryOpenAPISchema = z
+  .object({
+    cursor: z.string().optional().openapi({
+      description: 'Cursor for pagination',
+      example: 'eyJpZCI6IjEyMzQ1Njc4LTkwYWItY2RlZi0xMjM0LTU2Nzg5MGFiY2RlZiIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+    }),
+    limit: z
+      .string()
+      .optional()
+      .openapi({
+        description: 'Maximum number of items to return (1-100)',
+        example: '20',
+      }),
+  })
+  .openapi({
+    description: 'Cursor-based pagination query parameters',
+  })
 
 // ============================================================================
 // Request/Response Schemas with OpenAPI Metadata

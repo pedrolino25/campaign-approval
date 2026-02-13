@@ -1,4 +1,7 @@
 import { InvitationType } from '@prisma/client'
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { z } from 'zod'
 
 import {
@@ -23,6 +26,7 @@ import { UpdateUserRoleSchema } from '../lib/schemas/organization.schema'
 import {
   Action,
   ActorType,
+  type AuthenticatedEvent,
   ForbiddenError,
   NotFoundError,
   type RouteDefinition,
@@ -440,12 +444,62 @@ const handlePatchUserRole = async (
   }
 }
 
-/*
-const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
-  return await Promise.resolve(handleOpenAPIJson())
+const handleOpenApiSpec = (
+  _request: HttpRequest
+): Promise<HttpResponse> => {
+  return Promise.resolve().then(() => {
+    try {
+      const openApiPath = join(process.cwd(), 'openapi', 'worklient.v1.json')
+      const specContent = readFileSync(openApiPath, 'utf-8')
+      const spec = JSON.parse(specContent)
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: spec,
+      }
+    } catch (error) {
+      throw new NotFoundError(
+        `OpenAPI specification not found: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
+  })
 }
-*/
+
+const handleApiDocs = (_request: HttpRequest): Promise<HttpResponse> => {
+  const html = 
+  `<!DOCTYPE html>
+    <html>
+      <head>
+        <title>Worklient API Docs</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { margin: 0; padding: 0; }
+        </style>
+      </head>
+      <body>
+        <redoc spec-url="/openapi/worklient.v1.json"></redoc>
+        <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+      </body>
+    </html>`
+
+  return Promise.resolve({
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'text/html',
+    },
+    body: html,
+  })
+}
+
 const routes: RouteDefinition[] = [
+  // Public routes - must be registered before authenticated routes
+  RouteBuilder.get('/api-docs', handleApiDocs),
+  RouteBuilder.get('/openapi/worklient.v1.json', handleOpenApiSpec),
+  // Authenticated routes
   RouteBuilder.get('/organization', handleGetOrganization),
   RouteBuilder.patch('/organization', handlePatchOrganization),
   RouteBuilder.post('/onboarding/internal', handlePostInternalOnboarding),
@@ -462,4 +516,42 @@ const routes: RouteDefinition[] = [
 ]
 
 const router = new Router(routes)
-export const handler = createHandler(router.handle)
+
+const publicRoutePaths = new Set(['/api-docs', '/openapi/worklient.v1.json'])
+
+const wrappedHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const path = event.requestContext.path || event.path || '/'
+  const normalizedPath = path.split('?')[0] || '/' // Remove query string
+  
+  const isPublicRoute = publicRoutePaths.has(normalizedPath) || 
+    normalizedPath.startsWith('/openapi/')
+
+  if (isPublicRoute) {
+    const dummyAuthContext = {
+      userId: '',
+      email: '',
+      rawToken: '',
+      actor: {
+        type: ActorType.Internal as const,
+        userId: '',
+        organizationId: '',
+        role: 'MEMBER' as const,
+        onboardingCompleted: true,
+      },
+    }
+    
+    const publicEvent: AuthenticatedEvent = {
+      ...event,
+      authContext: dummyAuthContext,
+    }
+
+    return await router.handle(publicEvent)
+  }
+
+  const authenticatedHandler = createHandler(router.handle)
+  return await authenticatedHandler(event)
+}
+
+export const handler = wrappedHandler

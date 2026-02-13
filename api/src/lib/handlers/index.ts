@@ -35,5 +35,6 @@ const errorService = new ErrorService()
 const apiHandlerFactory = new ApiHandlerFactory(authService, errorService)
 
 export const createHandler = apiHandlerFactory.create.bind(apiHandlerFactory)
+export const createPublicHandler = apiHandlerFactory.createPublic.bind(apiHandlerFactory)
 
 export { ApiHandlerFactory }

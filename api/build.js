@@ -72,6 +72,12 @@ async function buildLambda() {
     const sourcePath = join(distDir, `${outfile}.js`)
     archive.file(sourcePath, { name: `${outfile}.js` })
   }
+  
+  // Include OpenAPI specification file
+  const openApiSourcePath = join(__dirname, "openapi", "worklient.v1.json")
+  if (existsSync(openApiSourcePath)) {
+    archive.file(openApiSourcePath, { name: "openapi/worklient.v1.json" })
+  }
 
   await archive.finalize()
 
