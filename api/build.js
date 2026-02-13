@@ -1,7 +1,7 @@
 import archiver from "archiver"
 import { build } from "esbuild"
 import { createWriteStream, existsSync, statSync } from "fs"
-import { mkdir, readFile, writeFile } from "fs/promises"
+import { mkdir, readFile, writeFile, readdir } from "fs/promises"
 import { dirname, join } from "path"
 import { fileURLToPath } from "url"
 
@@ -86,6 +86,25 @@ async function buildLambda() {
   };`
   
   archive.append(apiIndexContent, { name: "api/index.js" })
+  
+  // Include Prisma Client files and Query Engine binaries
+  const prismaClientPath = join(__dirname, "node_modules", ".prisma", "client")
+  if (existsSync(prismaClientPath)) {
+    const addPrismaFiles = async (dir, basePath = "") => {
+      const entries = await readdir(dir, { withFileTypes: true })
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name)
+        const archivePath = join("node_modules", ".prisma", "client", basePath, entry.name)
+        
+        if (entry.isDirectory()) {
+          await addPrismaFiles(fullPath, join(basePath, entry.name))
+        } else {
+          archive.file(fullPath, { name: archivePath })
+        }
+      }
+    }
+    await addPrismaFiles(prismaClientPath)
+  }
   
   // Include OpenAPI specification file
   const openApiSourcePath = join(__dirname, "openapi", "worklient.v1.json")
