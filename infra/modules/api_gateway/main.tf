@@ -81,12 +81,19 @@ resource "aws_apigatewayv2_integration" "notification" {
   integration_uri    = var.lambda_invoke_arns.notification
 }
 
-# Public routes - no authentication required
+resource "aws_apigatewayv2_integration" "documentation" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+
+  integration_method = "POST"
+  integration_uri    = var.lambda_invoke_arns.documentation
+}
+
 resource "aws_apigatewayv2_route" "api_docs" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /api-docs"
 
-  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+  target = "integrations/${aws_apigatewayv2_integration.documentation.id}"
 
   authorization_type = "NONE"
 }
@@ -95,7 +102,7 @@ resource "aws_apigatewayv2_route" "openapi_spec" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /openapi/worklient.v1.json"
 
-  target = "integrations/${aws_apigatewayv2_integration.organization.id}"
+  target = "integrations/${aws_apigatewayv2_integration.documentation.id}"
 
   authorization_type = "NONE"
 }
@@ -462,6 +469,14 @@ resource "aws_lambda_permission" "notification" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_arns.notification
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "documentation" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_arns.documentation
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }

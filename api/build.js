@@ -14,6 +14,7 @@ const entryPoints = {
   "api/attachment": "src/handlers/attachment.ts",
   "api/comment": "src/handlers/comment.ts",
   "api/notification": "src/handlers/notification.ts",
+  "api/documentation": "src/handlers/documentation.ts",
   "api/workers/email.worker": "src/workers/email.worker.ts",
   "api/workers/review-reminder.worker": "src/workers/review-reminder.worker.ts",
 }

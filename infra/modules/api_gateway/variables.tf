@@ -27,24 +27,26 @@ variable "cognito_app_client_id" {
 variable "lambda_invoke_arns" {
   description = "Map of Lambda function names to invoke ARNs"
   type = object({
-    organization = string
-    client       = string
-    review       = string
-    attachment   = string
-    comment      = string
-    notification = string
+    organization   = string
+    client         = string
+    review         = string
+    attachment     = string
+    comment        = string
+    notification   = string
+    documentation  = string
   })
 }
 
 variable "lambda_function_arns" {
   description = "Map of Lambda function names to function ARNs"
   type = object({
-    organization = string
-    client       = string
-    review       = string
-    attachment   = string
-    comment      = string
-    notification = string
+    organization   = string
+    client         = string
+    review         = string
+    attachment     = string
+    comment        = string
+    notification   = string
+    documentation  = string
   })
 }
 

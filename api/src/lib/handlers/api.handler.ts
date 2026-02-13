@@ -24,30 +24,8 @@ export class ApiHandlerFactory {
     ): Promise<APIGatewayProxyResult> => {
       try {
         const authenticatedEvent = await this.authService.authenticate(event)
-        // Apply onboarding guard after authentication
         const guardedEvent = onboardingGuard(authenticatedEvent)
         return await handler(guardedEvent)
-      } catch (error) {
-        const requestId =
-          event.requestContext.requestId || event.headers['x-request-id']
-
-        return this.errorService.handle(error, {
-          requestId,
-        })
-      }
-    }
-  }
-
-  createPublic(
-    handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
-  ): (
-    event: APIGatewayProxyEvent
-  ) => Promise<APIGatewayProxyResult> {
-    return async (
-      event: APIGatewayProxyEvent
-    ): Promise<APIGatewayProxyResult> => {
-      try {
-        return await handler(event)
       } catch (error) {
         const requestId =
           event.requestContext.requestId || event.headers['x-request-id']

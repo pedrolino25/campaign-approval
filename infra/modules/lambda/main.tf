@@ -29,6 +29,10 @@ locals {
       name = "${local.environment_prefix}notification-api-lambda"
       role = var.iam_roles.notification
     }
+    documentation = {
+      name = "${local.environment_prefix}documentation-api-lambda"
+      role = var.iam_roles.organization
+    }
     email_worker = {
       name = "${local.environment_prefix}email-worker-lambda"
       role = var.iam_roles.email_worker

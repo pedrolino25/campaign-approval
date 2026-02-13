@@ -18,7 +18,6 @@ export { transition, WorkflowAction } from './fsm/review-item'
 export {
   ApiHandlerFactory,
   createHandler,
-  createPublicHandler,
 } from './handlers'
 export {
   createCursorWhereCondition,
