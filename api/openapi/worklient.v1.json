@@ -22,6 +22,32 @@
       "bearerAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "Organization",
+      "description": "Organization management endpoints"
+    },
+    {
+      "name": "Onboarding",
+      "description": "User onboarding endpoints"
+    },
+    {
+      "name": "Clients",
+      "description": "Client management endpoints"
+    },
+    {
+      "name": "Review Items",
+      "description": "Review item management and workflow endpoints"
+    },
+    {
+      "name": "Attachments",
+      "description": "File attachment endpoints"
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification management endpoints"
+    }
+  ],
   "openapi": "3.1.0",
   "components": {
     "schemas": {
@@ -333,6 +359,9 @@
   "paths": {
     "/organization": {
       "get": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Get organization details",
         "description": "Retrieve the current organization information",
         "security": [
@@ -375,7 +404,15 @@
                     "name",
                     "createdAt",
                     "updatedAt"
-                  ]
+                  ],
+                  "example": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Acme Corporation",
+                    "reminderEnabled": true,
+                    "reminderIntervalDays": 7,
+                    "createdAt": "2024-01-01T00:00:00.000Z",
+                    "updatedAt": "2024-01-01T00:00:00.000Z"
+                  }
                 }
               }
             }
@@ -571,6 +608,9 @@
         }
       },
       "patch": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Update organization settings",
         "description": "Update organization settings including reminder preferences",
         "security": [
@@ -643,7 +683,15 @@
                     "name",
                     "createdAt",
                     "updatedAt"
-                  ]
+                  ],
+                  "example": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Acme Corporation",
+                    "reminderEnabled": true,
+                    "reminderIntervalDays": 7,
+                    "createdAt": "2024-01-01T00:00:00.000Z",
+                    "updatedAt": "2024-01-01T00:00:00.000Z"
+                  }
                 }
               }
             }
@@ -1035,6 +1083,9 @@
     },
     "/onboarding/internal": {
       "post": {
+        "tags": [
+          "Onboarding"
+        ],
         "summary": "Complete internal onboarding",
         "description": "Complete onboarding for an internal user",
         "security": [
@@ -1514,6 +1565,9 @@
     },
     "/onboarding/reviewer": {
       "post": {
+        "tags": [
+          "Onboarding"
+        ],
         "summary": "Complete reviewer onboarding",
         "description": "Complete onboarding for a reviewer",
         "security": [
@@ -1967,6 +2021,9 @@
     },
     "/organization/users": {
       "get": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Get organization users",
         "description": "Retrieve all users in the organization",
         "security": [
@@ -2021,7 +2078,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -2313,6 +2379,9 @@
     },
     "/organization/users/invite": {
       "post": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Invite internal user",
         "description": "Invite a new internal user to the organization",
         "security": [
@@ -2788,6 +2857,9 @@
     },
     "/organization/invitations": {
       "get": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Get organization invitations",
         "description": "Retrieve pending invitations for the organization",
         "security": [
@@ -2842,7 +2914,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -3228,6 +3309,9 @@
     },
     "/organization/invitations/{token}/accept": {
       "post": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Accept invitation",
         "description": "Accept an invitation using the invitation token",
         "security": [
@@ -3551,6 +3635,9 @@
     },
     "/organization/users/{id}": {
       "delete": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Delete user",
         "description": "Remove a user from the organization",
         "security": [
@@ -3954,6 +4041,9 @@
     },
     "/organization/users/{id}/role": {
       "patch": {
+        "tags": [
+          "Organization"
+        ],
         "summary": "Update user role",
         "description": "Update the role of a user in the organization",
         "security": [
@@ -4525,6 +4615,9 @@
     },
     "/clients": {
       "get": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Get clients",
         "description": "Retrieve all clients for the organization",
         "security": [
@@ -4579,7 +4672,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -4869,6 +4971,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Create client",
         "description": "Create a new client",
         "security": [
@@ -5221,6 +5326,9 @@
     },
     "/clients/{id}": {
       "patch": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Update client",
         "description": "Update an existing client",
         "security": [
@@ -5679,6 +5787,9 @@
     },
     "/clients/{id}/archive": {
       "post": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Archive client",
         "description": "Archive a client",
         "security": [
@@ -6090,6 +6201,9 @@
     },
     "/clients/{id}/reviewers": {
       "get": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Get client reviewers",
         "description": "Retrieve all reviewers for a client",
         "security": [
@@ -6153,7 +6267,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -6537,6 +6660,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Invite client reviewer",
         "description": "Invite a reviewer to a client",
         "security": [
@@ -7108,6 +7234,9 @@
     },
     "/clients/{id}/reviewers/{reviewerId}": {
       "delete": {
+        "tags": [
+          "Clients"
+        ],
         "summary": "Remove client reviewer",
         "description": "Remove a reviewer from a client",
         "security": [
@@ -7520,6 +7649,9 @@
     },
     "/review-items": {
       "get": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Get review items",
         "description": "Retrieve all review items for the organization",
         "security": [
@@ -7574,7 +7706,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -7864,6 +8005,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Create review item",
         "description": "Create a new review item",
         "security": [
@@ -8227,6 +8371,9 @@
     },
     "/review-items/{id}/approve": {
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Approve review item",
         "description": "Approve a review item",
         "security": [
@@ -8755,6 +8902,9 @@
     },
     "/review-items/{id}": {
       "get": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Get review item",
         "description": "Retrieve a specific review item by ID",
         "security": [
@@ -9166,6 +9316,9 @@
     },
     "/review-items/{id}/send": {
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Send review item for review",
         "description": "Send a review item to reviewers",
         "security": [
@@ -9694,6 +9847,9 @@
     },
     "/review-items/{id}/request-changes": {
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Request changes",
         "description": "Request changes on a review item",
         "security": [
@@ -10222,6 +10378,9 @@
     },
     "/review-items/{id}/archive": {
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Archive review item",
         "description": "Archive a review item",
         "security": [
@@ -10625,6 +10784,9 @@
     },
     "/review-items/{id}/activity": {
       "get": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Get review item activity",
         "description": "Retrieve activity log for a review item",
         "security": [
@@ -10688,7 +10850,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -11074,6 +11245,9 @@
     },
     "/attachments/presign": {
       "post": {
+        "tags": [
+          "Attachments"
+        ],
         "summary": "Create presigned upload URL",
         "description": "Generate a presigned URL for uploading a file to S3",
         "security": [
@@ -11445,6 +11619,9 @@
     },
     "/review-items/{id}/attachments": {
       "get": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Get attachments",
         "description": "Retrieve all attachments for a review item",
         "security": [
@@ -11508,7 +11685,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -11892,6 +12078,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Create attachment",
         "description": "Confirm and create an attachment for a review item",
         "security": [
@@ -12448,6 +12637,9 @@
     },
     "/review-items/{id}/attachments/{attachmentId}": {
       "delete": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Delete attachment",
         "description": "Delete an attachment from a review item",
         "security": [
@@ -12860,6 +13052,9 @@
     },
     "/review-items/{id}/comments": {
       "get": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Get comments",
         "description": "Retrieve all comments for a review item",
         "security": [
@@ -12923,7 +13118,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -13307,6 +13511,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Create comment",
         "description": "Add a comment to a review item",
         "security": [
@@ -13859,6 +14066,9 @@
     },
     "/review-items/{id}/comments/{commentId}": {
       "delete": {
+        "tags": [
+          "Review Items"
+        ],
         "summary": "Delete comment",
         "description": "Delete a comment from a review item",
         "security": [
@@ -14271,6 +14481,9 @@
     },
     "/notifications": {
       "get": {
+        "tags": [
+          "Notifications"
+        ],
         "summary": "Get notifications",
         "description": "Retrieve all notifications for the current user",
         "security": [
@@ -14325,7 +14538,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -14711,6 +14933,9 @@
     },
     "/notifications/{id}/read": {
       "patch": {
+        "tags": [
+          "Notifications"
+        ],
         "summary": "Mark notification as read",
         "description": "Mark a notification as read",
         "security": [

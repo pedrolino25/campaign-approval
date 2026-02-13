@@ -61,18 +61,37 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   // Common response schemas
-  const paginatedResponseSchema = z.object({
+  const paginatedResponseSchema = (z.object({
     data: z.array(z.record(z.unknown())),
     nextCursor: z.string().nullable(),
+  }) as any).openapi({
+    example: {
+      data: [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Example Item',
+        },
+      ],
+      nextCursor: 'eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+    },
   })
 
-  const organizationResponseSchema = z.object({
+  const organizationResponseSchema = (z.object({
     id: z.string().uuid(),
     name: z.string(),
     reminderEnabled: z.boolean().optional(),
     reminderIntervalDays: z.number().optional(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+  }) as any).openapi({
+    example: {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Acme Corporation',
+      reminderEnabled: true,
+      reminderIntervalDays: 7,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
   })
 
   // ============================================================================
@@ -82,15 +101,24 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/organization',
+    tags: ['Organization'],
     summary: 'Get organization details',
     description: 'Retrieve the current organization information',
     security: [{ bearerAuth: [] }],
-    responses: {
+      responses: {
       200: {
         description: 'Organization details',
         content: {
           'application/json': {
             schema: organizationResponseSchema,
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              name: 'Acme Corporation',
+              reminderEnabled: true,
+              reminderIntervalDays: 7,
+              createdAt: '2024-01-01T00:00:00.000Z',
+              updatedAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -116,6 +144,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'patch',
     path: '/organization',
+    tags: ['Organization'],
     summary: 'Update organization settings',
     description: 'Update organization settings including reminder preferences',
     security: [{ bearerAuth: [] }],
@@ -128,12 +157,20 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Organization updated successfully',
         content: {
           'application/json': {
             schema: organizationResponseSchema,
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              name: 'Acme Corporation',
+              reminderEnabled: true,
+              reminderIntervalDays: 7,
+              createdAt: '2024-01-01T00:00:00.000Z',
+              updatedAt: '2024-01-02T00:00:00.000Z',
+            },
           },
         },
       },
@@ -175,6 +212,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/onboarding/internal',
+    tags: ['Onboarding'],
     summary: 'Complete internal onboarding',
     description: 'Complete onboarding for an internal user',
     security: [{ bearerAuth: [] }],
@@ -187,7 +225,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -203,6 +241,17 @@ export function buildOpenAPISpec(): Record<string, unknown> {
                 name: z.string(),
               }),
             }),
+            example: {
+              user: {
+                id: '123e4567-e89b-12d3-a456-426614174000',
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+              },
+              organization: {
+                id: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+                name: 'Acme Corporation',
+              },
+            },
           },
         },
       },
@@ -244,6 +293,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/onboarding/reviewer',
+    tags: ['Onboarding'],
     summary: 'Complete reviewer onboarding',
     description: 'Complete onboarding for a reviewer',
     security: [{ bearerAuth: [] }],
@@ -256,7 +306,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -268,6 +318,13 @@ export function buildOpenAPISpec(): Record<string, unknown> {
                 email: z.string(),
               }),
             }),
+            example: {
+              reviewer: {
+                id: '123e4567-e89b-12d3-a456-426614174000',
+                name: 'Jane Reviewer',
+                email: 'jane.reviewer@example.com',
+              },
+            },
           },
         },
       },
@@ -309,6 +366,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/organization/users',
+    tags: ['Organization'],
     summary: 'Get organization users',
     description: 'Retrieve all users in the organization',
     security: [{ bearerAuth: [] }],
@@ -354,6 +412,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/organization/users/invite',
+    tags: ['Organization'],
     summary: 'Invite internal user',
     description: 'Invite a new internal user to the organization',
     security: [{ bearerAuth: [] }],
@@ -366,7 +425,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       201: {
         description: 'User invited',
         content: {
@@ -380,6 +439,15 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               expiresAt: z.string().datetime(),
               createdAt: z.string().datetime(),
             }),
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              email: 'newuser@example.com',
+              type: 'internal',
+              role: 'admin',
+              organizationId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+              expiresAt: '2024-01-08T00:00:00.000Z',
+              createdAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -421,18 +489,31 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/organization/invitations',
+    tags: ['Organization'],
     summary: 'Get organization invitations',
     description: 'Retrieve pending invitations for the organization',
     security: [{ bearerAuth: [] }],
     request: {
       query: CursorPaginationQueryOpenAPISchema,
     },
-    responses: {
+      responses: {
       200: {
         description: 'Paginated list of invitations',
         content: {
           'application/json': {
             schema: paginatedResponseSchema,
+            example: {
+              data: [
+                {
+                  id: '123e4567-e89b-12d3-a456-426614174000',
+                  email: 'user@example.com',
+                  role: 'admin',
+                  status: 'pending',
+                  createdAt: '2024-01-01T00:00:00.000Z',
+                },
+              ],
+              nextCursor: 'eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+            },
           },
         },
       },
@@ -474,6 +555,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/organization/invitations/{token}/accept',
+    tags: ['Organization'],
     summary: 'Accept invitation',
     description: 'Accept an invitation using the invitation token',
     security: [{ bearerAuth: [] }],
@@ -521,6 +603,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'delete',
     path: '/organization/users/{id}',
+    tags: ['Organization'],
     summary: 'Delete user',
     description: 'Remove a user from the organization',
     security: [{ bearerAuth: [] }],
@@ -569,6 +652,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'patch',
     path: '/organization/users/{id}/role',
+    tags: ['Organization'],
     summary: 'Update user role',
     description: 'Update the role of a user in the organization',
     security: [{ bearerAuth: [] }],
@@ -648,6 +732,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/clients',
+    tags: ['Clients'],
     summary: 'Get clients',
     description: 'Retrieve all clients for the organization',
     security: [{ bearerAuth: [] }],
@@ -693,6 +778,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/clients',
+    tags: ['Clients'],
     summary: 'Create client',
     description: 'Create a new client',
     security: [{ bearerAuth: [] }],
@@ -748,6 +834,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'patch',
     path: '/clients/{id}',
+    tags: ['Clients'],
     summary: 'Update client',
     description: 'Update an existing client',
     security: [{ bearerAuth: [] }],
@@ -813,6 +900,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/clients/{id}/archive',
+    tags: ['Clients'],
     summary: 'Archive client',
     description: 'Archive a client',
     security: [{ bearerAuth: [] }],
@@ -866,6 +954,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/clients/{id}/reviewers',
+    tags: ['Clients'],
     summary: 'Get client reviewers',
     description: 'Retrieve all reviewers for a client',
     security: [{ bearerAuth: [] }],
@@ -920,6 +1009,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/clients/{id}/reviewers',
+    tags: ['Clients'],
     summary: 'Invite client reviewer',
     description: 'Invite a reviewer to a client',
     security: [{ bearerAuth: [] }],
@@ -996,6 +1086,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'delete',
     path: '/clients/{id}/reviewers/{reviewerId}',
+    tags: ['Clients'],
     summary: 'Remove client reviewer',
     description: 'Remove a reviewer from a client',
     security: [{ bearerAuth: [] }],
@@ -1048,6 +1139,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/review-items',
+    tags: ['Review Items'],
     summary: 'Get review items',
     description: 'Retrieve all review items for the organization',
     security: [{ bearerAuth: [] }],
@@ -1093,6 +1185,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items',
+    tags: ['Review Items'],
     summary: 'Create review item',
     description: 'Create a new review item',
     security: [{ bearerAuth: [] }],
@@ -1148,6 +1241,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/approve',
+    tags: ['Review Items'],
     summary: 'Approve review item',
     description: 'Approve a review item',
     security: [{ bearerAuth: [] }],
@@ -1205,6 +1299,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/review-items/{id}',
+    tags: ['Review Items'],
     summary: 'Get review item',
     description: 'Retrieve a specific review item by ID',
     security: [{ bearerAuth: [] }],
@@ -1258,6 +1353,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/send',
+    tags: ['Review Items'],
     summary: 'Send review item for review',
     description: 'Send a review item to reviewers',
     security: [{ bearerAuth: [] }],
@@ -1326,6 +1422,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/approve',
+    tags: ['Review Items'],
     summary: 'Approve review item',
     description: 'Approve a review item',
     security: [{ bearerAuth: [] }],
@@ -1394,6 +1491,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/request-changes',
+    tags: ['Review Items'],
     summary: 'Request changes',
     description: 'Request changes on a review item',
     security: [{ bearerAuth: [] }],
@@ -1462,6 +1560,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/archive',
+    tags: ['Review Items'],
     summary: 'Archive review item',
     description: 'Archive a review item',
     security: [{ bearerAuth: [] }],
@@ -1510,6 +1609,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/review-items/{id}/activity',
+    tags: ['Review Items'],
     summary: 'Get review item activity',
     description: 'Retrieve activity log for a review item',
     security: [{ bearerAuth: [] }],
@@ -1568,6 +1668,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/attachments/presign',
+    tags: ['Attachments'],
     summary: 'Create presigned upload URL',
     description: 'Generate a presigned URL for uploading a file to S3',
     security: [{ bearerAuth: [] }],
@@ -1623,6 +1724,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/review-items/{id}/attachments',
+    tags: ['Review Items'],
     summary: 'Get attachments',
     description: 'Retrieve all attachments for a review item',
     security: [{ bearerAuth: [] }],
@@ -1677,6 +1779,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/attachments',
+    tags: ['Review Items'],
     summary: 'Create attachment',
     description: 'Confirm and create an attachment for a review item',
     security: [{ bearerAuth: [] }],
@@ -1745,6 +1848,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'delete',
     path: '/review-items/{id}/attachments/{attachmentId}',
+    tags: ['Review Items'],
     summary: 'Delete attachment',
     description: 'Delete an attachment from a review item',
     security: [{ bearerAuth: [] }],
@@ -1797,6 +1901,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/review-items/{id}/comments',
+    tags: ['Review Items'],
     summary: 'Get comments',
     description: 'Retrieve all comments for a review item',
     security: [{ bearerAuth: [] }],
@@ -1851,6 +1956,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/review-items/{id}/comments',
+    tags: ['Review Items'],
     summary: 'Create comment',
     description: 'Add a comment to a review item',
     security: [{ bearerAuth: [] }],
@@ -1919,6 +2025,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'delete',
     path: '/review-items/{id}/comments/{commentId}',
+    tags: ['Review Items'],
     summary: 'Delete comment',
     description: 'Delete a comment from a review item',
     security: [{ bearerAuth: [] }],
@@ -1971,6 +2078,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'get',
     path: '/notifications',
+    tags: ['Notifications'],
     summary: 'Get notifications',
     description: 'Retrieve all notifications for the current user',
     security: [{ bearerAuth: [] }],
@@ -2024,6 +2132,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'patch',
     path: '/notifications/{id}/read',
+    tags: ['Notifications'],
     summary: 'Mark notification as read',
     description: 'Mark a notification as read',
     security: [{ bearerAuth: [] }],
@@ -2106,6 +2215,32 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     security: [
       {
         bearerAuth: [],
+      },
+    ],
+    tags: [
+      {
+        name: 'Organization',
+        description: 'Organization management endpoints',
+      },
+      {
+        name: 'Onboarding',
+        description: 'User onboarding endpoints',
+      },
+      {
+        name: 'Clients',
+        description: 'Client management endpoints',
+      },
+      {
+        name: 'Review Items',
+        description: 'Review item management and workflow endpoints',
+      },
+      {
+        name: 'Attachments',
+        description: 'File attachment endpoints',
+      },
+      {
+        name: 'Notifications',
+        description: 'Notification management endpoints',
       },
     ],
   })

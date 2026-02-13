@@ -23,13 +23,11 @@
     "jose": "^5.2.0",
     "path-to-regexp": "^9.0.0",
     "pino": "^8.17.0",
-    "swagger-ui-express": "^5.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.130",
     "@types/node": "^20.10.6",
-    "@types/swagger-ui-express": "^4.1.6",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "archiver": "^7.0.1",
