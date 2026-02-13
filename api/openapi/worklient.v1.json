@@ -375,7 +375,15 @@
                     "name",
                     "createdAt",
                     "updatedAt"
-                  ]
+                  ],
+                  "example": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Acme Corporation",
+                    "reminderEnabled": true,
+                    "reminderIntervalDays": 7,
+                    "createdAt": "2024-01-01T00:00:00.000Z",
+                    "updatedAt": "2024-01-01T00:00:00.000Z"
+                  }
                 }
               }
             }
@@ -643,7 +651,15 @@
                     "name",
                     "createdAt",
                     "updatedAt"
-                  ]
+                  ],
+                  "example": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "name": "Acme Corporation",
+                    "reminderEnabled": true,
+                    "reminderIntervalDays": 7,
+                    "createdAt": "2024-01-01T00:00:00.000Z",
+                    "updatedAt": "2024-01-01T00:00:00.000Z"
+                  }
                 }
               }
             }
@@ -2021,7 +2037,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -2842,7 +2867,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -4579,7 +4613,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -6153,7 +6196,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -7574,7 +7626,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -10688,7 +10749,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -11508,7 +11578,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -12923,7 +13002,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }
@@ -14325,7 +14413,16 @@
                   "required": [
                     "data",
                     "nextCursor"
-                  ]
+                  ],
+                  "example": {
+                    "data": [
+                      {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "name": "Example Item"
+                      }
+                    ],
+                    "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9"
+                  }
                 }
               }
             }

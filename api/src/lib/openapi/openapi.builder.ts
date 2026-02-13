@@ -61,18 +61,37 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   // Common response schemas
-  const paginatedResponseSchema = z.object({
+  const paginatedResponseSchema = (z.object({
     data: z.array(z.record(z.unknown())),
     nextCursor: z.string().nullable(),
+  }) as any).openapi({
+    example: {
+      data: [
+        {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Example Item',
+        },
+      ],
+      nextCursor: 'eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+    },
   })
 
-  const organizationResponseSchema = z.object({
+  const organizationResponseSchema = (z.object({
     id: z.string().uuid(),
     name: z.string(),
     reminderEnabled: z.boolean().optional(),
     reminderIntervalDays: z.number().optional(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+  }) as any).openapi({
+    example: {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Acme Corporation',
+      reminderEnabled: true,
+      reminderIntervalDays: 7,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
   })
 
   // ============================================================================
@@ -85,12 +104,20 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     summary: 'Get organization details',
     description: 'Retrieve the current organization information',
     security: [{ bearerAuth: [] }],
-    responses: {
+      responses: {
       200: {
         description: 'Organization details',
         content: {
           'application/json': {
             schema: organizationResponseSchema,
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              name: 'Acme Corporation',
+              reminderEnabled: true,
+              reminderIntervalDays: 7,
+              createdAt: '2024-01-01T00:00:00.000Z',
+              updatedAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -128,12 +155,20 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Organization updated successfully',
         content: {
           'application/json': {
             schema: organizationResponseSchema,
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              name: 'Acme Corporation',
+              reminderEnabled: true,
+              reminderIntervalDays: 7,
+              createdAt: '2024-01-01T00:00:00.000Z',
+              updatedAt: '2024-01-02T00:00:00.000Z',
+            },
           },
         },
       },
@@ -187,7 +222,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -203,6 +238,17 @@ export function buildOpenAPISpec(): Record<string, unknown> {
                 name: z.string(),
               }),
             }),
+            example: {
+              user: {
+                id: '123e4567-e89b-12d3-a456-426614174000',
+                name: 'John Doe',
+                email: 'john.doe@example.com',
+              },
+              organization: {
+                id: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+                name: 'Acme Corporation',
+              },
+            },
           },
         },
       },
@@ -256,7 +302,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -268,6 +314,13 @@ export function buildOpenAPISpec(): Record<string, unknown> {
                 email: z.string(),
               }),
             }),
+            example: {
+              reviewer: {
+                id: '123e4567-e89b-12d3-a456-426614174000',
+                name: 'Jane Reviewer',
+                email: 'jane.reviewer@example.com',
+              },
+            },
           },
         },
       },
@@ -366,7 +419,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       201: {
         description: 'User invited',
         content: {
@@ -380,6 +433,15 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               expiresAt: z.string().datetime(),
               createdAt: z.string().datetime(),
             }),
+            example: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              email: 'newuser@example.com',
+              type: 'internal',
+              role: 'admin',
+              organizationId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+              expiresAt: '2024-01-08T00:00:00.000Z',
+              createdAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -427,12 +489,24 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     request: {
       query: CursorPaginationQueryOpenAPISchema,
     },
-    responses: {
+      responses: {
       200: {
         description: 'Paginated list of invitations',
         content: {
           'application/json': {
             schema: paginatedResponseSchema,
+            example: {
+              data: [
+                {
+                  id: '123e4567-e89b-12d3-a456-426614174000',
+                  email: 'user@example.com',
+                  role: 'admin',
+                  status: 'pending',
+                  createdAt: '2024-01-01T00:00:00.000Z',
+                },
+              ],
+              nextCursor: 'eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+            },
           },
         },
       },
