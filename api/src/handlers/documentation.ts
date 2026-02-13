@@ -3,27 +3,26 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 const handleApiDocs = (): APIGatewayProxyResult => {
-  const html = 
-  `<!DOCTYPE html>
-    <html>
-      <head>
-        <title>Worklient API Docs</title>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body { margin: 0; padding: 0; }
-        </style>
-      </head>
-      <body>
-        <redoc spec-url="/openapi/worklient.v1.json"></redoc>
-        <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-      </body>
-    </html>`
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Worklient API Docs</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { margin: 0; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <redoc spec-url="/openapi/worklient.v1.json"></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  </body>
+</html>`
 
   return {
     statusCode: 200,
     headers: {
-      'Content-Type': 'text/html',
+      'Content-Type': 'text/html; charset=utf-8',
     },
     body: html,
   }
@@ -43,7 +42,7 @@ const handleOpenApiSpec = (): APIGatewayProxyResult => {
       return {
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify(spec),
       }
@@ -55,7 +54,7 @@ const handleOpenApiSpec = (): APIGatewayProxyResult => {
       return {
         statusCode: 500,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({
           error: `OpenAPI specification invalid: ${error instanceof Error ? error.message : String(error)}`,
@@ -67,7 +66,7 @@ const handleOpenApiSpec = (): APIGatewayProxyResult => {
   return {
     statusCode: 404,
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify({
       error: `OpenAPI specification not found at any of: ${possiblePaths.join(', ')}`,
@@ -75,26 +74,70 @@ const handleOpenApiSpec = (): APIGatewayProxyResult => {
   }
 }
 
-export const handler = (
-  event: APIGatewayProxyEvent
-): APIGatewayProxyResult => {
-  const isProd = process.env.ENVIRONMENT === 'prod'
-
-  if (isProd) {
-    return {
-      statusCode: 404,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: 'Not Found' }),
+const getPath = (event: APIGatewayProxyEvent): string => {
+  const eventWithRawPath = event as APIGatewayProxyEvent & {
+    rawPath?: string
+    requestContext?: APIGatewayProxyEvent['requestContext'] & {
+      http?: { path?: string }
+      path?: string
     }
   }
 
-  const path = event.path || ''
+  return (
+    eventWithRawPath.rawPath ||
+    event.path ||
+    eventWithRawPath.requestContext?.http?.path ||
+    eventWithRawPath.requestContext?.path ||
+    ''
+  )
+}
 
-  if (path === '/openapi/worklient.v1.json' || path.endsWith('/openapi/worklient.v1.json')) {
-    return handleOpenApiSpec()
+const createErrorResponse = (error: unknown): APIGatewayProxyResult => {
+  return {
+    statusCode: 500,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify({
+      message: 'Internal Server Error',
+      error: error instanceof Error ? error.message : String(error),
+    }),
   }
+}
 
-  return handleApiDocs()
+export const handler = (
+  event: APIGatewayProxyEvent
+): APIGatewayProxyResult => {
+  try {
+    if (process.env.ENVIRONMENT === 'prod') {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: JSON.stringify({ message: 'Not Found' }),
+      }
+    }
+
+    const path = getPath(event)
+
+    if (
+      path === '/openapi/worklient.v1.json' ||
+      path.endsWith('/openapi/worklient.v1.json')
+    ) {
+      try {
+        return handleOpenApiSpec()
+      } catch (error) {
+        return createErrorResponse(error)
+      }
+    }
+
+    try {
+      return handleApiDocs()
+    } catch (error) {
+      return createErrorResponse(error)
+    }
+  } catch (error) {
+    return createErrorResponse(error)
+  }
 }
