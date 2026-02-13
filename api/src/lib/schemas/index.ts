@@ -43,6 +43,7 @@ export {
   InviteInternalUserSchema,
   type UpdateOrganizationSettingsRequest,
   UpdateOrganizationSettingsSchema,
+  UpdateUserRoleSchema,
 } from './organization.schema'
 export {
   type CursorPaginationQuery,

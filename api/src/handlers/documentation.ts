@@ -79,25 +79,26 @@ const errorService = new ErrorService()
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  if (config.ENVIRONMENT === 'prod') {
-    return {
-      statusCode: 404,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: 'Not Found' }),
-    }
-  }
+  const requestId =
+    event.requestContext.requestId || event.headers['x-request-id']
 
   try {
+    if (config.ENVIRONMENT === 'prod') {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: 'Not Found' }),
+      }
+    }
+
     const publicEvent: AuthenticatedEvent = {
       ...event,
       authContext: createPublicAuthContext(),
     }
     return await router.handle(publicEvent)
   } catch (error) {
-    const requestId =
-      event.requestContext.requestId || event.headers['x-request-id']
     return errorService.handle(error, { requestId })
   }
 }
