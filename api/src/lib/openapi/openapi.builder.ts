@@ -62,7 +62,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   // Common response schemas
   const paginatedResponseSchema = z.object({
-    data: z.array(z.any().openapi({ type: 'object' })),
+    data: z.array(z.record(z.unknown())),
     nextCursor: z.string().nullable(),
   })
 
@@ -713,7 +713,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any().openapi({ type: 'object' }),
+              data: z.object({}).passthrough(),
             }),
           },
         },
@@ -770,7 +770,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               message: z.string(),
               clientId: z.string(),
               userId: z.string(),
-              data: z.any().openapi({ type: 'object' }),
+              data: z.object({}).passthrough(),
             }),
           },
         },
@@ -824,7 +824,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Client archived',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1113,7 +1113,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any().openapi({ type: 'object' }),
+              data: z.object({}).passthrough(),
             }),
           },
         },
@@ -1216,7 +1216,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Review item details',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1276,7 +1276,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Review item sent',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1344,7 +1344,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Review item approved',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1412,7 +1412,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Changes requested',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1588,7 +1588,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               message: z.string(),
               userId: z.string(),
-              data: z.any().openapi({ type: 'object' }),
+              data: z.object({}).passthrough(),
             }),
           },
         },
@@ -1695,7 +1695,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Attachment created',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -1869,7 +1869,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Comment created',
         content: {
           'application/json': {
-            schema: z.any().openapi({ type: 'object' }),
+            schema: z.object({}).passthrough(),
           },
         },
       },
@@ -2038,7 +2038,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
             schema: z.object({
               id: z.string().uuid(),
               type: z.string(),
-              payload: z.any(),
+              payload: z.unknown(),
               readAt: z.string().datetime().nullable(),
               sentAt: z.string().datetime().nullable(),
               createdAt: z.string().datetime(),
