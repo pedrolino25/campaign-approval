@@ -74,6 +74,19 @@ async function buildLambda() {
     archive.file(sourcePath, { name: `${outfile}.js` })
   }
   
+  const apiHandlers = Object.keys(entryPoints)
+    .filter((key) => key.startsWith('api/') && !key.includes('workers'))
+    .map((key) => key.replace('api/', ''))
+  
+  const apiIndexContent = `// Auto-generated index for Lambda handler resolution
+  ${apiHandlers.map((handler) => `const ${handler} = require('./${handler}');`).join('\n')}
+
+  module.exports = {
+  ${apiHandlers.map((handler) => `  ${handler},`).join('\n')}
+  };`
+  
+  archive.append(apiIndexContent, { name: "api/index.js" })
+  
   // Include OpenAPI specification file
   const openApiSourcePath = join(__dirname, "openapi", "worklient.v1.json")
   if (existsSync(openApiSourcePath)) {
