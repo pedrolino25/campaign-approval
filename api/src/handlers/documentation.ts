@@ -20,25 +20,39 @@ import {
 const handleOpenApiSpec = (
   _request: HttpRequest
 ): Promise<HttpResponse> => {
-  return Promise.resolve().then(() => {
+  // In Lambda, the working directory is /var/task and files are at the root
+  const possiblePaths = [
+    '/var/task/openapi/worklient.v1.json',
+    join(process.cwd(), 'openapi', 'worklient.v1.json'),
+  ]
+
+  for (const path of possiblePaths) {
     try {
-      const openApiPath = join(process.cwd(), 'openapi', 'worklient.v1.json')
-      const specContent = readFileSync(openApiPath, 'utf-8')
+      const specContent = readFileSync(path, 'utf-8')
       const spec = JSON.parse(specContent)
 
-      return {
+      return Promise.resolve({
         statusCode: 200,
         headers: {
           'Content-Type': 'application/json',
         },
         body: spec,
-      }
+      })
     } catch (error) {
+      // If file doesn't exist, try next path
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        continue
+      }
+      // If it's a parse error, we found the file but it's invalid
       throw new NotFoundError(
-        `OpenAPI specification not found: ${error instanceof Error ? error.message : String(error)}`
+        `OpenAPI specification invalid: ${error instanceof Error ? error.message : String(error)}`
       )
     }
-  })
+  }
+
+  throw new NotFoundError(
+    `OpenAPI specification not found at any of: ${possiblePaths.join(', ')}`
+  )
 }
 
 const handleApiDocs = (_request: HttpRequest): Promise<HttpResponse> => {
@@ -80,10 +94,17 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   const requestId =
-    event.requestContext.requestId || event.headers['x-request-id']
+    event.requestContext?.requestId || event.headers?.['x-request-id'] || 'unknown'
 
   try {
-    if (config.ENVIRONMENT === 'prod') {
+    let isProd = false
+    try {
+      isProd = config.ENVIRONMENT === 'prod'
+    } catch {
+      isProd = false
+    }
+
+    if (isProd) {
       return {
         statusCode: 404,
         headers: {
