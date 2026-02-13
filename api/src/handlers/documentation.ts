@@ -111,13 +111,6 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // eslint-disable-next-line no-console
-    console.log('Documentation handler called', {
-      path: event.path,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rawPath: (event as any).rawPath,
-      requestContext: event.requestContext,
-    })
 
     if (process.env.ENVIRONMENT === 'prod') {
       return {
@@ -130,48 +123,26 @@ export const handler = async (
     }
 
     const path = getPath(event)
-    // eslint-disable-next-line no-console
-    console.log('Resolved path:', path)
 
     if (
       path === '/openapi/worklient.v1.json' ||
       path.endsWith('/openapi/worklient.v1.json')
     ) {
       try {
-        // eslint-disable-next-line no-console
-        console.log('Handling OpenAPI spec request')
+
         const response = await handleOpenApiSpec()
-        // eslint-disable-next-line no-console
-        console.log('OpenAPI spec response:', {
-          statusCode: response.statusCode,
-          bodyLength: response.body?.length,
-        })
         return response
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error handling OpenAPI spec:', error)
         return await createErrorResponse(error)
       }
     }
 
     try {
-      // eslint-disable-next-line no-console
-      console.log('Handling API docs request')
-      const response = await handleApiDocs()
-      // eslint-disable-next-line no-console
-      console.log('API docs response:', {
-        statusCode: response.statusCode,
-        bodyLength: response.body?.length,
-      })
-      return response
+      return await handleApiDocs()
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error handling API docs:', error)
       return await createErrorResponse(error)
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Unhandled error in documentation handler:', error)
     return await createErrorResponse(error)
   }
 }
