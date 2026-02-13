@@ -2197,16 +2197,8 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     info: {
       title: 'Worklient API',
       version: '1.0.0',
-      description: 'Worklient API - Review workflow management system',
-      contact: {
-        name: 'Worklient API Support',
-      },
     },
     servers: [
-      {
-        url: 'https://api.worklient.com',
-        description: 'Production server',
-      },
       {
         url: 'https://api-dev.worklient.com',
         description: 'Development server',
