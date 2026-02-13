@@ -19,10 +19,36 @@ const entryPoints = {
   "api/workers/review-reminder.worker": "src/workers/review-reminder.worker.ts",
 }
 
+async function copyDirectoryToArchive(
+  archive,
+  sourceDir,
+  targetBasePath,
+  basePath = ""
+) {
+  const entries = await readdir(sourceDir, { withFileTypes: true })
+
+  for (const entry of entries) {
+    const fullPath = join(sourceDir, entry.name)
+    const archivePath = join(targetBasePath, basePath, entry.name)
+
+    if (entry.isDirectory()) {
+      await copyDirectoryToArchive(
+        archive,
+        fullPath,
+        targetBasePath,
+        join(basePath, entry.name)
+      )
+    } else {
+      archive.file(fullPath, { name: archivePath })
+    }
+  }
+}
+
 async function buildLambda() {
   const distDir = join(__dirname, "dist")
   await mkdir(distDir, { recursive: true })
 
+  // Build all entry points
   await Promise.all(
     Object.entries(entryPoints).map(async ([outfile, entryPoint]) => {
       await build({
@@ -34,11 +60,16 @@ async function buildLambda() {
         outfile: join(distDir, `${outfile}.js`),
         minify: true,
         sourcemap: false,
-        external: ["@aws-sdk/*"],
+        external: [
+          "@aws-sdk/*",
+          "@prisma/client",
+          "prisma",
+        ],
       })
     })
   )
 
+  // Create minimal package.json
   const packageJson = JSON.parse(
     await readFile(join(__dirname, "package.json"), "utf-8")
   )
@@ -56,60 +87,64 @@ async function buildLambda() {
     2
   )
 
-  await writeFile(
-    join(distDir, "package.json"),
-    packageJsonContent,
-    "utf-8"
-  )
+  await writeFile(join(distDir, "package.json"), packageJsonContent, "utf-8")
 
-  const zipPath = join(__dirname, "dist", "lambda.zip")
+  // Create zip
+  const zipPath = join(distDir, "lambda.zip")
   const output = createWriteStream(zipPath)
   const archive = archiver("zip", { zlib: { level: 9 } })
 
   archive.pipe(output)
 
-  archive.file(join(distDir, "package.json"), { name: "package.json" })
+  // Add compiled handlers
   for (const [outfile] of Object.entries(entryPoints)) {
     const sourcePath = join(distDir, `${outfile}.js`)
     archive.file(sourcePath, { name: `${outfile}.js` })
   }
-  
+
+  // Auto-generated API index
   const apiHandlers = Object.keys(entryPoints)
-    .filter((key) => key.startsWith('api/') && !key.includes('workers'))
-    .map((key) => key.replace('api/', ''))
-  
+    .filter((key) => key.startsWith("api/") && !key.includes("workers"))
+    .map((key) => key.replace("api/", ""))
+
   const apiIndexContent = `// Auto-generated index for Lambda handler resolution
   ${apiHandlers.map((handler) => `const ${handler} = require('./${handler}');`).join('\n')}
 
   module.exports = {
   ${apiHandlers.map((handler) => `  ${handler},`).join('\n')}
   };`
-  
-  archive.append(apiIndexContent, { name: "api/index.js" })
-  
-  // Include Prisma Client files and Query Engine binaries
+
+  archive.append(apiIndexContent.trim(), { name: "api/index.js" })
+
+  // Add package.json
+  archive.file(join(distDir, "package.json"), { name: "package.json" })
+
+  // ✅ Include Prisma engine binaries (.prisma)
   const prismaClientPath = join(__dirname, "node_modules", ".prisma", "client")
   if (existsSync(prismaClientPath)) {
-    const addPrismaFiles = async (dir, basePath = "") => {
-      const entries = await readdir(dir, { withFileTypes: true })
-      for (const entry of entries) {
-        const fullPath = join(dir, entry.name)
-        const archivePath = join("node_modules", ".prisma", "client", basePath, entry.name)
-        
-        if (entry.isDirectory()) {
-          await addPrismaFiles(fullPath, join(basePath, entry.name))
-        } else {
-          archive.file(fullPath, { name: archivePath })
-        }
-      }
-    }
-    await addPrismaFiles(prismaClientPath)
+    await copyDirectoryToArchive(
+      archive,
+      prismaClientPath,
+      "node_modules/.prisma/client"
+    )
   }
-  
-  // Include OpenAPI specification file
+
+  // ✅ Include @prisma/client runtime
+  const prismaRuntimePath = join(__dirname, "node_modules", "@prisma", "client")
+  if (existsSync(prismaRuntimePath)) {
+    await copyDirectoryToArchive(
+      archive,
+      prismaRuntimePath,
+      "node_modules/@prisma/client"
+    )
+  }
+
+  // ✅ Include OpenAPI spec
   const openApiSourcePath = join(__dirname, "openapi", "worklient.v1.json")
   if (existsSync(openApiSourcePath)) {
-    archive.file(openApiSourcePath, { name: "openapi/worklient.v1.json" })
+    archive.file(openApiSourcePath, {
+      name: "openapi/worklient.v1.json",
+    })
   }
 
   await archive.finalize()
@@ -120,14 +155,17 @@ async function buildLambda() {
         reject(new Error(`Lambda zip file was not created at ${zipPath}`))
         return
       }
+
       const stats = statSync(zipPath)
       if (stats.size === 0) {
         reject(new Error(`Lambda zip file is empty at ${zipPath}`))
         return
       }
+
       console.log(`Lambda build complete: ${zipPath} (${stats.size} bytes)`)
       resolve()
     })
+
     output.on("error", reject)
   })
 }
