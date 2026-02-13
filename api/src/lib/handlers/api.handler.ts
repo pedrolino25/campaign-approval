@@ -24,7 +24,6 @@ export class ApiHandlerFactory {
     ): Promise<APIGatewayProxyResult> => {
       try {
         const authenticatedEvent = await this.authService.authenticate(event)
-        // Apply onboarding guard after authentication
         const guardedEvent = onboardingGuard(authenticatedEvent)
         return await handler(guardedEvent)
       } catch (error) {

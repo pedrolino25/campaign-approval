@@ -5,18 +5,27 @@ import { z } from 'zod'
 import { ErrorCode } from '../../models/errors'
 import {
   AddCommentSchema,
+  ApproveReviewSchema,
   AttachmentParamsSchema,
   ClientParamsSchema,
   ClientReviewerParamsSchema,
+  CompleteInternalOnboardingSchema,
+  CompleteReviewerOnboardingSchema,
   ConfirmUploadSchema,
   CreateClientSchema,
   CreatePresignedUploadSchema,
   CreateReviewItemSchema,
-  CursorPaginationQuerySchema,
+  DeleteAttachmentParamsSchema,
+  DeleteCommentParamsSchema,
+  InviteInternalUserSchema,
   InviteReviewerSchema,
+  NotificationParamsSchema,
+  RequestChangesSchema,
   ReviewItemParamsSchema,
+  SendForReviewSchema,
   UpdateClientSchema,
   UpdateOrganizationSettingsSchema,
+  UpdateUserRoleSchema,
 } from '../schemas'
 
 extendZodWithOpenApi(z)
@@ -123,13 +132,24 @@ export const InternalErrorResponseSchema = (BaseErrorResponseSchema).openapi({
 // Pagination Schemas
 // ============================================================================
 
-export const CursorPaginationQueryOpenAPISchema = (CursorPaginationQuerySchema as any).openapi({
-  description: 'Cursor-based pagination query parameters',
-  example: {
-    cursor: 'eyJpZCI6IjEyMzQ1Njc4LTkwYWItY2RlZi0xMjM0LTU2Nzg5MGFiY2RlZiIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
-    limit: 20,
-  },
-})
+
+export const CursorPaginationQueryOpenAPISchema = z
+  .object({
+    cursor: z.string().optional().openapi({
+      description: 'Cursor for pagination',
+      example: 'eyJpZCI6IjEyMzQ1Njc4LTkwYWItY2RlZi0xMjM0LTU2Nzg5MGFiY2RlZiIsInRpbWVzdGFtcCI6IjIwMjQtMDEtMDFUMDA6MDA6MDAuMDAwWiJ9',
+    }),
+    limit: z
+      .string()
+      .optional()
+      .openapi({
+        description: 'Maximum number of items to return (1-100)',
+        example: '20',
+      }),
+  })
+  .openapi({
+    description: 'Cursor-based pagination query parameters',
+  })
 
 // ============================================================================
 // Request/Response Schemas with OpenAPI Metadata
@@ -244,3 +264,99 @@ export const CommentParamsOpenAPISchema = (ReviewItemParamsSchema as any).openap
     id: '123e4567-e89b-12d3-a456-426614174000',
   },
 })
+
+export const DeleteCommentParamsOpenAPISchema = (DeleteCommentParamsSchema as any).openapi({
+  description: 'Delete comment path parameters',
+  example: {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    commentId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+  },
+})
+
+export const DeleteAttachmentParamsOpenAPISchema = (DeleteAttachmentParamsSchema as any).openapi({
+  description: 'Delete attachment path parameters',
+  example: {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    attachmentId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+  },
+})
+
+export const NotificationParamsOpenAPISchema = (NotificationParamsSchema as any).openapi({
+  description: 'Notification path parameters',
+  example: {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+  },
+})
+
+export const CompleteInternalOnboardingOpenAPISchema = (CompleteInternalOnboardingSchema as any).openapi({
+  description: 'Complete internal onboarding request',
+  example: {
+    userName: 'John Doe',
+    organizationName: 'Acme Corporation',
+  },
+})
+
+export const CompleteReviewerOnboardingOpenAPISchema = (CompleteReviewerOnboardingSchema as any).openapi({
+  description: 'Complete reviewer onboarding request',
+  example: {
+    name: 'Jane Smith',
+  },
+})
+
+export const InviteInternalUserOpenAPISchema = (InviteInternalUserSchema as any).openapi({
+  description: 'Invite internal user request',
+  example: {
+    email: 'user@example.com',
+    role: 'MEMBER',
+  },
+})
+
+export const UpdateUserRoleOpenAPISchema = (UpdateUserRoleSchema as any).openapi({
+  description: 'Update user role request',
+  example: {
+    role: 'ADMIN',
+  },
+})
+
+export const SendForReviewOpenAPISchema = (SendForReviewSchema as any).openapi({
+  description: 'Send for review request',
+  example: {
+    expectedVersion: 1,
+  },
+})
+
+export const ApproveReviewOpenAPISchema = (ApproveReviewSchema as any).openapi({
+  description: 'Approve review request',
+  example: {
+    expectedVersion: 1,
+  },
+})
+
+export const RequestChangesOpenAPISchema = (RequestChangesSchema as any).openapi({
+  description: 'Request changes request',
+  example: {
+    expectedVersion: 1,
+  },
+})
+
+export const InvitationTokenParamsOpenAPISchema = z
+  .object({
+    token: z.string(),
+  })
+  .openapi({
+    description: 'Invitation token path parameters',
+    example: {
+      token: 'abc123def456',
+    },
+  })
+
+export const UserParamsOpenAPISchema = z
+  .object({
+    id: z.string().uuid(),
+  })
+  .openapi({
+    description: 'User path parameters',
+    example: {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+    },
+  })

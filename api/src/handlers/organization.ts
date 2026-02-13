@@ -440,11 +440,6 @@ const handlePatchUserRole = async (
   }
 }
 
-/*
-const handleOpenAPI = async (_request: HttpRequest): Promise<HttpResponse> => {
-  return await Promise.resolve(handleOpenAPIJson())
-}
-*/
 const routes: RouteDefinition[] = [
   RouteBuilder.get('/organization', handleGetOrganization),
   RouteBuilder.patch('/organization', handlePatchOrganization),
