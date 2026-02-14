@@ -1,4 +1,4 @@
-import { LandingPageHeader } from "@/components/layout/landing-page-header";
+import { LandingHeader } from "@/components/layout/landing-header";
 import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
@@ -110,7 +110,7 @@ const ProductsSection = () => {
 export default function Home() {
   return (
     <>
-      <LandingPageHeader />
+      <LandingHeader />
       <HeroSection/>
       <ProductsSection/>
     </>
