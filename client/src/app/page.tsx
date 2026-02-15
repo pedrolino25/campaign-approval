@@ -12,16 +12,13 @@ const HeroSection = () => {
       {/* Background */}
       <div className="absolute inset-0 -z-10 md:px-12">
         <video
-          preload="metadata"
+          loop
+          preload="auto" 
           poster={'/home_hero_poster.png'}
-          loop={true}
-          muted={true}
-          playsInline={true}
-          webkit-playsinline={true}
-          autoPlay={true}
-          disablePictureInPicture={true}
-          controlsList="nodownload nofullscreen noremoteplayback"
+          muted
+          playsInline
           className="hero-video w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
+          autoPlay
         >
           <source src="/home_hero.webm" type="video/webm" />
           <source src="/home_hero.mp4" type="video/mp4" />
