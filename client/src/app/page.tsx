@@ -22,7 +22,7 @@ const HeroSection = () => {
           controls={false}
           disablePictureInPicture
           controlsList="nodownload nofullscreen noremoteplayback"
-          className="w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
+          className="w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
         />
       </div>
 
