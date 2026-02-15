@@ -19,10 +19,9 @@ const HeroSection = () => {
           playsInline={true}
           webkit-playsinline={true}
           autoPlay={true}
-          controls={false}
           disablePictureInPicture={true}
           controlsList="nodownload nofullscreen noremoteplayback"
-          className="w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
+          className="hero-video w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
         >
           <source src="/home_hero.webm" type="video/webm" />
           <source src="/home_hero.mp4" type="video/mp4" />
