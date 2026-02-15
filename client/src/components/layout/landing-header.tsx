@@ -35,7 +35,7 @@ export function LandingHeader() {
                     className="group flex items-center gap-2 font-normal"
                   >
                     Product
-                    <ChevronDownIcon className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+                    <ChevronDownIcon className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Button>
                 </HoverCardTrigger>
                 <HoverCardContent sideOffset={12} side="bottom" align="start">
@@ -51,7 +51,7 @@ export function LandingHeader() {
                     className="group flex items-center gap-2 font-normal"
                   >
                     Solutions
-                    <ChevronDownIcon className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+                    <ChevronDownIcon className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Button>
                 </HoverCardTrigger>
                 <HoverCardContent sideOffset={12} side="bottom" align="start">
