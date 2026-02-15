@@ -8,13 +8,10 @@ import Image from "next/image";
 const HeroSection = () => {
   return (
     <header className="relative w-full h-[600px] md:h-[735px] xl:h-[860px] overflow-hidden px-0 md:px-16">
-      
-      {/* Background */}
       <div className="absolute inset-0 -z-10 md:px-12">
         <video
           loop
-          preload="auto" 
-          poster={'/home_hero_poster.png'}
+          preload="auto"
           muted
           playsInline
           className="hero-video w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
@@ -24,36 +21,30 @@ const HeroSection = () => {
           <source src="/home_hero.mp4" type="video/mp4" />
         </video>
       </div>
-
-      {/* Content */}
       <div className="container pt-[96px] md:pt-[120px] flex flex-col gap-10 md:gap-16 items-center">
-        
         <div className="max-w-full md:max-w-[800px] flex flex-col items-start md:items-center gap-5">
           <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default">
             Jan 20: Introducing Search by Calibration Profile
           </Button>
-
           <TextEffect
             per="word"
             as="h1"
-            preset="fade-in-blur"
+            preset="blur"
             speedReveal={2}
             className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] text-start md:text-center"
           >
             Campaign Approval Infrastructure
           </TextEffect>
-
           <TextEffect
             per="word"
             as="h1"
-            preset="fade-in-blur"
+            preset="blur"
             delay={0.5}
             speedReveal={2}
             className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] -mt-5 text-start md:text-center"
           >
             Powering Modern Agencies
           </TextEffect>
-
           <TextEffect
             per="word"
             as="p"
@@ -64,7 +55,6 @@ const HeroSection = () => {
           >
             Centralize feedback, structure workflows, and gain full approval traceability.
           </TextEffect>
-
           <TextEffect
             per="word"
             as="p"
@@ -75,7 +65,6 @@ const HeroSection = () => {
           >
             Designed for agencies that take client collaboration seriously.
           </TextEffect>
-
           <Button variant="outline" size="sm" className="gap-2">
             <span className="transition-transform duration-300 group-hover:-translate-x-0.5">
               Get Started
@@ -83,7 +72,6 @@ const HeroSection = () => {
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
           </Button>
         </div>
-
         <div className="w-full max-w-none flex flex-col items-center gap-4">
           <div className="relative w-full md:min-w-[600px] aspect-[1.66957/1] rounded-xs border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80] overflow-hidden">
             <Image
@@ -94,7 +82,6 @@ const HeroSection = () => {
             />
           </div>
         </div>
-
       </div>
     </header>
   )
