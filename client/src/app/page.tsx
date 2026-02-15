@@ -14,10 +14,11 @@ const HeroSection = () => {
         <video
           src={'/home_hero.mp4'}
           loop
-          preload="auto"
+          preload="metadata"
           poster={'/home_hero_poster.png'}
           muted
           playsInline
+          webkit-playsinline="true"
           autoPlay
           controls={false}
           disablePictureInPicture
