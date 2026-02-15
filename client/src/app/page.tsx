@@ -41,7 +41,7 @@ const HeroSection = () => {
             as="h1"
             preset="fade-in-blur"
             speedReveal={2}
-            className="text-3xl md:text-[38px] font-medium tracking-[-0.04em] leading-[100%] text-start md:text-center"
+            className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] text-start md:text-center"
           >
             Campaign Approval Infrastructure
           </TextEffect>
@@ -52,7 +52,7 @@ const HeroSection = () => {
             preset="fade-in-blur"
             delay={0.5}
             speedReveal={2}
-            className="text-3xl md:text-[38px] font-medium tracking-[-0.04em] leading-[100%] -mt-5 text-start md:text-center"
+            className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] -mt-5 text-start md:text-center"
           >
             Powering Modern Agencies
           </TextEffect>
@@ -63,7 +63,7 @@ const HeroSection = () => {
             preset="fade-in-blur"
             speedReveal={100}
             delay={1}
-            className="text-body text-black/50 text-start md:text-center"
+            className="text-body lg:text-base text-black/50 text-start md:text-center"
           >
             Centralize feedback, structure workflows, and gain full approval traceability.
           </TextEffect>
@@ -74,12 +74,12 @@ const HeroSection = () => {
             preset="fade-in-blur"
             delay={1.2}
             speedReveal={100}
-            className="text-body text-black/50 -mt-5 text-start md:text-center"
+            className="text-body lg:text-base text-black/50 -mt-5 text-start md:text-center"
           >
             Designed for agencies that take client collaboration seriously.
           </TextEffect>
 
-          <Button variant="secondary" size="sm" className="bg-white gap-2">
+          <Button variant="outline" size="sm" className="gap-2">
             <span className="transition-transform duration-300 group-hover:-translate-x-0.5">
               Get Started
             </span>
@@ -87,7 +87,7 @@ const HeroSection = () => {
           </Button>
         </div>
 
-        <div className="w-full max-w-none md:max-w-[90%] flex flex-col items-center gap-4">
+        <div className="w-full max-w-none flex flex-col items-center gap-4">
           <div className="relative w-full md:min-w-[600px] aspect-[1.66957/1] rounded-xs border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80] overflow-hidden">
             <Image
               src={heroImage}
