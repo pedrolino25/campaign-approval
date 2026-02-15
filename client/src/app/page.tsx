@@ -12,7 +12,6 @@ const HeroSection = () => {
       {/* Background */}
       <div className="absolute inset-0 -z-10 md:px-12">
         <video
-          src={'/home_hero.mp4'}
           preload="metadata"
           poster={'/home_hero_poster.png'}
           loop={true}
@@ -24,7 +23,10 @@ const HeroSection = () => {
           disablePictureInPicture={true}
           controlsList="nodownload nofullscreen noremoteplayback"
           className="w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg pointer-events-none"
-        />
+        >
+          <source src="/home_hero.webm" type="video/webm" />
+          <source src="/home_hero.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* Content */}
