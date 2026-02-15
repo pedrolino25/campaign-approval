@@ -4,13 +4,23 @@ import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/home_hero.png";
 import Image from "next/image";
-import HeroVideo from "@/components/landing-page/hero-section/HeroVideo";
 
 const HeroSection = () => {
   return (
     <header className="relative w-full h-[600px] md:h-[735px] xl:h-[860px] overflow-hidden px-0 md:px-16">
-      <div className="absolute inset-0 -z-10 md:px-12">
-        <HeroVideo />
+      <div className="absolute inset-0 md:px-12">
+        <video
+          autoPlay
+          loop
+          preload="auto" 
+          poster={'/home_hero_poster.png'}
+          muted
+          playsInline
+          className="hero-video pointer-events-none w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
+        >
+          <source src="/home_hero.webm" type="video/webm" />
+          <source src="/home_hero.mp4" type="video/mp4" />
+        </video>
       </div>
       <div className="container pt-[96px] md:pt-[120px] flex flex-col gap-10 md:gap-16 items-center">
         <div className="max-w-full md:max-w-[800px] flex flex-col items-start md:items-center gap-5">

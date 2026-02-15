@@ -13,7 +13,7 @@ export function LandingHeader() {
         className="peer hidden"
       />
 
-      <nav className="z-20 fixed top-0 left-0 w-full flex justify-center items-center bg-white md:bg-[linear-gradient(rgb(255,255,255)_0%,rgb(255,255,255)_61%,rgba(0,0,0,0)_100%)] pt-3 px-5 pb-3 md:pb-10">
+      <nav className="z-20 fixed top-0 left-0 w-full flex justify-center items-center max-md:bg-white md:bg-[linear-gradient(rgb(255,255,255)_0%,rgb(255,255,255)_61%,rgba(0,0,0,0)_100%)] pt-3 px-5 pb-3 md:pb-10">
         <div className="container px-0 w-full flex justify-between items-center">
           <div className="flex items-center">
             <a href="/">
