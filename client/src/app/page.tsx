@@ -7,7 +7,7 @@ import Image from "next/image";
 
 const HeroSection = () => {
   return (
-    <header className="relative w-full h-[515px] md:h-[735px] xl:h-[860px] overflow-hidden px-0 md:px-16">
+    <header className="relative w-full h-[600px] md:h-[735px] xl:h-[860px] overflow-hidden px-0 md:px-16">
       
       {/* Background */}
       <div className="absolute inset-0 -z-10 md:px-12">
@@ -19,6 +19,9 @@ const HeroSection = () => {
           muted
           playsInline
           autoPlay
+          controls={false}
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
           className="w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
         />
       </div>
