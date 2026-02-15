@@ -12,10 +12,10 @@ const HeroSection = () => {
       {/* Background */}
       <div className="absolute inset-0 -z-10 md:px-12">
         <video
-          src="https://pub-555ebc3d8fed45d59f65c8dc164ec44c.r2.dev/home_hero.mp4"
+          src={'/home_hero.mp4'}
           loop
           preload="auto"
-          poster="https://framerusercontent.com/images/IwOXTjWuAuYppuoPEcs1yJDuP5w.png?width=3016&height=1692"
+          poster={'/home_hero_poster.png'}
           muted
           playsInline
           autoPlay
