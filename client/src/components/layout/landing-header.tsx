@@ -78,7 +78,7 @@ export function LandingHeader() {
               Login
             </Button>
 
-            <Button size="sm" className="gap-2 group">
+            <Button size="sm" variant="secondary" className="gap-2 group">
               <span className="transition-transform duration-300 group-hover:-translate-x-0.5">
                 Get Started
               </span>
