@@ -5,6 +5,8 @@ import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home_hero.png";
 import heroPoster from "@/assets/heros/home_hero_poster.png";
 import Hero from "@/components/landing-pages/hero";
+import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
+import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
 
 const HeroSection = () => {
   return (
@@ -77,10 +79,34 @@ const HeroSection = () => {
   )
 }
 
-const ProductsSection = () => {
+const WhatCompaniesSay = () => {
   return (
-    <section className="w-full h-[500px]">
-
+    <section className="container">
+      <div className="max-w-[300px] mx-auto">
+        <h2 className="text-h3 text-center">What companies say about Workclient</h2>
+      </div>
+      <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-2 gap-4">
+          <BenchmarkCard value="3x" description="Faster approval cycles"/>
+          <BenchmarkCard value="90%" description="Reduction in manual follow-ups"/>
+        </div>
+        <TestimonialCard
+          name="Isabella Duarte"
+          role="Head of Client Services"
+          message="Version confusion is gone. Every comment is centralized, every decision logged, and nothing gets lost between iterations. It’s the first time our approval process actually feels scalable."
+          variant="default"
+        />
+        <TestimonialCard
+          name="Daniel Mercer"
+          role="Operations Director"
+          message="Before worklient, campaign reviews lived across email threads and Slack messages. Now every asset moves through a defined workflow with full visibility. Our approval cycles are faster, and more importantly, predictable."
+          variant="other"
+        />
+        <div className="w-full grid grid-cols-2 gap-4">
+          <BenchmarkCard value="42%" description="Faster campaign launches"/>
+          <BenchmarkCard value="$18k" description="Saved per year in delays"/>
+        </div>
+      </div>
     </section>
   )
 }
@@ -91,7 +117,9 @@ export default function Home() {
     <>
       <Navbar />
       <HeroSection/>
-      <ProductsSection/>
+      <div className="flex flex-col items-center h-fit w-full px-5 py-16 sm:px-10 sm:py-20">
+        <WhatCompaniesSay/>
+      </div>
     </>
   )
 }
