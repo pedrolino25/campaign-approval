@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils"
 import NextImage from "next/image"
 import React from "react"
 import { ImageProps, StaticImport } from "next/dist/shared/lib/get-img-props"
-import { VideoCSR } from "../layout/video-csr"
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -37,14 +36,7 @@ const Background = React.forwardRef<
     className="absolute inset-0 md:px-12"
     {...props}
   >
-    <VideoCSR
-      src={videoSrc}
-      poster={videoPoster}
-      className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
-    />
-    {/**
-     
-     <video
+    <video
       autoPlay
       loop
       preload="auto"
@@ -64,9 +56,6 @@ const Background = React.forwardRef<
       className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
       priority
     />
-
-     */}
-    
   </div>
 ))
 
