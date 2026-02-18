@@ -1,5 +1,3 @@
-'use client'
-
 export default function IconSparkles(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

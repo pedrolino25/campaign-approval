@@ -111,46 +111,6 @@
     font-family: inherit;
   }
 
-  .hero-video::-webkit-media-controls {
-    display: none !important;
-  }
-
-  .hero-video::-webkit-media-controls-enclosure {
-    display: none !important;
-  }
-
-  .hero-video::-webkit-media-controls-panel {
-    display: none !important;
-  }
-
-  .hero-video::-webkit-media-controls-play-button {
-    display: none !important;
-  }
-
-  .hero-video::-webkit-media-controls-start-playback-button {
-    display: none !important;
-  }
-
-  .hero-video::-moz-media-controls {
-    display: none !important;
-  }
-
-  .hero-video::-moz-media-controls-enclosure {
-    display: none !important;
-  }
-
-  .hero-video::-moz-media-controls-panel {
-    display: none !important;
-  }
-
-  .hero-video::-moz-media-controls-play-button {
-    display: none !important;
-  }
-
-  .hero-video::-moz-media-controls-start-playback-button {
-    display: none !important;
-  }
-
 }
 
 @layer utilities {
@@ -300,7 +260,7 @@
   }
   .text-body {
     font-size: 14px;
-    line-height: 130%;
+    line-height: 150%;
     font-weight: 400;
     letter-spacing: 0;
   }

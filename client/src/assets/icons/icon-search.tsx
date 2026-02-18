@@ -1,5 +1,3 @@
-'use client'
-
 export default function IconSearch(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

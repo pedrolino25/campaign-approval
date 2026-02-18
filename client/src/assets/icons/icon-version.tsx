@@ -1,5 +1,3 @@
-'use client'
-
 export default function IconVersion(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

@@ -3,12 +3,13 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { ChevronDownIcon } from "lucide-react";
 import { ComponentType, SVGProps } from "react";
 import Image from "next/image";
-import IconCheck from "@/assets/icons-tsx/icon-check";
-import IconVersion from "@/assets/icons-tsx/icon-version";
-import IconSparkles from "@/assets/icons-tsx/icon-sparkles";
-import IconSearch from "@/assets/icons-tsx/icon-search";
-import IconClipboard from "@/assets/icons-tsx/icon-clipboard";
+import IconCheck from "@/assets/icons/icon-check";
+import IconVersion from "@/assets/icons/icon-version";
+import IconSparkles from "@/assets/icons/icon-sparkles";
+import IconSearch from "@/assets/icons/icon-search";
+import IconClipboard from "@/assets/icons/icon-clipboard";
 import ProductIcon from "@/assets/icon-product.svg";
+import IconProduct from "@/assets/icons/icon-product";
 
 interface MenuLinkItemProps {
   title: string;
@@ -38,7 +39,7 @@ const MenuLinkItem = ({
     >
       <div className="w-full flex gap-2">
         <div className="flex items-center justify-center p-2 rounded-xs bg-[#0000000d] transition-colors group-hover/product-link:bg-[color:var(--hover-bg)]">
-          <Icon className="w-5 h-5 text-[rgb(150,150,150)] transition-colors group-hover/product-link:text-[color:var(--hover-icon)]" />
+          <Icon className="w-5 h-5 text-[#969696] transition-colors group-hover/product-link:text-[color:var(--hover-icon)]" />
         </div>
 
         <div className="flex flex-col">
@@ -70,7 +71,7 @@ export const NavbarMenuProducts = () => {
         <HoverCardContent sideOffset={12} side="bottom" align="start" className="p-2 w-full">
             <div className="w-full h-full flex flex-col gap-2">
                 <div className="w-full flex gap-2 pl-[6px]">
-                    <Image src={ProductIcon} alt="Product" width={14} height={14} />
+                    <IconProduct width={14} height={14} />
                     <span className="text-[#0000007a] font-medium text-xs">Product</span>
                 </div>
                 <MenuLinkItem
