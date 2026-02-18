@@ -38,7 +38,7 @@ const Background = React.forwardRef<
           className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
         >
             {videoSrc.map((src) => (
-                <source src={src.src} type={src.type} />
+                <source key={src.type} src={src.src} type={src.type} />
             ))}
         </video>
         <NextImage
