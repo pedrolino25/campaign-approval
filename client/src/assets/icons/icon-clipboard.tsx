@@ -1,5 +1,3 @@
-'use client'
-
 export default function IconClipboard(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -12,4 +10,3 @@ export default function IconClipboard(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-

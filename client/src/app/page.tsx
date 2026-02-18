@@ -2,17 +2,19 @@ import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
-import heroImage from "@/assets/heros/home_hero.png";
-import heroPoster from "@/assets/heros/home_hero_poster.png";
+import heroImage from "@/assets/heros/home-hero.png";
+import heroPoster from "@/assets/heros/home-hero-poster.png";
 import Hero from "@/components/landing-pages/hero";
 import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
 import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
+import IconFeature from "@/assets/icons/icon-feature";
+import Features from "@/components/landing-pages/sections/features";
 
 const HeroSection = () => {
   return (
     <Hero.Root>
         <Hero.Background
-            videoPoster={'/home_hero_poster.png'}
+            videoPoster={'/home-hero-poster.png'}
             videoSrc={[{ src: '/hero-videos/home.mp4', type: 'video/mp4' }]}
             imageSrc={heroPoster}
         />
@@ -112,13 +114,17 @@ const WhatCompaniesSay = () => {
 }
 
 
+
 export default function Home() {
   return (
     <>
       <Navbar />
-      <HeroSection/>
+      <HeroSection />
       <div className="flex flex-col items-center h-fit w-full px-5 py-16 sm:px-10 sm:py-20">
-        <WhatCompaniesSay/>
+        <WhatCompaniesSay />
+      </div>
+      <div className="flex flex-col items-center h-fit w-full px-5 py-16 sm:px-10 sm:py-20 bg-[#f8f8f8] border-y border-[#f0f0f0]">
+        <Features />
       </div>
     </>
   )

@@ -2,15 +2,15 @@ import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
-import heroImage from "@/assets/heros/home_hero.png";
+import heroImage from "@/assets/heros/home-hero.png";
 import Hero from "@/components/landing-pages/hero";
-import clientExperiencePoster from "@/assets/heros/client_experience_poster.png";
+import clientExperiencePoster from "@/assets/heros/client-experience-poster.png";
 
 const HeroSection = () => {
   return (
     <Hero.Root>
         <Hero.Background
-            videoPoster={'/home_hero_poster.png'}
+            videoPoster={'/home-hero-poster.png'}
             videoSrc={[{ src: '/hero-videos/client_experience.mp4', type: 'video/mp4' }]}
             imageSrc={clientExperiencePoster}
         />

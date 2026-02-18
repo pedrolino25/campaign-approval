@@ -1,5 +1,3 @@
-'use client'
-
 export default function IconCheck(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
