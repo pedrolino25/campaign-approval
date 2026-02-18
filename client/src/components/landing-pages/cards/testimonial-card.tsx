@@ -45,7 +45,7 @@ const TestimonialCard = ({
           <Image
             src={testimonialCardBackground2SVG}
             alt=""
-            className="absolute top-0 right-0"
+            className="absolute bottom-0 right-0"
           />
         </>
       )}

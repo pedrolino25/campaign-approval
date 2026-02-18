@@ -81,7 +81,7 @@ const HeroSection = () => {
 
 const WhatCompaniesSay = () => {
   return (
-    <section className="container">
+    <section className="container max-sm:px-0">
       <div className="max-w-[300px] mx-auto">
         <h2 className="text-h3 text-center">What companies say about Workclient</h2>
       </div>
@@ -91,20 +91,20 @@ const WhatCompaniesSay = () => {
           <BenchmarkCard value="90%" description="Reduction in manual follow-ups"/>
         </div>
         <TestimonialCard
-          name="Isabella Duarte"
-          role="Head of Client Services"
+          name="Elena Kovac"
+          role="Chief Operating Officer"
           message="Version confusion is gone. Every comment is centralized, every decision logged, and nothing gets lost between iterations. It’s the first time our approval process actually feels scalable."
           variant="default"
         />
         <TestimonialCard
           name="Daniel Mercer"
-          role="Operations Director"
+          role="Marketing Director"
           message="Before worklient, campaign reviews lived across email threads and Slack messages. Now every asset moves through a defined workflow with full visibility. Our approval cycles are faster, and more importantly, predictable."
           variant="other"
         />
         <div className="w-full grid grid-cols-2 gap-4">
           <BenchmarkCard value="42%" description="Faster campaign launches"/>
-          <BenchmarkCard value="$18k" description="Saved per year in delays"/>
+          <BenchmarkCard value="$18k" description="Savings from reduced delays"/>
         </div>
       </div>
     </section>
