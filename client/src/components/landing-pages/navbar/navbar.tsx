@@ -105,11 +105,12 @@ const MobileMenu = () => {
           </label>
           <ChevronDownIcon
             className="
-              pointer-events-none
+              pointer-events-none hidden
               absolute -right-[6px] top-[6px]
               w-6 h-6 text-[#969696]
               transition-transform duration-300
               peer-checked:rotate-180
+              group-has-[input:checked]:block
             "
           />
           <div
@@ -120,7 +121,7 @@ const MobileMenu = () => {
               peer-checked:grid-rows-[1fr]
             "
           >
-            <div className="overflow-hidden flex flex-col gap-2 pt-2">
+            <div className="overflow-hidden flex flex-col gap-6 pt-2">
               <MobileMenuLinkItem
                 title="Approval Workflows"
                 description="Structured campaign progression"
