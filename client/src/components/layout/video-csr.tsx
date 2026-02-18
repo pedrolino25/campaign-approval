@@ -1,22 +1,35 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
-interface VideoCSRProps extends React.HTMLAttributes<HTMLVideoElement> {
-  src: { src: string; type: string }[]
+interface VideoSource {
+  src: string
+  type: string
+}
+
+interface VideoCSRProps
+  extends React.HTMLAttributes<HTMLVideoElement> {
+  src: VideoSource[]
   poster?: string
 }
 
-export function VideoCSR({ src, poster, ...props }: VideoCSRProps) {
+export function VideoCSR({
+  src,
+  poster,
+  className,
+  ...props
+}: VideoCSRProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const hasPlayedRef = useRef(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const [isVisible, setIsVisible] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+  const [sourcesLoaded, setSourcesLoaded] = useState(false)
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    // HARD REQUIREMENTS FOR MOBILE AUTOPLAY
     video.muted = true
     video.defaultMuted = true
     video.playsInline = true
@@ -24,77 +37,71 @@ export function VideoCSR({ src, poster, ...props }: VideoCSRProps) {
     video.setAttribute("webkit-playsinline", "")
     video.setAttribute("muted", "")
 
-    const safePlay = async () => {
-      if (!video || hasPlayedRef.current) return
-      try {
-        await video.play()
-        hasPlayedRef.current = true
-      } catch {
-        // Autoplay blocked — will retry on interaction
-      }
-    }
-
-    const safePause = () => {
-      if (!video) return
-      video.pause()
-      hasPlayedRef.current = false
-    }
-
-    const onIntersect = (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0]
-      if (!video) return
-
-      if (entry.isIntersecting) {
-        if (video.readyState >= 2) {
-          safePlay()
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
         } else {
-          video.addEventListener("loadeddata", safePlay, { once: true })
+          video.pause()
         }
-      } else {
-        safePause()
+      },
+      {
+        threshold: 0.3,
+        rootMargin: "0px 0px -10% 0px",
       }
-    }
+    )
 
-    observerRef.current = new IntersectionObserver(onIntersect, {
-      threshold: 0.3,
-      rootMargin: "0px 0px -10% 0px",
-    })
+    observer.observe(video)
+    observerRef.current = observer
 
-    observerRef.current.observe(video)
+    return () => observer.disconnect()
+  }, [])
 
-    // 🔓 iOS Unlock Fallback (first user interaction)
-    const unlockOnInteraction = async () => {
+  useEffect(() => {
+    if (!isVisible || sourcesLoaded) return
+    setSourcesLoaded(true)
+  }, [isVisible, sourcesLoaded])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !sourcesLoaded) return
+
+    const handleCanPlay = async () => {
       try {
         await video.play()
-        video.pause()
+        setIsReady(true)
       } catch {}
     }
 
-    document.addEventListener("touchstart", unlockOnInteraction, {
-      once: true,
-    })
-    document.addEventListener("click", unlockOnInteraction, {
-      once: true,
-    })
+    video.addEventListener("canplay", handleCanPlay, { once: true })
 
     return () => {
-      observerRef.current?.disconnect()
+      video.removeEventListener("canplay", handleCanPlay)
     }
-  }, [])
+  }, [sourcesLoaded])
 
   return (
-    <video
-      ref={videoRef}
-      loop
-      muted
-      playsInline
-      preload="metadata"
-      poster={poster}
-      {...props}
-    >
-      {src.map((item, index) => (
-        <source key={index} src={item.src} type={item.type} />
-      ))}
-    </video>
+    <div className="relative w-full h-full overflow-hidden">
+      <video
+        ref={videoRef}
+        loop
+        muted
+        playsInline
+        preload="none"
+        poster={poster}
+        className={`
+          w-full h-full object-cover
+          transition-opacity duration-700 ease-out
+          ${isReady ? "opacity-100" : "opacity-0"}
+          ${className ?? ""}
+        `}
+        {...props}
+      >
+        {sourcesLoaded &&
+          src.map((item, index) => (
+            <source key={index} src={item.src} type={item.type} />
+          ))}
+      </video>
+    </div>
   )
 }
