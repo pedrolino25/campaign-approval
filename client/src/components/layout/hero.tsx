@@ -16,6 +16,7 @@ const Root = React.forwardRef<
         {children}
     </header>
 ))
+Root.displayName = "Hero.Root"
 
 interface BackgroundProps extends React.HTMLAttributes<HTMLDivElement> {
     videoPoster: string;
@@ -48,6 +49,7 @@ const Background = React.forwardRef<
         />
       </div>
 ))
+Background.displayName = "Hero.Background"
 
 const Container = React.forwardRef<
   HTMLDivElement,
@@ -61,6 +63,7 @@ const Container = React.forwardRef<
         {children}
     </div>
 ))
+Container.displayName = "Hero.Container"
 
 const Image = React.forwardRef<
   HTMLElement,
@@ -75,6 +78,7 @@ const Image = React.forwardRef<
         </div>
     </div>
 ))
+Image.displayName = "Hero.Image"
 
 const Content = React.forwardRef<
   HTMLDivElement,
@@ -88,6 +92,7 @@ const Content = React.forwardRef<
         {children}
     </div>
 ))
+Content.displayName = "Hero.Content"
 
 const Hero = {
     Root,
