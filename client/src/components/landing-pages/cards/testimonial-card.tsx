@@ -51,12 +51,12 @@ const TestimonialCard = ({
       )}
 
       <div className="relative p-6">
-        <p className="text-body text-black/80 pb-4 break-words">
+        <p className="text-body lg:text-body-lg text-black/80 pb-4 break-words">
           {`"${message}"`}
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-body text-black/80 font-medium">
+          <span className="text-body text-black/80 !font-medium">
             {name}
           </span>
 
