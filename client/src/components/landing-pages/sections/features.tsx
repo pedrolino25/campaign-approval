@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/accordion";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { VideoCSR } from "@/components/layout/video-csr";
 
 const features = [
   {
@@ -125,11 +124,16 @@ const Features = () => {
         </div>
         <div className="relative w-full">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
-                <VideoCSR
-                    src={[{ src: '/hero-videos/features.mp4', type: 'video/mp4' }]}
-                    poster={'/home-hero-poster.png'}
+                <video
+                    autoPlay
+                    loop
+                    preload="auto"
+                    muted
+                    playsInline
                     className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
-                />
+                >
+                    <source src={'/hero-videos/features.mp4'} type="video/mp4" />
+                </video>
             </div>
         </div>
       </div>
