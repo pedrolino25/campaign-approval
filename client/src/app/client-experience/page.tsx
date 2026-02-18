@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home_hero.png";
-import heroPoster from "@/assets/heros/home_hero_poster.png";
 import Hero from "@/components/landing-pages/hero";
+import clientExperiencePoster from "@/assets/heros/client_experience_poster.png";
 
 const HeroSection = () => {
   return (
     <Hero.Root>
         <Hero.Background
             videoPoster={'/home_hero_poster.png'}
-            videoSrc={[{ src: '/hero-videos/home.mp4', type: 'video/mp4' }]}
-            imageSrc={heroPoster}
+            videoSrc={[{ src: '/hero-videos/client_experience.mp4', type: 'video/mp4' }]}
+            imageSrc={clientExperiencePoster}
         />
     
       <Hero.Container>
@@ -27,7 +27,7 @@ const HeroSection = () => {
             speedReveal={2}
             className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] text-start md:text-center"
           >
-            Campaign Approval Infrastructure
+            Professional Client Reviews
           </TextEffect>
           <TextEffect
             per="word"
@@ -37,7 +37,7 @@ const HeroSection = () => {
             speedReveal={2}
             className="text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] -mt-5 text-start md:text-center"
           >
-            Powering Modern Agencies
+            At Every Stage
           </TextEffect>
           <TextEffect
             per="word"
@@ -47,7 +47,7 @@ const HeroSection = () => {
             delay={1}
             className="text-body lg:text-base text-black/50 text-start md:text-center"
           >
-            Centralize feedback, structure workflows, and gain full approval traceability.
+            Deliver a clean, structured approval experience clients trust instantly.
           </TextEffect>
           <TextEffect
             per="word"
@@ -57,7 +57,7 @@ const HeroSection = () => {
             speedReveal={100}
             className="text-body lg:text-base text-black/50 -mt-5 text-start md:text-center"
           >
-            Designed for agencies that take client collaboration seriously.
+            Built for agencies that value clarity as much as creativity.
           </TextEffect>
           <Button variant="outline" size="sm" className="group/hero-button gap-2">
             <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
@@ -77,21 +77,11 @@ const HeroSection = () => {
   )
 }
 
-const ProductsSection = () => {
-  return (
-    <section className="w-full h-[500px]">
-
-    </section>
-  )
-}
-
-
-export default function Home() {
+export default function ClientExperience() {
   return (
     <>
       <Navbar />
       <HeroSection/>
-      <ProductsSection/>
     </>
   )
 }
