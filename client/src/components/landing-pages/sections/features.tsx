@@ -33,15 +33,29 @@ const features = [
 
 
 const Features = () => {
-  const [active, setActive] = useState<string>("0");
+    const [active, setActive] = useState<string>("0");
+    const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActive((prev: string) => String((parseInt(prev) + 1) % 4));
-      }, 4000);
+    useEffect(() => {
+        const media = window.matchMedia("(max-width: 640px)");
 
-      return () => clearInterval(interval);
+        const handleChange = () => setIsMobile(media.matches);
+
+        handleChange();
+        media.addEventListener("change", handleChange);
+
+        return () => media.removeEventListener("change", handleChange);
     }, []);
+
+    useEffect(() => {
+        if (isMobile) return;
+
+        const interval = setInterval(() => {
+            setActive((prev) => String((parseInt(prev) + 1) % features.length));
+        }, 4000);
+
+        return () => clearInterval(interval);
+    }, [isMobile]);
 
   return (
     <section className="container max-sm:px-0">
@@ -71,7 +85,7 @@ const Features = () => {
             </Button>
           </div>
 
-          <div className="w-fit flex gap-2">
+          <div className="hidden sm:flex w-fit gap-2">
             {features.map((_, i) => (
               <div
                 key={i}
@@ -84,45 +98,74 @@ const Features = () => {
             ))}
           </div>
 
-          <Accordion
-            type="single"
-            collapsible
-            value={active}
-            onValueChange={(val) => {
-              if (val) setActive(val);
-            }}
-            className="w-full flex flex-col border-none"
-          >
-            {features.map((item, i) => (
-              <AccordionItem
-                key={i}
-                value={String(i)}
-                className="border-b last:border-b-0 border-black/10"
-              >
-                <AccordionTrigger
-                  hideIcon
-                  className="text-[18px] font-medium text-black/80 hover:no-underline py-[12px]"
+          {isMobile ? (
+            <Accordion
+                type="multiple"
+                value={features.map((_, i) => String(i))}
+                className="w-full flex flex-col border-none"
+            >
+                {features.map((item, i) => (
+                <AccordionItem
+                    key={i}
+                    value={String(i)}
+                    className="border-b last:border-b-0 border-black/10"
                 >
-                  {item.title}
-                </AccordionTrigger>
+                    <AccordionTrigger
+                    hideIcon
+                    className="text-[18px] font-medium text-black/80 py-[12px] hover:no-underline pointer-events-none"
+                    >
+                    {item.title}
+                    </AccordionTrigger>
 
-                <AccordionContent>
-                  <TextEffect
-                    key={`${i}-${active}`} // retriggers animation
-                    per="word"
-                    as="p"
-                    preset="fade-in-blur"
-                    speedReveal={100}
-                    className="text-body text-black/80"
-                  >
-                    {item.desc}
-                  </TextEffect>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+                    <AccordionContent>
+                    <p className="text-body text-black/80">
+                        {item.desc}
+                    </p>
+                    </AccordionContent>
+                </AccordionItem>
+                ))}
+            </Accordion>
+            ) : (
+            <Accordion
+                type="single"
+                collapsible
+                value={active}
+                onValueChange={(val) => {
+                if (val) setActive(val);
+                }}
+                className="w-full flex flex-col border-none"
+            >
+                {features.map((item, i) => (
+                <AccordionItem
+                    key={i}
+                    value={String(i)}
+                    className="border-b last:border-b-0 border-black/10"
+                >
+                    <AccordionTrigger
+                    hideIcon
+                    className="text-[18px] font-medium text-black/80 py-[12px]"
+                    >
+                    {item.title}
+                    </AccordionTrigger>
+
+                    <AccordionContent>
+                    <TextEffect
+                        key={`${i}-${active}`}
+                        per="word"
+                        as="p"
+                        preset="fade-in-blur"
+                        speedReveal={100}
+                        className="text-body text-black/80"
+                    >
+                        {item.desc}
+                    </TextEffect>
+                    </AccordionContent>
+                </AccordionItem>
+                ))}
+            </Accordion>
+            )}
         </div>
-        <div className="relative w-full">
+        <div className="relative w-full hidden sm:block">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
                 <video
                     autoPlay
