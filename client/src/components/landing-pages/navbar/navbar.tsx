@@ -3,11 +3,11 @@ import { Button } from "../../ui/button";
 import Logo from "@/assets/logo.svg";
 import Image from "next/image";
 import { NavbarMenuProducts } from "./navbar-menu";
-import IconCheck from "@/assets/icons-tsx/icon_check";
-import IconVersion from "@/assets/icons-tsx/icon_version";
-import IconSparkles from "@/assets/icons-tsx/icon_sparkles";
-import IconSearch from "@/assets/icons-tsx/icon_search";
-import IconClipboard from "@/assets/icons-tsx/icon_clipboard";
+import IconCheck from "@/assets/icons-tsx/icon-check";
+import IconVersion from "@/assets/icons-tsx/icon-version";
+import IconSparkles from "@/assets/icons-tsx/icon-sparkles";
+import IconSearch from "@/assets/icons-tsx/icon-search";
+import IconClipboard from "@/assets/icons-tsx/icon-clipboard";
 import { ComponentType, SVGProps } from "react";
 
 const MobileMenuButton = () => {
