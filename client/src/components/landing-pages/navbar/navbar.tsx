@@ -157,10 +157,10 @@ const MobileMenu = () => {
           </div>
         </div>
 
-        <a href="#" className="font-medium text-2xl text-[#000000cc]">
+        <a href="/pricing" className="font-medium text-2xl text-[#000000cc]">
           Pricing
         </a>
-        <a href="#" className="font-medium text-2xl text-[#000000cc]">
+        <a href="/login" className="font-medium text-2xl text-[#000000cc]">
           Login
         </a>
       </div>
@@ -192,24 +192,26 @@ export function Navbar() {
             <div className="flex items-center gap-2 pl-4 hidden md:flex">
               <NavbarMenuProducts />
 
-              <Button
+              <ButtonLink
+                href="/pricing"
                 size="sm"
                 variant="ghost"
                 className="group flex items-center gap-2 font-normal"
               >
                 Pricing
-              </Button>
+              </ButtonLink>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
+            <ButtonLink
+              href="/login"
               size="sm"
               variant="ghost"
               className="flex items-center gap-2 font-normal hidden md:flex"
             >
               Login
-            </Button>
+            </ButtonLink>
 
             <ButtonLink href="/signup" size="sm" variant="secondary" className="group/navbar gap-2">
               <span className="transition-transform duration-300 group-hover/navbar:-translate-x-0.5">

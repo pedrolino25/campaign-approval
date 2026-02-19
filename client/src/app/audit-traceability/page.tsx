@@ -18,8 +18,8 @@ const HeroSection = () => {
     
       <Hero.Container>
         <Hero.Content>
-          <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default">
-            Jan 20: Introducing Search by Calibration Profile
+          <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default gap-2 items-center justify-center">
+            <span className="text-small !font-semibold">⭐⭐⭐⭐⭐ 4.9</span><span className="text-small text-black/50">251 reviews</span>
           </Button>
           <TextEffect
             per="word"
