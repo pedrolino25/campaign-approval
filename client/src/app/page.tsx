@@ -90,7 +90,7 @@ export default function Home() {
       <Container className="flex flex-col items-center h-fit w-full">
         <TestimonialsSection/>
       </Container>
-      <Container className="flex flex-col items-center h-fit w-full bg-[#f8f8f8] border-y border-[#f0f0f0]">
+      <Container className="flex flex-col items-center h-fit w-full max-w-full bg-[#f8f8f8] border-y border-[#f0f0f0]">
         <FeaturesSection/>
       </Container>
       <Container className="flex flex-col items-center h-fit w-full max-sm:px-0">
