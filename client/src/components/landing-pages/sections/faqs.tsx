@@ -41,7 +41,7 @@ const faqs = [
 
 const FAQsSection = () => {
   return (
-    <section className="container relative py-[60px] md:py-[120px] flex items-center justify-center">
+    <section className="container relative py-[60px] flex items-center justify-center">
         <div className="absolute bottom-0 left-0 -z-10">
           <video
             autoPlay
