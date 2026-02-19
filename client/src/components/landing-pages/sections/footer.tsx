@@ -43,7 +43,7 @@ const FooterSection = () => {
   return (
     <footer className="container flex flex-col lg:flex-row gap-5 lg:gap-[250px] pb-20">
       <div><Image src={Logo} alt="Worklient Logo" width={50} height={50} /></div>
-      <div className="w-full grid grid-cols-3 gap-4">
+      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex flex-col gap-2">
             <Title>Product</Title>
             <div className="flex flex-col">
