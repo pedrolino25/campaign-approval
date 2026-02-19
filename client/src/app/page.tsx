@@ -85,16 +85,16 @@ const HeroSection = () => {
 export default function Home() {
   return (
     <>
-      <Navbar />
-      <HeroSection />
+      <Navbar/>
+      <HeroSection/>
       <Layout.Container>
-        <TestimonialsSection />
+        <TestimonialsSection/>
       </Layout.Container>
       <Layout.Container className="bg-[#f8f8f8] border-y border-[#f0f0f0]">
-        <FeaturesSection />
+        <FeaturesSection/>
       </Layout.Container>
       <Layout.Container className="max-sm:px-0">
-        <FAQsSection />
+        <FAQsSection/>
       </Layout.Container>
     </>
   )

@@ -67,25 +67,53 @@
 
   /* Dark mode theme (prepared for future implementation) */
   .dark {
-    --background: 0 0% 0%; /* neutral-900: #000000 */
-    --foreground: 0 0% 100%; /* neutral-0: #ffffff */
-    --card: 0 0% 0%; /* neutral-900: #000000 */
-    --card-foreground: 0 0% 100%; /* neutral-0: #ffffff */
-    --popover: 0 0% 0%; /* neutral-900: #000000 */
-    --popover-foreground: 0 0% 100%; /* neutral-0: #ffffff */
-    --primary: 234 88% 78%; /* primary: #a0affa */
+    /* Worklient Background Colors */
+    --background: 0 0% 100%; /* neutral-0: #ffffff */
+    --foreground: 0 0% 0%; /* neutral-900: #000000 */
+    
+    /* Worklient Card Colors */
+    --card: 0 0% 100%; /* neutral-0: #ffffff */
+    --card-foreground: 0 0% 0%; /* neutral-900: #000000 */
+    
+    /* Worklient Popover Colors */
+    --popover: 0 0% 100%; /* neutral-0: #ffffff */
+    --popover-foreground: 0 0% 0%; /* neutral-900: #000000 */
+    
+    /* Worklient Primary Color */
+    /* #a0affa -> HSL: 234 88% 78% */
+    --primary: 234 88% 78%;
     --primary-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    --secondary: 0 0% 10%; /* neutral-800: #1a1a1a */
-    --secondary-foreground: 0 0% 100%; /* neutral-0: #ffffff */
-    --muted: 0 0% 10%; /* neutral-800: #1a1a1a */
-    --muted-foreground: 0 0% 59%; /* neutral-500: #969696 */
-    --accent: 0 0% 10%; /* neutral-800: #1a1a1a */
-    --accent-foreground: 0 0% 100%; /* neutral-0: #ffffff */
-    --destructive: 352 100% 57%; /* danger: #ff2244 */
+    
+    /* Worklient Secondary Colors */
+    /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 0%; /* neutral-900: #000000 */
+    
+    /* Worklient Muted Colors */
+    /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
+    --muted: 0 0% 97%;
+    /* neutral-500: #969696 -> HSL: 0 0% 59% */
+    --muted-foreground: 0 0% 59%;
+    
+    /* Worklient Accent Colors */
+    /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
+    --accent: 0 0% 97%;
+    --accent-foreground: 0 0% 0%; /* neutral-900: #000000 */
+    
+    /* Worklient Destructive Color */
+    /* #ff2244 -> HSL: 352 100% 57% */
+    --destructive: 352 100% 57%;
     --destructive-foreground: 0 0% 100%; /* white */
-    --border: 0 0% 23%; /* neutral-700: #3a3a3a */
-    --input: 0 0% 23%; /* neutral-700: #3a3a3a */
+    
+    /* Worklient Border Colors */
+    /* neutral-300: #ececec -> HSL: 0 0% 93% */
+    --border: 0 0% 93%;
+    --input: 0 0% 93%;
     --ring: 234 88% 78%; /* primary color */
+    
+    /* Worklient Border Radius */
+    /* Using radius-md: 16px */
+    --radius: 16px;
   }
 }
 
