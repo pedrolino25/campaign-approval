@@ -1,8 +1,8 @@
 import Image from "next/image";
-import testimonialCardBackground1 from "@/assets/testimonials-bg-1.png";
-import testimonialCardBackground1SVG from "@/assets/testimonials-bg-1.svg";
-import testimonialCardBackground2 from "@/assets/testimonials-bg-2.png";
-import testimonialCardBackground2SVG from "@/assets/testimonials-bg-2.svg";
+import testimonialCardBackground1 from "@/assets/testimonials/testimonials-bg-1.png";
+import testimonialCardBackground1SVG from "@/assets/testimonials/testimonials-bg-1.svg";
+import testimonialCardBackground2 from "@/assets/testimonials/testimonials-bg-2.png";
+import testimonialCardBackground2SVG from "@/assets/testimonials/testimonials-bg-2.svg";
 
 interface TestimonialCardProps {
   message: string;

@@ -7,8 +7,6 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ComponentType, SVGProps } from "react";
 
-
-
 interface ProductLinkItemProps {
   title: string;
   description: string;

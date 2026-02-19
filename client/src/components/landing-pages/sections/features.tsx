@@ -11,28 +11,37 @@ import {
 } from "@/components/ui/accordion";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import featuresImage1 from "@/assets/features/feature-1.png";
+import featuresImage2 from "@/assets/features/feature-2.png";
+import featuresImage3 from "@/assets/features/feature-3.png";
+import featuresImage4 from "@/assets/features/feature-4.png";
 
 const features = [
   {
     title: "Approval Workflows",
     desc: "Move every asset through structured status transitions with controlled permissions and clear progression from draft to final approval.",
+    image: featuresImage1,
   },
   {
     title: "Version Integrity",
     desc: "Maintain clean version history with persistent feedback across every iteration and eliminate asset confusion permanently.",
+    image: featuresImage2,
   },
   {
     title: "Audit Traceability",
     desc: "Log every comment, status change, and approval in a permanent activity record that protects accountability.",
+    image: featuresImage3,
   },
   {
     title: "Automated Follow-Ups",
     desc: "Trigger reminders automatically to reduce approval delays and eliminate manual chasing across campaigns.",
+    image: featuresImage4,
   },
 ];
 
 
-const Features = () => {
+const FeaturesSection = () => {
     const [active, setActive] = useState<string>("0");
     const [isMobile, setIsMobile] = useState(false);
 
@@ -58,9 +67,9 @@ const Features = () => {
     }, [isMobile]);
 
   return (
-    <section className="container max-sm:px-0">
+    <section className="container !px-0">
       <div className="w-full flex gap-20 items-stretch">
-        <div className="w-full flex flex-col gap-6 justify-center">
+        <div className="w-full md:w-[40%] flex flex-col gap-6 justify-center">
 
           <div className="w-full flex flex-col gap-6">
             <div className="flex items-center gap-2">
@@ -68,7 +77,7 @@ const Features = () => {
               <p className="text-body text-black/80">Features</p>
             </div>
 
-            <h2 className="text-h3 text-black/80">
+            <h2 className="text-h3 lg:text-h2 text-black/80">
               Your Campaign Approval System
             </h2>
 
@@ -143,7 +152,7 @@ const Features = () => {
                 >
                     <AccordionTrigger
                     hideIcon
-                    className="text-[18px] font-medium text-black/80 py-[12px]"
+                    className="text-[18px] font-medium text-black/80 py-[12px] hover:no-underline"
                     >
                     {item.title}
                     </AccordionTrigger>
@@ -165,7 +174,7 @@ const Features = () => {
             </Accordion>
             )}
         </div>
-        <div className="relative w-full hidden sm:block">
+        <div className="relative min-h-[650px] w-[60%] hidden md:block overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
                 <video
                     autoPlay
@@ -175,13 +184,19 @@ const Features = () => {
                     playsInline
                     className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
                 >
-                    <source src={'/hero-videos/features.mp4'} type="video/mp4" />
+                    <source src={'/videos/features.mp4'} type="video/mp4" />
                 </video>
             </div>
+            <Image
+              src={features[parseInt(active)].image}
+              alt="Worklient Hero"
+              fill
+              className="object-cover mt-[50px] ml-[50px] rounded-sm border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80]"
+            />
         </div>
       </div>
     </section>
   );
 };
 
-export default Features;
+export default FeaturesSection;

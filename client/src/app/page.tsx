@@ -5,17 +5,18 @@ import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
 import heroPoster from "@/assets/heros/home-hero-poster.png";
 import Hero from "@/components/landing-pages/hero";
-import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
-import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
-import IconFeature from "@/assets/icons/icon-feature";
-import Features from "@/components/landing-pages/sections/features";
+import TestimonialsSection from "@/components/landing-pages/sections/testimonials";
+import FeaturesSection from "@/components/landing-pages/sections/features";
+import React from "react";
+import Layout from "@/components/layout/layout";
+import FAQsSection from "@/components/landing-pages/sections/faqs";
 
 const HeroSection = () => {
   return (
     <Hero.Root>
         <Hero.Background
             videoPoster={'/home-hero-poster.png'}
-            videoSrc={[{ src: '/hero-videos/home.mp4', type: 'video/mp4' }]}
+            videoSrc={[{ src: '/videos/home.mp4', type: 'video/mp4' }]}
             imageSrc={heroPoster}
         />
     
@@ -81,51 +82,20 @@ const HeroSection = () => {
   )
 }
 
-const WhatCompaniesSay = () => {
-  return (
-    <section className="container max-sm:px-0">
-      <div className="max-w-[300px] mx-auto">
-        <h2 className="text-h3 text-center">What companies say about Workclient</h2>
-      </div>
-      <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="w-full grid grid-cols-2 gap-4">
-          <BenchmarkCard value="3x" description="Faster approval cycles"/>
-          <BenchmarkCard value="90%" description="Reduction in manual follow-ups"/>
-        </div>
-        <TestimonialCard
-          name="Elena Kovac"
-          role="Chief Operating Officer"
-          message="Version confusion is gone. Every comment is centralized, every decision logged, and nothing gets lost between iterations. It’s the first time our approval process actually feels scalable."
-          variant="default"
-        />
-        <TestimonialCard
-          name="Daniel Mercer"
-          role="Marketing Director"
-          message="Before worklient, campaign reviews lived across email threads and Slack messages. Now every asset moves through a defined workflow with full visibility. Our approval cycles are faster, and more importantly, predictable."
-          variant="other"
-        />
-        <div className="w-full grid grid-cols-2 gap-4">
-          <BenchmarkCard value="42%" description="Faster campaign launches"/>
-          <BenchmarkCard value="$18k" description="Savings from reduced delays"/>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-
-
 export default function Home() {
   return (
     <>
       <Navbar />
       <HeroSection />
-      <div className="flex flex-col items-center h-fit w-full px-5 py-16 sm:px-10 sm:py-20">
-        <WhatCompaniesSay />
-      </div>
-      <div className="flex flex-col items-center h-fit w-full px-5 py-16 sm:px-10 sm:py-20 bg-[#f8f8f8] border-y border-[#f0f0f0]">
-        <Features />
-      </div>
+      <Layout.Container>
+        <TestimonialsSection />
+      </Layout.Container>
+      <Layout.Container className="bg-[#f8f8f8] border-y border-[#f0f0f0]">
+        <FeaturesSection />
+      </Layout.Container>
+      <Layout.Container className="max-sm:px-0">
+        <FAQsSection />
+      </Layout.Container>
     </>
   )
 }
