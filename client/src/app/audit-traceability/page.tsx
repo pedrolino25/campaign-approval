@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
 import Hero from "@/components/landing-pages/sections/hero";
 import auditTraceabilityPoster from "@/assets/heros/audit-traceability-poster.png";
+import { ButtonLink } from "@/components/ui/button-link";
 
 const HeroSection = () => {
   return (
@@ -17,8 +18,8 @@ const HeroSection = () => {
     
       <Hero.Container>
         <Hero.Content>
-          <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default">
-            Jan 20: Introducing Search by Calibration Profile
+          <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default gap-2 items-center justify-center">
+            <span className="text-small !font-semibold">⭐⭐⭐⭐⭐ 4.9</span><span className="text-small text-black/50">251 reviews</span>
           </Button>
           <TextEffect
             per="word"
@@ -59,12 +60,12 @@ const HeroSection = () => {
           >
             Engineered for agencies that treat approvals as operational governance.
           </TextEffect>
-          <Button variant="outline" size="sm" className="group/hero-button gap-2">
+          <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2">
             <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
               Get Started
             </span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
-          </Button>
+          </ButtonLink>
         </Hero.Content>
         <Hero.Image
             src={heroImage}
