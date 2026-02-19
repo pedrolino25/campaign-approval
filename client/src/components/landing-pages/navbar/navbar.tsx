@@ -184,7 +184,7 @@ export function Navbar() {
                 src={Logo}
                 alt="Worklient"
                 width={130}
-                className="mt-[-9px]"
+                className="md:mt-[-9px]"
               />
             </a>
 
