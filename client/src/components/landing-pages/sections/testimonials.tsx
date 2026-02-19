@@ -10,7 +10,7 @@ const TestimonialsSection = () => {
       <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full grid grid-cols-2 gap-4">
           <BenchmarkCard value="3x" description="Faster approval cycles"/>
-          <BenchmarkCard value="90%" description="Reduction in manual follow-ups"/>
+          <BenchmarkCard value="90%" description="Less manual follow-ups"/>
         </div>
         <TestimonialCard
           name="Elena Kovac"
