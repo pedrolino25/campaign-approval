@@ -12,10 +12,10 @@ import {
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import featuresImage1 from "@/assets/features/feature_1.png";
-import featuresImage2 from "@/assets/features/feature_2.png";
-import featuresImage3 from "@/assets/features/feature_3.png";
-import featuresImage4 from "@/assets/features/feature_4.png";
+import featuresImage1 from "@/assets/features/feature-1.png";
+import featuresImage2 from "@/assets/features/feature-2.png";
+import featuresImage3 from "@/assets/features/feature-3.png";
+import featuresImage4 from "@/assets/features/feature-4.png";
 
 const features = [
   {
@@ -174,7 +174,7 @@ const FeaturesSection = () => {
             </Accordion>
             )}
         </div>
-        <div className="relative min-h-[630px] w-[60%] hidden md:block overflow-hidden">
+        <div className="relative min-h-[650px] w-[60%] hidden md:block overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
                 <video
                     autoPlay
@@ -184,7 +184,7 @@ const FeaturesSection = () => {
                     playsInline
                     className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
                 >
-                    <source src={'/hero-videos/features.mp4'} type="video/mp4" />
+                    <source src={'/videos/features.mp4'} type="video/mp4" />
                 </video>
             </div>
             <Image

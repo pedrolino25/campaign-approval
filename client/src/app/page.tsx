@@ -9,13 +9,14 @@ import TestimonialsSection from "@/components/landing-pages/sections/testimonial
 import FeaturesSection from "@/components/landing-pages/sections/features";
 import React from "react";
 import Layout from "@/components/layout/layout";
+import FAQsSection from "@/components/landing-pages/sections/faqs";
 
 const HeroSection = () => {
   return (
     <Hero.Root>
         <Hero.Background
             videoPoster={'/home-hero-poster.png'}
-            videoSrc={[{ src: '/hero-videos/home.mp4', type: 'video/mp4' }]}
+            videoSrc={[{ src: '/videos/home.mp4', type: 'video/mp4' }]}
             imageSrc={heroPoster}
         />
     
@@ -91,6 +92,9 @@ export default function Home() {
       </Layout.Container>
       <Layout.Container className="bg-[#f8f8f8] border-y border-[#f0f0f0]">
         <FeaturesSection />
+      </Layout.Container>
+      <Layout.Container className="max-sm:px-0">
+        <FAQsSection />
       </Layout.Container>
     </>
   )
