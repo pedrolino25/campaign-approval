@@ -8,8 +8,8 @@ import Hero from "@/components/landing-pages/hero";
 import TestimonialsSection from "@/components/landing-pages/sections/testimonials";
 import FeaturesSection from "@/components/landing-pages/sections/features";
 import React from "react";
-import Layout from "@/components/layout/layout";
 import FAQsSection from "@/components/landing-pages/sections/faqs";
+import { Container } from "@/components/ui/container";
 
 const HeroSection = () => {
   return (
@@ -87,15 +87,15 @@ export default function Home() {
     <>
       <Navbar/>
       <HeroSection/>
-      <Layout.Container>
+      <Container className="flex flex-col items-center h-fit w-full">
         <TestimonialsSection/>
-      </Layout.Container>
-      <Layout.Container className="bg-[#f8f8f8] border-y border-[#f0f0f0]">
+      </Container>
+      <Container className="flex flex-col items-center h-fit w-full bg-[#f8f8f8] border-y border-[#f0f0f0]">
         <FeaturesSection/>
-      </Layout.Container>
-      <Layout.Container className="max-sm:px-0">
+      </Container>
+      <Container className="flex flex-col items-center h-fit w-full max-sm:px-0">
         <FAQsSection/>
-      </Layout.Container>
+      </Container>
     </>
   )
 }
