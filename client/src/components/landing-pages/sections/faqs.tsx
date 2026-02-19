@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import faqsPoster from "@/assets/faqs/faqs-bg.png";
 import Image from "next/image"
+import { ButtonLink } from "@/components/ui/button-link";
 
 const faqs = [
   {
@@ -92,12 +93,12 @@ const FAQsSection = () => {
                     </AccordionItem>
                 ))}
             </Accordion>
-            <Button variant="outline" size="sm" className="group/hero-button gap-2 w-fit">
+            <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2 w-fit">
                 <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
                     Get Started
                 </span>
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
-            </Button>
+            </ButtonLink>
         </div>
     </section>
   );

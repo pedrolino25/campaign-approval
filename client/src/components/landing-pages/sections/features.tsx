@@ -16,6 +16,7 @@ import featuresImage1 from "@/assets/features/feature-1.png";
 import featuresImage2 from "@/assets/features/feature-2.png";
 import featuresImage3 from "@/assets/features/feature-3.png";
 import featuresImage4 from "@/assets/features/feature-4.png";
+import { ButtonLink } from "@/components/ui/button-link";
 
 const features = [
   {
@@ -86,12 +87,12 @@ const FeaturesSection = () => {
               From version control to final sign-off, it brings clarity and operational discipline to client collaboration.
             </p>
 
-            <Button size="sm" variant="outline" className="group/features gap-2 w-fit">
+            <ButtonLink href="/signup" size="sm" variant="outline" className="group/features gap-2 w-fit">
               <span className="transition-transform duration-300 group-hover/features:-translate-x-0.5">
                 Get Started
               </span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/features:translate-x-0.5" />
-            </Button>
+            </ButtonLink>
           </div>
 
           <div className="hidden sm:flex w-fit gap-2">

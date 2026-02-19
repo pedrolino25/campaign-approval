@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ButtonLink } from "@/components/ui/button-link"
 
 export default function InternalOnboardingPage() {
   return (
@@ -33,7 +34,7 @@ export default function InternalOnboardingPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button>Get Started</Button>
+            <ButtonLink href="/signup">Get Started</ButtonLink>
             <Button variant="outline">Skip for Now</Button>
           </div>
         </CardContent>

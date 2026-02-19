@@ -11,6 +11,7 @@ import React from "react";
 import FAQsSection from "@/components/landing-pages/sections/faqs";
 import { Container } from "@/components/ui/container";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { ButtonLink } from "@/components/ui/button-link";
 
 const HeroSection = () => {
   return (
@@ -65,12 +66,12 @@ const HeroSection = () => {
           >
             Designed for agencies that take client collaboration seriously.
           </TextEffect>
-          <Button variant="outline" size="sm" className="group/hero-button gap-2">
+          <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2">
             <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
               Get Started
             </span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
-          </Button>
+          </ButtonLink>
         </Hero.Content>
         <Hero.Image
             src={heroImage}

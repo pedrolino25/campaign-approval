@@ -9,6 +9,7 @@ import IconSparkles from "@/assets/icons/icon-sparkles";
 import IconSearch from "@/assets/icons/icon-search";
 import IconClipboard from "@/assets/icons/icon-clipboard";
 import { ComponentType, SVGProps } from "react";
+import { ButtonLink } from "@/components/ui/button-link";
 
 const MobileMenuButton = () => {
   return (
@@ -210,12 +211,12 @@ export function Navbar() {
               Login
             </Button>
 
-            <Button size="sm" variant="secondary" className="group/navbar gap-2">
+            <ButtonLink href="/signup" size="sm" variant="secondary" className="group/navbar gap-2">
               <span className="transition-transform duration-300 group-hover/navbar:-translate-x-0.5">
                 Get Started
               </span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/navbar:translate-x-0.5" />
-            </Button>
+            </ButtonLink>
             <MobileMenuButton />
           </div>
         </div>

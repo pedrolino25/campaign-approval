@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
 import Hero from "@/components/landing-pages/sections/hero";
 import operationalVisibilityPoster from "@/assets/heros/operational-visibility-poster.png";
+import { ButtonLink } from "@/components/ui/button-link";
 
 const HeroSection = () => {
   return (
@@ -59,12 +60,12 @@ const HeroSection = () => {
           >
             Designed for agencies scaling delivery without sacrificing control.
           </TextEffect>
-          <Button variant="outline" size="sm" className="group/hero-button gap-2">
+          <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2">
             <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
               Get Started
             </span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
-          </Button>
+          </ButtonLink>
         </Hero.Content>
         <Hero.Image
             src={heroImage}
