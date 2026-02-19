@@ -11,7 +11,7 @@ const HeroSection = () => {
     <Hero.Root>
         <Hero.Background
             videoPoster={'/home-hero-poster.png'}
-            videoSrc={[{ src: '/videos/operational_visibility.mp4', type: 'video/mp4' }]}
+            videoSrc={[{ src: '/videos/operational-visibility.mp4', type: 'video/mp4' }]}
             imageSrc={operationalVisibilityPoster}
         />
     
