@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
-import Hero from "@/components/landing-pages/hero";
+import Hero from "@/components/landing-pages/sections/hero";
 import versionIntegrityPoster from "@/assets/heros/version-integrity-poster.png";
 
 const HeroSection = () => {
@@ -11,7 +11,7 @@ const HeroSection = () => {
     <Hero.Root>
         <Hero.Background
             videoPoster={'/home-hero-poster.png'}
-            videoSrc={[{ src: 'hero-videos/version_integrity.mp4', type: 'video/mp4' }]}
+            videoSrc={[{ src: '/videos/version_integrity.mp4', type: 'video/mp4' }]}
             imageSrc={versionIntegrityPoster}
         />
     

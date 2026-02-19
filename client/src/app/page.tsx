@@ -4,12 +4,13 @@ import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
 import heroPoster from "@/assets/heros/home-hero-poster.png";
-import Hero from "@/components/landing-pages/hero";
+import Hero from "@/components/landing-pages/sections/hero";
 import TestimonialsSection from "@/components/landing-pages/sections/testimonials";
 import FeaturesSection from "@/components/landing-pages/sections/features";
 import React from "react";
 import FAQsSection from "@/components/landing-pages/sections/faqs";
 import { Container } from "@/components/ui/container";
+import FooterSection from "@/components/landing-pages/sections/footer";
 
 const HeroSection = () => {
   return (
@@ -96,6 +97,7 @@ export default function Home() {
       <Container className="flex flex-col items-center h-fit w-full max-sm:px-0">
         <FAQsSection/>
       </Container>
+      <FooterSection/>
     </>
   )
 }

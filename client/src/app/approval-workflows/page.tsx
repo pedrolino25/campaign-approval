@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/heros/home-hero.png";
-import Hero from "@/components/landing-pages/hero";
+import Hero from "@/components/landing-pages/sections/hero";
 import approvalWorkflowsPoster from "@/assets/heros/approval-workflows-poster.png";
 
 const HeroSection = () => {

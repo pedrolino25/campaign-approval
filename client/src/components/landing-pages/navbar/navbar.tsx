@@ -183,9 +183,8 @@ export function Navbar() {
               <Image
                 src={Logo}
                 alt="Worklient"
-                width={100}
-                height={100}
-                className="mt-[-3px]"
+                width={130}
+                className="mt-[-9px]"
               />
             </a>
 
