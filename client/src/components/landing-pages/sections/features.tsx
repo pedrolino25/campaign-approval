@@ -17,6 +17,7 @@ import featuresImage2 from "@/assets/features/feature-2.png";
 import featuresImage3 from "@/assets/features/feature-3.png";
 import featuresImage4 from "@/assets/features/feature-4.png";
 import { ButtonLink } from "@/components/ui/button-link";
+import { FeatureBackground } from "../cards/feature-card";
 
 const features = [
   {
@@ -175,26 +176,8 @@ const FeaturesSection = () => {
             </Accordion>
             )}
         </div>
-        <div className="relative min-h-[650px] w-[60%] hidden md:block overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
-                <video
-                    autoPlay
-                    loop
-                    preload="auto"
-                    poster={'/images/bg-card-purple-poster.png'}
-                    muted
-                    playsInline
-                    className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
-                >
-                    <source src={'/videos/bg-card-purple.mp4'} type="video/mp4" />
-                </video>
-            </div>
-            <Image
-              src={features[parseInt(active)].image}
-              alt="Worklient Hero"
-              fill
-              className="object-cover mt-[50px] ml-[50px] rounded-sm border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80]"
-            />
+        <div className="min-h-[650px] w-[60%] hidden md:block">
+          <FeatureBackground theme="purple" imageSrc={features[parseInt(active)].image} />
         </div>
       </div>
     </section>
