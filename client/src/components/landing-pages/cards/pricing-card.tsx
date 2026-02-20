@@ -86,7 +86,7 @@ export const PriceCard = ({
             <h3 className="text-h3 lg:text-h2 text-black/80">{title}</h3>
             <p className="text-body lg:text-body-lg text-black/50">{description}</p>
           </div>
-          <p className="text-body-lg lg:text-h3 text-black/80">{price}</p>
+          <p className="text-h3 text-black/80">{price}</p>
           <div className="flex flex-col gap-2">
             {features.map((feature, index) => (
               <div key={index} className="flex items-center gap-2">
