@@ -5,7 +5,7 @@ const TestimonialsSection = () => {
   return (
     <section className="container max-sm:px-0">
       <div className="max-w-[300px] lg:max-w-[400px] mx-auto">
-        <h2 className="text-h3 lg:text-h2 text-center">What companies say about Workclient</h2>
+        <h2 className="text-h3 lg:text-h2 text-center">What companies say about Worklient</h2>
       </div>
       <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full grid grid-cols-2 gap-4">
