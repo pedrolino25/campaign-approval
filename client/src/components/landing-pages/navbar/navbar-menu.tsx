@@ -89,10 +89,10 @@ export const NavbarMenuProducts = () => {
                     color={{ background: "#ffa6001a", icon: "#ffb30080" }}
                 />
                 <MenuLinkItem
-                    title="Audit & Traceability"
-                    description="Every decision, permanently recorded"
-                    Icon={IconClipboard}
-                    href="/audit-traceability"
+                    title="Operational Visibility"
+                    description="Complete approval status clarity"
+                    Icon={IconSearch}
+                    href="/operational-visibility"
                     color={{ background: "#156ce51a", icon: "#156ce6cc" }}
                 />
                 <MenuLinkItem
@@ -103,10 +103,10 @@ export const NavbarMenuProducts = () => {
                     color={{ background: "#5239cc1a", icon: "#3300ff80" }}
                 />
                 <MenuLinkItem
-                    title="Operational Visibility"
-                    description="Complete approval status clarity"
-                    Icon={IconSearch}
-                    href="/operational-visibility"
+                    title="Audit & Traceability"
+                    description="Every decision, permanently recorded"
+                    Icon={IconClipboard}
+                    href="/audit-traceability"
                     color={{ background: "#cc39391a", icon: "#ff000080" }}
                 />
             </div>

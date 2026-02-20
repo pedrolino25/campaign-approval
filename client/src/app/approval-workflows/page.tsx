@@ -1,5 +1,8 @@
+import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import featuresImage1 from "@/assets/features/feature-1.png";
+import { Container } from "@/components/ui/container";
 
 export default function ApprovalWorkflows() {
   return (
@@ -10,6 +13,34 @@ export default function ApprovalWorkflows() {
         title={["Structured Approval Workflows", "Built for Campaign Scale"]}
         description={["Control status progression, enforce permissions, and eliminate approval ambiguity.", "Designed for agencies that operate with process, not chaos."]}
       />
+      <Container className="sm:px-5 md:px-10 py-10 flex flex-col gap-10">
+        <FeatureCard
+          theme="green"
+          imageSrc={featuresImage1}
+          title="Defined status progression for every asset."
+          description="Move campaigns from draft to approval through controlled transitions that eliminate ambiguity."
+        />
+        <FeatureCard
+          theme="green"
+          imageSrc={featuresImage1}
+          title="Permissions that protect decision authority."
+          description="Ensure only the right stakeholders can request changes or approve deliverables."
+          reverse
+        />
+        <FeatureCard
+          theme="green"
+          imageSrc={featuresImage1}
+          title="Automatic workflow alignment across teams."
+          description="Keep status updates synchronized with uploads and review actions in real time."
+        />
+        <FeatureCard
+          theme="green"
+          imageSrc={featuresImage1}
+          title="Structured approvals instead of email chaos."
+          description="Replace fragmented feedback threads with a governed, predictable review process."
+          reverse
+        />
+      </Container>
     </>
   )
 }
