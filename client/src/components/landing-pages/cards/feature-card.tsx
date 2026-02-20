@@ -65,7 +65,7 @@ export const FeatureBackground = ({
             <Image
                 src={backgroundImageSrc}
                 alt="feature background"
-                className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-lg md:rounded-br-lg"
+                className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-sm md:rounded-br-sm"
                 priority
             />
         </div>
