@@ -1,7 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import faqsPoster from "@/assets/faqs/faqs-bg.png";
+import poster from "@/assets/backgrounds/bg-hero-purple-poster.png";
 import Image from "next/image"
 import { ButtonLink } from "@/components/ui/button-link";
 
@@ -48,16 +47,16 @@ const FAQsSection = () => {
             autoPlay
             loop
             preload="auto"
-            poster={'/home-hero-poster.png'}
+            poster={'/images/bg-hero-purple-poster.png'}
             muted
             playsInline
             className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-bl-lg rounded-br-lg"
           >
-            <source src={'/videos/faqs.mp4'} type='video/mp4' />
+            <source src={'/videos/bg-hero-purple.mp4'} type='video/mp4' />
           </video>
 
           <Image
-            src={faqsPoster}
+            src={poster}
             alt="Worklient Hero Poster"
             className="sm:hidden -z-10 w-full h-full object-cover rounded-bl-lg rounded-br-lg"
             priority
