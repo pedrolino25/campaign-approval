@@ -11,9 +11,23 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Worklient",
-  description: "Worklient - Review Management Platform",
-}
+  metadataBase: new URL("https://worklient.com"),
+  title: {
+    default: "Worklient | Campaign Approval Infrastructure",
+    template: "%s | Worklient",
+  },
+  description:
+    "Worklient is a campaign approval platform built for modern agencies. Structure workflows, preserve version integrity, and maintain full approval traceability.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "Worklient",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function RootLayout({
   children,
@@ -27,6 +41,26 @@ export default function RootLayout({
       className={`${GeistSans.className} ${inter.variable}`}
     >
       <body className="font-sans antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Worklient",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              description:
+                "Campaign approval infrastructure for marketing agencies. Structured workflows, version integrity, and audit traceability.",
+              url: "https://worklient.com",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+            }),
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

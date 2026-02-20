@@ -4,6 +4,30 @@ import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 import featuresImage1 from "@/assets/features/feature-1.png";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Creative Version Control for Campaign Approvals",
+  description:
+    "Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals.",
+  keywords: [
+    "creative version control",
+    "approval version tracking",
+    "asset review software",
+    "campaign version management",
+  ],
+  openGraph: {
+    title: "Version Integrity for Campaign Approvals",
+    description:
+      "Maintain clean version history and preserve feedback across every creative iteration.",
+    url: "https://worklient.com/version-integrity",
+    siteName: "Worklient",
+    type: "website",
+  },
+  alternates: {
+    canonical: "/version-integrity",
+  },
+};
 
 export default function VersionIntegrity() {
   return (
