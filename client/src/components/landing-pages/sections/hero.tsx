@@ -13,6 +13,8 @@ import { TextEffect } from "@/components/motion-primitives/text-effect"
 import { ButtonLink } from "@/components/ui/button-link"
 import { ArrowRight } from "lucide-react"
 import heroImage from "@/assets/heros/home-hero.png";
+import IconSlack from "@/assets/icons/icon-slack"
+import IconAnnouncement from "@/assets/icons/icon-announcement"
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -182,7 +184,7 @@ const HeroSection = ({ theme, title, description }: HeroSectionProps) => {
       <Container>
         <Content>
           <Button variant="outline" className="shadow-none py-0 px-2 text-xs cursor-default gap-2 items-center justify-center">
-            <span className="text-small !font-semibold">⭐⭐⭐⭐⭐ 4.9</span><span className="text-small text-black/50">251 reviews</span>
+            <IconSlack className="w-4 h-4" /><span className="text-small text-black/50">Slack real-time notifications - Coming soon!</span>
           </Button>
           {title.map((t, index) => (
             <TextEffect
