@@ -1,10 +1,10 @@
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
-import posterGreen from "@/assets/backgrounds/bg-hero-green-poster.png";
-import posterYellow from "@/assets/backgrounds/bg-hero-yellow-poster.png";
-import posterBlue from "@/assets/backgrounds/bg-hero-blue-poster.png";
-import posterPurple from "@/assets/backgrounds/bg-hero-purple-poster.png";
-import posterRed from "@/assets/backgrounds/bg-hero-red-poster.png";
+import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
+import posterYellow from "@/assets/backgrounds/bg-card-yellow-poster.png";
+import posterBlue from "@/assets/backgrounds/bg-card-blue-poster.png";
+import posterPurple from "@/assets/backgrounds/bg-card-purple-poster.png";
+import posterRed from "@/assets/backgrounds/bg-card-red-poster.png";
 import { ButtonLink } from "@/components/ui/button-link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
