@@ -7,7 +7,7 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Approval Audit Trail & Campaign Traceability | Worklient",
+  title: "Approval Audit Trail & Campaign Traceability",
   description:
     "Track every approval, comment, and status change with immutable activity logs built for operational accountability and compliance.",
   keywords: [

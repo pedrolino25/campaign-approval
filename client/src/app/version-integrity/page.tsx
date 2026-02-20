@@ -7,7 +7,7 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Creative Version Control for Campaign Approvals | Worklient",
+  title: "Creative Version Control for Campaign Approvals",
   description:
     "Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals.",
   keywords: [

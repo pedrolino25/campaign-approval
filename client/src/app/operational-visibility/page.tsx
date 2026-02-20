@@ -7,7 +7,7 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Campaign Approval Status Tracking | Worklient",
+  title: "Campaign Approval Status Tracking",
   description:
     "Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams.",
   keywords: [

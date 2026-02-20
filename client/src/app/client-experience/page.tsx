@@ -7,7 +7,7 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Client Approval Portal for Agencies | Worklient",
+  title: "Client Approval Portal for Agencies",
   description:
     "Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control.",
   keywords: [
