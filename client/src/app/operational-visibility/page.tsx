@@ -3,6 +3,7 @@ import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 import featuresImage1 from "@/assets/features/feature-1.png";
+import FooterSection from "@/components/landing-pages/sections/footer";
 
 export default function OperationalVisibility() {
   return (
@@ -41,6 +42,7 @@ export default function OperationalVisibility() {
           reverse
         />
       </Container>
+      <FooterSection/>
     </>
   )
 }
