@@ -66,6 +66,7 @@ interface PriceCardProps {
   theme: keyof typeof themes
   title: string
   description: string
+  oldPrice?: string
   price: string
   features: string[]
 }
@@ -74,6 +75,7 @@ export const PriceCard = ({
   theme,
   title,
   description,
+  oldPrice,
   price,
   features,
 }: PriceCardProps) => {
@@ -86,7 +88,12 @@ export const PriceCard = ({
             <h3 className="text-h3 lg:text-h2 text-black/80">{title}</h3>
             <p className="text-body lg:text-body-lg text-black/50">{description}</p>
           </div>
-          <p className="text-h3 text-black/80">{price}</p>
+          <p className="text-h3 text-black/80">
+          {oldPrice && (
+            <span className="text-[22px] !font-medium text-black/50 line-through mr-1">{oldPrice}</span>
+          )}
+          {price}
+          </p>
           <div className="flex flex-col gap-2">
             {features.map((feature, index) => (
               <div key={index} className="flex items-center gap-2">

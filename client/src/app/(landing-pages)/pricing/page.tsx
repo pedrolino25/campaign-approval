@@ -55,9 +55,29 @@ export default function Pricing() {
           <p className="text-body lg:text-body-lg text-black/50">Get started with a free option to experience Worklient, <br/>then upgrade your plan and unlock everything there is.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <PriceCard theme="purple" title="Free" description="For small agencies managing simple client approvals." price="$0/mo" features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews"]} />
-          <PriceCard theme="green" title="Starter" description="For growing teams structuring campaign approvals at scale." price="$79/mo" features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews"]} />
-          <PriceCard theme="blue" title="Business" description="For agencies operating with full approval governance." price="$249/mo" features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews"]} />
+          <PriceCard
+            theme="purple"
+            title="Free"
+            description="For small agencies managing simple client approvals."
+            price="$0/mo"
+            features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews"]}
+          />
+          <PriceCard 
+            theme="green" 
+            title="Starter" 
+            description="For growing teams structuring campaign approvals at scale." 
+            oldPrice="$99"
+            price="$79/mo" 
+            features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews"]} 
+          />
+          <PriceCard 
+            theme="blue" 
+            title="Business" 
+            description="For agencies operating with full approval governance." 
+            oldPrice="$249"
+            price="$199/mo" 
+            features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews"]} 
+          />
         </div>
       </Container>
 
