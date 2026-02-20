@@ -4,6 +4,30 @@ import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 import featuresImage1 from "@/assets/features/feature-1.png";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Campaign Approval Status Tracking | Worklient",
+  description:
+    "Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams.",
+  keywords: [
+    "approval status tracking",
+    "campaign approval dashboard",
+    "creative workflow visibility",
+    "marketing approval tracking",
+  ],
+  openGraph: {
+    title: "Operational Visibility for Campaign Approvals",
+    description:
+      "Monitor approval progress across campaigns and eliminate manual follow-ups.",
+    url: "https://worklient.com/operational-visibility",
+    siteName: "Worklient",
+    type: "website",
+  },
+  alternates: {
+    canonical: "/operational-visibility",
+  },
+};
 
 export default function OperationalVisibility() {
   return (

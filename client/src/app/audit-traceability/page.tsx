@@ -4,6 +4,30 @@ import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 import featuresImage1 from "@/assets/features/feature-1.png";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Approval Audit Trail & Campaign Traceability | Worklient",
+  description:
+    "Track every approval, comment, and status change with immutable activity logs built for operational accountability and compliance.",
+  keywords: [
+    "approval audit trail",
+    "campaign approval tracking",
+    "approval compliance software",
+    "creative approval logs",
+  ],
+  openGraph: {
+    title: "Approval Audit Trail for Agencies",
+    description:
+      "Every campaign decision permanently recorded with structured approval traceability.",
+    url: "https://worklient.com/audit-traceability",
+    siteName: "Worklient",
+    type: "website",
+  },
+  alternates: {
+    canonical: "/audit-traceability",
+  },
+};
 
 export default function AuditTraceability() {
   return (
