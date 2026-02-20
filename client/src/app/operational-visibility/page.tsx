@@ -6,7 +6,7 @@ export default function OperationalVisibility() {
     <>
       <Navbar />
       <HeroSection
-        theme="lightBlue"
+        theme="red"
         title={["Complete Approval Visibility", "Across Every Campaign"]}
         description={["Track status in real time, align teams instantly, and remove manual follow-ups.", "Designed for agencies scaling delivery without sacrificing control."]}
       />

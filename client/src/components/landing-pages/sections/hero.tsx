@@ -3,18 +3,17 @@ import NextImage from "next/image"
 import React from "react"
 import { ImageProps, StaticImport } from "next/dist/shared/lib/get-img-props"
 import { Button } from "@/components/ui/button"
-import posterDefault from "@/assets/heros/home-hero-poster.png";
-import posterGreen from "@/assets/heros/approval-workflows-poster.png";
-import posterYellow from "@/assets/heros/version-integrity-poster.png";
-import posterBlue from "@/assets/heros/audit-traceability-poster.png";
-import posterPurple from "@/assets/heros/client-experience-poster.png";
-import posterLightBlue from "@/assets/heros/operational-visibility-poster.png";
+import posterDefault from "@/assets/backgrounds/bg-hero-default-poster.png";
+import posterGreen from "@/assets/backgrounds/bg-hero-green-poster.png";
+import posterYellow from "@/assets/backgrounds/bg-hero-yellow-poster.png";
+import posterBlue from "@/assets/backgrounds/bg-hero-blue-poster.png";
+import posterPurple from "@/assets/backgrounds/bg-hero-purple-poster.png";
+import posterRed from "@/assets/backgrounds/bg-hero-red-poster.png";
 import { TextEffect } from "@/components/motion-primitives/text-effect"
 import { ButtonLink } from "@/components/ui/button-link"
 import { ArrowRight } from "lucide-react"
 import heroImage from "@/assets/heros/home-hero.png";
 import IconSlack from "@/assets/icons/icon-slack"
-import IconAnnouncement from "@/assets/icons/icon-announcement"
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -129,39 +128,39 @@ Content.displayName = "Content"
 
 const themes = {
   default: {
-    backgroundVideoPoster: '/images/home-hero-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/home.mp4', type: 'video/mp4' }],
+    backgroundVideoPoster: '/images/bg-hero-default-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-default.mp4', type: 'video/mp4' }],
     backgroundImageSrc: posterDefault,
     imageSrc: heroImage,
   },
   green: {
-    backgroundVideoPoster: '/images/approval-workflows-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/approval-workflows.mp4', type: 'video/mp4' }],
+    backgroundVideoPoster: '/images/bg-hero-green-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-green.mp4', type: 'video/mp4' }],
     backgroundImageSrc: posterGreen,
     imageSrc: heroImage,
   },
   yellow: {
-    backgroundVideoPoster: '/images/version-integrity-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/version-integrity.mp4', type: 'video/mp4' }],
+    backgroundVideoPoster: '/images/bg-hero-yellow-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-yellow.mp4', type: 'video/mp4' }],
     backgroundImageSrc: posterYellow,
     imageSrc: heroImage,
   },
   blue: {
-    backgroundVideoPoster: '/images/audit-traceability-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/audit-traceability.mp4', type: 'video/mp4' }],
+    backgroundVideoPoster: '/images/bg-hero-blue-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-blue.mp4', type: 'video/mp4' }],
     backgroundImageSrc: posterBlue,
     imageSrc: heroImage,
   },
   purple: {
-    backgroundVideoPoster: '/images/client-experience-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/client-experience.mp4', type: 'video/mp4' }],
+    backgroundVideoPoster: '/images/bg-hero-purple-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-purple.mp4', type: 'video/mp4' }],
     backgroundImageSrc: posterPurple,
     imageSrc: heroImage,
   },
-  lightBlue: {
-    backgroundVideoPoster: '/images/operational-visibility-poster.png',
-    backgroundVideoSrc: [{ src: '/videos/operational-visibility.mp4', type: 'video/mp4' }],
-    backgroundImageSrc: posterLightBlue,
+  red: {
+    backgroundVideoPoster: '/images/bg-hero-red-poster.png',
+    backgroundVideoSrc: [{ src: '/videos/bg-hero-red.mp4', type: 'video/mp4' }],
+    backgroundImageSrc: posterRed,
     imageSrc: heroImage,
   },
 }

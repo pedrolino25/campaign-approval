@@ -181,11 +181,12 @@ const FeaturesSection = () => {
                     autoPlay
                     loop
                     preload="auto"
+                    poster={'/images/bg-card-purple-poster.png'}
                     muted
                     playsInline
                     className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
                 >
-                    <source src={'/videos/features.mp4'} type="video/mp4" />
+                    <source src={'/videos/bg-card-purple.mp4'} type="video/mp4" />
                 </video>
             </div>
             <Image

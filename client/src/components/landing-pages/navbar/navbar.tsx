@@ -1,5 +1,4 @@
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
-import { Button } from "../../ui/button";
 import Logo from "@/assets/logo.svg";
 import Image from "next/image";
 import { NavbarMenuProducts } from "./navbar-menu";

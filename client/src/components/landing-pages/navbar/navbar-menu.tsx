@@ -107,7 +107,7 @@ export const NavbarMenuProducts = () => {
                     description="Complete approval status clarity"
                     Icon={IconSearch}
                     href="/operational-visibility"
-                    color={{ background: "#39aacc1a", icon: "#00bbff80" }}
+                    color={{ background: "#cc39391a", icon: "#ff000080" }}
                 />
             </div>
         </HoverCardContent>
