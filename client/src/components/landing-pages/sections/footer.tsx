@@ -49,9 +49,9 @@ const FooterSection = () => {
             <div className="flex flex-col">
                 <Link href="/approval-workflows">Approval Workflows</Link>
                 <Link href="/version-integrity">Version Integrity</Link>
-                <Link href="/audit-traceability">Audit & Traceability</Link>
-                <Link href="/client-experience">Client Experience</Link>
                 <Link href="/operational-visibility">Operational Visibility</Link>
+                <Link href="/client-experience">Client Experience</Link>
+                <Link href="/audit-traceability">Audit & Traceability</Link>
             </div>
         </div>
         <div className="flex flex-col gap-2">
@@ -63,8 +63,8 @@ const FooterSection = () => {
         <div className="flex flex-col gap-2">
             <Title>Legal & Compliance</Title>
             <div className="flex flex-col">
-                <Link href="/terms-service">Terms of Service</Link>
-                <Link href="/privacy-policy">Privacy Policy</Link>
+                <Link href="/legal/terms-of-service">Terms of Service</Link>
+                <Link href="/legal/privacy-policy">Privacy Policy</Link>
             </div>
         </div>
       </div>
