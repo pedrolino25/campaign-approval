@@ -2,7 +2,6 @@
 
 import IconFeature from "@/assets/icons/icon-feature";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
-import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -11,13 +10,12 @@ import {
 } from "@/components/ui/accordion";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import featuresImage1 from "@/assets/features/feature-1.png";
 import featuresImage2 from "@/assets/features/feature-2.png";
 import featuresImage3 from "@/assets/features/feature-3.png";
 import featuresImage4 from "@/assets/features/feature-4.png";
 import { ButtonLink } from "@/components/ui/button-link";
-import { FeatureBackground } from "../cards/feature-card";
+import { FeatureImage } from "../cards/feature-card";
 
 const features = [
   {
@@ -177,7 +175,7 @@ const FeaturesSection = () => {
             )}
         </div>
         <div className="min-h-[650px] w-[60%] hidden md:block">
-          <FeatureBackground theme="purple" imageSrc={features[parseInt(active)].image} />
+          <FeatureImage theme="purple" imageSrc={features[parseInt(active)].image} />
         </div>
       </div>
     </section>

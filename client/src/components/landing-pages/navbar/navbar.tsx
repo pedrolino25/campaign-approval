@@ -135,10 +135,10 @@ const MobileMenu = () => {
                 href="/version-integrity"
               />
               <MobileMenuLinkItem
-                title="Audit & Traceability"
-                description="Every decision, permanently recorded"
-                Icon={IconClipboard}
-                href="/audit-traceability"
+                title="Operational Visibility"
+                description="Complete approval status clarity"
+                Icon={IconSearch}
+                href="/operational-visibility"
               />
               <MobileMenuLinkItem
                 title="Client Experience"
@@ -147,10 +147,10 @@ const MobileMenu = () => {
                 href="/client-experience"
               />
               <MobileMenuLinkItem
-                title="Operational Visibility"
-                description="Complete approval status clarity"
-                Icon={IconSearch}
-                href="/operational-visibility"
+                title="Audit & Traceability"
+                description="Every decision, permanently recorded"
+                Icon={IconClipboard}
+                href="/audit-traceability"
               />
             </div>
           </div>
