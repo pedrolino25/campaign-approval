@@ -90,7 +90,7 @@ export default function TermsOfService() {
         <p className="text-body lg:text-body-lg">These Terms are governed by the laws of the applicable jurisdiction in which Worklient operates, without regard to conflict of law principles. Any disputes shall be resolved in the competent courts of that jurisdiction.</p>
 
         <h2 className="text-body-lg lg:text-h3">19. Contact Information</h2>
-        <p className="text-body lg:text-body-lg">For questions regarding these Terms, please contact legal@worklient.com.</p>
+        <p className="text-body lg:text-body-lg">For questions regarding these Terms, please contact info@worklient.com.</p>
       </Container>
       <FooterSection/>
     </>
