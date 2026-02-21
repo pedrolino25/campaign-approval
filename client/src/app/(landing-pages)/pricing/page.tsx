@@ -52,7 +52,7 @@ export default function Pricing() {
             speedReveal={2}
             className={"text-h3 md:text-h2 lg:text-hero-lg text-black/80 -mt-5"}
           >and company stage.</TextEffect>
-          <p className="text-body lg:text-body-lg text-black/50">Get started with a free option to experience Worklient, <br/>then upgrade your plan and unlock everything there is.</p>
+          <p className="text-body lg:text-body-lg text-black/50">Get started with a free option to experience Worklient, then upgrade your plan and unlock everything.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <PriceCard
