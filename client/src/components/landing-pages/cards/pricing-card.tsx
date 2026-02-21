@@ -80,7 +80,7 @@ export const PriceCard = ({
   features,
 }: PriceCardProps) => {
   return (
-    <div className={cn("relative bg-black/5 rounded-sm border border-[#a0affa] h-[350px] lg:h-[400px]", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
+    <div className={cn("relative bg-black/5 rounded-sm border border-[#a0affa] h-[350px] lg:h-[450px]", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
       <Background theme={theme} />
       <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-4">
         <div className="flex flex-col gap-5">
@@ -96,14 +96,14 @@ export const PriceCard = ({
           </p>
           <div className="flex flex-col gap-2">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <IconCheck className="w-4 h-4 text-black/60" />
+              <div key={index} className="flex items-start gap-2">
+                <IconCheck className="w-4 h-4 text-black/60 mt-1" />
                 <p className="text-body lg:text-body-lg text-black/60">{feature}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className={cn("w-full p-[6px] bg-white rounded-sm border", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
+        <div className={cn("w-full p-1 bg-white rounded-sm border", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
           <ButtonLink variant="secondary" size="sm" className="w-full" href="/signup">Get Started</ButtonLink>
         </div>
       </div>

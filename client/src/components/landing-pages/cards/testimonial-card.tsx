@@ -51,7 +51,7 @@ const TestimonialCard = ({
       )}
 
       <div className="relative p-6 flex flex-col justify-between h-full">
-        <p className="text-body lg:text-body-lg text-black/80 pb-4 break-words">
+        <p className="text-body italic lg:text-body-lg text-black/80 pb-4 break-words">
           {`"${message}"`}
         </p>
 

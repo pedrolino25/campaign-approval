@@ -60,7 +60,7 @@ export default function Pricing() {
             title="Free"
             description="For small agencies managing simple client approvals."
             price="0€/mo"
-            features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews"]}
+            features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews", "Only URL based reviews"]}
           />
           <PriceCard 
             theme="green" 
@@ -68,7 +68,7 @@ export default function Pricing() {
             description="For growing teams structuring campaign approvals at scale." 
             oldPrice="99€"
             price="79€/mo" 
-            features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews"]} 
+            features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews", "URLs, files and images reviews"]} 
           />
           <PriceCard 
             theme="blue" 
@@ -76,7 +76,7 @@ export default function Pricing() {
             description="For agencies operating with full approval governance." 
             oldPrice="249€"
             price="199€/mo" 
-            features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews"]} 
+            features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews", "URLs, files, images and videos reviews"]} 
           />
         </div>
       </Container>
