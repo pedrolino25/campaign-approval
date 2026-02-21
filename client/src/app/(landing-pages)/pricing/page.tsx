@@ -66,7 +66,7 @@ export default function Pricing() {
             theme="green" 
             title="Starter" 
             description="For growing teams structuring campaign approvals at scale." 
-            oldPrice="99"
+            oldPrice="99€"
             price="79€/mo" 
             features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews"]} 
           />
@@ -74,7 +74,7 @@ export default function Pricing() {
             theme="blue" 
             title="Business" 
             description="For agencies operating with full approval governance." 
-            oldPrice="249"
+            oldPrice="249€"
             price="199€/mo" 
             features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews"]} 
           />
