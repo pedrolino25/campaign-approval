@@ -59,23 +59,23 @@ export default function Pricing() {
             theme="purple"
             title="Free"
             description="For small agencies managing simple client approvals."
-            price="$0/mo"
+            price="€0/mo"
             features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews"]}
           />
           <PriceCard 
             theme="green" 
             title="Starter" 
             description="For growing teams structuring campaign approvals at scale." 
-            oldPrice="$99"
-            price="$79/mo" 
+            oldPrice="€99"
+            price="€79/mo" 
             features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews"]} 
           />
           <PriceCard 
             theme="blue" 
             title="Business" 
             description="For agencies operating with full approval governance." 
-            oldPrice="$249"
-            price="$199/mo" 
+            oldPrice="€249"
+            price="€199/mo" 
             features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews"]} 
           />
         </div>
@@ -104,7 +104,7 @@ export default function Pricing() {
           />
           <div className="w-full grid grid-cols-2 gap-4">
             <BenchmarkCard value="42%" description="Faster campaign launches"/>
-            <BenchmarkCard value="$18k" description="Savings from reduced delays"/>
+            <BenchmarkCard value="€18k" description="Savings from reduced delays"/>
           </div>
         </div>
       </Container>
