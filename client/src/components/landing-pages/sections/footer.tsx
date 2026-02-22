@@ -57,8 +57,9 @@ const FooterSection = () => {
         <div className="flex flex-col gap-2">
             <Title>Company</Title>
             <div className="flex flex-col">
-                <Link href="mailto:info@worklient.com">Contacts</Link>
+                <Link href="/blog">Blog</Link>
                 <Link href="/pricing">Pricing</Link>
+                <Link href="mailto:info@worklient.com">Contacts</Link>
             </div>
         </div>
         <div className="flex flex-col gap-2">
