@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils"
 import React from "react"
 import NextImage from "next/image"
 import poster from "@/assets/backgrounds/bg-hero-purple-poster.png";
-import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
+import { AnimatedTitle } from "@/components/ui/animated-text";
 
 const Container = React.forwardRef<
   HTMLDivElement,
@@ -49,13 +49,9 @@ Date.displayName = "Blog.Date"
 
 
 const Title = ({ children }: { children: string }) => (
-    <TextEffect
-        per="word"
-        as="h1"
-        preset="blur"
-        speedReveal={2}
-        className={cn("text-h3 font-medium tracking-[-0.04em] leading-[100%] text-start")}
-    >{children}</TextEffect>
+  <AnimatedTitle
+    className={cn("!text-h3 font-medium tracking-[-0.04em] leading-[100%] text-start")}
+  >{children}</AnimatedTitle>
 )
 
 Title.displayName = "Blog.Title"

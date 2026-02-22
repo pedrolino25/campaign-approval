@@ -2,10 +2,10 @@ import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import { Container } from "@/components/ui/container";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { Metadata } from "next";
-import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { PriceCard } from "@/components/landing-pages/cards/pricing-card";
 import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
 import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
+import { AnimatedTitle } from "@/components/ui/animated-text";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -37,21 +37,13 @@ export default function Pricing() {
       <Container className="!pt-[120px] !lg:pt-[150px] flex flex-col gap-10 lg:gap-20">
         <div className="flex flex-col gap-4">
           <p className="text-body lg:text-body-lg text-black/50">Pricing</p>
-          <TextEffect
-            per="word"
-            as="h1"
-            preset="blur"
-            speedReveal={2}
-            className={"text-h3 md:text-h2 lg:text-hero-lg text-black/80"}
-          >Plans that fit your needs</TextEffect>
-          <TextEffect
-            per="word"
-            as="h1"
-            preset="blur"
-            delay={0.5}
-            speedReveal={2}
-            className={"text-h3 md:text-h2 lg:text-hero-lg text-black/80 -mt-5"}
-          >and company stage.</TextEffect>
+            <AnimatedTitle
+              className={"!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80"}
+            >Plans that fit your needs</AnimatedTitle>
+            <AnimatedTitle
+              delay={0.5}
+              className={"!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80 -mt-5"}
+            >and company stage.</AnimatedTitle>
           <p className="text-body lg:text-body-lg text-black/50">Get started with a free option to experience Worklient, then upgrade your plan and unlock everything.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
