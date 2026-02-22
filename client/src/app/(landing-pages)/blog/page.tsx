@@ -15,9 +15,9 @@ import image9 from "@/assets/blog/creative-version-control-growing-agencies.png"
 import image10 from "@/assets/blog/email-based-client-approvals-workflow-inefficiencies.png";
 import image11 from "@/assets/blog/manual-approval-follow-ups-creative-teams.png";
 import image12 from "@/assets/blog/professional-client-approval-process-agencies.png";
-import { TextEffect } from "@/components/motion-primitives/text-effect";
 import Link from "next/link";
 import BlogCard from "@/components/landing-pages/cards/blog-card";
+import { AnimatedTitle } from "@/components/ui/animated-text";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -123,13 +123,9 @@ export default function Blog() {
           <div className="flex flex-col md:flex-row gap-10 lg:gap-20">
             <div className="w-full flex flex-col gap-5 justify-center">
               <p className="text-body md:text-body-lg text-muted-foreground">Blog</p>
-              <TextEffect
-                  per="word"
-                  as="h1"
-                  preset="blur"
-                  speedReveal={2}
-                  className={"text-h3 md:text-h2 lg:text-hero-lg font-medium tracking-[-0.04em] leading-[100%] text-start text-black/80"}
-              >Agency Operations Insights</TextEffect>
+              <AnimatedTitle
+                className={"text-h3 md:text-h2 lg:text-hero-lg font-medium tracking-[-0.04em] leading-[100%] text-start text-black/80"}
+              >Agency Operations Insights</AnimatedTitle>
               <p className="text-body md:text-body-lg text-muted-foreground">Articles on approval workflows, client collaboration, and operational updates for modern agencies.</p>
             </div>
             <Link href="/blog/client-approval-delays-agencies" className="w-full">

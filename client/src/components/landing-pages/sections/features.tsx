@@ -1,7 +1,6 @@
 "use client";
 
 import IconFeature from "@/assets/icons/icon-feature";
-import { TextEffect } from "@/components/motion-primitives/text-effect";
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +15,7 @@ import featuresImage3 from "@/assets/features/feature-3.png";
 import featuresImage4 from "@/assets/features/feature-4.png";
 import { ButtonLink } from "@/components/ui/button-link";
 import { FeatureImage } from "../cards/feature-card";
+import { AnimatedDescription } from "@/components/ui/animated-text";
 
 const features = [
   {
@@ -158,16 +158,10 @@ const FeaturesSection = () => {
                     </AccordionTrigger>
 
                     <AccordionContent>
-                    <TextEffect
+                      <AnimatedDescription
                         key={`${i}-${active}`}
-                        per="word"
-                        as="p"
-                        preset="fade-in-blur"
-                        speedReveal={100}
-                        className="text-body text-black/80"
-                    >
-                        {item.desc}
-                    </TextEffect>
+                        className="!text-body text-black/80"
+                      >{item.desc}</AnimatedDescription>
                     </AccordionContent>
                 </AccordionItem>
                 ))}

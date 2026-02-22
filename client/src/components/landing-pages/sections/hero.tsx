@@ -9,11 +9,11 @@ import posterYellow from "@/assets/backgrounds/bg-hero-yellow-poster.png";
 import posterBlue from "@/assets/backgrounds/bg-hero-blue-poster.png";
 import posterPurple from "@/assets/backgrounds/bg-hero-purple-poster.png";
 import posterRed from "@/assets/backgrounds/bg-hero-red-poster.png";
-import { TextEffect } from "@/components/motion-primitives/text-effect"
 import { ButtonLink } from "@/components/ui/button-link"
 import { ArrowRight } from "lucide-react"
 import heroImage from "@/assets/heros/home-hero.png";
 import IconSlack from "@/assets/icons/icon-slack"
+import { AnimatedDescription, AnimatedTitle } from "@/components/ui/animated-text"
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -186,26 +186,18 @@ const HeroSection = ({ theme, title, description }: HeroSectionProps) => {
             <IconSlack className="w-4 h-4" /><span className="text-small text-black/50">Slack real-time notifications - Coming soon!</span>
           </Button>
           {title.map((t, index) => (
-            <TextEffect
+            <AnimatedTitle
               key={index}
-              per="word"
-              as="h1"
-              preset="blur"
               delay={index === 0 ? 0 : 0.5}
-              speedReveal={2}
-              className={cn("text-3xl md:text-[38px] lg:text-[48px] font-medium tracking-[-0.04em] leading-[100%] text-start md:text-center", index > 0 && "-mt-5")}
-            >{t}</TextEffect>
+              className={index > 0 ? "-mt-5" : ""}
+            >{t}</AnimatedTitle>
           ))}
           {description.map((d, index) => (
-            <TextEffect
+            <AnimatedDescription
               key={index}
-              per="word"
-              as="p"
-              preset="fade-in-blur"
               delay={index === 0 ? 1 : 1.2}
-              speedReveal={100}
-              className={cn("text-body lg:text-base text-black/50 text-start md:text-center", index > 0 && "-mt-5")}
-            >{d}</TextEffect>
+              className={index > 0 ? "-mt-5" : ""}
+            >{d}</AnimatedDescription>
           ))}
           <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2">
             <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
