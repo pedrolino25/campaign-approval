@@ -2,11 +2,8 @@ import { cn } from "@/lib/utils"
 import React from "react"
 import NextImage from "next/image"
 import poster from "@/assets/backgrounds/bg-hero-purple-poster.png";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
-import { useRouter } from "next/navigation";
 
 const Container = React.forwardRef<
   HTMLDivElement,
