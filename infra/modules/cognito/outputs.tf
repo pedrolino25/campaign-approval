@@ -20,5 +20,5 @@ output "issuer_url" {
 
 output "domain" {
   description = "Cognito domain (hosted UI domain)"
-  value       = "${replace(aws_cognito_user_pool.main.name, "_", "-")}.auth.${data.aws_region.current.name}.amazoncognito.com"
+  value       = "${replace(aws_cognito_user_pool.main.name, "_", "-")}.auth.${data.aws_region.current.id}.amazoncognito.com"
 }
