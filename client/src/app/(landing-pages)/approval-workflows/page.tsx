@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
-import HeroSection from "@/components/landing-pages/sections/hero";
-import featuresImage1 from "@/assets/features/feature-1.png";
-import { Container } from "@/components/ui/container";
 import FooterSection from "@/components/landing-pages/sections/footer";
-import { Metadata } from "next";
+import HeroSection from "@/components/landing-pages/sections/hero";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Campaign Approval Workflows for Agencies",
@@ -72,7 +73,7 @@ export default function ApprovalWorkflows() {
           reverse
         />
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
+
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -76,7 +77,7 @@ export default function PrivacyPolicy() {
         <h2 className="text-body-lg lg:text-h3">14. Contact Information</h2>
         <p className="text-body lg:text-body-lg">For questions about this Privacy Policy or data protection practices, please contact privacy@worklient.com.</p>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

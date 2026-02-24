@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import image from "@/assets/blog/client-approval-portals-vs-project-management-tools.png";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
-import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
-import image from "@/assets/blog/client-approval-portals-vs-project-management-tools.png";
 import { ButtonBack } from "@/components/ui/button-back";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Client Approval Portals vs Project Management Tools",
@@ -148,7 +149,7 @@ export default function ClientApprovalPortalsVsProjectManagementTools() {
           </div>
         </Blog.Container>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

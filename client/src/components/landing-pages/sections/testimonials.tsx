@@ -9,8 +9,8 @@ const TestimonialsSection = () => {
       </div>
       <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full grid grid-cols-2 gap-4">
-          <BenchmarkCard value="3x" description="Faster approval cycles"/>
-          <BenchmarkCard value="90%" description="Less manual follow-ups"/>
+          <BenchmarkCard value="3x" description="Faster approval cycles" />
+          <BenchmarkCard value="90%" description="Less manual follow-ups" />
         </div>
         <TestimonialCard
           name="Elena Kovac"
@@ -25,8 +25,8 @@ const TestimonialsSection = () => {
           variant="other"
         />
         <div className="w-full grid grid-cols-2 gap-4">
-          <BenchmarkCard value="42%" description="Faster campaign launches"/>
-          <BenchmarkCard value="$18k" description="Savings from reduced delays"/>
+          <BenchmarkCard value="42%" description="Faster campaign launches" />
+          <BenchmarkCard value="$18k" description="Savings from reduced delays" />
         </div>
       </div>
     </section>

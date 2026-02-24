@@ -1,6 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Building2, Calendar, FileText, Users } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
-import { Building2, Users, FileText, Calendar } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function OrganizationPage() {
   return (

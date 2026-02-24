@@ -2,31 +2,68 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
+    "source.fixAll.eslint": "always",
     "source.organizeImports": "never"
+  },
+  "editor.formatOnSaveMode": "file",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
-  "[javascript]": {
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "always"
+    }
+  },
+  "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
-  "prettier.requireConfig": true,
-  "prettier.configPath": "./api/.prettierrc",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "prettier.requireConfig": false,
   "prettier.singleAttributePerLine": true,
   "prettier.enable": true,
+  "prettier.documentSelectors": ["**/*.{js,jsx,ts,tsx,json,css,scss,md,html}"],
+  "prettier.resolveGlobalModules": true,
+  "prettier.useEditorConfig": false,
+  "prettier.configPath": ".prettierrc",
+  "prettier.ignorePath": ".prettierignore",
   "eslint.validate": [
     "javascript",
-    "typescript"
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
   ],
   "eslint.workingDirectories": [
-    "./api"
+    "./api",
+    "./client"
   ],
   "eslint.format.enable": false,
   "eslint.codeActionsOnSave.mode": "all",
+  "eslint.lintTask.enable": true,
+  "eslint.run": "onType",
   "editor.formatOnPaste": true,
   "editor.formatOnType": false,
-  "files.autoSave": "onFocusChange"
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false
 }

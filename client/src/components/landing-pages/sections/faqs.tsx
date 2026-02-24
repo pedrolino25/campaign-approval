@@ -1,7 +1,8 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowRight } from "lucide-react";
-import poster from "@/assets/backgrounds/bg-hero-purple-poster.png";
 import Image from "next/image"
+
+import poster from "@/assets/backgrounds/bg-hero-purple-poster.png";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ButtonLink } from "@/components/ui/button-link";
 
 const faqs = [
@@ -42,63 +43,63 @@ const faqs = [
 const FAQsSection = () => {
   return (
     <section className="container relative py-[60px] flex items-center justify-center">
-        <div className="absolute bottom-0 left-0 -z-10">
-          <video
-            autoPlay
-            loop
-            preload="auto"
-            poster={'/images/bg-hero-purple-poster.png'}
-            muted
-            playsInline
-            className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-bl-lg rounded-br-lg"
-          >
-            <source src={'/videos/bg-hero-purple.mp4'} type='video/mp4' />
-          </video>
+      <div className="absolute bottom-0 left-0 -z-10">
+        <video
+          autoPlay
+          loop
+          preload="auto"
+          poster={'/images/bg-hero-purple-poster.png'}
+          muted
+          playsInline
+          className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-bl-lg rounded-br-lg"
+        >
+          <source src={'/videos/bg-hero-purple.mp4'} type='video/mp4' />
+        </video>
 
-          <Image
-            src={poster}
-            alt="Worklient Hero Poster"
-            className="sm:hidden -z-10 w-full h-full object-cover rounded-bl-lg rounded-br-lg"
-            priority
-          />
-        </div>
-        <div className="flex flex-col gap-10 w-full max-w-full md:max-w-[540px]">
-            <h2 className="text-h3 md:text-[32px] font-medium text-black/80">Frequently Asked Questions</h2>
-            <Accordion
-                type="single"
-                collapsible
-                className="w-full flex flex-col border-none"
+        <Image
+          src={poster}
+          alt="Worklient Hero Poster"
+          className="sm:hidden -z-10 w-full h-full object-cover rounded-bl-lg rounded-br-lg"
+          priority
+        />
+      </div>
+      <div className="flex flex-col gap-10 w-full max-w-full md:max-w-[540px]">
+        <h2 className="text-h3 md:text-[32px] font-medium text-black/80">Frequently Asked Questions</h2>
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full flex flex-col border-none"
+        >
+          {faqs.map((item, i) => (
+            <AccordionItem
+              key={i}
+              value={String(i)}
+              className="border-b last:border-b-0 border-black/10"
             >
-                {faqs.map((item, i) => (
-                    <AccordionItem
-                        key={i}
-                        value={String(i)}
-                        className="border-b last:border-b-0 border-black/10"
-                    >
-                        <AccordionTrigger
-                            className="text-[18px] font-medium text-start text-black/80 hover:no-underline"
-                        >
-                            {item.title}
-                        </AccordionTrigger>
+              <AccordionTrigger
+                className="text-[18px] font-medium text-start text-black/80 hover:no-underline"
+              >
+                {item.title}
+              </AccordionTrigger>
 
-                        <AccordionContent>
-                            <p
-                                key={`faq-${i}`}
-                                className="text-body text-black/80"
-                            >
-                                {item.desc}
-                            </p>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-            <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2 w-fit">
-                <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
-                    Get Started
-                </span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
-            </ButtonLink>
-        </div>
+              <AccordionContent>
+                <p
+                  key={`faq-${i}`}
+                  className="text-body text-black/80"
+                >
+                  {item.desc}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+        <ButtonLink href="/signup" variant="outline" size="sm" className="group/hero-button gap-2 w-fit">
+          <span className="transition-transform duration-300 group-hover/hero-button:-translate-x-0.5">
+            Get Started
+          </span>
+          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/hero-button:translate-x-0.5" />
+        </ButtonLink>
+      </div>
     </section>
   );
 };

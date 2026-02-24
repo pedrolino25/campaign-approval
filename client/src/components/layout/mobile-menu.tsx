@@ -1,15 +1,16 @@
 "use client"
 
+import {
+  Bell,
+  Building2,
+  FileText,
+  LayoutDashboard,
+  Menu,
+  Users,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  Building2,
-  Bell,
-  Menu,
-} from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"

@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
+
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -31,7 +32,7 @@ export default function TermsOfService() {
     <>
       <Navbar />
       <Container className="sm:px-5 md:px-10 !py-30 flex flex-col gap-5">
-        
+
         <h1 className="text-h3 lg:text-h2">Terms of Service</h1>
         <p className="text-body lg:text-body-lg">Last updated: February 20, 2026</p>
 
@@ -92,7 +93,7 @@ export default function TermsOfService() {
         <h2 className="text-body-lg lg:text-h3">19. Contact Information</h2>
         <p className="text-body lg:text-body-lg">For questions regarding these Terms, please contact info@worklient.com.</p>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

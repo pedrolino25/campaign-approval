@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import image from "@/assets/blog/approval-bottlenecks-performance-marketing.png";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
-import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
-import image from "@/assets/blog/approval-bottlenecks-performance-marketing.png";
 import { ButtonBack } from "@/components/ui/button-back";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Approval Bottlenecks in Performance Marketing",
@@ -168,7 +169,7 @@ export default function ApprovalBottlenecksPerformanceMarketing() {
           </div>
         </Blog.Container>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

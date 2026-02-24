@@ -1,19 +1,20 @@
-import { cn } from "@/lib/utils"
+import { ArrowRight } from "lucide-react"
+import type { ImageProps, StaticImport } from "next/dist/shared/lib/get-img-props"
 import NextImage from "next/image"
 import React from "react"
-import { ImageProps, StaticImport } from "next/dist/shared/lib/get-img-props"
-import { Button } from "@/components/ui/button"
+
+import posterBlue from "@/assets/backgrounds/bg-hero-blue-poster.png";
 import posterDefault from "@/assets/backgrounds/bg-hero-default-poster.png";
 import posterGreen from "@/assets/backgrounds/bg-hero-green-poster.png";
-import posterYellow from "@/assets/backgrounds/bg-hero-yellow-poster.png";
-import posterBlue from "@/assets/backgrounds/bg-hero-blue-poster.png";
 import posterPurple from "@/assets/backgrounds/bg-hero-purple-poster.png";
 import posterRed from "@/assets/backgrounds/bg-hero-red-poster.png";
-import { ButtonLink } from "@/components/ui/button-link"
-import { ArrowRight } from "lucide-react"
+import posterYellow from "@/assets/backgrounds/bg-hero-yellow-poster.png";
 import heroImage from "@/assets/heros/home-hero.png";
 import IconSlack from "@/assets/icons/icon-slack"
 import { AnimatedDescription, AnimatedTitle } from "@/components/ui/animated-text"
+import { Button } from "@/components/ui/button"
+import { ButtonLink } from "@/components/ui/button-link"
+import { cn } from "@/lib/utils"
 
 const Root = React.forwardRef<
   HTMLDivElement,
@@ -176,9 +177,9 @@ const HeroSection = ({ theme, title, description }: HeroSectionProps) => {
   return (
     <Root>
       <Background
-          videoPoster={backgroundVideoPoster}
-          videoSrc={backgroundVideoSrc}
-          imageSrc={backgroundImageSrc}
+        videoPoster={backgroundVideoPoster}
+        videoSrc={backgroundVideoSrc}
+        imageSrc={backgroundImageSrc}
       />
       <Container>
         <Content>

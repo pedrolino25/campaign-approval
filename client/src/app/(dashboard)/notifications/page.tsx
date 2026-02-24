@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyNotifications } from "@/lib/dummy/notifications"
 
 export default function NotificationsPage() {
@@ -42,9 +42,8 @@ export default function NotificationsPage() {
             {dummyNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start justify-between p-4 rounded-lg border ${
-                  !notification.read ? "bg-accent/50" : ""
-                }`}
+                className={`flex items-start justify-between p-4 rounded-lg border ${!notification.read ? "bg-accent/50" : ""
+                  }`}
               >
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
