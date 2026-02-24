@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import testimonialCardBackground1 from "@/assets/testimonials/testimonials-bg-1.png";
 import testimonialCardBackground1SVG from "@/assets/testimonials/testimonials-bg-1.svg";
 import testimonialCardBackground2 from "@/assets/testimonials/testimonials-bg-2.png";
@@ -19,7 +20,7 @@ const TestimonialCard = ({
 }: TestimonialCardProps) => {
   return (
     <div className="relative rounded-md border border-gray-200 w-full overflow-hidden">
-      
+
       {variant === "default" ? (
         <>
           <Image

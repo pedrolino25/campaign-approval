@@ -1,5 +1,12 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import featuresImage1 from "@/assets/features/feature-1.png";
+import featuresImage2 from "@/assets/features/feature-2.png";
+import featuresImage3 from "@/assets/features/feature-3.png";
+import featuresImage4 from "@/assets/features/feature-4.png";
 import IconFeature from "@/assets/icons/icon-feature";
 import {
   Accordion,
@@ -7,15 +14,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
-import featuresImage1 from "@/assets/features/feature-1.png";
-import featuresImage2 from "@/assets/features/feature-2.png";
-import featuresImage3 from "@/assets/features/feature-3.png";
-import featuresImage4 from "@/assets/features/feature-4.png";
-import { ButtonLink } from "@/components/ui/button-link";
-import { FeatureImage } from "../cards/feature-card";
 import { AnimatedDescription } from "@/components/ui/animated-text";
+import { ButtonLink } from "@/components/ui/button-link";
+
+import { FeatureImage } from "../cards/feature-card";
 
 const features = [
   {
@@ -42,29 +44,29 @@ const features = [
 
 
 const FeaturesSection = () => {
-    const [active, setActive] = useState<string>("0");
-    const [isMobile, setIsMobile] = useState(false);
+  const [active, setActive] = useState<string>("0");
+  const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const media = window.matchMedia("(max-width: 640px)");
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 640px)");
 
-        const handleChange = () => setIsMobile(media.matches);
+    const handleChange = () => setIsMobile(media.matches);
 
-        handleChange();
-        media.addEventListener("change", handleChange);
+    handleChange();
+    media.addEventListener("change", handleChange);
 
-        return () => media.removeEventListener("change", handleChange);
-    }, []);
+    return () => media.removeEventListener("change", handleChange);
+  }, []);
 
-    useEffect(() => {
-        if (isMobile) return;
+  useEffect(() => {
+    if (isMobile) return;
 
-        const interval = setInterval(() => {
-            setActive((prev) => String((parseInt(prev) + 1) % features.length));
-        }, 4000);
+    const interval = setInterval(() => {
+      setActive((prev) => String((parseInt(prev) + 1) % features.length));
+    }, 4000);
 
-        return () => clearInterval(interval);
-    }, [isMobile]);
+    return () => clearInterval(interval);
+  }, [isMobile]);
 
   return (
     <section className="container !px-0">
@@ -98,75 +100,74 @@ const FeaturesSection = () => {
             {features.map((_, i) => (
               <div
                 key={i}
-                className={`h-[4px] w-[14px] rounded-[22px] transition-colors duration-300 ${
-                  active === String(i)
+                className={`h-[4px] w-[14px] rounded-[22px] transition-colors duration-300 ${active === String(i)
                     ? "bg-[#c4c5f4]"
                     : "bg-black/10"
-                }`}
+                  }`}
               />
             ))}
           </div>
 
           {isMobile ? (
             <Accordion
-                type="multiple"
-                value={features.map((_, i) => String(i))}
-                className="w-full flex flex-col border-none"
+              type="multiple"
+              value={features.map((_, i) => String(i))}
+              className="w-full flex flex-col border-none"
             >
-                {features.map((item, i) => (
+              {features.map((item, i) => (
                 <AccordionItem
-                    key={i}
-                    value={String(i)}
-                    className="border-b last:border-b-0 border-black/10"
+                  key={i}
+                  value={String(i)}
+                  className="border-b last:border-b-0 border-black/10"
                 >
-                    <AccordionTrigger
+                  <AccordionTrigger
                     hideIcon
                     className="text-[18px] font-medium text-black/80 py-[12px] hover:no-underline pointer-events-none"
-                    >
+                  >
                     {item.title}
-                    </AccordionTrigger>
+                  </AccordionTrigger>
 
-                    <AccordionContent>
+                  <AccordionContent>
                     <p className="text-body text-black/80">
-                        {item.desc}
+                      {item.desc}
                     </p>
-                    </AccordionContent>
+                  </AccordionContent>
                 </AccordionItem>
-                ))}
+              ))}
             </Accordion>
-            ) : (
+          ) : (
             <Accordion
-                type="single"
-                collapsible
-                value={active}
-                onValueChange={(val) => {
+              type="single"
+              collapsible
+              value={active}
+              onValueChange={(val) => {
                 if (val) setActive(val);
-                }}
-                className="w-full flex flex-col border-none"
+              }}
+              className="w-full flex flex-col border-none"
             >
-                {features.map((item, i) => (
+              {features.map((item, i) => (
                 <AccordionItem
-                    key={i}
-                    value={String(i)}
-                    className="border-b last:border-b-0 border-black/10"
+                  key={i}
+                  value={String(i)}
+                  className="border-b last:border-b-0 border-black/10"
                 >
-                    <AccordionTrigger
+                  <AccordionTrigger
                     hideIcon
                     className="text-[18px] font-medium text-black/80 py-[12px] hover:no-underline"
-                    >
+                  >
                     {item.title}
-                    </AccordionTrigger>
+                  </AccordionTrigger>
 
-                    <AccordionContent>
-                      <AnimatedDescription
-                        key={`${i}-${active}`}
-                        className="!text-body text-black/80"
-                      >{item.desc}</AnimatedDescription>
-                    </AccordionContent>
+                  <AccordionContent>
+                    <AnimatedDescription
+                      key={`${i}-${active}`}
+                      className="!text-body text-black/80"
+                    >{item.desc}</AnimatedDescription>
+                  </AccordionContent>
                 </AccordionItem>
-                ))}
+              ))}
             </Accordion>
-            )}
+          )}
         </div>
         <div className="min-h-[650px] w-[60%] hidden md:block">
           <FeatureImage theme="purple" imageSrc={features[parseInt(active)].image} />

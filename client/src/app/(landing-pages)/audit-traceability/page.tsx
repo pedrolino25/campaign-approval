@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
+import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
-import featuresImage1 from "@/assets/features/feature-1.png";
-import FooterSection from "@/components/landing-pages/sections/footer";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Approval Audit Trail & Campaign Traceability",
@@ -66,7 +67,7 @@ export default function AuditTraceability() {
           reverse
         />
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import image from "@/assets/blog/email-based-client-approvals-workflow-inefficiencies.png";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
-import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
-import image from "@/assets/blog/email-based-client-approvals-workflow-inefficiencies.png";
 import { ButtonBack } from "@/components/ui/button-back";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Email-Based Client Approvals and Workflow Issues",
@@ -144,7 +145,7 @@ export default function EmailBasedClientApprovalsWorkflowInefficiencies() {
           </div>
         </Blog.Container>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

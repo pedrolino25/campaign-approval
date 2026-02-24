@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
+
+import image from "@/assets/blog/client-approval-delays-agencies.png";
 import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
-import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
-import image from "@/assets/blog/client-approval-delays-agencies.png";
 import { ButtonBack } from "@/components/ui/button-back";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Client Approval Delays in Agencies",
@@ -34,7 +35,7 @@ export default function ClientApprovalDelaysAgencies() {
           <Blog.Title>Client Approval Delays in Agencies</Blog.Title>
           <Blog.Image src={image} alt="Client Approval Delays in Agencies" />
           <div>
-            
+
             <Blog.Subtitle>
               Why client sign-offs slow down and how agencies can design faster approval processes.
             </Blog.Subtitle>
@@ -155,7 +156,7 @@ export default function ClientApprovalDelaysAgencies() {
           </div>
         </Blog.Container>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

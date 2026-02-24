@@ -1,12 +1,14 @@
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
-import { Button } from "../ui/button";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "../ui/hover-card";
-import Logo from "@/assets/logo.svg";
-import ProductIcon from "@/assets/icon-product.svg";
 import Image from "next/image";
+import type { ComponentType, SVGProps } from "react";
+
+import ProductIcon from "@/assets/icon-product.svg";
+import Logo from "@/assets/logo.svg";
 import { cn } from "@/lib/utils";
-import { ComponentType, SVGProps } from "react";
+
+import { Button } from "../ui/button";
 import { ButtonLink } from "../ui/button-link";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 
 interface ProductLinkItemProps {
   title: string;
@@ -15,7 +17,7 @@ interface ProductLinkItemProps {
   href: string;
   color: { background: string; icon: string };
 }
-const ProductLinkItem = ({title, description, Icon, href, color }: ProductLinkItemProps) => {
+const ProductLinkItem = ({ title, description, Icon, href, color }: ProductLinkItemProps) => {
   return (
     <a href={href} className="p-[6px] hover:bg-[#f7f7f7] rounded-xs cursor-pointer">
       <div className="w-full flex gap-2">

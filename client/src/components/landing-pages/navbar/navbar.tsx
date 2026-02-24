@@ -1,14 +1,16 @@
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
-import Logo from "@/assets/logo.svg";
 import Image from "next/image";
-import { NavbarMenuProducts } from "./navbar-menu";
+import type { ComponentType, SVGProps } from "react";
+
 import IconCheck from "@/assets/icons/icon-check";
-import IconVersion from "@/assets/icons/icon-version";
-import IconSparkles from "@/assets/icons/icon-sparkles";
-import IconSearch from "@/assets/icons/icon-search";
 import IconClipboard from "@/assets/icons/icon-clipboard";
-import { ComponentType, SVGProps } from "react";
+import IconSearch from "@/assets/icons/icon-search";
+import IconSparkles from "@/assets/icons/icon-sparkles";
+import IconVersion from "@/assets/icons/icon-version";
+import Logo from "@/assets/logo.svg";
 import { ButtonLink } from "@/components/ui/button-link";
+
+import { NavbarMenuProducts } from "./navbar-menu";
 
 const MobileMenuButton = () => {
   return (

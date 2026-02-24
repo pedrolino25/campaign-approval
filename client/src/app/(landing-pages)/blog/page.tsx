@@ -1,8 +1,7 @@
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
-import FooterSection from "@/components/landing-pages/sections/footer";
-import { Container } from "@/components/ui/container";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
+
 import image1 from "@/assets/blog/approval-bottlenecks-performance-marketing.png";
 import image2 from "@/assets/blog/approval-traceability-agency-risk-management.png";
 import image3 from "@/assets/blog/approval-workflow-software-vs-slack.png";
@@ -15,9 +14,11 @@ import image9 from "@/assets/blog/creative-version-control-growing-agencies.png"
 import image10 from "@/assets/blog/email-based-client-approvals-workflow-inefficiencies.png";
 import image11 from "@/assets/blog/manual-approval-follow-ups-creative-teams.png";
 import image12 from "@/assets/blog/professional-client-approval-process-agencies.png";
-import Link from "next/link";
 import BlogCard from "@/components/landing-pages/cards/blog-card";
+import { Navbar } from "@/components/landing-pages/navbar/navbar";
+import FooterSection from "@/components/landing-pages/sections/footer";
 import { AnimatedTitle } from "@/components/ui/animated-text";
+import { Container } from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -142,7 +143,7 @@ export default function Blog() {
           </div>
         </div>
       </Container>
-      <FooterSection/>
+      <FooterSection />
     </>
   )
 }

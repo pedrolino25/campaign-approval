@@ -1,8 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { dummyReviewItems } from "@/lib/dummy/review-items"
-import { dummyClients } from "@/lib/dummy/clients"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyActivity } from "@/lib/dummy/activity"
+import { dummyClients } from "@/lib/dummy/clients"
+import { dummyReviewItems } from "@/lib/dummy/review-items"
 
 export default function DashboardPage() {
   const activeReviews = dummyReviewItems.filter(
@@ -89,8 +89,8 @@ export default function DashboardPage() {
                   </div>
                   <Badge variant={
                     item.status === "completed" ? "default" :
-                    item.status === "in_progress" ? "secondary" :
-                    item.status === "rejected" ? "destructive" : "outline"
+                      item.status === "in_progress" ? "secondary" :
+                        item.status === "rejected" ? "destructive" : "outline"
                   }>
                     {item.status}
                   </Badge>

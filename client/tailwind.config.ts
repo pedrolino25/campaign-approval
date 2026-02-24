@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+
 import { worklientTokens } from "./src/lib/design/worklient.tokens"
 
 const config = {

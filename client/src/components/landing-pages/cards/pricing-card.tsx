@@ -1,11 +1,12 @@
 
 import Image from "next/image";
-import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
+
 import posterBlue from "@/assets/backgrounds/bg-card-blue-poster.png";
+import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
 import posterPurple from "@/assets/backgrounds/bg-card-purple-poster.png";
-import { cn } from "@/lib/utils";
 import IconCheck from "@/assets/icons/icon-check";
 import { ButtonLink } from "@/components/ui/button-link";
+import { cn } from "@/lib/utils";
 
 const themes = {
   green: {
@@ -36,27 +37,27 @@ export const Background = ({
   const { backgroundVideoPoster, backgroundVideoSrc, backgroundImageSrc } = themes[theme]
   return (
     <div className="relative w-full h-full overflow-hidden rounded-sm">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm opacity-40">
-            <video
-                autoPlay
-                loop
-                preload="auto"
-                poster={backgroundVideoPoster}
-                muted
-                playsInline
-                className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
-            >
-                {backgroundVideoSrc.map((src, index) => (
-                    <source key={index} src={src.src} type={src.type} />
-                ))}
-            </video>
-            <Image
-                src={backgroundImageSrc}
-                alt="feature background"
-                className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-sm md:rounded-br-sm scale-125"
-                priority
-            />
-        </div>
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm opacity-40">
+        <video
+          autoPlay
+          loop
+          preload="auto"
+          poster={backgroundVideoPoster}
+          muted
+          playsInline
+          className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
+        >
+          {backgroundVideoSrc.map((src, index) => (
+            <source key={index} src={src.src} type={src.type} />
+          ))}
+        </video>
+        <Image
+          src={backgroundImageSrc}
+          alt="feature background"
+          className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-sm md:rounded-br-sm scale-125"
+          priority
+        />
+      </div>
     </div>
   );
 };
@@ -89,10 +90,10 @@ export const PriceCard = ({
             <p className="text-body lg:text-body-lg text-black/50">{description}</p>
           </div>
           <p className="text-h3 text-black/80">
-          {oldPrice && (
-            <span className="text-[22px] !font-medium text-black/50 line-through mr-1">{oldPrice}</span>
-          )}
-          {price}
+            {oldPrice && (
+              <span className="text-[22px] !font-medium text-black/50 line-through mr-1">{oldPrice}</span>
+            )}
+            {price}
           </p>
           <div className="flex flex-col gap-2">
             {features.map((feature, index) => (

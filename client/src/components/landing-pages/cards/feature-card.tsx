@@ -1,12 +1,13 @@
-import { StaticImport } from "next/dist/shared/lib/get-img-props";
+import { ArrowRight } from "lucide-react";
+import type { StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
-import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
-import posterYellow from "@/assets/backgrounds/bg-card-yellow-poster.png";
+
 import posterBlue from "@/assets/backgrounds/bg-card-blue-poster.png";
+import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
 import posterPurple from "@/assets/backgrounds/bg-card-purple-poster.png";
 import posterRed from "@/assets/backgrounds/bg-card-red-poster.png";
+import posterYellow from "@/assets/backgrounds/bg-card-yellow-poster.png";
 import { ButtonLink } from "@/components/ui/button-link";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const themes = {
@@ -50,36 +51,36 @@ export const FeatureImage = ({
   const { backgroundVideoPoster, backgroundVideoSrc, backgroundImageSrc } = themes[theme]
   return (
     <div className="relative w-full h-full overflow-hidden rounded-sm">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
-            <video
-                autoPlay
-                loop
-                preload="auto"
-                poster={backgroundVideoPoster}
-                muted
-                playsInline
-                className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
-            >
-                {backgroundVideoSrc.map((src, index) => (
-                    <source key={index} src={src.src} type={src.type} />
-                ))}
-            </video>
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-sm">
+        <video
+          autoPlay
+          loop
+          preload="auto"
+          poster={backgroundVideoPoster}
+          muted
+          playsInline
+          className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
+        >
+          {backgroundVideoSrc.map((src, index) => (
+            <source key={index} src={src.src} type={src.type} />
+          ))}
+        </video>
 
-            <Image
-                src={backgroundImageSrc}
-                alt="feature background"
-                className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-sm md:rounded-br-sm"
-                priority
-            />
-        </div>
-        <div className="absolute top-[50px] left-[50px] w-full h-full overflow-hidden rounded-sm border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80]">
         <Image
-            src={imageSrc}
-            alt="feature background"
-            fill
-            className="object-cover rounded-sm"
+          src={backgroundImageSrc}
+          alt="feature background"
+          className="sm:hidden -z-10 w-full h-full object-cover md:rounded-bl-sm md:rounded-br-sm"
+          priority
         />
-        </div>
+      </div>
+      <div className="absolute top-[50px] left-[50px] w-full h-full overflow-hidden rounded-sm border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80]">
+        <Image
+          src={imageSrc}
+          alt="feature background"
+          fill
+          className="object-cover rounded-sm"
+        />
+      </div>
     </div>
   );
 };
@@ -112,7 +113,7 @@ export const FeatureCard = ({
         <p className="text-body">{description}</p>
         <ButtonLink href="/signup" variant="outline" size="sm" className="group/feature gap-2 w-fit">
           <span className="transition-transform duration-300 group-hover/feature:-translate-x-0.5">
-              Get Started
+            Get Started
           </span>
           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/feature:translate-x-0.5" />
         </ButtonLink>
