@@ -48,7 +48,7 @@ export default function NotificationsPage() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold">{notification.title}</h3>
-                    <Badge variant={getTypeColor(notification.type) as any} className="text-xs">
+                    <Badge variant={getTypeColor(notification.type)} className="text-xs">
                       {notification.type}
                     </Badge>
                     {!notification.read && (
