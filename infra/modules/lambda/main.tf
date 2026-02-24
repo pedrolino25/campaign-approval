@@ -52,7 +52,7 @@ locals {
 resource "aws_cloudwatch_log_group" "lambda" {
   for_each = {
     for k, v in local.lambda_functions : k => v
-    if k != "email_worker" && k != "review_reminder"
+    if k != "email_worker" && k != "review_reminder" && k != "auth"
   }
   name              = "/aws/lambda/${each.value.name}"
   retention_in_days = var.lambda_log_retention_days
