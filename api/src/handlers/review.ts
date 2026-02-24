@@ -25,17 +25,78 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
+import { ActivityLogActionType } from '../models/activity-log'
 import {
   ActivityLogRepository,
   AttachmentRepository,
   ClientReviewerRepository,
   ReviewItemRepository,
 } from '../repositories'
-import { ActivityLogActionType } from '../models/activity-log'
 import {
   ReviewItemService,
   ReviewWorkflowService,
 } from '../services'
+
+const buildVersionHistory = async (
+  reviewItemId: string,
+  organizationId: string,
+  reviewItem: { version: number; createdAt: Date }
+): Promise<Array<{
+  version: number
+  attachments: Array<{
+    id: string
+    fileName: string
+    fileType: string
+    fileSize: number
+    s3Key: string
+    createdAt: string
+  }>
+  createdAt: string
+}>> => {
+  const attachmentRepository = new AttachmentRepository()
+  const attachmentsByVersion = await attachmentRepository.listByReviewItemGroupedByVersion(reviewItemId)
+
+  const activityLogRepository = new ActivityLogRepository()
+  const activityLogs = await activityLogRepository.list({
+    organizationId,
+    reviewItemId,
+    pagination: {
+      limit: 1000,
+      cursor: undefined,
+    },
+  })
+
+  const versions = Array.from(attachmentsByVersion.keys()).sort((a, b) => a - b)
+  
+  if (versions.length === 0 && reviewItem.version >= 1) {
+    versions.push(reviewItem.version)
+  }
+
+  return versions.map((version) => {
+    const attachments = attachmentsByVersion.get(version) || []
+    
+    const versionActivityLog = activityLogs.data.find((log) => {
+      if (log.action === ActivityLogActionType.ATTACHMENT_UPLOADED) {
+        const metadata = log.metadata as { version?: number }
+        return metadata.version === version
+      }
+      return false
+    })
+
+    return {
+      version,
+      attachments: attachments.map((att) => ({
+        id: att.id,
+        fileName: att.fileName,
+        fileType: att.fileType,
+        fileSize: att.fileSize,
+        s3Key: att.s3Key,
+        createdAt: att.createdAt.toISOString(),
+      })),
+      createdAt: versionActivityLog?.createdAt.toISOString() || reviewItem.createdAt.toISOString(),
+    }
+  })
+}
 
 const handleGetReviewItems = async (
   request: HttpRequest
@@ -158,54 +219,11 @@ const handleGetReviewItem = async (
     deletedAt: reviewItem.archivedAt,
   })
 
-  // Get all attachments grouped by version
-  const attachmentRepository = new AttachmentRepository()
-  const attachmentsByVersion = await attachmentRepository.listByReviewItemGroupedByVersion(reviewItemId)
-
-  // Get activity logs to determine version creation timestamps
-  const activityLogRepository = new ActivityLogRepository()
-  const activityLogs = await activityLogRepository.list({
-    organizationId: reviewItem.organizationId,
+  const versionHistory = await buildVersionHistory(
     reviewItemId,
-    pagination: { limit: 1000, cursor: undefined }, // Get all activity logs for version history
-  })
-
-  // Build version history
-  // Get all unique versions from attachments
-  const versions = Array.from(attachmentsByVersion.keys()).sort((a, b) => a - b)
-  
-  // If no attachments, still include current version
-  if (versions.length === 0 && reviewItem.version >= 1) {
-    versions.push(reviewItem.version)
-  }
-
-  // Build version data with attachments
-  const versionHistory = versions.map((version) => {
-    const attachments = attachmentsByVersion.get(version) || []
-    
-    // Find activity log entry for this version (look for attachment uploads or status changes)
-    const versionActivityLog = activityLogs.data.find((log) => {
-      if (log.action === ActivityLogActionType.ATTACHMENT_UPLOADED) {
-        const metadata = log.metadata as { version?: number }
-        return metadata.version === version
-      }
-      // For status changes, infer version from activity log order
-      return false
-    })
-
-    return {
-      version,
-      attachments: attachments.map((att) => ({
-        id: att.id,
-        fileName: att.fileName,
-        fileType: att.fileType,
-        fileSize: att.fileSize,
-        s3Key: att.s3Key,
-        createdAt: att.createdAt.toISOString(),
-      })),
-      createdAt: versionActivityLog?.createdAt.toISOString() || reviewItem.createdAt.toISOString(),
-    }
-  })
+    reviewItem.organizationId,
+    reviewItem
+  )
 
   return {
     statusCode: 200,

@@ -1,4 +1,4 @@
-import { type Attachment, ReviewStatus } from '@prisma/client'
+import { type Attachment, type ReviewItem, ReviewStatus } from '@prisma/client'
 import { randomUUID } from 'crypto'
 
 import { prisma } from '../lib'
@@ -61,6 +61,51 @@ export class AttachmentService implements IAttachmentService {
     this.activityLogService = new ActivityLogService()
   }
 
+  private async incrementVersionIfNeeded(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewItem: ReviewItem,
+    reviewItemId: string,
+    organizationId: string
+  ): Promise<{ finalVersion: number; updatedReviewItem: ReviewItem }> {
+    const existingAttachments = await tx.attachment.findMany({
+      where: { reviewItemId },
+      take: 1,
+    })
+
+    const isNewVersion =
+      reviewItem.status === ReviewStatus.CHANGES_REQUESTED ||
+      reviewItem.status === ReviewStatus.APPROVED ||
+      existingAttachments.length > 0
+
+    if (!isNewVersion) {
+      return {
+        finalVersion: reviewItem.version,
+        updatedReviewItem: reviewItem,
+      }
+    }
+
+    const updatedReviewItem = await tx.reviewItem.update({
+      where: {
+        id: reviewItemId,
+        organizationId,
+        version: reviewItem.version,
+      },
+      data: {
+        version: {
+          increment: 1,
+        },
+        ...(reviewItem.status === ReviewStatus.CHANGES_REQUESTED || reviewItem.status === ReviewStatus.APPROVED
+          ? { status: ReviewStatus.PENDING_REVIEW }
+          : {}),
+      },
+    })
+
+    return {
+      finalVersion: updatedReviewItem.version,
+      updatedReviewItem,
+    }
+  }
+
   async generatePresignedUpload(
     params: GeneratePresignedUploadParams
   ): Promise<GeneratePresignedUploadResult> {
@@ -90,41 +135,12 @@ export class AttachmentService implements IAttachmentService {
         throw new NotFoundError('Review item not found')
       }
 
-      // Check if this is a new version scenario
-      const existingAttachments = await tx.attachment.findMany({
-        where: { reviewItemId },
-        take: 1,
-      })
-
-      const isNewVersion =
-        reviewItem.status === ReviewStatus.CHANGES_REQUESTED ||
-        reviewItem.status === ReviewStatus.APPROVED ||
-        existingAttachments.length > 0
-
-      let finalVersion = reviewItem.version
-      let updatedReviewItem = reviewItem
-
-      // Increment version if this is a new version upload
-      // This ensures S3 key matches the version that will be stored
-      if (isNewVersion) {
-        updatedReviewItem = await tx.reviewItem.update({
-          where: {
-            id: reviewItemId,
-            organizationId,
-            version: reviewItem.version,
-          },
-          data: {
-            version: {
-              increment: 1,
-            },
-            // If status is CHANGES_REQUESTED or APPROVED, reopen to PENDING_REVIEW
-            ...(reviewItem.status === ReviewStatus.CHANGES_REQUESTED || reviewItem.status === ReviewStatus.APPROVED
-              ? { status: ReviewStatus.PENDING_REVIEW }
-              : {}),
-          },
-        })
-        finalVersion = updatedReviewItem.version
-      }
+      const { finalVersion } = await this.incrementVersionIfNeeded(
+        tx,
+        reviewItem,
+        reviewItemId,
+        organizationId
+      )
 
       const uniqueId = randomUUID()
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
