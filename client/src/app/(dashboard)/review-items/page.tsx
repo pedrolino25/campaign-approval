@@ -69,12 +69,12 @@ export default function ReviewItemsPage() {
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>{item.clientName}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusColor(item.status) as any}>
+                    <Badge variant={getStatusColor(item.status)}>
                       {item.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getPriorityColor(item.priority) as any}>
+                    <Badge variant={getPriorityColor(item.priority)}>
                       {item.priority}
                     </Badge>
                   </TableCell>

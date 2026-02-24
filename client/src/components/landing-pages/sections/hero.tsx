@@ -43,7 +43,7 @@ interface BackgroundProps extends React.HTMLAttributes<HTMLDivElement> {
 const Background = React.forwardRef<
   HTMLDivElement,
   BackgroundProps
->(({ className, children, videoPoster, videoSrc, imageSrc, ...props }, ref) => (
+>(({ videoPoster, videoSrc, imageSrc, ...props }, ref) => (
   <div
     ref={ref}
     className="absolute inset-0 md:px-12"
@@ -95,7 +95,7 @@ Container.displayName = "Container"
 const Image = React.forwardRef<
   HTMLImageElement,
   ImageProps
->(({ className, children, ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <div className="w-full max-w-none flex flex-col items-center gap-4">
     <div className="relative w-full md:min-w-[600px] aspect-[1.66957/1] rounded-xs border border-[#f0f0f0] shadow-[0_0_0_5px_#ffffff80] overflow-hidden">
       <NextImage
