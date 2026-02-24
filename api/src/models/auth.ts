@@ -19,5 +19,5 @@ export interface TokenVerifier {
 }
 
 export interface AuthTokenExtractor {
-  extract(event: APIGatewayProxyEvent): string
+  extract(event: APIGatewayProxyEvent): string | Promise<string>
 }

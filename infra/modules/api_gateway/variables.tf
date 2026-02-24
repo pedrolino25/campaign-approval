@@ -34,6 +34,7 @@ variable "lambda_invoke_arns" {
     comment       = string
     notification  = string
     documentation = string
+    auth          = string
   })
 }
 
@@ -47,6 +48,7 @@ variable "lambda_function_arns" {
     comment       = string
     notification  = string
     documentation = string
+    auth          = string
   })
 }
 

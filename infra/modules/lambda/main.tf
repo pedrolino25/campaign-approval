@@ -33,6 +33,10 @@ locals {
       name = "${local.environment_prefix}documentation-api-lambda"
       role = var.iam_roles.organization
     }
+    auth = {
+      name = "${local.environment_prefix}auth-api-lambda"
+      role = var.iam_roles.auth
+    }
     email_worker = {
       name = "${local.environment_prefix}email-worker-lambda"
       role = var.iam_roles.email_worker
@@ -59,7 +63,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 resource "aws_lambda_function" "api" {
   for_each = {
     for k, v in local.lambda_functions : k => v
-    if k != "email_worker" && k != "review_reminder"
+    if k != "email_worker" && k != "review_reminder" && k != "auth"
   }
 
   filename         = local.artifact_path_resolved
@@ -79,6 +83,10 @@ resource "aws_lambda_function" "api" {
       SQS_QUEUE_URL         = var.sqs_queue_url
       COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
       COGNITO_APP_CLIENT_ID = var.cognito_app_client_id
+      COGNITO_DOMAIN        = var.cognito_domain
+      AWS_REGION            = var.aws_region
+      FRONTEND_URL          = var.frontend_url
+      WORKLIENT_API_URL     = var.worklient_api_url
       DATABASE_URL          = var.database_url
     }
   }
@@ -93,6 +101,48 @@ resource "aws_lambda_function" "api" {
   )
 }
 
+resource "aws_cloudwatch_log_group" "auth" {
+  name              = "/aws/lambda/${local.lambda_functions.auth.name}"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = var.tags
+}
+
+resource "aws_lambda_function" "auth" {
+  filename         = local.artifact_path_resolved
+  function_name    = local.lambda_functions.auth.name
+  role             = local.lambda_functions.auth.role
+  handler          = "api.handlers.auth.handler"
+  source_code_hash = local.lambda_zip_hash
+  runtime          = var.lambda_runtime
+  architectures    = [var.lambda_architecture]
+  memory_size      = var.lambda_memory_mb
+  timeout          = var.lambda_timeout_seconds
+
+  environment {
+    variables = {
+      ENVIRONMENT           = var.environment
+      S3_BUCKET_NAME        = var.s3_bucket_name
+      SQS_QUEUE_URL         = var.sqs_queue_url
+      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
+      COGNITO_APP_CLIENT_ID = var.cognito_app_client_id
+      COGNITO_DOMAIN        = var.cognito_domain
+      AWS_REGION            = var.aws_region
+      FRONTEND_URL          = var.frontend_url
+      WORKLIENT_API_URL     = var.worklient_api_url
+      DATABASE_URL          = var.database_url
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.auth]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = local.lambda_functions.auth.name
+    }
+  )
+}
 
 resource "aws_cloudwatch_log_group" "email_worker" {
   name              = "/aws/lambda/${local.lambda_functions.email_worker.name}"
@@ -127,6 +177,10 @@ resource "aws_lambda_function" "email_worker" {
       SENDGRID_TEMPLATE_REVIEW_REMINDER          = var.sendgrid_template_ids.REVIEW_REMINDER
       SENDGRID_TEMPLATE_INVITATION               = var.sendgrid_template_ids.INVITATION
       APP_BASE_URL                               = var.app_base_url
+      COGNITO_DOMAIN                             = var.cognito_domain
+      AWS_REGION                                 = var.aws_region
+      FRONTEND_URL                               = var.frontend_url
+      WORKLIENT_API_URL                          = var.worklient_api_url
     }
   }
 
@@ -168,10 +222,14 @@ resource "aws_lambda_function" "review_reminder" {
 
   environment {
     variables = {
-      ENVIRONMENT   = var.environment
-      DATABASE_URL  = var.database_url
-      SQS_QUEUE_URL = var.sqs_queue_url
-      NODE_ENV      = var.environment
+      ENVIRONMENT       = var.environment
+      DATABASE_URL      = var.database_url
+      SQS_QUEUE_URL     = var.sqs_queue_url
+      NODE_ENV          = var.environment
+      COGNITO_DOMAIN    = var.cognito_domain
+      AWS_REGION        = var.aws_region
+      FRONTEND_URL      = var.frontend_url
+      WORKLIENT_API_URL = var.worklient_api_url
     }
   }
 

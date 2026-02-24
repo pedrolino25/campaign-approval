@@ -220,3 +220,8 @@ variable "app_base_url" {
   type        = string
   default     = "https://worklient.com"
 }
+
+variable "frontend_url" {
+  description = "Frontend application URL"
+  type        = string
+}

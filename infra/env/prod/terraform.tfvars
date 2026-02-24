@@ -100,6 +100,8 @@ email_cname_records = [
   }
 ]
 
+frontend_url = "https://worklient.com"
+
 resource_tags = {
   Project     = "worklient"
   Environment = "prod"

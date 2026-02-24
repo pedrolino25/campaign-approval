@@ -37,3 +37,8 @@ output "review_reminder_role_arn" {
   description = "Review Reminder Worker Lambda IAM role ARN"
   value       = aws_iam_role.review_reminder.arn
 }
+
+output "auth_role_arn" {
+  description = "Auth API Lambda IAM role ARN"
+  value       = aws_iam_role.auth.arn
+}

@@ -29,7 +29,7 @@ export class AuthService {
   async authenticate(
     event: APIGatewayProxyEvent
   ): Promise<AuthenticatedEvent> {
-    const token = this.tokenExtractor.extract(event)
+    const token = await Promise.resolve(this.tokenExtractor.extract(event))
     const authContext = await this.tokenVerifier.verify(token)
     const organizationId = event.queryStringParameters?.organizationId
 

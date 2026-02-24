@@ -75,6 +75,7 @@ variable "iam_roles" {
     attachment      = string
     comment         = string
     notification    = string
+    auth            = string
     email_worker    = string
     review_reminder = string
   })
@@ -114,6 +115,26 @@ variable "app_base_url" {
   description = "Base URL for the application (used for invitation links)"
   type        = string
   default     = "https://worklient.com"
+}
+
+variable "frontend_url" {
+  description = "Frontend application URL"
+  type        = string
+}
+
+variable "worklient_api_url" {
+  description = "Backend API base URL"
+  type        = string
+}
+
+variable "cognito_domain" {
+  description = "Cognito domain (hosted UI domain)"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
 }
 
 variable "tags" {

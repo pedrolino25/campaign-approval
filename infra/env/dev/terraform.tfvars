@@ -100,6 +100,8 @@ email_cname_records = [
   }
 ]
 
+frontend_url = "https://worklient-git-develop-lynulabs-projects.vercel.app"
+
 resource_tags = {
   Project     = "worklient"
   Environment = "dev"

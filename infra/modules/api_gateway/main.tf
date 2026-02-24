@@ -89,6 +89,14 @@ resource "aws_apigatewayv2_integration" "documentation" {
   integration_uri    = var.lambda_invoke_arns.documentation
 }
 
+resource "aws_apigatewayv2_integration" "auth" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+
+  integration_method = "POST"
+  integration_uri    = var.lambda_invoke_arns.auth
+}
+
 resource "aws_apigatewayv2_route" "api_docs" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /api-docs"
@@ -105,6 +113,43 @@ resource "aws_apigatewayv2_route" "openapi_spec" {
   target = "integrations/${aws_apigatewayv2_integration.documentation.id}"
 
   authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_login" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /auth/login"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_callback" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /auth/callback"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_logout" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/logout"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_me" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /auth/me"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
 }
 
 resource "aws_apigatewayv2_route" "organization_get" {
@@ -477,6 +522,14 @@ resource "aws_lambda_permission" "documentation" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_arns.documentation
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "auth" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_arns.auth
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }

@@ -5,11 +5,12 @@ import {
   UserRepository,
 } from '../../repositories'
 import { OnboardingService } from '../../services/onboarding.service'
-import { AuthService, BearerTokenExtractor, JwtVerifier, RBACService } from '../auth'
+import { AuthService, CookieTokenExtractor, JwtVerifier, RBACService } from '../auth'
 import { ErrorService } from '../errors/error.service'
 import { ApiHandlerFactory } from './api.handler'
+import { PublicHandlerFactory } from './public.handler'
 
-const tokenExtractor = new BearerTokenExtractor()
+const tokenExtractor = new CookieTokenExtractor()
 const tokenVerifier = new JwtVerifier()
 const userRepository = new UserRepository()
 const reviewerRepository = new ReviewerRepository()
@@ -33,7 +34,9 @@ const authService = new AuthService(
 )
 const errorService = new ErrorService()
 const apiHandlerFactory = new ApiHandlerFactory(authService, errorService)
+const publicHandlerFactory = new PublicHandlerFactory(errorService)
 
 export const createHandler = apiHandlerFactory.create.bind(apiHandlerFactory)
+export const createPublicHandler = publicHandlerFactory.create.bind(publicHandlerFactory)
 
-export { ApiHandlerFactory }
+export { ApiHandlerFactory, PublicHandlerFactory }
