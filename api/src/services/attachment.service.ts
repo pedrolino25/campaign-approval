@@ -1,4 +1,4 @@
-import { type Attachment } from '@prisma/client'
+import { type Attachment, ReviewStatus } from '@prisma/client'
 import { randomUUID } from 'crypto'
 
 import { prisma } from '../lib'
@@ -72,38 +72,76 @@ export class AttachmentService implements IAttachmentService {
 
     const organizationId = actor.organizationId
 
-    const reviewItem = await this.reviewItemRepository.findByIdScoped(
-      reviewItemId,
-      organizationId
-    )
+    return await prisma.$transaction(async (tx) => {
+      const reviewItem = await this.reviewItemRepository.findByIdScoped(
+        reviewItemId,
+        organizationId
+      )
 
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
-    }
+      if (!reviewItem) {
+        throw new NotFoundError('Review item not found')
+      }
 
-    if (reviewItem.archivedAt !== null) {
-      throw new ForbiddenError('Cannot upload attachment to archived review item')
-    }
+      if (reviewItem.archivedAt !== null) {
+        throw new ForbiddenError('Cannot upload attachment to archived review item')
+      }
 
-    if (reviewItem.organizationId !== organizationId) {
-      throw new NotFoundError('Review item not found')
-    }
+      if (reviewItem.organizationId !== organizationId) {
+        throw new NotFoundError('Review item not found')
+      }
 
-    const uniqueId = randomUUID()
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const s3Key = `${reviewItem.organizationId}/${reviewItem.clientId}/${reviewItemId}/${reviewItem.version}/${uniqueId}-${sanitizedFileName}`
+      // Check if this is a new version scenario
+      const existingAttachments = await tx.attachment.findMany({
+        where: { reviewItemId },
+        take: 1,
+      })
 
-    const presignedUrl = await this.s3Service.generatePresignedUploadUrl(
-      s3Key,
-      fileType,
-      3600
-    )
+      const isNewVersion =
+        reviewItem.status === ReviewStatus.CHANGES_REQUESTED ||
+        reviewItem.status === ReviewStatus.APPROVED ||
+        existingAttachments.length > 0
 
-    return {
-      presignedUrl,
-      s3Key,
-      version: reviewItem.version,
-    }
+      let finalVersion = reviewItem.version
+      let updatedReviewItem = reviewItem
+
+      // Increment version if this is a new version upload
+      // This ensures S3 key matches the version that will be stored
+      if (isNewVersion) {
+        updatedReviewItem = await tx.reviewItem.update({
+          where: {
+            id: reviewItemId,
+            organizationId,
+            version: reviewItem.version,
+          },
+          data: {
+            version: {
+              increment: 1,
+            },
+            // If status is CHANGES_REQUESTED or APPROVED, reopen to PENDING_REVIEW
+            ...(reviewItem.status === ReviewStatus.CHANGES_REQUESTED || reviewItem.status === ReviewStatus.APPROVED
+              ? { status: ReviewStatus.PENDING_REVIEW }
+              : {}),
+          },
+        })
+        finalVersion = updatedReviewItem.version
+      }
+
+      const uniqueId = randomUUID()
+      const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const s3Key = `${reviewItem.organizationId}/${reviewItem.clientId}/${reviewItemId}/${finalVersion}/${uniqueId}-${sanitizedFileName}`
+
+      const presignedUrl = await this.s3Service.generatePresignedUploadUrl(
+        s3Key,
+        fileType,
+        3600
+      )
+
+      return {
+        presignedUrl,
+        s3Key,
+        version: finalVersion,
+      }
+    })
   }
 
   async confirmUpload(params: ConfirmUploadParams): Promise<Attachment> {
@@ -133,6 +171,26 @@ export class AttachmentService implements IAttachmentService {
         throw new NotFoundError('Review item not found')
       }
 
+      // Version was already incremented in generatePresignedUpload
+      // Extract version from S3 key path: {orgId}/{clientId}/{reviewItemId}/{version}/{file}
+      const s3KeyParts = s3Key.split('/')
+      const versionFromS3Key = s3KeyParts.length >= 5 ? parseInt(s3KeyParts[4] as string, 10) : null
+      
+      // Get current review item to verify version
+      const currentReviewItem = await tx.reviewItem.findUnique({
+        where: { id: reviewItemId },
+      })
+
+      if (!currentReviewItem) {
+        throw new NotFoundError('Review item not found')
+      }
+
+      // Use version from S3 key if valid, otherwise use current version
+      // The S3 key version should match the current version (set in generatePresignedUpload)
+      const finalVersion = versionFromS3Key && !isNaN(versionFromS3Key) 
+        ? versionFromS3Key 
+        : currentReviewItem.version
+
       const attachment = await tx.attachment.create({
         data: {
           reviewItemId,
@@ -140,7 +198,7 @@ export class AttachmentService implements IAttachmentService {
           fileType,
           fileSize,
           s3Key,
-          version: reviewItem.version,
+          version: finalVersion,
         },
       })
 

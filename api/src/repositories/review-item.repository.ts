@@ -153,6 +153,15 @@ export class ReviewItemRepository implements IReviewItemRepository {
         organizationId,
         archivedAt: null,
       },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     })
   }
 
