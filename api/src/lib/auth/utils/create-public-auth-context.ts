@@ -2,9 +2,8 @@ import { ActorType, type AuthContext } from '../../../models'
 
 export function createPublicAuthContext(): AuthContext {
   return {
-    userId: '',
+    cognitoSub: '',
     email: '',
-    rawToken: '',
     actor: {
       type: ActorType.Internal,
       userId: '',

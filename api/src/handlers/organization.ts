@@ -338,7 +338,7 @@ const handlePostAcceptInvitation = async (
     throw new NotFoundError('Invitation token not found')
   }
 
-  const cognitoUserId = request.auth.userId
+  const cognitoUserId = request.auth.cognitoSub
 
   if (!cognitoUserId) {
     throw new NotFoundError('User ID not found')

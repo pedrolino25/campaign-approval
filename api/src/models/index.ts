@@ -5,8 +5,10 @@ export {
 } from './activity-log'
 export type {
   AuthContext,
+  AuthTokenExtractor,
   AuthenticatedEvent,
   SessionExtractor,
+  TokenVerifier,
 } from './auth'
 export {
   BusinessRuleViolationError,

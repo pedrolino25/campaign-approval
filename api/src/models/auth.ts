@@ -17,3 +17,11 @@ export interface AuthenticatedEvent extends APIGatewayProxyEvent {
 export interface SessionExtractor {
   extract(event: APIGatewayProxyEvent): Promise<CanonicalSession>
 }
+
+export interface TokenVerifier {
+  verify(token: string): Promise<{ userId: string; email: string; rawToken: string }>
+}
+
+export interface AuthTokenExtractor {
+  extract(event: APIGatewayProxyEvent): string
+}

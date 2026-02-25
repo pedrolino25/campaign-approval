@@ -7,7 +7,8 @@ import type { UserRepository } from '../../../repositories'
 import type { RBACService } from '../rbac.service'
 import type { CanonicalSession, SessionService } from '../session.service'
 import { config } from '../../utils/config'
-import { clearActivationCookie, clearOAuthCookies } from './cookie.utils'
+import { clearActivationCookie } from './activation-token.utils'
+import { clearOAuthCookies } from './cookie.utils'
 
 export function calculateOnboardingStatus(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
