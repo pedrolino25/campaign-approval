@@ -7,10 +7,13 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import type { RBACService } from '../rbac.service'
-import { resolveActorFromTokens } from './actor.utils'
-import { buildSessionResponse } from './session.utils'
 import type { SessionService } from '../session.service'
-import { JwtVerifier } from './jwt-verifier'
+import { resolveActorFromTokens } from './actor.utils'
+import type { JwtVerifier } from './jwt-verifier'
+import {
+  buildSessionJsonResponse,
+  buildSessionResponse,
+} from './session.utils'
 
 export interface CreateSessionFromTokensParams {
   idToken: string
@@ -24,6 +27,7 @@ export interface CreateSessionFromTokensParams {
   rbacService: RBACService
   sessionService: SessionService
   tokenVerifier: JwtVerifier
+  returnJson?: boolean
 }
 
 /**
@@ -45,6 +49,7 @@ export async function createSessionFromTokens(
     rbacService,
     sessionService,
     tokenVerifier,
+    returnJson = false,
   } = params
 
   // Verify idToken and extract sub + email
@@ -65,6 +70,19 @@ export async function createSessionFromTokens(
   )
 
   // Build and return session response
+  if (returnJson) {
+    return await buildSessionJsonResponse(
+      userId,
+      actor,
+      user,
+      reviewer,
+      organization,
+      email,
+      sessionService,
+      context
+    )
+  }
+
   return await buildSessionResponse(
     userId,
     actor,

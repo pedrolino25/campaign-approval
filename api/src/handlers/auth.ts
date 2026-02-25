@@ -774,6 +774,7 @@ const handleVerifyEmail = async (
       rbacService,
       sessionService,
       tokenVerifier,
+      returnJson: true, // Return JSON for embedded auth
     })
 
     if (validated.inviteToken) {
@@ -886,10 +887,9 @@ const handleEmbeddedLogin = async (
       rbacService,
       sessionService,
       tokenVerifier,
+      returnJson: true, // Return JSON for embedded auth
     })
 
-    // Accept invitation AFTER session is successfully created
-    // This prevents invitation from being consumed if session creation fails
     if (validated.inviteToken) {
       await acceptInvitationAfterSession(
         validated.inviteToken,
