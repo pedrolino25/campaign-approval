@@ -31,14 +31,20 @@ export function addCorsHeaders(
     return response
   }
 
-  const headers = response.headers || {}
+  const existingHeaders = response.headers || {}
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Credentials': 'true',
+  }
+
+  if (origin) {
+    corsHeaders['Access-Control-Allow-Origin'] = origin
+  }
 
   return {
     ...response,
     headers: {
-      ...headers,
-      ...(origin ? { 'Access-Control-Allow-Origin': origin } : {}),
-      'Access-Control-Allow-Credentials': 'true',
+      ...existingHeaders,
+      ...corsHeaders,
     },
   }
 }

@@ -47,6 +47,7 @@ import {
   VerifyEmailSchema,
 } from '../lib/schemas'
 import { logger } from '../lib/utils/logger'
+import { addCorsHeaders, handlePreflightRequest } from '../lib/utils/cors'
 import {
   ActorType,
   type AuthenticatedEvent,
@@ -1172,6 +1173,11 @@ function getMethod(event: APIGatewayProxyEvent): string {
 const handleAuthRoute = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const preflightResponse = handlePreflightRequest(event)
+  if (preflightResponse) {
+    return preflightResponse
+  }
+
   const path = getPath(event)
   const method = getMethod(event)
 
@@ -1197,16 +1203,29 @@ const handleAuthRoute = async (
   const routeKey = `${method}:${path}`
   const handler = routeMap[routeKey]
 
-  if (handler) {
-    return await handler(event)
-  }
+  try {
+    if (handler) {
+      const response = await handler(event)
+      return addCorsHeaders(event, response)
+    }
 
-  return {
-    statusCode: 404,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-    body: JSON.stringify({ message: 'Not Found' }),
+    const notFoundResponse: APIGatewayProxyResult = {
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ message: 'Not Found' }),
+    }
+    return addCorsHeaders(event, notFoundResponse)
+  } catch (error) {
+    const errorResponse: APIGatewayProxyResult = {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ message: 'Internal Server Error' }),
+    }
+    return addCorsHeaders(event, errorResponse)
   }
 }
 
