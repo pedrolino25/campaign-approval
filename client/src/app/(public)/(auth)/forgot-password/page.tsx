@@ -1,9 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -28,54 +26,37 @@ import {
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
-export default function LoginPage() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
+export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
-      password: '',
     },
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true)
-    setError(null)
+    setSuccess(false)
 
     try {
-      await apiFetch('/auth/login', {
+      await apiFetch('/auth/forgot-password', {
         method: 'POST',
         body: JSON.stringify(values),
       })
 
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/')
-    } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
-        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
-        return
-      }
-
-      if (apiError.code === 'INVALID_CREDENTIALS') {
-        setError('Invalid email or password.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
+      setSuccess(true)
+    } catch {
+      setSuccess(true)
     } finally {
       setIsLoading(false)
     }
@@ -85,17 +66,21 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle>Reset your password</CardTitle>
           <CardDescription>
-            Enter your email and password to access your account
+            Enter your email address and we&apos;ll send you instructions to reset
+            your password
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+              {success && (
+                <Alert>
+                  <AlertDescription>
+                    If the account exists, password reset instructions have been
+                    sent.
+                  </AlertDescription>
                 </Alert>
               )}
 
@@ -117,44 +102,21 @@ export default function LoginPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="flex flex-col gap-2">
                 <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
                       <Spinner className="mr-2" />
-                      Signing in...
+                      Sending...
                     </>
                   ) : (
-                    'Sign in'
+                    'Send reset instructions'
                   )}
                 </Button>
 
-                <div className="flex items-center justify-between text-sm">
-                  <Link
-                    href="/signup"
-                    className="text-primary hover:underline"
-                  >
-                    Create an account
-                  </Link>
-                  <Link
-                    href="/forgot-password"
-                    className="text-primary hover:underline"
-                  >
-                    Forgot password?
+                <div className="text-center text-sm">
+                  <Link href="/login" className="text-primary hover:underline">
+                    Back to sign in
                   </Link>
                 </div>
               </div>

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -30,35 +30,47 @@ import { Spinner } from '@/components/ui/spinner'
 import { apiFetch } from '@/lib/api/client'
 import { type ApiError } from '@/lib/api/error-handler'
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+const verifyEmailSchema = z.object({
+  code: z.string().length(6, 'Code must be 6 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
-export default function LoginPage() {
+export default function VerifyEmailPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const email = searchParams.get('email') || ''
+
+  const form = useForm<VerifyEmailFormValues>({
+    resolver: zodResolver(verifyEmailSchema),
     defaultValues: {
-      email: '',
+      code: '',
       password: '',
     },
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: VerifyEmailFormValues) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      await apiFetch('/auth/login', {
+      const inviteToken = searchParams.get('inviteToken')
+
+      await apiFetch('/auth/verify-email', {
         method: 'POST',
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          email,
+          code: values.code,
+          password: values.password,
+          ...(inviteToken && { inviteToken }),
+        }),
       })
 
       await queryClient.invalidateQueries({ queryKey: ['session'] })
@@ -66,13 +78,10 @@ export default function LoginPage() {
     } catch (err) {
       const apiError = err as ApiError
 
-      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
-        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
-        return
-      }
-
-      if (apiError.code === 'INVALID_CREDENTIALS') {
-        setError('Invalid email or password.')
+      if (apiError.code === 'INVALID_CODE') {
+        setError('Invalid verification code.')
+      } else if (apiError.code === 'CODE_EXPIRED') {
+        setError('Verification code expired. Please request a new one.')
       } else {
         setError(apiError.message || 'An error occurred')
       }
@@ -81,13 +90,32 @@ export default function LoginPage() {
     }
   }
 
+  const handleResend = async () => {
+    setIsResending(true)
+    setResendSuccess(false)
+    setError(null)
+
+    try {
+      await apiFetch('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+
+      setResendSuccess(true)
+    } catch {
+      setResendSuccess(true)
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle>Verify your email</CardTitle>
           <CardDescription>
-            Enter your email and password to access your account
+            Enter the 6-digit code sent to {email || 'your email'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,16 +127,25 @@ export default function LoginPage() {
                 </Alert>
               )}
 
+              {resendSuccess && (
+                <Alert>
+                  <AlertDescription>
+                    If the account exists, a new code has been sent.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <FormField
                 control={form.control}
-                name="email"
+                name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Verification Code</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="you@example.com"
+                        type="text"
+                        placeholder="000000"
+                        maxLength={6}
                         {...field}
                       />
                     </FormControl>
@@ -136,25 +173,33 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Spinner className="mr-2" />
-                      Signing in...
+                      Verifying...
                     </>
                   ) : (
-                    'Sign in'
+                    'Verify email'
                   )}
                 </Button>
 
-                <div className="flex items-center justify-between text-sm">
-                  <Link
-                    href="/signup"
-                    className="text-primary hover:underline"
-                  >
-                    Create an account
-                  </Link>
-                  <Link
-                    href="/forgot-password"
-                    className="text-primary hover:underline"
-                  >
-                    Forgot password?
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResend}
+                  disabled={isResending}
+                  className="w-full"
+                >
+                  {isResending ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Resending...
+                    </>
+                  ) : (
+                    'Resend code'
+                  )}
+                </Button>
+
+                <div className="text-center text-sm">
+                  <Link href="/login" className="text-primary hover:underline">
+                    Back to sign in
                   </Link>
                 </div>
               </div>

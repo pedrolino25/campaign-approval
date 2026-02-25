@@ -1,7 +1,6 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -30,49 +29,57 @@ import { Spinner } from '@/components/ui/spinner'
 import { apiFetch } from '@/lib/api/client'
 import { type ApiError } from '@/lib/api/error-handler'
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-})
+const resetPasswordSchema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    code: z.string().length(6, 'Code must be 6 characters'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       email: '',
-      password: '',
+      code: '',
+      newPassword: '',
+      confirmPassword: '',
     },
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: ResetPasswordFormValues) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      await apiFetch('/auth/login', {
+      await apiFetch('/auth/reset-password', {
         method: 'POST',
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          email: values.email,
+          code: values.code,
+          newPassword: values.newPassword,
+        }),
       })
 
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/')
+      router.push('/login')
     } catch (err) {
       const apiError = err as ApiError
 
-      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
-        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
-        return
-      }
-
-      if (apiError.code === 'INVALID_CREDENTIALS') {
-        setError('Invalid email or password.')
+      if (apiError.code === 'INVALID_CODE') {
+        setError('Invalid verification code.')
+      } else if (apiError.code === 'CODE_EXPIRED') {
+        setError('Verification code expired. Please request a new one.')
       } else {
         setError(apiError.message || 'An error occurred')
       }
@@ -85,9 +92,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle>Reset your password</CardTitle>
           <CardDescription>
-            Enter your email and password to access your account
+            Enter your email, verification code, and new password
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -119,10 +126,43 @@ export default function LoginPage() {
 
               <FormField
                 control={form.control}
-                name="password"
+                name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Verification Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="000000"
+                        maxLength={6}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -136,25 +176,16 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Spinner className="mr-2" />
-                      Signing in...
+                      Resetting password...
                     </>
                   ) : (
-                    'Sign in'
+                    'Reset password'
                   )}
                 </Button>
 
-                <div className="flex items-center justify-between text-sm">
-                  <Link
-                    href="/signup"
-                    className="text-primary hover:underline"
-                  >
-                    Create an account
-                  </Link>
-                  <Link
-                    href="/forgot-password"
-                    className="text-primary hover:underline"
-                  >
-                    Forgot password?
+                <div className="text-center text-sm">
+                  <Link href="/login" className="text-primary hover:underline">
+                    Back to sign in
                   </Link>
                 </div>
               </div>

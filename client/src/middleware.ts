@@ -1,29 +1,35 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+const publicRoutes = [
+  '/',
+  '/login',
+  '/signup',
+  '/verify-email',
+  '/forgot-password',
+  '/reset-password',
+  '/auth',
+  '/blog',
+  '/audit-traceability',
+  '/approval-workflows',
+  '/version-integrity',
+  '/operational-visibility',
+  '/client-experience',
+  '/pricing',
+  '/terms-of-service',
+  '/privacy-policy',
+]
+
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
 export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
 
-    const publicRoutes = [
-      '/',
-      '/login',
-      '/auth',
-      '/blog',
-      '/audit-traceability',
-      '/approval-workflows',
-      '/version-integrity',
-      '/operational-visibility',
-      '/client-experience',
-      '/pricing',
-      '/terms-of-service',
-      '/privacy-policy',
-    ]
-
-    const isPublicRoute = publicRoutes.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`)
-    )
-
-    if (isPublicRoute) {
+    if (isPublicRoute(pathname)) {
       return NextResponse.next()
     }
 
@@ -38,15 +44,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   } catch {
     const pathname = request.nextUrl.pathname
-    const publicRoutes = ['/', '/login', '/auth', '/blog']
-    const isPublicRoute = publicRoutes.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`)
-    )
-    
-    if (isPublicRoute) {
+
+    if (isPublicRoute(pathname)) {
       return NextResponse.next()
     }
-    
+
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

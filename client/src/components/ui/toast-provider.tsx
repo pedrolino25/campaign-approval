@@ -1,7 +1,12 @@
 'use client'
 
-// Placeholder implementation - will upgrade later
+import { Toaster } from '@/lib/hooks/use-toast'
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  // Minimal implementation for now
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <Toaster />
+    </>
+  )
 }
