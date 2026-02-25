@@ -177,11 +177,11 @@ module "domain_mapping" {
 module "waf" {
   source = "../../modules/waf"
 
-  environment            = var.environment
-  api_gateway_stage_arn  = module.api_gateway.api_stage_arn
-  auth_rate_limit        = var.waf_auth_rate_limit
-  activation_rate_limit  = var.waf_activation_rate_limit
-  log_retention_days     = var.waf_log_retention_days
+  environment           = var.environment
+  api_gateway_stage_arn = module.api_gateway.api_stage_arn
+  auth_rate_limit       = var.waf_auth_rate_limit
+  activation_rate_limit = var.waf_activation_rate_limit
+  log_retention_days    = var.waf_log_retention_days
 
   tags = var.resource_tags
 }
