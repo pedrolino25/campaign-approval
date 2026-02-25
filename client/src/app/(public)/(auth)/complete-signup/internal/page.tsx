@@ -92,7 +92,7 @@ export default function InternalCompleteSignupPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Complete Your Setup</CardTitle>
           <CardDescription>
