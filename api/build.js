@@ -15,7 +15,7 @@ const entryPoints = {
   "api/comment": "src/handlers/comment.ts",
   "api/notification": "src/handlers/notification.ts",
   "api/documentation": "src/handlers/documentation.ts",
-  "api/handlers/auth": "src/handlers/auth.ts",
+  "api/auth": "src/handlers/auth.ts",
   "api/workers/email.worker": "src/workers/email.worker.ts",
   "api/workers/review-reminder.worker": "src/workers/review-reminder.worker.ts",
 }
@@ -52,13 +52,18 @@ async function buildLambda() {
   // Build all entry points
   await Promise.all(
     Object.entries(entryPoints).map(async ([outfile, entryPoint]) => {
+      // Ensure the output directory exists (for nested paths like api/handlers/auth)
+      const outfilePath = join(distDir, `${outfile}.js`)
+      const outfileDir = dirname(outfilePath)
+      await mkdir(outfileDir, { recursive: true })
+
       await build({
         entryPoints: [join(__dirname, entryPoint)],
         bundle: true,
         platform: "node",
         target: "node20",
         format: "cjs",
-        outfile: join(distDir, `${outfile}.js`),
+        outfile: outfilePath,
         minify: true,
         sourcemap: false,
         external: [
@@ -100,6 +105,9 @@ async function buildLambda() {
   // Add compiled handlers
   for (const [outfile] of Object.entries(entryPoints)) {
     const sourcePath = join(distDir, `${outfile}.js`)
+    if (!existsSync(sourcePath)) {
+      throw new Error(`Built file not found: ${sourcePath}`)
+    }
     archive.file(sourcePath, { name: `${outfile}.js` })
   }
 

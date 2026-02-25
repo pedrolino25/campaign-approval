@@ -117,7 +117,7 @@ resource "aws_lambda_function" "auth" {
   filename         = local.artifact_path_resolved
   function_name    = local.lambda_functions.auth.name
   role             = local.lambda_functions.auth.role
-  handler          = "api.handlers.auth.handler"
+  handler          = "api.auth.handler"
   source_code_hash = local.lambda_zip_hash
   runtime          = var.lambda_runtime
   architectures    = [var.lambda_architecture]
