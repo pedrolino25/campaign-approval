@@ -47,13 +47,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/legal/terms-of-service`,
+      url: `${baseUrl}/terms-of-service`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/legal/privacy-policy`,
+      url: `${baseUrl}/privacy-policy`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,

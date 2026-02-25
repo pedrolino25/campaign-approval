@@ -15,21 +15,23 @@ export default function HomePage() {
       return
     }
 
-    if (session === null) {
-      router.push('/login')
-      return
-    }
-
-    if (!session.onboardingCompleted) {
-      if (session.actorType === 'INTERNAL') {
-        router.push('/auth/complete-signup/internal')
-      } else if (session.actorType === 'REVIEWER') {
-        router.push('/auth/complete-signup/reviewer')
+    // If user is logged in, redirect to appropriate page
+    if (session) {
+      if (!session.onboardingCompleted) {
+        if (session.actorType === 'INTERNAL') {
+          router.push('/auth/complete-signup/internal')
+        } else if (session.actorType === 'REVIEWER') {
+          router.push('/auth/complete-signup/reviewer')
+        }
+        return
       }
+
+      router.push('/dashboard')
       return
     }
 
-    router.push('/dashboard')
+    // If not logged in, redirect to login (root page is not a public landing page)
+    router.push('/login')
   }, [session, isLoading, router])
 
   return <FullScreenLoader />

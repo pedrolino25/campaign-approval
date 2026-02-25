@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     title: "Privacy Policy",
     description:
       "This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website and services.",
-    url: "https://worklient.com/legal/privacy-policy",
+    url: "https://worklient.com/privacy-policy",
     siteName: "Worklient",
     type: "website",
   },
   alternates: {
-    canonical: "/legal/privacy-policy",
+    canonical: "/privacy-policy",
   },
 };
 

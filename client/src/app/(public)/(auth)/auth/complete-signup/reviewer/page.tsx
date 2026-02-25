@@ -37,27 +37,19 @@ export default function ReviewerCompleteSignupPage() {
     },
   })
 
-  // Redirect if no session
+  // Show loading while checking session
   if (sessionLoading) {
     return <FullScreenLoader />
   }
 
-  if (!session) {
-    router.push('/login')
-    return <FullScreenLoader />
-  }
-
-  // Redirect if already onboarded
-  if (session.onboardingCompleted) {
+  // If already onboarded, redirect to dashboard
+  if (session?.onboardingCompleted) {
     router.push('/dashboard')
     return <FullScreenLoader />
   }
 
-  // Only allow REVIEWER users
-  if (session.actorType !== 'REVIEWER') {
-    router.push('/login')
-    return <FullScreenLoader />
-  }
+  // Show error if no session or wrong actor type (don't redirect - this is a public page)
+  const showError = !session || session.actorType !== 'REVIEWER'
 
   const handleContinue = () => {
     mutation.mutate()
@@ -73,22 +65,43 @@ export default function ReviewerCompleteSignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {mutation.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {(mutation.error as { message?: string })?.message ||
-                  'Failed to complete setup'}
-              </AlertDescription>
-            </Alert>
-          )}
+          {showError ? (
+            <>
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {!session
+                    ? 'You must be logged in to complete signup. Please log in first.'
+                    : 'This page is only available for reviewers.'}
+                </AlertDescription>
+              </Alert>
+              <Button
+                onClick={() => router.push('/login')}
+                className="w-full"
+                variant="outline"
+              >
+                Go to Login
+              </Button>
+            </>
+          ) : (
+            <>
+              {mutation.isError && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {(mutation.error as { message?: string })?.message ||
+                      'Failed to complete setup'}
+                  </AlertDescription>
+                </Alert>
+              )}
 
-          <Button
-            onClick={handleContinue}
-            disabled={mutation.isPending}
-            className="w-full"
-          >
-            {mutation.isPending ? 'Completing...' : 'Continue'}
-          </Button>
+              <Button
+                onClick={handleContinue}
+                disabled={mutation.isPending}
+                className="w-full"
+              >
+                {mutation.isPending ? 'Completing...' : 'Continue'}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

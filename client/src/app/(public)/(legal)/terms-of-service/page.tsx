@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     title: "Terms of Service",
     description:
       "These Terms of Service outline the agreement between you and Worklient regarding your use of our website and services.",
-    url: "https://worklient.com/legal/terms-of-service",
+    url: "https://worklient.com/terms-of-service",
     siteName: "Worklient",
     type: "website",
   },
   alternates: {
-    canonical: "/legal/terms-of-service",
+    canonical: "/terms-of-service",
   },
 };
 
