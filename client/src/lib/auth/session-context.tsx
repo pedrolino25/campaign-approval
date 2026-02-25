@@ -32,8 +32,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for session invalidation events (from 401 handling)
   useEffect(() => {
-    const handleSessionInvalidated = () => {
-      queryClient.invalidateQueries({ queryKey: ['session'] })
+    const handleSessionInvalidated = async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
     }
 
     window.addEventListener('session-invalidated', handleSessionInvalidated)
