@@ -26,6 +26,7 @@ import {
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import { buildErrorResponse } from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
+import { createSessionFromTokens } from '../lib/auth/utils/token-session.utils'
 import {
   validateActivationToken,
   validateCallbackParams,
@@ -33,8 +34,15 @@ import {
 } from '../lib/auth/utils/validation.utils'
 import { createHandler, createPublicHandler } from '../lib/handlers'
 import {
+  ChangePasswordSchema,
   CompleteInternalOnboardingSchema,
   CompleteReviewerOnboardingSchema,
+  ForgotPasswordSchema,
+  LoginSchema,
+  ResendVerificationSchema,
+  ResetPasswordSchema,
+  SignUpSchema,
+  VerifyEmailSchema,
 } from '../lib/schemas'
 import { logger } from '../lib/utils/logger'
 import {
@@ -683,6 +691,389 @@ const handleReviewerActivate = async (
   )
 }
 
+const handleSignUp = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = SignUpSchema.parse(body)
+
+    await cognitoService.signUp(validated.email, validated.password)
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'SIGNUP_STARTED',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requiresEmailVerification: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'SIGNUP_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleVerifyEmail = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = VerifyEmailSchema.parse(body)
+
+    const tokens = await cognitoService.confirmSignUp(
+      validated.email,
+      validated.code,
+      validated.password
+    )
+
+    // Verify token to get userId
+    const authContext = await tokenVerifier.verify(tokens.idToken)
+
+    // Handle invitation if provided
+    let reviewerActivationCompleted = false
+    if (validated.inviteToken) {
+      const activationResult = await processReviewerActivation(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context,
+        invitationRepository,
+        invitationService
+      )
+      reviewerActivationCompleted = activationResult.success
+    }
+
+    // Create session from tokens
+    const sessionResponse = await createSessionFromTokens({
+      idToken: tokens.idToken,
+      inviteToken: validated.inviteToken,
+      reviewerActivationCompleted,
+      context,
+      userRepository,
+      reviewerRepository,
+      organizationRepository,
+      invitationRepository,
+      rbacService,
+      sessionService,
+      tokenVerifier,
+    })
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'EMAIL_VERIFIED',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return sessionResponse
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'EMAIL_VERIFICATION_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleResendVerification = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ResendVerificationSchema.parse(body)
+
+    await cognitoService.resendConfirmation(validated.email)
+
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch {
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  }
+}
+
+const handleEmbeddedLogin = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'LOGIN_STARTED',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = LoginSchema.parse(body)
+
+    const tokens = await cognitoService.login(validated.email, validated.password)
+
+    // Handle invitation if provided
+    let reviewerActivationCompleted = false
+    if (validated.inviteToken) {
+      // First verify token to get userId
+      const authContext = await tokenVerifier.verify(tokens.idToken)
+      const activationResult = await processReviewerActivation(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context,
+        invitationRepository,
+        invitationService
+      )
+      reviewerActivationCompleted = activationResult.success
+    }
+
+    // Create session from tokens
+    const sessionResponse = await createSessionFromTokens({
+      idToken: tokens.idToken,
+      inviteToken: validated.inviteToken,
+      reviewerActivationCompleted,
+      context,
+      userRepository,
+      reviewerRepository,
+      organizationRepository,
+      invitationRepository,
+      rbacService,
+      sessionService,
+      tokenVerifier,
+    })
+
+    return sessionResponse
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'LOGIN_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleForgotPassword = async (
+  _event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const body = _event.body ? JSON.parse(_event.body) : {}
+    const validated = ForgotPasswordSchema.parse(body)
+
+    await cognitoService.forgotPassword(validated.email)
+
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch {
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  }
+}
+
+const handleResetPassword = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ResetPasswordSchema.parse(body)
+
+    await cognitoService.confirmForgotPassword(
+      validated.email,
+      validated.code,
+      validated.newPassword
+    )
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'PASSWORD_RESET_SUCCESS',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'PASSWORD_RESET_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+async function changeUserPassword(
+  email: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<void> {
+  // Verify old password by attempting login to get access token
+  const loginResult = await cognitoService.login(email, oldPassword)
+  
+  // Change password using the access token
+  await cognitoService.changePassword(
+    loginResult.accessToken,
+    oldPassword,
+    newPassword
+  )
+}
+
+const handleChangePassword = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ChangePasswordSchema.parse(body)
+
+    const email = event.authContext.email
+    
+    await changeUserPassword(email, validated.oldPassword, validated.newPassword)
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'PASSWORD_CHANGED',
+        actorType: event.authContext.actor.type,
+        ...context,
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'PASSWORD_CHANGE_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
 export const loginHandler = createPublicHandler(handleLogin)
 export const callbackHandler = createPublicHandler(handleCallback)
 export const logoutHandler = createPublicHandler(handleLogout)
@@ -690,6 +1081,13 @@ export const reviewerActivateHandler = createPublicHandler(handleReviewerActivat
 export const meHandler = createHandler(handleMe)
 export const completeSignupInternalHandler = createHandler(handleCompleteSignupInternal)
 export const completeSignupReviewerHandler = createHandler(handleCompleteSignupReviewer)
+export const signUpHandler = createPublicHandler(handleSignUp)
+export const verifyEmailHandler = createPublicHandler(handleVerifyEmail)
+export const resendVerificationHandler = createPublicHandler(handleResendVerification)
+export const embeddedLoginHandler = createPublicHandler(handleEmbeddedLogin)
+export const forgotPasswordHandler = createPublicHandler(handleForgotPassword)
+export const resetPasswordHandler = createPublicHandler(handleResetPassword)
+export const changePasswordHandler = createHandler(handleChangePassword)
 
 function getPath(event: APIGatewayProxyEvent): string {
   if (event.path) {
@@ -723,13 +1121,19 @@ const handleAuthRoute = async (
     string,
     (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
   > = {
-    'GET:/auth/login': loginHandler,
     'GET:/auth/callback': callbackHandler,
     'POST:/auth/logout': logoutHandler,
     'GET:/auth/me': meHandler,
     'GET:/auth/reviewer/activate': reviewerActivateHandler,
     'POST:/auth/complete-signup/internal': completeSignupInternalHandler,
     'POST:/auth/complete-signup/reviewer': completeSignupReviewerHandler,
+    'POST:/auth/signup': signUpHandler,
+    'POST:/auth/verify-email': verifyEmailHandler,
+    'POST:/auth/resend-verification': resendVerificationHandler,
+    'POST:/auth/login': embeddedLoginHandler,
+    'POST:/auth/forgot-password': forgotPasswordHandler,
+    'POST:/auth/reset-password': resetPasswordHandler,
+    'POST:/auth/change-password': changePasswordHandler,
   }
 
   const routeKey = `${method}:${path}`
