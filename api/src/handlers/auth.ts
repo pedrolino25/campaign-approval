@@ -4,10 +4,14 @@ import type {
 } from 'aws-lambda'
 
 import { validateBody } from '../lib'
+import {
+  AuthService,
+  CookieTokenExtractor,
+  OAuthService,
+  RBACService,
+  SessionService,
+} from '../lib/auth'
 import { CognitoService } from '../lib/auth/cognito.service'
-import { OAuthService } from '../lib/auth/oauth.service'
-import { RBACService } from '../lib/auth/rbac.service'
-import { SessionService } from '../lib/auth/session.service'
 import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
 import {
   clearActivationCookie,
@@ -59,6 +63,11 @@ const organizationRepository = new OrganizationRepository()
 const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
 const rbacService = new RBACService(new ClientReviewerRepository())
+const authService = new AuthService(
+  new CookieTokenExtractor(),
+  userRepository,
+  reviewerRepository
+)
 
 function extractSafeContext(
   event: APIGatewayProxyEvent | AuthenticatedEvent
@@ -394,6 +403,20 @@ const handleMe = async (
   const session = await sessionService.verifySession(sessionToken)
 
   if (!session) {
+    return Promise.resolve({
+      statusCode: 401,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'Unauthorized',
+      }),
+    })
+  }
+
+  try {
+    await authService.verifySessionVersion(session, event)
+  } catch {
     return Promise.resolve({
       statusCode: 401,
       headers: {

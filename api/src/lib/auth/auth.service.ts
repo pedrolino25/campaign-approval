@@ -46,7 +46,7 @@ export class AuthService {
     }
   }
 
-  private async verifySessionVersion(
+  async verifySessionVersion(
     session: CanonicalSession,
     event: APIGatewayProxyEvent
   ): Promise<void> {

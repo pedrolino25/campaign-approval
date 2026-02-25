@@ -1,6 +1,6 @@
 import type { Invitation, UserRole } from '@prisma/client'
 
-import { InternalError } from '../../../models'
+import { BusinessRuleViolationError, InternalError } from '../../../models'
 import type {
   OrganizationRepository,
   UserRepository,
@@ -21,6 +21,10 @@ export async function acceptInvitationAndCreateUser(
 }> {
   if (!invitation.role) {
     throw new InternalError('INTERNAL_USER invitation must have a role')
+  }
+
+  if (invitation.expiresAt && invitation.expiresAt <= new Date()) {
+    throw new BusinessRuleViolationError('Invitation has expired')
   }
 
   return await prisma.$transaction(async (tx) => {
