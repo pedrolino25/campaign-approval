@@ -27,13 +27,13 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         method: 'POST',
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/login')
     },
-    onError: () => {
+    onError: async () => {
       // Even if logout fails, clear session and redirect
-      queryClient.invalidateQueries({ queryKey: ['session'] })
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/login')
     },
   })
