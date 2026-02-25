@@ -25,5 +25,5 @@ output "api_url" {
 
 output "api_stage_arn" {
   description = "API Gateway stage ARN (for WAF association)"
-  value       = aws_apigatewayv2_stage.main.arn
+  value       = "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.main.id}/stages/${aws_apigatewayv2_stage.main.name}"
 }
