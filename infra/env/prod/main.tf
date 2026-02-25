@@ -122,9 +122,11 @@ module "lambdas" {
 
   sendgrid_api_key = var.sendgrid_api_key
 
-  database_url          = var.database_url
-  sendgrid_template_ids = var.sendgrid_template_ids
-  app_base_url          = var.app_base_url
+  database_url             = var.database_url
+  sendgrid_template_ids    = var.sendgrid_template_ids
+  app_base_url             = var.app_base_url
+  session_secret           = var.session_secret
+  activation_cookie_secret = var.activation_cookie_secret
 
   tags = var.resource_tags
 }

@@ -226,6 +226,18 @@ variable "frontend_url" {
   type        = string
 }
 
+variable "session_secret" {
+  description = "Secret key for signing session tokens (HS256)"
+  type        = string
+  sensitive   = true
+}
+
+variable "activation_cookie_secret" {
+  description = "Secret key for signing activation cookies (HMAC-SHA256)"
+  type        = string
+  sensitive   = true
+}
+
 variable "waf_auth_rate_limit" {
   description = "WAF rate limit for /auth/* endpoints (requests per 5 minutes per IP)"
   type        = number

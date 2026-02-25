@@ -78,15 +78,17 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      ENVIRONMENT           = var.environment
-      S3_BUCKET_NAME        = var.s3_bucket_name
-      SQS_QUEUE_URL         = var.sqs_queue_url
-      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
-      COGNITO_APP_CLIENT_ID = var.cognito_app_client_id
-      COGNITO_DOMAIN        = var.cognito_domain
-      FRONTEND_URL          = var.frontend_url
-      WORKLIENT_API_URL     = var.worklient_api_url
-      DATABASE_URL          = var.database_url
+      ENVIRONMENT              = var.environment
+      S3_BUCKET_NAME           = var.s3_bucket_name
+      SQS_QUEUE_URL            = var.sqs_queue_url
+      COGNITO_USER_POOL_ID     = var.cognito_user_pool_id
+      COGNITO_APP_CLIENT_ID    = var.cognito_app_client_id
+      COGNITO_DOMAIN           = var.cognito_domain
+      FRONTEND_URL             = var.frontend_url
+      WORKLIENT_API_URL        = var.worklient_api_url
+      DATABASE_URL             = var.database_url
+      SESSION_SECRET           = var.session_secret
+      ACTIVATION_COOKIE_SECRET = var.activation_cookie_secret
     }
   }
 
@@ -124,15 +126,17 @@ resource "aws_lambda_function" "auth" {
 
   environment {
     variables = {
-      ENVIRONMENT           = var.environment
-      S3_BUCKET_NAME        = var.s3_bucket_name
-      SQS_QUEUE_URL         = var.sqs_queue_url
-      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
-      COGNITO_APP_CLIENT_ID = var.cognito_app_client_id
-      COGNITO_DOMAIN        = var.cognito_domain
-      FRONTEND_URL          = var.frontend_url
-      WORKLIENT_API_URL     = var.worklient_api_url
-      DATABASE_URL          = var.database_url
+      ENVIRONMENT              = var.environment
+      S3_BUCKET_NAME           = var.s3_bucket_name
+      SQS_QUEUE_URL            = var.sqs_queue_url
+      COGNITO_USER_POOL_ID     = var.cognito_user_pool_id
+      COGNITO_APP_CLIENT_ID    = var.cognito_app_client_id
+      COGNITO_DOMAIN           = var.cognito_domain
+      FRONTEND_URL             = var.frontend_url
+      WORKLIENT_API_URL        = var.worklient_api_url
+      DATABASE_URL             = var.database_url
+      SESSION_SECRET           = var.session_secret
+      ACTIVATION_COOKIE_SECRET = var.activation_cookie_secret
     }
   }
 

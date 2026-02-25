@@ -225,3 +225,15 @@ variable "frontend_url" {
   description = "Frontend application URL"
   type        = string
 }
+
+variable "session_secret" {
+  description = "Secret key for signing session tokens (HS256)"
+  type        = string
+  sensitive   = true
+}
+
+variable "activation_cookie_secret" {
+  description = "Secret key for signing activation cookies (HMAC-SHA256)"
+  type        = string
+  sensitive   = true
+}
