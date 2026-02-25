@@ -1,3 +1,4 @@
+import { OpenAPIGenerator, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
 
 import {
@@ -33,7 +34,6 @@ import {
   UserParamsOpenAPISchema,
   ValidationErrorResponseSchema,
 } from './openapi.registry'
-import { OpenAPIGenerator, OpenAPIRegistry } from './openapi-adapter'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable max-lines-per-function */
@@ -105,7 +105,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     summary: 'Get organization details',
     description: 'Retrieve the current organization information',
     security: [{ bearerAuth: [] }],
-    responses: {
+      responses: {
       200: {
         description: 'Organization details',
         content: {
@@ -157,7 +157,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Organization updated successfully',
         content: {
@@ -225,7 +225,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -306,7 +306,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       200: {
         description: 'Onboarding completed',
         content: {
@@ -425,7 +425,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
     },
-    responses: {
+      responses: {
       201: {
         description: 'User invited',
         content: {
@@ -2177,7 +2177,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'Notification management endpoints',
       },
     ],
-  }, registry)
+  })
   
   return document as unknown as Record<string, unknown>
 }
