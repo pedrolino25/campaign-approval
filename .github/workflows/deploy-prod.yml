@@ -21,11 +21,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
+
+      - name: Force npm public registry
+        working-directory: api
+        run: npm config set registry https://registry.npmjs.org/
 
       - name: Install API dependencies
         working-directory: api
-        run: npm install
+        run: npm ci
 
       - name: Run API typecheck
         working-directory: api
