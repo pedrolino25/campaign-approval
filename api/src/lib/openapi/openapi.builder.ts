@@ -1239,64 +1239,6 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   registry.registerPath({
-    method: 'post',
-    path: '/review-items/{id}/approve',
-    tags: ['Review Items'],
-    summary: 'Approve review item',
-    description: 'Approve a review item',
-    security: [{ bearerAuth: [] }],
-    request: {
-      params: ReviewItemParamsOpenAPISchema,
-    },
-    responses: {
-      200: {
-        description: 'Review item approved',
-        content: {
-          'application/json': {
-            schema: z.object({
-              message: z.string(),
-              reviewItemId: z.string(),
-              userId: z.string(),
-            }),
-          },
-        },
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: UnauthorizedErrorResponseSchema,
-          },
-        },
-      },
-      404: {
-        description: 'Review item not found',
-        content: {
-          'application/json': {
-            schema: NotFoundErrorResponseSchema,
-          },
-        },
-      },
-      409: {
-        description: 'Invalid state transition',
-        content: {
-          'application/json': {
-            schema: ConflictErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: InternalErrorResponseSchema,
-          },
-        },
-      },
-    },
-  })
-
-  registry.registerPath({
     method: 'get',
     path: '/review-items/{id}',
     tags: ['Review Items'],

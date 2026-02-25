@@ -1073,7 +1073,7 @@
         }
       }
     },
-    "/onboarding/internal": {
+    "/auth/complete-signup/internal": {
       "post": {
         "tags": [
           "Onboarding"
@@ -1555,7 +1555,7 @@
         }
       }
     },
-    "/onboarding/reviewer": {
+    "/auth/complete-signup/reviewer": {
       "post": {
         "tags": [
           "Onboarding"
@@ -8361,13 +8361,427 @@
         }
       }
     },
-    "/review-items/{id}/approve": {
+    "/review-items/{id}": {
+      "get": {
+        "tags": [
+          "Review Items"
+        ],
+        "summary": "Get review item",
+        "description": "Retrieve a specific review item by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review item details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Forbidden error response",
+                  "example": {
+                    "error": {
+                      "code": "FORBIDDEN",
+                      "message": "Access denied"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Review item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Not found error response",
+                  "example": {
+                    "error": {
+                      "code": "NOT_FOUND",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{id}/send": {
       "post": {
         "tags": [
           "Review Items"
         ],
-        "summary": "Approve review item",
-        "description": "Approve a review item",
+        "summary": "Send review item for review",
+        "description": "Send a review item to reviewers",
         "security": [
           {
             "bearerAuth": []
@@ -8399,7 +8813,7 @@
                   "expectedVersion"
                 ],
                 "additionalProperties": false,
-                "description": "Approve review request",
+                "description": "Send for review request",
                 "example": {
                   "expectedVersion": 1
                 }
@@ -8409,7 +8823,7 @@
         },
         "responses": {
           "200": {
-            "description": "Review item approved",
+            "description": "Review item sent",
             "content": {
               "application/json": {
                 "schema": {
@@ -8892,427 +9306,13 @@
         }
       }
     },
-    "/review-items/{id}": {
-      "get": {
-        "tags": [
-          "Review Items"
-        ],
-        "summary": "Get review item",
-        "description": "Retrieve a specific review item by ID",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Review item details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {}
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "0": "B",
-                  "1": "a",
-                  "2": "s",
-                  "3": "e",
-                  "4": "E",
-                  "5": "r",
-                  "6": "r",
-                  "7": "o",
-                  "8": "r",
-                  "9": "R",
-                  "10": "e",
-                  "11": "s",
-                  "12": "p",
-                  "13": "o",
-                  "14": "n",
-                  "15": "s",
-                  "16": "e",
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "0": "E",
-                      "1": "r",
-                      "2": "r",
-                      "3": "o",
-                      "4": "r",
-                      "5": "O",
-                      "6": "b",
-                      "7": "j",
-                      "8": "e",
-                      "9": "c",
-                      "10": "t",
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "0": "E",
-                            "1": "r",
-                            "2": "r",
-                            "3": "o",
-                            "4": "r",
-                            "5": "D",
-                            "6": "e",
-                            "7": "t",
-                            "8": "a",
-                            "9": "i",
-                            "10": "l",
-                            "type": "object",
-                            "properties": {
-                              "field": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "field",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "description": "Unauthorized error response",
-                  "example": {
-                    "error": {
-                      "code": "UNAUTHORIZED",
-                      "message": "Unauthorized"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "0": "B",
-                  "1": "a",
-                  "2": "s",
-                  "3": "e",
-                  "4": "E",
-                  "5": "r",
-                  "6": "r",
-                  "7": "o",
-                  "8": "r",
-                  "9": "R",
-                  "10": "e",
-                  "11": "s",
-                  "12": "p",
-                  "13": "o",
-                  "14": "n",
-                  "15": "s",
-                  "16": "e",
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "0": "E",
-                      "1": "r",
-                      "2": "r",
-                      "3": "o",
-                      "4": "r",
-                      "5": "O",
-                      "6": "b",
-                      "7": "j",
-                      "8": "e",
-                      "9": "c",
-                      "10": "t",
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "0": "E",
-                            "1": "r",
-                            "2": "r",
-                            "3": "o",
-                            "4": "r",
-                            "5": "D",
-                            "6": "e",
-                            "7": "t",
-                            "8": "a",
-                            "9": "i",
-                            "10": "l",
-                            "type": "object",
-                            "properties": {
-                              "field": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "field",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "description": "Forbidden error response",
-                  "example": {
-                    "error": {
-                      "code": "FORBIDDEN",
-                      "message": "Access denied"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Review item not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "0": "B",
-                  "1": "a",
-                  "2": "s",
-                  "3": "e",
-                  "4": "E",
-                  "5": "r",
-                  "6": "r",
-                  "7": "o",
-                  "8": "r",
-                  "9": "R",
-                  "10": "e",
-                  "11": "s",
-                  "12": "p",
-                  "13": "o",
-                  "14": "n",
-                  "15": "s",
-                  "16": "e",
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "0": "E",
-                      "1": "r",
-                      "2": "r",
-                      "3": "o",
-                      "4": "r",
-                      "5": "O",
-                      "6": "b",
-                      "7": "j",
-                      "8": "e",
-                      "9": "c",
-                      "10": "t",
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "0": "E",
-                            "1": "r",
-                            "2": "r",
-                            "3": "o",
-                            "4": "r",
-                            "5": "D",
-                            "6": "e",
-                            "7": "t",
-                            "8": "a",
-                            "9": "i",
-                            "10": "l",
-                            "type": "object",
-                            "properties": {
-                              "field": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "field",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "description": "Not found error response",
-                  "example": {
-                    "error": {
-                      "code": "NOT_FOUND",
-                      "message": "Resource not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "0": "B",
-                  "1": "a",
-                  "2": "s",
-                  "3": "e",
-                  "4": "E",
-                  "5": "r",
-                  "6": "r",
-                  "7": "o",
-                  "8": "r",
-                  "9": "R",
-                  "10": "e",
-                  "11": "s",
-                  "12": "p",
-                  "13": "o",
-                  "14": "n",
-                  "15": "s",
-                  "16": "e",
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "0": "E",
-                      "1": "r",
-                      "2": "r",
-                      "3": "o",
-                      "4": "r",
-                      "5": "O",
-                      "6": "b",
-                      "7": "j",
-                      "8": "e",
-                      "9": "c",
-                      "10": "t",
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "0": "E",
-                            "1": "r",
-                            "2": "r",
-                            "3": "o",
-                            "4": "r",
-                            "5": "D",
-                            "6": "e",
-                            "7": "t",
-                            "8": "a",
-                            "9": "i",
-                            "10": "l",
-                            "type": "object",
-                            "properties": {
-                              "field": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "field",
-                              "message"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "description": "Internal server error response",
-                  "example": {
-                    "error": {
-                      "code": "INTERNAL_ERROR",
-                      "message": "An unexpected error occurred"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/review-items/{id}/send": {
+    "/review-items/{id}/approve": {
       "post": {
         "tags": [
           "Review Items"
         ],
-        "summary": "Send review item for review",
-        "description": "Send a review item to reviewers",
+        "summary": "Approve review item",
+        "description": "Approve a review item",
         "security": [
           {
             "bearerAuth": []
@@ -9344,7 +9344,7 @@
                   "expectedVersion"
                 ],
                 "additionalProperties": false,
-                "description": "Send for review request",
+                "description": "Approve review request",
                 "example": {
                   "expectedVersion": 1
                 }
@@ -9354,7 +9354,7 @@
         },
         "responses": {
           "200": {
-            "description": "Review item sent",
+            "description": "Review item approved",
             "content": {
               "application/json": {
                 "schema": {

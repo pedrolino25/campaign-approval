@@ -2,6 +2,9 @@ terraform {
   required_version = ">= 1.5.0"
 }
 
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 # --------------------------------------------
 # WAF Web ACL
 # --------------------------------------------
@@ -165,7 +168,7 @@ resource "aws_iam_role_policy" "waf_logging" {
 
 resource "aws_wafv2_web_acl_logging_configuration" "auth_protection" {
   resource_arn            = aws_wafv2_web_acl.auth_protection.arn
-  log_destination_configs = [aws_cloudwatch_log_group.waf_logs.arn]
+  log_destination_configs = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${trimprefix(aws_cloudwatch_log_group.waf_logs.name, "/")}"]
 
   redacted_fields {
     single_header {
