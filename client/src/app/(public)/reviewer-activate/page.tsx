@@ -1,9 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -12,7 +13,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
-import { Button } from '@/components/ui/button'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -67,7 +67,7 @@ function ReviewerActivateContent() {
           <CardHeader>
             <CardTitle>Activation Failed</CardTitle>
             <CardDescription>
-              We couldn't activate your invitation
+              We couldn&apos;t activate your invitation
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

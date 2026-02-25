@@ -56,13 +56,13 @@ export default function InternalCompleteSignupPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: CompleteSignupFormValues) => {
-      return apiFetch('/auth/complete-signup/internal', {
+      return await apiFetch('/auth/complete-signup/internal', {
         method: 'POST',
         body: JSON.stringify(data),
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/dashboard')
     },
     onError: (err: { status?: number; message?: string }) => {

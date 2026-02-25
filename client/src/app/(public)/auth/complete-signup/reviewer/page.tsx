@@ -23,13 +23,13 @@ export default function ReviewerCompleteSignupPage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      return apiFetch('/auth/complete-signup/reviewer', {
+      return await apiFetch('/auth/complete-signup/reviewer', {
         method: 'POST',
         body: JSON.stringify({ name: session?.email.split('@')[0] || '' }),
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/dashboard')
     },
     onError: () => {
