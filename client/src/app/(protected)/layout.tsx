@@ -3,10 +3,15 @@
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+import { MainShell } from '@/components/layout/main-shell'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { useSession } from '@/lib/auth/use-session'
 
-export default function HomePage() {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const { session, isLoading } = useSession()
   const router = useRouter()
 
@@ -20,17 +25,29 @@ export default function HomePage() {
       return
     }
 
+    // Onboarding enforcement
     if (!session.onboardingCompleted) {
       if (session.actorType === 'INTERNAL') {
         router.push('/auth/complete-signup/internal')
       } else if (session.actorType === 'REVIEWER') {
         router.push('/auth/complete-signup/reviewer')
       }
-      return
     }
-
-    router.push('/dashboard')
   }, [session, isLoading, router])
 
-  return <FullScreenLoader />
+  if (isLoading) {
+    return <FullScreenLoader />
+  }
+
+  if (session === null) {
+    return <FullScreenLoader />
+  }
+
+  // If onboarding not completed, show loader while redirecting
+  if (!session.onboardingCompleted) {
+    return <FullScreenLoader />
+  }
+
+  return <MainShell>{children}</MainShell>
 }
+
