@@ -98,6 +98,22 @@ export function transformApiError(
 ): ParsedError {
   const { status, code, message, details } = rawError
 
+  if (message && ERROR_REGISTRY[message]) {
+    const definition = ERROR_REGISTRY[message]
+    return createParsedError({
+      code: message,
+      message: definition.technicalMessage || message,
+      category: definition.category,
+      severity: definition.severity,
+      userMessage: definition.userMessage,
+      statusCode: status,
+      details,
+      retryable: definition.retryable,
+      retryAfter: definition.retryAfter,
+      originalError,
+    })
+  }
+
   if (code && ERROR_REGISTRY[code]) {
     const definition = ERROR_REGISTRY[code]
     return createParsedError({

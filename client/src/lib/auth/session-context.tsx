@@ -56,7 +56,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['session'],
     queryFn: () => apiFetch<Session>('/auth/me'),
     retry: false,
-    enabled: !isPublic,
   })
 
   useEffect(() => {

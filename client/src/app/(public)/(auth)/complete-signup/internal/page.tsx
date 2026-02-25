@@ -1,7 +1,6 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { type ControllerRenderProps, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -25,7 +24,8 @@ import {
 } from '@/components/ui/form'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
-import { apiFetch, getErrorMessage } from '@/lib/api/client'
+import { getErrorMessage } from '@/lib/api/client'
+import { useCompleteSignupInternalMutation } from '@/lib/auth/auth-mutations'
 import { useSession } from '@/lib/auth/use-session'
 
 const completeSignupSchema = z.object({
@@ -44,7 +44,6 @@ type CompleteSignupFormValues = z.infer<typeof completeSignupSchema>
 export default function InternalCompleteSignupPage() {
   const { session, isLoading: sessionLoading } = useSession()
   const router = useRouter()
-  const queryClient = useQueryClient()
 
   const form = useForm<CompleteSignupFormValues>({
     resolver: zodResolver(completeSignupSchema),
@@ -54,41 +53,28 @@ export default function InternalCompleteSignupPage() {
     },
   })
 
-  const mutation = useMutation({
-    mutationFn: async (data: CompleteSignupFormValues) => {
-      return await apiFetch('/auth/complete-signup/internal', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      })
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/dashboard')
-    },
-    onError: (err: unknown) => {
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
+  const mutation = useCompleteSignupInternalMutation()
 
-  // Show loading while checking session
+  const onSubmit = (data: CompleteSignupFormValues) => {
+    mutation.mutate(data, {
+      onError: (err) => {
+        form.setError('root', {
+          message: getErrorMessage(err),
+        })
+      },
+    })
+  }
+
   if (sessionLoading) {
     return <FullScreenLoader />
   }
 
-  // If already onboarded, redirect to dashboard
   if (session?.onboardingCompleted) {
     router.push('/dashboard')
     return <FullScreenLoader />
   }
 
-  // Show error if no session or wrong actor type (don't redirect - this is a public page)
   const showError = !session || session.actorType !== 'INTERNAL'
-
-  const onSubmit = (data: CompleteSignupFormValues) => {
-    mutation.mutate(data)
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
