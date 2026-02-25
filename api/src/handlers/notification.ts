@@ -18,7 +18,6 @@ import {
   ForbiddenError,
   NotFoundError,
   type RouteDefinition,
-  UnauthorizedError,
 } from '../models'
 import { ClientReviewerRepository } from '../repositories'
 import { NotificationService } from '../services'
@@ -93,20 +92,7 @@ const validateNotificationOwnership = (
   }
 }
 
-const getOrganizationIdForActor = (
-  actor: { type: ActorType; organizationId?: string },
-  queryOrganizationId: string | undefined
-): string => {
-  if (actor.type === ActorType.Internal) {
-    return actor.organizationId!
-  }
-
-  if (!queryOrganizationId) {
-    throw new UnauthorizedError('Organization ID is required for reviewers')
-  }
-
-  return queryOrganizationId
-}
+// Removed - organizationId now derived from clientId for reviewers
 
 const handleGetNotifications = async (
   request: HttpRequest
@@ -141,11 +127,17 @@ const handleGetNotifications = async (
     }
   } else {
     const reviewerId = actor.reviewerId
-    const organizationId = request.query?.organizationId as string | undefined
-
-    if (!organizationId) {
-      throw new UnauthorizedError('Organization ID is required for reviewers')
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
     }
+    const organizationId = client.organizationId
 
     authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
       organizationId,
@@ -181,10 +173,22 @@ const handlePatchNotificationRead = async (
   const actor = request.auth.actor
   const notificationService = new NotificationService()
 
-  const organizationId = getOrganizationIdForActor(
-    actor,
-    request.query?.organizationId as string | undefined
-  )
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId!
+  } else {
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
+  }
 
   if (actor.type === ActorType.Internal) {
     authorizeOrThrow(actor, Action.VIEW_ORGANIZATION, {

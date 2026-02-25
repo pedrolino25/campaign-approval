@@ -29,7 +29,7 @@ export interface ICommentRepository {
     reviewItemId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Comment>>
-  delete(id: string): Promise<void>
+  deleteScoped(id: string, organizationId: string): Promise<void>
 }
 
 export class CommentRepository implements ICommentRepository {
@@ -87,9 +87,14 @@ export class CommentRepository implements ICommentRepository {
     }
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.comment.delete({
-      where: { id },
+  async deleteScoped(id: string, organizationId: string): Promise<void> {
+    await prisma.comment.deleteMany({
+      where: {
+        id,
+        reviewItem: {
+          organizationId,
+        },
+      },
     })
   }
 }

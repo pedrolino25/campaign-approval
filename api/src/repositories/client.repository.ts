@@ -33,6 +33,7 @@ export interface IClientRepository {
     name: string,
     organizationId: string
   ): Promise<Client | null>
+  findByIdForReviewer(clientId: string, reviewerId: string): Promise<Client | null>
 }
 
 export class ClientRepository implements IClientRepository {
@@ -123,11 +124,23 @@ export class ClientRepository implements IClientRepository {
     })
   }
 
-  async getOrganizationId(clientId: string): Promise<string | null> {
-    const client = await prisma.client.findUnique({
-      where: { id: clientId },
-      select: { organizationId: true },
+  async findByIdForReviewer(clientId: string, reviewerId: string): Promise<Client | null> {
+    // Validate reviewer has access to this client via ClientReviewer link
+    const clientReviewer = await prisma.clientReviewer.findFirst({
+      where: {
+        reviewerId,
+        clientId,
+        archivedAt: null,
+      },
+      include: {
+        client: true,
+      },
     })
-    return client?.organizationId ?? null
+
+    if (!clientReviewer || clientReviewer.client.archivedAt !== null) {
+      return null
+    }
+
+    return clientReviewer.client
   }
 }

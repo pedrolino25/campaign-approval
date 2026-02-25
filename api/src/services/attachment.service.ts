@@ -184,9 +184,12 @@ export class AttachmentService implements IAttachmentService {
       const s3KeyParts = s3Key.split('/')
       const versionFromS3Key = s3KeyParts.length >= 5 ? parseInt(s3KeyParts[4] as string, 10) : null
       
-      // Get current review item to verify version
-      const currentReviewItem = await tx.reviewItem.findUnique({
-        where: { id: reviewItemId },
+      // Get current review item to verify version (use scoped method)
+      const currentReviewItem = await tx.reviewItem.findFirst({
+        where: {
+          id: reviewItemId,
+          organizationId: reviewItem.organizationId,
+        },
       })
 
       if (!currentReviewItem) {
@@ -253,8 +256,14 @@ export class AttachmentService implements IAttachmentService {
         throw new ForbiddenError('Cannot delete attachment from archived review item')
       }
 
-      const attachment = await tx.attachment.findUnique({
-        where: { id: attachmentId },
+      // Load attachment using scoped method
+      const attachment = await tx.attachment.findFirst({
+        where: {
+          id: attachmentId,
+          reviewItem: {
+            organizationId: reviewItem.organizationId,
+          },
+        },
       })
 
       if (!attachment) {

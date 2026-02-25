@@ -9,7 +9,6 @@ import {
   validateQuery,
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
-import { enrichReviewerActorFromOrganization } from '../lib/auth/utils/enrich-reviewer-actor'
 import {
   AddCommentSchema,
   CommentParamsSchema,
@@ -22,7 +21,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ClientReviewerRepository, CommentRepository, ReviewItemRepository } from '../repositories'
+import { CommentRepository, ReviewItemRepository } from '../repositories'
 import { CommentService } from '../services'
 
 const handleGetComments = async (
@@ -66,24 +65,23 @@ const handlePostComment = async (
   const withParams = validateParams(CommentParamsSchema)(request)
   const validated = validateBody(AddCommentSchema)(withParams)
   
-  let actor = request.auth.actor
+  const actor = request.auth.actor
   const reviewItemId = validated.params.id!
 
   let organizationId: string
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      organizationId,
-      clientReviewerRepository
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
     )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
   }
   
   const reviewItemRepository = new ReviewItemRepository()
@@ -127,10 +125,17 @@ const handleDeleteComment = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
     }
+    organizationId = client.organizationId
   }
 
   const commentRepository = new CommentRepository()

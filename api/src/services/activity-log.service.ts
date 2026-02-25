@@ -96,8 +96,12 @@ export class ActivityLogService implements IActivityLogService {
     organizationId: string,
     tx: Prisma.TransactionClient
   ): Promise<void> {
-    const reviewItem = await tx.reviewItem.findUnique({
-      where: { id: reviewItemId },
+    // Use scoped method to validate reviewItem belongs to organization
+    const reviewItem = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItemId,
+        organizationId,
+      },
       select: { organizationId: true },
     })
 

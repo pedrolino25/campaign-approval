@@ -289,8 +289,13 @@ export class NotificationService {
     tx: Prisma.TransactionClient
   ): Promise<void> {
     if (recipient.userId) {
-      const user = await tx.user.findUnique({
-        where: { id: recipient.userId },
+      // Use scoped method to validate user belongs to organization
+      const user = await tx.user.findFirst({
+        where: {
+          id: recipient.userId,
+          organizationId,
+          archivedAt: null,
+        },
         select: { organizationId: true },
       })
 

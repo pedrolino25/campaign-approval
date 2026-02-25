@@ -61,10 +61,21 @@ export class CommentService implements ICommentService {
   async listComments(params: ListCommentsParams): Promise<CursorPaginationResult<Comment>> {
     const { reviewItemId, actor, pagination } = params
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let organizationId: string
+    if (actor.type === ActorType.Internal) {
+      organizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId!,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      organizationId = client.organizationId
+    }
 
     const reviewItem = await this.reviewItemRepository.findByIdScoped(
       reviewItemId,
@@ -87,10 +98,21 @@ export class CommentService implements ICommentService {
     this.validateCoordinates(xCoordinate, yCoordinate)
     this.validateTimestamp(timestampSeconds)
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let organizationId: string
+    if (actor.type === ActorType.Internal) {
+      organizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId!,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      organizationId = client.organizationId
+    }
 
     return await prisma.$transaction(async (tx) => {
       const reviewItem = await this.loadAndValidateReviewItem(
@@ -262,10 +284,21 @@ export class CommentService implements ICommentService {
   async deleteComment(params: DeleteCommentParams): Promise<void> {
     const { reviewItemId, commentId, actor } = params
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let organizationId: string
+    if (actor.type === ActorType.Internal) {
+      organizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId!,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      organizationId = client.organizationId
+    }
 
     await prisma.$transaction(async (tx) => {
       // Validate review item scoping
@@ -284,10 +317,11 @@ export class CommentService implements ICommentService {
 
       this.validateReviewItemAccess(reviewItem, actor, organizationId)
 
-      // Load comment
-      const comment = await tx.comment.findUnique({
-        where: { id: commentId },
-      })
+      // Load comment using scoped method
+      const comment = await this.commentRepository.findByIdScoped(
+        commentId,
+        organizationId
+      )
 
       if (!comment) {
         throw new NotFoundError('Comment not found')
@@ -316,10 +350,8 @@ export class CommentService implements ICommentService {
         }
       }
 
-      // Delete comment
-      await tx.comment.delete({
-        where: { id: commentId },
-      })
+      // Delete comment using scoped method
+      await this.commentRepository.deleteScoped(commentId, organizationId)
 
       // Create ActivityLog
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.COMMENT_DELETED] = {
@@ -371,16 +403,5 @@ export class CommentService implements ICommentService {
         throw new InvariantViolationError('INVALID_COMMENT_AUTHOR')
       }
     }
-  }
-
-  private async getOrganizationIdFromClient(clientId: string): Promise<string> {
-    const clientRepository = new ClientRepository()
-    const organizationId = await clientRepository.getOrganizationId(clientId)
-
-    if (!organizationId) {
-      throw new NotFoundError('Client not found')
-    }
-
-    return organizationId
   }
 }

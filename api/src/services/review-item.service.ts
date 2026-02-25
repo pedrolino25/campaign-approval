@@ -84,10 +84,21 @@ export class ReviewItemService implements IReviewItemService {
   async archiveReviewItem(input: ArchiveReviewItemInput): Promise<void> {
     const { actor, reviewItemId } = input
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let organizationId: string
+    if (actor.type === ActorType.Internal) {
+      organizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      organizationId = client.organizationId
+    }
 
     await prisma.$transaction(async (tx) => {
       const reviewItem = await tx.reviewItem.findFirst({
@@ -137,16 +148,5 @@ export class ReviewItemService implements IReviewItemService {
         tx,
       })
     })
-  }
-
-  private async getOrganizationIdFromClient(clientId: string): Promise<string> {
-    const clientRepository = new ClientRepository()
-    const organizationId = await clientRepository.getOrganizationId(clientId)
-
-    if (!organizationId) {
-      throw new NotFoundError('Client not found')
-    }
-
-    return organizationId
   }
 }

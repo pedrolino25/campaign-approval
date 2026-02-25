@@ -10,7 +10,6 @@ import {
   WorkflowAction,
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
-import { enrichReviewerActorFromOrganization } from '../lib/auth/utils/enrich-reviewer-actor'
 import {
   ApproveReviewSchema,
   CreateReviewItemSchema,
@@ -29,7 +28,6 @@ import { ActivityLogActionType } from '../models/activity-log'
 import {
   ActivityLogRepository,
   AttachmentRepository,
-  ClientReviewerRepository,
   ReviewItemRepository,
 } from '../repositories'
 import {
@@ -119,11 +117,17 @@ const handleGetReviewItems = async (
       limit: validatedQuery.query.limit as number | undefined,
     })
   } else {
-    // REVIEWER: List by organizationId (from query param) and clientId
-    const organizationId = request.query?.organizationId as string | undefined
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
     }
+    const organizationId = client.organizationId
     
     result = await repository.listByClient(actor.clientId, organizationId, {
       cursor: validatedQuery.query.cursor,
@@ -176,7 +180,7 @@ const handleGetReviewItem = async (
 ): Promise<HttpResponse> => {
   const validated = validateParams(ReviewItemParamsSchema)(request)
   
-  let actor = request.auth.actor
+  const actor = request.auth.actor
   const reviewItemId = validated.params.id!
   const repository = new ReviewItemRepository()
   
@@ -187,18 +191,18 @@ const handleGetReviewItem = async (
     organizationId = actor.organizationId
     reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
-    
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      organizationId,
-      clientReviewerRepository
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
     )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
+    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
   }
 
   if (!reviewItem) {
@@ -239,7 +243,7 @@ const handleSendReviewItem = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(SendForReviewSchema)(validatedParams)
   
-  let actor = request.auth.actor
+  const actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
 
@@ -249,17 +253,17 @@ const handleSendReviewItem = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      organizationId,
-      clientReviewerRepository
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
     )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
   }
   
   const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
@@ -296,7 +300,7 @@ const handleApproveReviewItem = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(ApproveReviewSchema)(validatedParams)
   
-  let actor = request.auth.actor
+  const actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
 
@@ -306,17 +310,17 @@ const handleApproveReviewItem = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      organizationId,
-      clientReviewerRepository
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
     )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
   }
   
   const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
@@ -353,7 +357,7 @@ const handleRequestChanges = async (
   const validatedParams = validateParams(ReviewItemParamsSchema)(request)
   const validatedBody = validateBody(RequestChangesSchema)(validatedParams)
   
-  let actor = request.auth.actor
+  const actor = request.auth.actor
   const reviewItemId = validatedBody.params.id!
   const expectedVersion = validatedBody.body.expectedVersion
 
@@ -363,17 +367,17 @@ const handleRequestChanges = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
-    }
-    
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      organizationId,
-      clientReviewerRepository
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
     )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    organizationId = client.organizationId
   }
   
   const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
@@ -440,10 +444,17 @@ const handleGetActivity = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    organizationId = request.query?.organizationId as string
-    if (!organizationId) {
-      throw new NotFoundError('Organization not found')
+    // REVIEWER: Derive organizationId from clientId
+    const { ClientRepository } = await import('../repositories')
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
     }
+    organizationId = client.organizationId
   }
 
   const reviewItemId = validatedQuery.params.id!

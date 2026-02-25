@@ -79,10 +79,21 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
     const { reviewItemId, action, actor, expectedVersion } = input
 
-    const actorOrganizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let actorOrganizationId: string
+    if (actor.type === ActorType.Internal) {
+      actorOrganizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      actorOrganizationId = client.organizationId
+    }
 
     const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
 
@@ -245,8 +256,12 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       )
     }
 
-    const updated = await tx.reviewItem.findUnique({
-      where: { id: reviewItem.id },
+    // Fetch updated review item using scoped method
+    const updated = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItem.id,
+        organizationId: reviewItem.organizationId,
+      },
     })
 
     if (!updated) {
@@ -345,18 +360,5 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       }
       return
     }
-  }
-
-  private async getOrganizationIdFromClient(
-    clientId: string
-  ): Promise<string> {
-    const clientRepository = new ClientRepository()
-    const organizationId = await clientRepository.getOrganizationId(clientId)
-
-    if (!organizationId) {
-      throw new NotFoundError('Client not found')
-    }
-
-    return organizationId
   }
 }
