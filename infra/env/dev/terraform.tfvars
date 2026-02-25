@@ -31,8 +31,27 @@ api_stage_name = "v1"
 
 enable_api_cors = true
 
+# CORS allowed origins
+# Note: Lambda code also handles localhost on any port and .vercel.app domains
+# API Gateway requires explicit origins (no wildcards), so we list common localhost ports
 api_cors_allowed_origins = [
-  "https://worklient.com"
+  "https://worklient.com",
+  "https://worklient-git-develop-lynulabs-projects.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://localhost:3003",
+  "http://localhost:3004",
+  "http://localhost:3005",
+  "http://localhost:3006",
+  "http://localhost:3007",
+  "http://localhost:3008",
+  "http://localhost:3009",
+  "http://localhost:3010",
+  "http://localhost:5173", # Vite default
+  "http://localhost:5174", # Vite alternate
+  "http://localhost:8080", # Common dev server
+  "http://localhost:8081", # Common dev server
 ]
 
 api_cors_allowed_methods = [
@@ -44,7 +63,8 @@ api_cors_allowed_methods = [
 
 api_cors_allowed_headers = [
   "Authorization",
-  "Content-Type"
+  "Content-Type",
+  "Cookie"
 ]
 
 email_mx_records = [

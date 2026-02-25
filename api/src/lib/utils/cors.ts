@@ -14,7 +14,7 @@ function isAllowedOrigin(origin: string | undefined): boolean {
     return true
   }
 
-  if (origin.endsWith('.vercel.app')) {
+  if (origin.startsWith('http://localhost:') || origin.endsWith('.vercel.app')) {
     return true
   }
 
@@ -78,7 +78,7 @@ export function handlePreflightRequest(
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     },
     body: '',
   }
