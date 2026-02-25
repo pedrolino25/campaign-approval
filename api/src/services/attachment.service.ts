@@ -1,9 +1,10 @@
-import { type Attachment, type ReviewItem, ReviewStatus } from '@prisma/client'
+import { type Attachment, Prisma, type ReviewItem, ReviewStatus } from '@prisma/client'
 import { randomUUID } from 'crypto'
 
-import { prisma } from '../lib'
+import { logger, prisma } from '../lib'
 import { S3Service } from '../lib/s3'
 import {
+  ConflictError,
   ForbiddenError,
   NotFoundError,
 } from '../models'
@@ -117,7 +118,7 @@ export class AttachmentService implements IAttachmentService {
 
     const organizationId = actor.organizationId
 
-    return await prisma.$transaction(async (tx) => {
+    const { finalVersion, s3Key } = await prisma.$transaction(async (tx) => {
       const reviewItem = await this.reviewItemRepository.findByIdScoped(
         reviewItemId,
         organizationId
@@ -131,7 +132,7 @@ export class AttachmentService implements IAttachmentService {
         throw new ForbiddenError('Cannot upload attachment to archived review item')
       }
 
-      const { finalVersion } = await this.incrementVersionIfNeeded(
+      const { finalVersion: version } = await this.incrementVersionIfNeeded(
         tx,
         reviewItem,
         reviewItemId,
@@ -140,20 +141,26 @@ export class AttachmentService implements IAttachmentService {
 
       const uniqueId = randomUUID()
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const s3Key = `${reviewItem.organizationId}/${reviewItem.clientId}/${reviewItemId}/${finalVersion}/${uniqueId}-${sanitizedFileName}`
-
-      const presignedUrl = await this.s3Service.generatePresignedUploadUrl(
-        s3Key,
-        fileType,
-        3600
-      )
+      const key = `${reviewItem.organizationId}/${reviewItem.clientId}/${reviewItemId}/${version}/${uniqueId}-${sanitizedFileName}`
 
       return {
-        presignedUrl,
-        s3Key,
-        version: finalVersion,
+        finalVersion: version,
+        s3Key: key,
       }
     })
+
+    // Generate presigned URL AFTER transaction commits
+    const presignedUrl = await this.s3Service.generatePresignedUploadUrl(
+      s3Key,
+      fileType,
+      3600
+    )
+
+    return {
+      presignedUrl,
+      s3Key,
+      version: finalVersion,
+    }
   }
 
   async confirmUpload(params: ConfirmUploadParams): Promise<Attachment> {
@@ -166,70 +173,132 @@ export class AttachmentService implements IAttachmentService {
     const organizationId = actor.organizationId
 
     return await prisma.$transaction(async (tx) => {
-      const reviewItem = await this.reviewItemRepository.findByIdScoped(
+      const reviewItem = await this.validateReviewItemForUpload(
         reviewItemId,
         organizationId
       )
 
-      if (!reviewItem) {
-        throw new NotFoundError('Review item not found')
-      }
+      const finalVersion = await this.determineAttachmentVersion(
+        tx,
+        reviewItemId,
+        organizationId,
+        s3Key
+      )
 
-      if (reviewItem.archivedAt !== null) {
-        throw new ForbiddenError('Cannot upload attachment to archived review item')
-      }
+      const attachment = await this.createAttachmentWithConflictHandling(
+        tx,
+        reviewItemId,
+        fileName,
+        fileType,
+        fileSize,
+        s3Key,
+        finalVersion
+      )
 
-      // Version was already incremented in generatePresignedUpload
-      // Extract version from S3 key path: {orgId}/{clientId}/{reviewItemId}/{version}/{file}
-      const s3KeyParts = s3Key.split('/')
-      const versionFromS3Key = s3KeyParts.length >= 5 ? parseInt(s3KeyParts[4] as string, 10) : null
-      
-      // Get current review item to verify version (use scoped method)
-      const currentReviewItem = await tx.reviewItem.findFirst({
-        where: {
-          id: reviewItemId,
-          organizationId: reviewItem.organizationId,
-        },
-      })
+      await this.logAttachmentUpload(tx, attachment, reviewItem, actor)
 
-      if (!currentReviewItem) {
-        throw new NotFoundError('Review item not found')
-      }
+      return attachment
+    })
+  }
 
-      // Use version from S3 key if valid, otherwise use current version
-      // The S3 key version should match the current version (set in generatePresignedUpload)
-      const finalVersion = versionFromS3Key && !isNaN(versionFromS3Key) 
-        ? versionFromS3Key 
-        : currentReviewItem.version
+  private async validateReviewItemForUpload(
+    reviewItemId: string,
+    organizationId: string
+  ): Promise<ReviewItem> {
+    const reviewItem = await this.reviewItemRepository.findByIdScoped(
+      reviewItemId,
+      organizationId
+    )
 
-      const attachment = await tx.attachment.create({
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    if (reviewItem.archivedAt !== null) {
+      throw new ForbiddenError('Cannot upload attachment to archived review item')
+    }
+
+    return reviewItem
+  }
+
+  private async determineAttachmentVersion(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewItemId: string,
+    organizationId: string,
+    s3Key: string
+  ): Promise<number> {
+    const s3KeyParts = s3Key.split('/')
+    const versionFromS3Key = s3KeyParts.length >= 5
+      ? parseInt(s3KeyParts[4] as string, 10)
+      : null
+
+    const currentReviewItem = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItemId,
+        organizationId,
+      },
+    })
+
+    if (!currentReviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    return versionFromS3Key && !isNaN(versionFromS3Key)
+      ? versionFromS3Key
+      : currentReviewItem.version
+  }
+
+  private async createAttachmentWithConflictHandling(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewItemId: string,
+    fileName: string,
+    fileType: string,
+    fileSize: number,
+    s3Key: string,
+    version: number
+  ): Promise<Attachment> {
+    try {
+      return await tx.attachment.create({
         data: {
           reviewItemId,
           fileName,
           fileType,
           fileSize,
           s3Key,
-          version: finalVersion,
+          version,
         },
       })
-
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.ATTACHMENT_UPLOADED] = {
-        reviewItemId: attachment.reviewItemId,
-        attachmentId: attachment.id,
-        fileName: attachment.fileName,
-        version: attachment.version,
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictError('Attachment already confirmed')
       }
+      throw error
+    }
+  }
 
-      await this.activityLogService.log({
-        action: ActivityLogActionType.ATTACHMENT_UPLOADED,
-        organizationId: reviewItem.organizationId,
-        actor,
-        metadata,
-        reviewItemId: attachment.reviewItemId,
-        tx,
-      })
+  private async logAttachmentUpload(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    attachment: Attachment,
+    reviewItem: ReviewItem,
+    actor: ActorContext
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.ATTACHMENT_UPLOADED] = {
+      reviewItemId: attachment.reviewItemId,
+      attachmentId: attachment.id,
+      fileName: attachment.fileName,
+      version: attachment.version,
+    }
 
-      return attachment
+    await this.activityLogService.log({
+      action: ActivityLogActionType.ATTACHMENT_UPLOADED,
+      organizationId: reviewItem.organizationId,
+      actor,
+      metadata,
+      reviewItemId: attachment.reviewItemId,
+      tx,
     })
   }
 
@@ -242,7 +311,7 @@ export class AttachmentService implements IAttachmentService {
 
     const organizationId = actor.organizationId
 
-    await prisma.$transaction(async (tx) => {
+    const attachment = await prisma.$transaction(async (tx) => {
       const reviewItem = await this.reviewItemRepository.findByIdScoped(
         reviewItemId,
         organizationId
@@ -257,7 +326,7 @@ export class AttachmentService implements IAttachmentService {
       }
 
       // Load attachment using scoped method
-      const attachment = await tx.attachment.findFirst({
+      const attachmentRecord = await tx.attachment.findFirst({
         where: {
           id: attachmentId,
           reviewItem: {
@@ -266,11 +335,11 @@ export class AttachmentService implements IAttachmentService {
         },
       })
 
-      if (!attachment) {
+      if (!attachmentRecord) {
         throw new NotFoundError('Attachment not found')
       }
 
-      if (attachment.reviewItemId !== reviewItemId) {
+      if (attachmentRecord.reviewItemId !== reviewItemId) {
         throw new NotFoundError('Attachment not found')
       }
 
@@ -278,13 +347,11 @@ export class AttachmentService implements IAttachmentService {
         where: { id: attachmentId },
       })
 
-      await this.s3Service.deleteObject(attachment.s3Key)
-
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.ATTACHMENT_UPLOADED] = {
-        reviewItemId: attachment.reviewItemId,
-        attachmentId: attachment.id,
-        fileName: attachment.fileName,
-        version: attachment.version,
+        reviewItemId: attachmentRecord.reviewItemId,
+        attachmentId: attachmentRecord.id,
+        fileName: attachmentRecord.fileName,
+        version: attachmentRecord.version,
       }
 
       await this.activityLogService.log({
@@ -292,9 +359,25 @@ export class AttachmentService implements IAttachmentService {
         organizationId: reviewItem.organizationId,
         actor,
         metadata,
-        reviewItemId: attachment.reviewItemId,
+        reviewItemId: attachmentRecord.reviewItemId,
         tx,
       })
+
+      return attachmentRecord
     })
+
+    // Delete S3 object AFTER transaction commits
+    try {
+      await this.s3Service.deleteObject(attachment.s3Key)
+    } catch (error) {
+      // Log error but do NOT rollback DB delete
+      // DB is source of truth, S3 delete is best-effort
+      logger.error({
+        message: 'Failed to delete S3 object after attachment deletion',
+        attachmentId: attachment.id,
+        s3Key: attachment.s3Key,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
   }
 }

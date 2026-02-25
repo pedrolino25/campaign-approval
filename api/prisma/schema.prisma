@@ -215,6 +215,7 @@ model Attachment {
 
   reviewItem ReviewItem @relation(fields: [reviewItemId], references: [id])
 
+  @@unique([reviewItemId, s3Key])
   @@index([reviewItemId])
   @@map("attachments")
 }

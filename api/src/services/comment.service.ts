@@ -1,7 +1,7 @@
 import { type Comment, CommentAuthorType, type Prisma } from '@prisma/client'
 
 import { type CursorPaginationParams, type CursorPaginationResult, prisma } from '../lib'
-import { WorkflowEventDispatcher } from '../lib/workflow-events/workflow-event.dispatcher'
+import { type DispatchResult, WorkflowEventDispatcher } from '../lib/workflow-events/workflow-event.dispatcher'
 import {
   ForbiddenError,
   InvariantViolationError,
@@ -47,6 +47,7 @@ export class CommentService implements ICommentService {
   private readonly reviewItemRepository: ReviewItemRepository
   private readonly activityLogService: ActivityLogService
   private readonly workflowEventDispatcher: WorkflowEventDispatcher
+  private readonly notificationService: NotificationService
 
   constructor(
     commentRepository: CommentRepository,
@@ -55,7 +56,8 @@ export class CommentService implements ICommentService {
     this.commentRepository = commentRepository
     this.reviewItemRepository = reviewItemRepository
     this.activityLogService = new ActivityLogService()
-    this.workflowEventDispatcher = new WorkflowEventDispatcher(new NotificationService())
+    this.notificationService = new NotificationService()
+    this.workflowEventDispatcher = new WorkflowEventDispatcher(this.notificationService)
   }
 
   async listComments(params: ListCommentsParams): Promise<CursorPaginationResult<Comment>> {
@@ -86,14 +88,14 @@ export class CommentService implements ICommentService {
 
     const organizationId = await this.resolveOrganizationId(actor)
 
-    return await prisma.$transaction(async (tx) => {
+    const { comment, dispatchResult } = await prisma.$transaction(async (tx) => {
       const reviewItem = await this.loadAndValidateReviewItem(
         reviewItemId,
         organizationId,
         actor
       )
 
-      const comment = await this.createCommentInTransaction(
+      const commentRecord = await this.createCommentInTransaction(
         tx,
         reviewItemId,
         trimmedContent,
@@ -105,17 +107,30 @@ export class CommentService implements ICommentService {
 
       await this.logCommentActivity(
         tx,
-        comment,
+        commentRecord,
         reviewItem,
         xCoordinate,
         yCoordinate,
         timestampSeconds,
         actor
       )
-      await this.dispatchCommentEvent(tx, reviewItem, actor)
+      const result = await this.dispatchCommentEvent(tx, reviewItem, actor)
 
-      return comment
+      return { comment: commentRecord,
+dispatchResult: result }
     })
+
+    // Enqueue emails AFTER transaction commits
+    if (dispatchResult.reviewItem) {
+      for (const notification of dispatchResult.notifications) {
+        await this.notificationService.enqueueEmailJobForNotification(
+          notification,
+          dispatchResult.reviewItem
+        )
+      }
+    }
+
+    return comment
   }
 
   private validateAndTrimContent(content: string): string {
@@ -238,8 +253,8 @@ export class CommentService implements ICommentService {
       Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>
     >,
     actor: ActorContext
-  ): Promise<void> {
-    await this.workflowEventDispatcher.dispatch({
+  ): Promise<DispatchResult> {
+    return await this.workflowEventDispatcher.dispatch({
       type: WorkflowEventType.COMMENT_ADDED,
       payload: {
         reviewItemId: reviewItem.id,

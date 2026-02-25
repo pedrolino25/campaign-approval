@@ -5,6 +5,7 @@ import {
 } from '@prisma/client'
 
 import { prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
+import type { DispatchResult } from '../lib/workflow-events/workflow-event.dispatcher'
 import {
   BusinessRuleViolationError,
   ConflictError,
@@ -65,14 +66,16 @@ export interface IReviewWorkflowService {
 export class ReviewWorkflowService implements IReviewWorkflowService {
   private readonly activityLogService: ActivityLogService
   private readonly workflowEventDispatcher: WorkflowEventDispatcher
+  private readonly notificationService: NotificationService
 
   constructor(
     private readonly reviewItemRepository: ReviewItemRepository,
     private readonly attachmentRepository: AttachmentRepository
   ) {
     this.activityLogService = new ActivityLogService()
+    this.notificationService = new NotificationService()
     this.workflowEventDispatcher = new WorkflowEventDispatcher(
-      new NotificationService()
+      this.notificationService
     )
   }
 
@@ -177,8 +180,8 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     const shouldIncrementVersion = 
       action === WorkflowAction.UPLOAD_NEW_VERSION || shouldUpdateStatus
 
-    return await prisma.$transaction(async (tx) => {
-      const updated = await this.updateReviewItem(
+    const { updated, dispatchResult } = await prisma.$transaction(async (tx) => {
+      const updatedItem = await this.updateReviewItem(
         tx,
         reviewItem,
         newStatus,
@@ -189,28 +192,42 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
       await this.createActivityLog(
         tx,
-        updated,
+        updatedItem,
         actor,
         action,
         previousStatus,
         newStatus
       )
 
+      let dispatchResult: DispatchResult | null = null
       const eventType = mapWorkflowActionToWorkflowEventType(action)
       if (eventType && shouldUpdateStatus) {
-        await this.workflowEventDispatcher.dispatch({
+        dispatchResult = await this.workflowEventDispatcher.dispatch({
           type: eventType,
           payload: {
-            reviewItemId: updated.id,
-            organizationId: updated.organizationId,
+            reviewItemId: updatedItem.id,
+            organizationId: updatedItem.organizationId,
           },
           actor,
           tx,
         })
       }
 
-      return updated
+      return { updated: updatedItem,
+dispatchResult }
     })
+
+    // Enqueue emails AFTER transaction commits
+    if (dispatchResult?.reviewItem) {
+      for (const notification of dispatchResult.notifications) {
+        await this.notificationService.enqueueEmailJobForNotification(
+          notification,
+          dispatchResult.reviewItem
+        )
+      }
+    }
+
+    return updated
   }
 
   private async updateReviewItem(
