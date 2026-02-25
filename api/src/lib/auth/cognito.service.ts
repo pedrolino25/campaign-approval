@@ -3,8 +3,8 @@ import {
   AdminGetUserCommand,
   AuthFlowType,
   ChangePasswordCommand,
-  CognitoIdentityProviderClient,
   CodeMismatchException,
+  CognitoIdentityProviderClient,
   ConfirmForgotPasswordCommand,
   ConfirmSignUpCommand,
   ExpiredCodeException,
@@ -16,9 +16,9 @@ import {
   NotAuthorizedException,
   ResendConfirmationCodeCommand,
   SignUpCommand,
+  UsernameExistsException,
   UserNotConfirmedException,
   UserNotFoundException,
-  UsernameExistsException,
 } from '@aws-sdk/client-cognito-identity-provider'
 import { randomBytes } from 'crypto'
 
@@ -176,6 +176,26 @@ export class CognitoService {
     return authResult
   }
 
+  private handleLoginError(error: unknown): never {
+    if (error instanceof UserNotConfirmedException) {
+      throw new BusinessRuleViolationError('EMAIL_NOT_VERIFIED')
+    }
+    if (
+      error instanceof NotAuthorizedException ||
+      error instanceof UserNotFoundException
+    ) {
+      throw new UnauthorizedError('INVALID_CREDENTIALS')
+    }
+    if (
+      error instanceof ValidationError ||
+      error instanceof BusinessRuleViolationError ||
+      error instanceof UnauthorizedError
+    ) {
+      throw error
+    }
+    throw new InternalError('COGNITO_LOGIN_FAILED')
+  }
+
   async login(
     email: string,
     password: string
@@ -212,19 +232,7 @@ export class CognitoService {
         refreshToken: RefreshToken,
       }
     } catch (error) {
-      if (error instanceof UserNotConfirmedException) {
-        throw new BusinessRuleViolationError('EMAIL_NOT_VERIFIED')
-      }
-      if (
-        error instanceof NotAuthorizedException ||
-        error instanceof UserNotFoundException
-      ) {
-        throw new UnauthorizedError('INVALID_CREDENTIALS')
-      }
-      if (error instanceof ValidationError || error instanceof BusinessRuleViolationError || error instanceof UnauthorizedError) {
-        throw error
-      }
-      throw new InternalError('COGNITO_LOGIN_FAILED')
+      this.handleLoginError(error)
     }
   }
 
@@ -278,6 +286,45 @@ export class CognitoService {
         throw new ValidationError('CODE_EXPIRED')
       }
       throw new InternalError('COGNITO_RESET_FAILED')
+    }
+  }
+
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; idToken: string }> {
+    try {
+      const response = await this.client.send(
+        new InitiateAuthCommand({
+          ClientId: this.clientId,
+          AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
+          AuthParameters: {
+            REFRESH_TOKEN: refreshToken,
+          },
+        })
+      )
+
+      if (!response.AuthenticationResult) {
+        throw new InternalError('COGNITO_REFRESH_FAILED')
+      }
+
+      const { IdToken, AccessToken } = response.AuthenticationResult
+
+      if (!IdToken || !AccessToken) {
+        throw new InternalError('COGNITO_REFRESH_FAILED')
+      }
+
+      return {
+        accessToken: AccessToken,
+        idToken: IdToken,
+      }
+    } catch (error) {
+      if (error instanceof NotAuthorizedException) {
+        throw new UnauthorizedError('INVALID_REFRESH_TOKEN')
+      }
+      if (error instanceof ValidationError || error instanceof UnauthorizedError || error instanceof InternalError) {
+        throw error
+      }
+      throw new InternalError('COGNITO_REFRESH_FAILED')
     }
   }
 

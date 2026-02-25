@@ -22,7 +22,9 @@ import {
   appendSetCookie,
   clearOAuthCookies,
   getSameSiteValue,
+  parseCookies,
 } from '../lib/auth/utils/cookie.utils'
+import { acceptInvitationForEmbeddedAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import { buildErrorResponse } from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
@@ -758,25 +760,12 @@ const handleVerifyEmail = async (
     // Verify token to get userId
     const authContext = await tokenVerifier.verify(tokens.idToken)
 
-    // Handle invitation if provided
-    let reviewerActivationCompleted = false
-    if (validated.inviteToken) {
-      const activationResult = await processReviewerActivation(
-        validated.inviteToken,
-        authContext.userId,
-        validated.email,
-        context,
-        invitationRepository,
-        invitationService
-      )
-      reviewerActivationCompleted = activationResult.success
-    }
-
-    // Create session from tokens
+    // Create session FIRST (before accepting invitation)
+    // This ensures authentication succeeds before consuming invitation
     const sessionResponse = await createSessionFromTokens({
       idToken: tokens.idToken,
-      inviteToken: validated.inviteToken,
-      reviewerActivationCompleted,
+      inviteToken: undefined, // Don't pass inviteToken to session creation
+      reviewerActivationCompleted: false,
       context,
       userRepository,
       reviewerRepository,
@@ -786,6 +775,15 @@ const handleVerifyEmail = async (
       sessionService,
       tokenVerifier,
     })
+
+    if (validated.inviteToken) {
+      await acceptInvitationAfterSession(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context
+      )
+    }
 
     try {
       logger.info({
@@ -871,27 +869,15 @@ const handleEmbeddedLogin = async (
 
     const tokens = await cognitoService.login(validated.email, validated.password)
 
-    // Handle invitation if provided
-    let reviewerActivationCompleted = false
-    if (validated.inviteToken) {
-      // First verify token to get userId
-      const authContext = await tokenVerifier.verify(tokens.idToken)
-      const activationResult = await processReviewerActivation(
-        validated.inviteToken,
-        authContext.userId,
-        validated.email,
-        context,
-        invitationRepository,
-        invitationService
-      )
-      reviewerActivationCompleted = activationResult.success
-    }
+    // Verify token to get userId
+    const authContext = await tokenVerifier.verify(tokens.idToken)
 
-    // Create session from tokens
+    // Create session FIRST (before accepting invitation)
+    // This ensures authentication succeeds before consuming invitation
     const sessionResponse = await createSessionFromTokens({
       idToken: tokens.idToken,
-      inviteToken: validated.inviteToken,
-      reviewerActivationCompleted,
+      inviteToken: undefined, // Don't pass inviteToken to session creation
+      reviewerActivationCompleted: false,
       context,
       userRepository,
       reviewerRepository,
@@ -901,6 +887,17 @@ const handleEmbeddedLogin = async (
       sessionService,
       tokenVerifier,
     })
+
+    // Accept invitation AFTER session is successfully created
+    // This prevents invitation from being consumed if session creation fails
+    if (validated.inviteToken) {
+      await acceptInvitationAfterSession(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context
+      )
+    }
 
     return sessionResponse
   } catch (error) {
@@ -1007,20 +1004,72 @@ const handleResetPassword = async (
   }
 }
 
+function extractRefreshTokenFromCookies(
+  cookieString: string
+): string | undefined {
+  const cookies = parseCookies(cookieString)
+  return cookies['worklient_refresh_token'] || undefined
+}
+
+async function acceptInvitationAfterSession(
+  inviteToken: string,
+  userId: string,
+  email: string,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<void> {
+  try {
+    await acceptInvitationForEmbeddedAuth(
+      inviteToken,
+      userId,
+      email,
+      context,
+      invitationRepository,
+      invitationService
+    )
+  } catch (error) {
+    // Log error but don't fail the request - session is already created
+    try {
+      logger.warn({
+        source: 'auth',
+        event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+          email,
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+  }
+}
+
 async function changeUserPassword(
   email: string,
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
+  refreshToken?: string
 ): Promise<void> {
-  // Verify old password by attempting login to get access token
-  const loginResult = await cognitoService.login(email, oldPassword)
-  
+  let accessToken: string
+
+  // Try to use refresh token first if available (more efficient)
+  if (refreshToken) {
+    try {
+      const refreshResult = await cognitoService.refreshAccessToken(refreshToken)
+      accessToken = refreshResult.accessToken
+    } catch {
+      // If refresh token fails, fall back to old password
+      const loginResult = await cognitoService.login(email, oldPassword)
+      accessToken = loginResult.accessToken
+    }
+  } else {
+    // No refresh token available, use old password to get access token
+    const loginResult = await cognitoService.login(email, oldPassword)
+    accessToken = loginResult.accessToken
+  }
+
   // Change password using the access token
-  await cognitoService.changePassword(
-    loginResult.accessToken,
-    oldPassword,
-    newPassword
-  )
+  await cognitoService.changePassword(accessToken, oldPassword, newPassword)
 }
 
 const handleChangePassword = async (
@@ -1033,8 +1082,17 @@ const handleChangePassword = async (
     const validated = ChangePasswordSchema.parse(body)
 
     const email = event.authContext.email
-    
-    await changeUserPassword(email, validated.oldPassword, validated.newPassword)
+
+    // Try to get refresh token from cookies if available
+    const cookies = event.headers.cookie || event.headers.Cookie || ''
+    const refreshToken = extractRefreshTokenFromCookies(cookies)
+
+    await changeUserPassword(
+      email,
+      validated.oldPassword,
+      validated.newPassword,
+      refreshToken
+    )
 
     try {
       logger.info({

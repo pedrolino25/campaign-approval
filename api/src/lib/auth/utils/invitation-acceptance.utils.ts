@@ -1,70 +1,158 @@
-import type { Invitation, UserRole } from '@prisma/client'
+import type { InvitationRepository } from '../../../repositories'
+import type { InvitationService } from '../../../services/invitation.service'
+import { logger } from '../../utils/logger'
 
-import { BusinessRuleViolationError, InternalError } from '../../../models'
-import type {
-  OrganizationRepository,
-  UserRepository,
-} from '../../../repositories'
-import { logger, prisma } from '../../index'
+type InvitationContext = {
+  ip?: string
+  userAgent?: string
+  requestId?: string
+}
 
-type AuthContext = { ip?: string; userAgent?: string; requestId?: string }
+type Invitation = Awaited<ReturnType<InvitationRepository['findByToken']>>
 
-export async function acceptInvitationAndCreateUser(
-  invitation: Invitation,
-  cognitoSub: string,
+function logInvitationFailure(
+  context: InvitationContext,
+  reason: string
+): void {
+  try {
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACCEPTANCE_FAILED',
+      ...context,
+      metadata: { reason },
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+}
+
+function logInvitationSuccess(
+  context: InvitationContext,
+  invitationType: string,
   email: string,
-  organizationRepository: OrganizationRepository,
-  context: AuthContext
-): Promise<{
-  user: Awaited<ReturnType<UserRepository['findByCognitoId']>>
-  organization: Awaited<ReturnType<OrganizationRepository['findById']>>
-}> {
-  if (!invitation.role) {
-    throw new InternalError('INTERNAL_USER invitation must have a role')
-  }
-
-  if (invitation.expiresAt && invitation.expiresAt <= new Date()) {
-    throw new BusinessRuleViolationError('Invitation has expired')
-  }
-
-  return await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        cognitoUserId: cognitoSub,
-        email: email.toLowerCase().trim(),
-        organizationId: invitation.organizationId,
-        role: invitation.role as UserRole,
-        sessionVersion: 1,
-        name: null,
+  isReviewer: boolean
+): void {
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'INVITATION_ACCEPTED',
+      actorType: isReviewer ? 'REVIEWER' : 'INTERNAL',
+      ...context,
+      metadata: {
+        invitationType,
+        email,
       },
     })
+  } catch {
+    // Never throw if logging fails
+  }
+}
 
-    await tx.invitation.update({
-      where: { id: invitation.id },
-      data: { acceptedAt: new Date() },
-    })
+function validateInvitationForEmbeddedAuth(
+  invitation: Invitation,
+  email: string,
+  context: InvitationContext
+): { valid: boolean; reason?: string } {
+  if (!invitation) {
+    logInvitationFailure(context, 'Invitation not found')
+    return {
+      valid: false,
+      reason: 'Invitation not found',
+    }
+  }
 
-    const organization = await organizationRepository.findById(
-      invitation.organizationId
+  if (invitation.expiresAt < new Date()) {
+    logInvitationFailure(context, 'Invitation expired')
+    return {
+      valid: false,
+      reason: 'Invitation expired',
+    }
+  }
+
+  if (invitation.acceptedAt) {
+    logInvitationFailure(context, 'Invitation already accepted')
+    return {
+      valid: false,
+      reason: 'Invitation already accepted',
+    }
+  }
+
+  if (email.toLowerCase().trim() !== invitation.email.toLowerCase().trim()) {
+    logInvitationFailure(context, 'Email mismatch')
+    return {
+      valid: false,
+      reason: 'Email mismatch',
+    }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Accepts an invitation for either INTERNAL_USER or REVIEWER type.
+ * This is used for embedded auth flows (signup/login with inviteToken).
+ *
+ * DO NOT use this for reviewer activation flow - use processReviewerActivation instead.
+ */
+export async function acceptInvitationForEmbeddedAuth(
+  inviteToken: string,
+  cognitoUserId: string,
+  email: string,
+  context: InvitationContext,
+  invitationRepository: InvitationRepository,
+  invitationService: InvitationService
+): Promise<{ success: boolean; isReviewer: boolean }> {
+  try {
+    const invitation = await invitationRepository.findByToken(inviteToken)
+
+    const validation = validateInvitationForEmbeddedAuth(
+      invitation,
+      email,
+      context
     )
-    if (!organization) {
-      throw new InternalError('Organization not found for invitation')
+
+    if (!validation.valid) {
+      return {
+        success: false,
+        isReviewer: false,
+      }
     }
 
+    await invitationService.acceptInvitation({
+      token: inviteToken,
+      cognitoUserId,
+      email,
+    })
+
+    const isReviewer = invitation!.type === 'REVIEWER'
+
+    logInvitationSuccess(
+      context,
+      invitation!.type,
+      email,
+      isReviewer
+    )
+
+    return {
+      success: true,
+      isReviewer,
+    }
+  } catch (error) {
     try {
-      logger.info({
+      logger.error({
         source: 'auth',
-        event: 'INVITATION_ACCEPTED',
-        actorType: 'INTERNAL',
-        actorId: user.id,
-        organizationId: organization.id,
+        event: 'INVITATION_ACCEPTANCE_FAILED',
         ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
       })
     } catch {
       // Never throw if logging fails
     }
-
-    return { user,
-organization }
-  })
+    return {
+      success: false,
+      isReviewer: false,
+    }
+  }
 }
