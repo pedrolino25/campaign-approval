@@ -22,3 +22,8 @@ output "api_url" {
   description = "API Gateway base URL (default invoke URL - custom domain should be used via domain_mapping module)"
   value       = replace(aws_apigatewayv2_stage.main.invoke_url, "/$", "")
 }
+
+output "api_stage_arn" {
+  description = "API Gateway stage ARN (for WAF association)"
+  value       = aws_apigatewayv2_stage.main.arn
+}

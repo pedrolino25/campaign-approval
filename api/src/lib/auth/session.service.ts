@@ -5,9 +5,7 @@ import type { ActorType } from '../../models'
 import { config } from '../utils/config'
 
 export interface CanonicalSession {
-  accessToken: string
-  idToken: string
-  refreshToken?: string
+  cognitoSub: string
   actorType: ActorType
   userId?: string
   reviewerId?: string
@@ -16,6 +14,7 @@ export interface CanonicalSession {
   role?: 'OWNER' | 'ADMIN' | 'MEMBER'
   onboardingCompleted: boolean
   email: string
+  sessionVersion: number
 }
 
 const SESSION_COOKIE_NAME = 'worklient_session'
@@ -55,10 +54,65 @@ export class SessionService {
         algorithms: ['HS256'],
       })
 
+      if (!this.isValidSessionPayload(payload)) {
+        return null
+      }
+
       return payload as unknown as CanonicalSession
     } catch {
       return null
     }
+  }
+
+  private isValidSessionPayload(payload: unknown): payload is CanonicalSession {
+    if (!payload || typeof payload !== 'object') {
+      return false
+    }
+
+    const p = payload as Record<string, unknown>
+
+    if (!this.hasRequiredFields(p)) {
+      return false
+    }
+
+    if (p.actorType === 'INTERNAL') {
+      return this.isValidInternalSession(p)
+    }
+
+    if (p.actorType === 'REVIEWER') {
+      return this.isValidReviewerSession(p)
+    }
+
+    return false
+  }
+
+  private hasRequiredFields(p: Record<string, unknown>): boolean {
+    return (
+      typeof p.cognitoSub === 'string' &&
+      !!p.cognitoSub &&
+      typeof p.actorType === 'string' &&
+      (p.actorType === 'INTERNAL' || p.actorType === 'REVIEWER') &&
+      typeof p.email === 'string' &&
+      !!p.email &&
+      typeof p.onboardingCompleted === 'boolean' &&
+      typeof p.sessionVersion === 'number' &&
+      p.sessionVersion > 0
+    )
+  }
+
+  private isValidInternalSession(p: Record<string, unknown>): boolean {
+    return (
+      typeof p.userId === 'string' &&
+      !!p.userId &&
+      typeof p.organizationId === 'string' &&
+      !!p.organizationId &&
+      typeof p.role === 'string' &&
+      ['OWNER', 'ADMIN', 'MEMBER'].includes(p.role)
+    )
+  }
+
+  private isValidReviewerSession(p: Record<string, unknown>): boolean {
+    return typeof p.reviewerId === 'string' && !!p.reviewerId
   }
 
   setSessionCookie(
@@ -67,17 +121,15 @@ export class SessionService {
   ): void {
     const cookie = this.buildCookie(sessionToken)
 
-    const existingHeaders = response.headers || {}
-    const existingSetCookies = existingHeaders['Set-Cookie'] || []
-
-    const setCookies = Array.isArray(existingSetCookies)
-      ? [...existingSetCookies, cookie]
-      : [existingSetCookies, cookie]
-
-    response.headers = {
-      ...existingHeaders,
-      'Set-Cookie': Array.isArray(setCookies) ? setCookies.join(', ') : setCookies,
+    if (!response.multiValueHeaders) {
+      response.multiValueHeaders = {}
     }
+
+    if (!response.multiValueHeaders['Set-Cookie']) {
+      response.multiValueHeaders['Set-Cookie'] = []
+    }
+
+    response.multiValueHeaders['Set-Cookie'].push(cookie)
   }
 
   getSessionFromCookie(
@@ -96,17 +148,15 @@ export class SessionService {
     const sameSite = this.isProduction ? 'Lax' : 'None'
     const cookie = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
 
-    const existingHeaders = response.headers || {}
-    const existingSetCookies = existingHeaders['Set-Cookie'] || []
-
-    const setCookies = Array.isArray(existingSetCookies)
-      ? [...existingSetCookies, cookie]
-      : [existingSetCookies, cookie]
-
-    response.headers = {
-      ...existingHeaders,
-      'Set-Cookie': Array.isArray(setCookies) ? setCookies.join(', ') : setCookies,
+    if (!response.multiValueHeaders) {
+      response.multiValueHeaders = {}
     }
+
+    if (!response.multiValueHeaders['Set-Cookie']) {
+      response.multiValueHeaders['Set-Cookie'] = []
+    }
+
+    response.multiValueHeaders['Set-Cookie'].push(cookie)
   }
 
   private buildCookie(value: string): string {

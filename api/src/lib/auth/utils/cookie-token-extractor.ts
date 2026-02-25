@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEvent } from 'aws-lambda'
 
 import { UnauthorizedError } from '../../../models'
-import { SessionService } from '../session.service'
+import { type CanonicalSession,SessionService } from '../session.service'
 
 export class CookieTokenExtractor {
   private readonly sessionService: SessionService
@@ -10,12 +10,12 @@ export class CookieTokenExtractor {
     this.sessionService = new SessionService()
   }
 
-  async extract(event: APIGatewayProxyEvent): Promise<string> {
+  async extract(event: APIGatewayProxyEvent): Promise<CanonicalSession> {
     const cookies = event.headers.cookie || event.headers.Cookie
     const sessionToken = this.sessionService.getSessionFromCookie(cookies)
 
     if (!sessionToken) {
-      throw new UnauthorizedError('Missing or invalid session cookie')
+      throw new UnauthorizedError('Missing session cookie')
     }
 
     const session = await this.sessionService.verifySession(sessionToken)
@@ -24,7 +24,7 @@ export class CookieTokenExtractor {
       throw new UnauthorizedError('Invalid or expired session')
     }
 
-    return session.idToken
+    return session
   }
 
   hasSession(event: APIGatewayProxyEvent): boolean {

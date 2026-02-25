@@ -1,0 +1,138 @@
+import type { APIGatewayProxyResult } from 'aws-lambda'
+
+import { ActorType, InternalError } from '../../../models'
+import type { OrganizationRepository } from '../../../repositories'
+import type { ReviewerRepository } from '../../../repositories'
+import type { UserRepository } from '../../../repositories'
+import type { RBACService } from '../rbac.service'
+import type { CanonicalSession, SessionService } from '../session.service'
+import { config } from '../../utils/config'
+import { clearActivationCookie, clearOAuthCookies } from './cookie.utils'
+
+export function calculateOnboardingStatus(
+  actor: Awaited<ReturnType<RBACService['resolve']>>,
+  user: { name?: string | null } | null,
+  reviewer: { name?: string | null } | null,
+  organization: { name?: string | null } | null
+): boolean {
+  if (actor.type === ActorType.Internal) {
+    const userName = user?.name
+    const organizationName = organization?.name
+    return Boolean(userName?.trim() && organizationName?.trim())
+  }
+
+  const reviewerName = reviewer?.name
+  return Boolean(reviewerName?.trim())
+}
+
+export function buildCanonicalSession(
+  userId: string,
+  actor: Awaited<ReturnType<RBACService['resolve']>>,
+  email: string,
+  onboardingCompleted: boolean,
+  user: Awaited<ReturnType<UserRepository['findByCognitoId']>> | null,
+  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>> | null
+): CanonicalSession {
+  const normalizedEmail = email.toLowerCase().trim()
+  const session: CanonicalSession = {
+    cognitoSub: userId,
+    actorType: actor.type,
+    email: normalizedEmail,
+    onboardingCompleted,
+    sessionVersion: 0, // Will be set below
+  }
+
+  if (actor.type === ActorType.Internal) {
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+      role: 'OWNER' | 'ADMIN' | 'MEMBER'
+    }
+    session.userId = internalActor.userId
+    session.organizationId = internalActor.organizationId
+    session.role = internalActor.role
+
+    if (!user) {
+      throw new InternalError('User not found when building session')
+    }
+    session.sessionVersion = user.sessionVersion
+  } else {
+    const reviewerActor = actor as {
+      type: typeof ActorType.Reviewer
+      reviewerId: string
+      clientId: string | null
+    }
+    session.reviewerId = reviewerActor.reviewerId
+    session.clientId = reviewerActor.clientId || undefined
+
+    if (!reviewer) {
+      throw new InternalError('Reviewer not found when building session')
+    }
+    session.sessionVersion = reviewer.sessionVersion
+  }
+
+  return session
+}
+
+export function getRedirectPath(
+  onboardingCompleted: boolean,
+  actorType: ActorType
+): string {
+  if (onboardingCompleted) {
+    return '/dashboard'
+  }
+
+  return actorType === ActorType.Internal
+    ? '/onboarding/internal'
+    : '/onboarding/reviewer'
+}
+
+export async function buildSessionResponse(
+  userId: string,
+  actor: Awaited<ReturnType<RBACService['resolve']>>,
+  user: Awaited<ReturnType<UserRepository['findByCognitoId']>> | null,
+  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>> | null,
+  organization: Awaited<ReturnType<OrganizationRepository['findById']>> | null,
+  email: string,
+  activationToken: string | undefined,
+  sessionService: SessionService,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  const onboardingCompleted = calculateOnboardingStatus(
+    actor,
+    user,
+    reviewer,
+    organization
+  )
+
+  const normalizedEmail = email.toLowerCase().trim()
+  const canonicalSession = buildCanonicalSession(
+    userId,
+    actor,
+    normalizedEmail,
+    onboardingCompleted,
+    user,
+    reviewer
+  )
+
+  const signedSession = await sessionService.signSession(canonicalSession)
+  const redirectPath = getRedirectPath(onboardingCompleted, actor.type)
+
+  const response: APIGatewayProxyResult = {
+    statusCode: 302,
+    headers: {
+      Location: `${config.FRONTEND_URL}${redirectPath}`,
+    },
+    body: '',
+  }
+
+  sessionService.setSessionCookie(response, signedSession)
+  clearOAuthCookies(response)
+
+  if (activationToken) {
+    clearActivationCookie(response)
+  }
+
+  return response
+}

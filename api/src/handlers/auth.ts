@@ -3,30 +3,51 @@ import type {
   APIGatewayProxyResult,
 } from 'aws-lambda'
 
+import { CognitoService } from '../lib/auth/cognito.service'
 import { OAuthService } from '../lib/auth/oauth.service'
 import { RBACService } from '../lib/auth/rbac.service'
+import { SessionService } from '../lib/auth/session.service'
+import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
 import {
-  type CanonicalSession,
-  SessionService,
-} from '../lib/auth/session.service'
+  clearActivationCookie,
+  setActivationCookie,
+} from '../lib/auth/utils/activation-token.utils'
+import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
+import {
+  appendSetCookie,
+  clearOAuthCookies,
+  getSameSiteValue,
+} from '../lib/auth/utils/cookie.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
+import { buildErrorResponse } from '../lib/auth/utils/response-builders'
+import { buildSessionResponse } from '../lib/auth/utils/session.utils'
+import {
+  validateActivationToken,
+  validateCallbackParams,
+  validateReviewerInvitation,
+} from '../lib/auth/utils/validation.utils'
 import { createHandler, createPublicHandler } from '../lib/handlers'
-import { config } from '../lib/utils/config'
+import { logger } from '../lib/utils/logger'
 import { ActorType, type AuthenticatedEvent } from '../models'
 import {
   ClientReviewerRepository,
+  InvitationRepository,
   OrganizationRepository,
   ReviewerRepository,
   UserRepository,
 } from '../repositories'
+import { InvitationService } from '../services/invitation.service'
 import { OnboardingService } from '../services/onboarding.service'
 
 const oauthService = new OAuthService()
 const sessionService = new SessionService()
 const tokenVerifier = new JwtVerifier()
+const cognitoService = new CognitoService()
 const userRepository = new UserRepository()
 const reviewerRepository = new ReviewerRepository()
 const organizationRepository = new OrganizationRepository()
+const invitationRepository = new InvitationRepository()
+const invitationService = new InvitationService()
 const rbacService = new RBACService(new ClientReviewerRepository())
 const onboardingService = new OnboardingService(
   userRepository,
@@ -34,217 +55,191 @@ const onboardingService = new OnboardingService(
   organizationRepository
 )
 
-function parseCookies(cookieString: string): Record<string, string> {
-  const cookies: Record<string, string> = {}
+function extractSafeContext(
+  event: APIGatewayProxyEvent | AuthenticatedEvent
+): {
+  ip?: string
+  userAgent?: string
+  requestId?: string
+} {
+  try {
+    const requestContext = event.requestContext
+    const headers = event.headers || {}
 
-  for (const cookie of cookieString.split(';')) {
-    const [name, ...valueParts] = cookie.trim().split('=')
-    if (name && valueParts.length > 0) {
-      cookies[name] = valueParts.join('=')
+    return {
+      ip:
+        (requestContext as { identity?: { sourceIp?: string } })?.identity
+          ?.sourceIp || undefined,
+      userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+      requestId:
+        (requestContext as { requestId?: string })?.requestId || undefined,
     }
-  }
-
-  return cookies
-}
-
-function buildOAuthErrorResponse(
-  error: string,
-  errorDescription?: string
-): APIGatewayProxyResult {
-  return {
-    statusCode: 400,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      error: 'OAuth error',
-      errorDescription: errorDescription || error,
-    }),
+  } catch {
+    return {}
   }
 }
 
-function buildMissingParamsResponse(): APIGatewayProxyResult {
-  return {
-    statusCode: 400,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      error: 'Missing code or state parameter',
-    }),
+function logLoginSuccess(
+  actor: Awaited<ReturnType<RBACService['resolve']>>,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): void {
+  try {
+    const baseLogData = {
+      source: 'auth' as const,
+      actorType: actor.type,
+      ...context,
+    }
+
+    if (actor.type === ActorType.Internal) {
+      const internalActor = actor as {
+        type: typeof ActorType.Internal
+        userId: string
+        organizationId: string
+        role: 'OWNER' | 'ADMIN' | 'MEMBER'
+      }
+      logger.info({
+        ...baseLogData,
+        event: 'LOGIN_SUCCESS',
+        actorId: internalActor.userId,
+        organizationId: internalActor.organizationId,
+      })
+
+      logger.info({
+        ...baseLogData,
+        event: 'SESSION_CREATED',
+        actorId: internalActor.userId,
+        organizationId: internalActor.organizationId,
+      })
+    } else {
+      const reviewerActor = actor as {
+        type: typeof ActorType.Reviewer
+        reviewerId: string
+        clientId: string | null
+      }
+      logger.info({
+        ...baseLogData,
+        event: 'LOGIN_SUCCESS',
+        actorId: reviewerActor.reviewerId,
+        clientId: reviewerActor.clientId,
+      })
+
+      logger.info({
+        ...baseLogData,
+        event: 'SESSION_CREATED',
+        actorId: reviewerActor.reviewerId,
+        clientId: reviewerActor.clientId,
+      })
+    }
+  } catch {
+    // Never throw if logging fails
   }
 }
 
-function buildMissingStateResponse(): APIGatewayProxyResult {
-  return {
-    statusCode: 400,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      error: 'Missing OAuth state in cookies. Please try logging in again.',
-    }),
-  }
-}
-
-function buildErrorResponse(
-  error: unknown
-): APIGatewayProxyResult {
-  return {
-    statusCode: error instanceof Error && 'statusCode' in error
-      ? (error.statusCode as number)
-      : 500,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      error: 'Failed to exchange authorization code',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }),
-  }
-}
-
-function clearOAuthCookies(response: APIGatewayProxyResult): void {
-  const sameSite = config.ENVIRONMENT === 'prod' ? 'Lax' : 'None'
-  const clearVerifierCookie = `oauth_code_verifier=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-  const clearStateCookie = `oauth_state=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-
-  const existingHeaders = response.headers || {}
-  const existingSetCookies = existingHeaders['Set-Cookie']
-  
-  let setCookies: string[]
-  if (Array.isArray(existingSetCookies)) {
-    setCookies = [...existingSetCookies, clearVerifierCookie, clearStateCookie]
-  } else if (typeof existingSetCookies === 'string') {
-    setCookies = [existingSetCookies, clearVerifierCookie, clearStateCookie]
-  } else {
-    setCookies = [clearVerifierCookie, clearStateCookie]
-  }
-
-  response.headers = {
-    ...existingHeaders,
-    'Set-Cookie': setCookies.join(', '),
-  }
-}
-
-async function resolveActorFromTokens(
-  userId: string,
-  email: string
+async function processOAuthCallback(
+  code: string,
+  codeVerifier: string,
+  state: string,
+  expectedState: string,
+  activationToken: string | undefined,
+  context: { ip?: string; userAgent?: string; requestId?: string }
 ): Promise<{
-  actor: Awaited<ReturnType<typeof rbacService.resolve>>
-  user: Awaited<ReturnType<typeof userRepository.findByCognitoId>> | null
-  reviewer:
-    | Awaited<ReturnType<typeof reviewerRepository.findByCognitoId>>
-    | null
-  organization:
-    | Awaited<ReturnType<typeof organizationRepository.findById>>
-    | null
+  userId: string
+  email: string
+  reviewerActivationCompleted: boolean
+  errorResponse?: APIGatewayProxyResult
 }> {
-  const [user, reviewer] = await Promise.all([
-    userRepository.findByCognitoId(userId),
-    reviewerRepository.findByCognitoId(userId),
-  ])
-
-  let resolvedUser = user
-  const resolvedReviewer = reviewer
-  let organization = user
-    ? await organizationRepository.findById(user.organizationId)
-    : null
-
-  if (!user && !reviewer) {
-    const result = await onboardingService.ensureInternalUserExists({
-      cognitoUserId: userId,
-      email,
-    })
-    resolvedUser = result.user
-    organization = result.organization
-  }
-
-  const actor = await rbacService.resolve(
-    userId,
-    undefined,
-    resolvedUser,
-    resolvedReviewer
+  const tokenResponse = await oauthService.exchangeCodeForTokens(
+    code,
+    codeVerifier,
+    state,
+    expectedState
   )
 
+  const authContext = await tokenVerifier.verify(tokenResponse.idToken)
+  const { userId, email } = authContext
+
+  let reviewerActivationCompleted = false
+
+  if (activationToken) {
+    const activationResult = await processReviewerActivation(
+      activationToken,
+      userId,
+      email,
+      context,
+      invitationRepository,
+      invitationService
+    )
+
+    if (!activationResult.success) {
+      return {
+        userId,
+        email,
+        reviewerActivationCompleted: false,
+        errorResponse: activationResult.errorResponse,
+      }
+    }
+
+    reviewerActivationCompleted = true
+  }
+
   return {
-    actor,
-    user: resolvedUser,
-    reviewer: resolvedReviewer,
-    organization,
-  }
-}
-
-function calculateOnboardingStatus(
-  actor: Awaited<ReturnType<typeof rbacService.resolve>>,
-  user: { name?: string | null } | null,
-  reviewer: { name?: string | null } | null,
-  organization: { name?: string | null } | null
-): boolean {
-  if (actor.type === ActorType.Internal) {
-    const userName = user?.name
-    const organizationName = organization?.name
-    return Boolean(userName?.trim() && organizationName?.trim())
-  }
-
-  const reviewerName = reviewer?.name
-  return Boolean(reviewerName?.trim())
-}
-
-function buildCanonicalSession(
-  tokenResponse: Awaited<ReturnType<typeof oauthService.exchangeCodeForTokens>>,
-  actor: Awaited<ReturnType<typeof rbacService.resolve>>,
-  email: string,
-  onboardingCompleted: boolean
-): CanonicalSession {
-  const session: CanonicalSession = {
-    accessToken: tokenResponse.accessToken,
-    idToken: tokenResponse.idToken,
-    refreshToken: tokenResponse.refreshToken,
-    actorType: actor.type,
+    userId,
     email,
-    onboardingCompleted,
+    reviewerActivationCompleted,
   }
-
-  if (actor.type === ActorType.Internal) {
-    const internalActor = actor as {
-      type: typeof ActorType.Internal
-      userId: string
-      organizationId: string
-      role: 'OWNER' | 'ADMIN' | 'MEMBER'
-    }
-    session.userId = internalActor.userId
-    session.organizationId = internalActor.organizationId
-    session.role = internalActor.role
-  } else {
-    const reviewerActor = actor as {
-      type: typeof ActorType.Reviewer
-      reviewerId: string
-      clientId: string | null
-    }
-    session.reviewerId = reviewerActor.reviewerId
-    session.clientId = reviewerActor.clientId || undefined
-  }
-
-  return session
 }
 
-function getRedirectPath(
-  onboardingCompleted: boolean,
-  actorType: ActorType
-): string {
-  if (onboardingCompleted) {
-    return '/dashboard'
-  }
+async function buildSessionForUser(
+  userId: string,
+  email: string,
+  reviewerActivationCompleted: boolean,
+  activationToken: string | undefined,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  const { actor, user, reviewer, organization } =
+    await resolveActorFromTokens(
+      userId,
+      email,
+      reviewerActivationCompleted,
+      userRepository,
+      reviewerRepository,
+      organizationRepository,
+      rbacService,
+      onboardingService
+    )
 
-  return actorType === ActorType.Internal
-    ? '/onboarding/internal'
-    : '/onboarding/reviewer'
+  const sessionResponse = await buildSessionResponse(
+    userId,
+    actor,
+    user,
+    reviewer,
+    organization,
+    email,
+    activationToken,
+    sessionService,
+    context
+  )
+
+  logLoginSuccess(actor, context)
+
+  return sessionResponse
 }
 
 const handleLogin = (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'LOGIN_STARTED',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
 
@@ -258,14 +253,12 @@ const handleLogin = (
     }),
   }
 
-  const sameSite = config.ENVIRONMENT === 'prod' ? 'Lax' : 'None'
+  const sameSite = getSameSiteValue()
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  response.headers = {
-    ...response.headers,
-    'Set-Cookie': `${verifierCookie}, ${stateCookie}`,
-  }
+  appendSetCookie(response, verifierCookie)
+  appendSetCookie(response, stateCookie)
 
   return Promise.resolve(response)
 }
@@ -273,82 +266,86 @@ const handleLogin = (
 const handleCallback = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  const queryParams = event.queryStringParameters || {}
-  const code = queryParams.code
-  const state = queryParams.state
-  const error = queryParams.error
-  const errorDescription = queryParams.error_description
+  const context = extractSafeContext(event)
+  const validation = validateCallbackParams(event)
 
-  if (error) {
-    return buildOAuthErrorResponse(error, errorDescription)
+  if (!validation.valid) {
+    try {
+      logger.warn({
+        source: 'auth',
+        event: 'LOGIN_FAILURE',
+        ...context,
+        metadata: { reason: 'Invalid callback parameters' },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+    return validation.errorResponse!
   }
 
-  if (!code || !state) {
-    return buildMissingParamsResponse()
-  }
-
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  const cookieMap = parseCookies(cookies)
-  const codeVerifier = cookieMap['oauth_code_verifier']
-  const expectedState = cookieMap['oauth_state']
-
-  if (!codeVerifier || !expectedState) {
-    return buildMissingStateResponse()
-  }
+  const { code, state, codeVerifier, expectedState, activationToken } = validation
 
   try {
-    const tokenResponse = await oauthService.exchangeCodeForTokens(
-      code,
-      codeVerifier,
-      state,
-      expectedState
+    const oauthResult = await processOAuthCallback(
+      code!,
+      codeVerifier!,
+      state!,
+      expectedState!,
+      activationToken,
+      context
     )
 
-    const authContext = await tokenVerifier.verify(tokenResponse.idToken)
-    const { userId, email } = authContext
-
-    const { actor, user, reviewer, organization } = await resolveActorFromTokens(
-      userId,
-      email
-    )
-
-    const onboardingCompleted = calculateOnboardingStatus(
-      actor,
-      user,
-      reviewer,
-      organization
-    )
-
-    const canonicalSession = buildCanonicalSession(
-      tokenResponse,
-      actor,
-      email,
-      onboardingCompleted
-    )
-
-    const signedSession = await sessionService.signSession(canonicalSession)
-    const redirectPath = getRedirectPath(onboardingCompleted, actor.type)
-
-    const response: APIGatewayProxyResult = {
-      statusCode: 302,
-      headers: {
-        Location: `${config.FRONTEND_URL}${redirectPath}`,
-      },
-      body: '',
+    if (oauthResult.errorResponse) {
+      return oauthResult.errorResponse
     }
 
-    sessionService.setSessionCookie(response, signedSession)
-    clearOAuthCookies(response)
-
-    return response
+    return await buildSessionForUser(
+      oauthResult.userId,
+      oauthResult.email,
+      oauthResult.reviewerActivationCompleted,
+      activationToken,
+      context
+    )
   } catch (error) {
-    return buildErrorResponse(error)
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'LOGIN_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    const errorResponse = buildErrorResponse(error)
+
+    if (validation.activationToken) {
+      clearActivationCookie(errorResponse)
+    }
+
+    clearOAuthCookies(errorResponse)
+    return errorResponse
   }
 }
 
 const handleLogout = (
-  _event: APIGatewayProxyEvent
+  event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'LOGOUT',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
   const response: APIGatewayProxyResult = {
     statusCode: 200,
     headers: {
@@ -361,6 +358,11 @@ const handleLogout = (
   }
 
   sessionService.clearSessionCookie(response)
+  clearOAuthCookies(response)
+
+  const sameSite = getSameSiteValue()
+  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
+  appendSetCookie(response, clearActivationCookieValue)
 
   return Promise.resolve(response)
 }
@@ -415,9 +417,108 @@ const handleMe = async (
   })
 }
 
+function buildOAuthRedirectResponse(
+  authorizationUrl: string,
+  codeVerifier: string,
+  state: string,
+  activationToken: string
+): APIGatewayProxyResult {
+  const sameSite = getSameSiteValue()
+  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+
+  const response: APIGatewayProxyResult = {
+    statusCode: 302,
+    headers: {
+      Location: authorizationUrl,
+    },
+    body: '',
+  }
+
+  appendSetCookie(response, verifierCookie)
+  appendSetCookie(response, stateCookie)
+  setActivationCookie(response, activationToken)
+
+  return response
+}
+
+const handleReviewerActivate = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'INVITATION_ACTIVATION_ATTEMPT',
+      actorType: 'REVIEWER',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  const queryParams = event.queryStringParameters || {}
+  const token = queryParams.token
+
+  const tokenValidation = validateActivationToken(token)
+  if (!tokenValidation.valid) {
+    try {
+      logger.warn({
+        source: 'auth',
+        event: 'INVITATION_ACTIVATION_FAILURE',
+        actorType: 'REVIEWER',
+        ...context,
+        metadata: { reason: 'Invalid activation token format' },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+    return tokenValidation.errorResponse!
+  }
+
+  const normalizedToken = tokenValidation.normalizedToken!
+
+  const invitation = await invitationRepository.findByToken(normalizedToken)
+  const invitationValidation = validateReviewerInvitation(invitation)
+  if (!invitationValidation.valid) {
+    try {
+      logger.warn({
+        source: 'auth',
+        event: 'INVITATION_ACTIVATION_FAILURE',
+        actorType: 'REVIEWER',
+        ...context,
+        metadata: { reason: 'Invitation validation failed' },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+    return invitationValidation.errorResponse!
+  }
+
+  // Check if Cognito user exists, create if not
+  const email = invitation!.email.toLowerCase().trim()
+  const userExists = await cognitoService.userExistsByEmail(email)
+
+  if (!userExists) {
+    await cognitoService.createUserWithTemporaryPassword(email)
+  }
+
+  const { authorizationUrl, codeVerifier, state } =
+    oauthService.generateAuthorizationUrl(event)
+
+  return buildOAuthRedirectResponse(
+    authorizationUrl,
+    codeVerifier,
+    state,
+    normalizedToken
+  )
+}
+
 export const loginHandler = createPublicHandler(handleLogin)
 export const callbackHandler = createPublicHandler(handleCallback)
 export const logoutHandler = createPublicHandler(handleLogout)
+export const reviewerActivateHandler = createPublicHandler(handleReviewerActivate)
 export const meHandler = createHandler(handleMe)
 
 function getPath(event: APIGatewayProxyEvent): string {
@@ -448,20 +549,22 @@ const handleAuthRoute = async (
   const path = getPath(event)
   const method = getMethod(event)
 
-  if (method === 'GET' && path.endsWith('/auth/login')) {
-    return await loginHandler(event)
+  const routeMap: Record<
+    string,
+    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+  > = {
+    'GET:/auth/login': loginHandler,
+    'GET:/auth/callback': callbackHandler,
+    'POST:/auth/logout': logoutHandler,
+    'GET:/auth/me': meHandler,
+    'GET:/auth/reviewer/activate': reviewerActivateHandler,
   }
 
-  if (method === 'GET' && path.endsWith('/auth/callback')) {
-    return await callbackHandler(event)
-  }
+  const routeKey = `${method}:${path}`
+  const handler = routeMap[routeKey]
 
-  if (method === 'POST' && path.endsWith('/auth/logout')) {
-    return await logoutHandler(event)
-  }
-
-  if (method === 'GET' && path.endsWith('/auth/me')) {
-    return await meHandler(event)
+  if (handler) {
+    return await handler(event)
   }
 
   return {

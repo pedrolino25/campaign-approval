@@ -9,8 +9,7 @@ import { BearerTokenExtractor } from './utils/token-extractor'
 export type {
   AuthContext,
   AuthenticatedEvent,
-  AuthTokenExtractor,
-  TokenVerifier,
+  SessionExtractor,
 } from '../../models'
 
 export {

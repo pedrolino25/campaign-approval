@@ -72,6 +72,9 @@ export class ReviewerRepository implements IReviewerRepository {
       where: { id },
       data: {
         archivedAt: new Date(),
+        sessionVersion: {
+          increment: 1,
+        },
       },
     })
   }

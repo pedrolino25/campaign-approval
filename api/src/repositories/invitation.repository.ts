@@ -34,6 +34,7 @@ export interface IInvitationRepository {
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Invitation>>
   markAccepted(id: string, organizationId: string): Promise<void>
+  markAcceptedByToken(token: string): Promise<void>
   delete(id: string, organizationId: string): Promise<void>
 }
 
@@ -132,6 +133,15 @@ export class InvitationRepository implements IInvitationRepository {
         id,
         organizationId,
       },
+      data: {
+        acceptedAt: new Date(),
+      },
+    })
+  }
+
+  async markAcceptedByToken(token: string): Promise<void> {
+    await prisma.invitation.update({
+      where: { token },
       data: {
         acceptedAt: new Date(),
       },

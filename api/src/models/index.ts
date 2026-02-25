@@ -6,8 +6,7 @@ export {
 export type {
   AuthContext,
   AuthenticatedEvent,
-  AuthTokenExtractor,
-  TokenVerifier,
+  SessionExtractor,
 } from './auth'
 export {
   BusinessRuleViolationError,

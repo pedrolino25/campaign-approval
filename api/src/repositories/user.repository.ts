@@ -135,6 +135,9 @@ export class UserRepository implements IUserRepository {
       },
       data: {
         archivedAt: new Date(),
+        sessionVersion: {
+          increment: 1,
+        },
       },
     })
   }

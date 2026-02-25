@@ -1,6 +1,6 @@
 import { type Client, type Invitation } from '@prisma/client'
 
-import { prisma, ValidationError } from '../lib'
+import { logger,prisma, ValidationError } from '../lib'
 import {
   ActivityLogActionType,
   type ActivityLogMetadataMap,
@@ -299,6 +299,31 @@ export class ClientService implements IClientService {
           archivedAt: new Date(),
         },
       })
+
+      await tx.reviewer.update({
+        where: { id: reviewerId },
+        data: {
+          sessionVersion: {
+            increment: 1,
+          },
+        },
+      })
+
+      try {
+        logger.info({
+          source: 'auth',
+          event: 'MEMBERSHIP_REMOVED',
+          actorType: 'REVIEWER',
+          actorId: reviewerId,
+          clientId,
+          organizationId: client.organizationId,
+          metadata: {
+            removedBy: actor.userId,
+          },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
         invitedUserEmail: '',

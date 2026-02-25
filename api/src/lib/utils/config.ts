@@ -15,6 +15,7 @@ const configSchema = z.object({
   WORKLIENT_API_URL: z.string().url(),
   SESSION_SECRET: z.string().min(32),
   SESSION_MAX_AGE: z.coerce.number().int().positive().default(28800), // 8 hours in seconds
+  ACTIVATION_COOKIE_SECRET: z.string().min(32),
 })
 
 type Config = z.infer<typeof configSchema>
@@ -35,6 +36,7 @@ const getConfig = (): Config => {
     WORKLIENT_API_URL: process.env.WORKLIENT_API_URL,
     SESSION_SECRET: process.env.SESSION_SECRET,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
+    ACTIVATION_COOKIE_SECRET: process.env.ACTIVATION_COOKIE_SECRET,
   }
 
   const result = configSchema.safeParse(rawConfig)

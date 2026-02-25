@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^3.2.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.490.0",
     "@aws-sdk/client-s3": "^3.490.0",
     "@aws-sdk/client-sqs": "^3.490.0",
     "@aws-sdk/s3-request-presigner": "^3.490.0",

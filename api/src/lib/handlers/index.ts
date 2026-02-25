@@ -1,36 +1,19 @@
 import {
-  ClientReviewerRepository,
-  OrganizationRepository,
   ReviewerRepository,
   UserRepository,
 } from '../../repositories'
-import { OnboardingService } from '../../services/onboarding.service'
-import { AuthService, CookieTokenExtractor, JwtVerifier, RBACService } from '../auth'
+import { AuthService, CookieTokenExtractor } from '../auth'
 import { ErrorService } from '../errors/error.service'
 import { ApiHandlerFactory } from './api.handler'
 import { PublicHandlerFactory } from './public.handler'
 
-const tokenExtractor = new CookieTokenExtractor()
-const tokenVerifier = new JwtVerifier()
+const sessionExtractor = new CookieTokenExtractor()
 const userRepository = new UserRepository()
 const reviewerRepository = new ReviewerRepository()
-const organizationRepository = new OrganizationRepository()
-const rbacService = new RBACService(
-  new ClientReviewerRepository()
-)
-const onboardingService = new OnboardingService(
-  userRepository,
-  reviewerRepository,
-  organizationRepository
-)
 const authService = new AuthService(
-  tokenExtractor,
-  tokenVerifier,
-  rbacService,
-  onboardingService,
+  sessionExtractor,
   userRepository,
-  reviewerRepository,
-  organizationRepository
+  reviewerRepository
 )
 const errorService = new ErrorService()
 const apiHandlerFactory = new ApiHandlerFactory(authService, errorService)
