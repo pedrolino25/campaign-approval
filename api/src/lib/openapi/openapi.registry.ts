@@ -7,6 +7,7 @@ import {
   AddCommentSchema,
   ApproveReviewSchema,
   AttachmentParamsSchema,
+  ChangePasswordSchema,
   ClientParamsSchema,
   ClientReviewerParamsSchema,
   CompleteInternalOnboardingSchema,
@@ -17,15 +18,21 @@ import {
   CreateReviewItemSchema,
   DeleteAttachmentParamsSchema,
   DeleteCommentParamsSchema,
+  ForgotPasswordSchema,
   InviteInternalUserSchema,
   InviteReviewerSchema,
+  LoginSchema,
   NotificationParamsSchema,
   RequestChangesSchema,
+  ResendVerificationSchema,
+  ResetPasswordSchema,
   ReviewItemParamsSchema,
   SendForReviewSchema,
+  SignUpSchema,
   UpdateClientSchema,
   UpdateOrganizationSettingsSchema,
   UpdateUserRoleSchema,
+  VerifyEmailSchema,
 } from '../schemas'
 
 extendZodWithOpenApi(z)
@@ -360,3 +367,66 @@ export const UserParamsOpenAPISchema = z
       id: '123e4567-e89b-12d3-a456-426614174000',
     },
   })
+
+// ============================================================================
+// Auth Schemas
+// ============================================================================
+
+export const SignUpOpenAPISchema = (SignUpSchema as any).openapi({
+  description: 'Sign up request',
+  example: {
+    email: 'user@example.com',
+    password: 'SecurePassword123!',
+    inviteToken: 'optional-invite-token',
+  },
+})
+
+export const VerifyEmailOpenAPISchema = (VerifyEmailSchema as any).openapi({
+  description: 'Verify email request',
+  example: {
+    email: 'user@example.com',
+    code: '123456',
+    password: 'SecurePassword123!',
+    inviteToken: 'optional-invite-token',
+  },
+})
+
+export const ResendVerificationOpenAPISchema = (ResendVerificationSchema as any).openapi({
+  description: 'Resend verification code request',
+  example: {
+    email: 'user@example.com',
+  },
+})
+
+export const LoginOpenAPISchema = (LoginSchema as any).openapi({
+  description: 'Login request',
+  example: {
+    email: 'user@example.com',
+    password: 'SecurePassword123!',
+    inviteToken: 'optional-invite-token',
+  },
+})
+
+export const ForgotPasswordOpenAPISchema = (ForgotPasswordSchema as any).openapi({
+  description: 'Forgot password request',
+  example: {
+    email: 'user@example.com',
+  },
+})
+
+export const ResetPasswordOpenAPISchema = (ResetPasswordSchema as any).openapi({
+  description: 'Reset password request',
+  example: {
+    email: 'user@example.com',
+    code: '123456',
+    newPassword: 'NewSecurePassword123!',
+  },
+})
+
+export const ChangePasswordOpenAPISchema = (ChangePasswordSchema as any).openapi({
+  description: 'Change password request',
+  example: {
+    oldPassword: 'OldPassword123!',
+    newPassword: 'NewSecurePassword123!',
+  },
+})

@@ -1,0 +1,198 @@
+'use client'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
+import { apiFetch } from '@/lib/api/client'
+import { type ApiError } from '@/lib/api/error-handler'
+
+const resetPasswordSchema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    code: z.string().length(6, 'Code must be 6 characters'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
+
+export default function ResetPasswordPage() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: '',
+      code: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  })
+
+  const onSubmit = async (values: ResetPasswordFormValues) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      await apiFetch('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: values.email,
+          code: values.code,
+          newPassword: values.newPassword,
+        }),
+      })
+
+      router.push('/login')
+    } catch (err) {
+      const apiError = err as ApiError
+
+      if (apiError.code === 'INVALID_CODE') {
+        setError('Invalid verification code.')
+      } else if (apiError.code === 'CODE_EXPIRED') {
+        setError('Verification code expired. Please request a new one.')
+      } else {
+        setError(apiError.message || 'An error occurred')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md rounded-md">
+        <CardHeader>
+          <CardTitle>Reset your password</CardTitle>
+          <CardDescription>
+            Enter your email, verification code, and new password
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Verification Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="000000"
+                        maxLength={6}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex flex-col gap-2">
+                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
+                  {isLoading ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Resetting password...
+                    </>
+                  ) : (
+                    'Reset password'
+                  )}
+                </Button>
+
+                <div className="text-center text-sm">
+                  <Link href="/login" className="text-primary hover:underline">
+                    Back to sign in
+                  </Link>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

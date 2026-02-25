@@ -15,7 +15,6 @@ export async function getServerSession(): Promise<ServerSession | null> {
   const apiUrl = process.env.WORKLIENT_API_URL || process.env.NEXT_PUBLIC_API_URL
 
   if (!apiUrl) {
-    console.error('WORKLIENT_API_URL or NEXT_PUBLIC_API_URL environment variable is not set')
     return null
   }
 

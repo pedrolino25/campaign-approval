@@ -1,21 +1,22 @@
-import React from "react";
+import { Navbar } from '@/components/landing-pages/navbar/navbar'
+import FAQsSection from '@/components/landing-pages/sections/faqs'
+import FeaturesSection from '@/components/landing-pages/sections/features'
+import FooterSection from '@/components/landing-pages/sections/footer'
+import HeroSection from '@/components/landing-pages/sections/hero'
+import TestimonialsSection from '@/components/landing-pages/sections/testimonials'
+import { Container } from '@/components/ui/container'
 
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
-import FAQsSection from "@/components/landing-pages/sections/faqs";
-import FeaturesSection from "@/components/landing-pages/sections/features";
-import FooterSection from "@/components/landing-pages/sections/footer";
-import HeroSection from "@/components/landing-pages/sections/hero";
-import TestimonialsSection from "@/components/landing-pages/sections/testimonials";
-import { Container } from "@/components/ui/container";
-
-export default function Home() {
+export default function HomePage() {
   return (
     <>
       <Navbar />
       <HeroSection
         theme="default"
-        title={["Campaign Approval Infrastructure", "Powering Modern Agencies"]}
-        description={["Centralize feedback, structure workflows, and gain full approval traceability.", "Designed for agencies that take client collaboration seriously."]}
+        title={['Campaign Approval Infrastructure', 'Powering Modern Agencies']}
+        description={[
+          'Centralize feedback, structure workflows, and gain full approval traceability.',
+          'Designed for agencies that take client collaboration seriously.',
+        ]}
       />
       <Container className="flex flex-col items-center h-fit w-full">
         <TestimonialsSection />

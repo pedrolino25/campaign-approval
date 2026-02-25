@@ -5,6 +5,7 @@ import {
   AddCommentOpenAPISchema,
   ApproveReviewOpenAPISchema,
   AttachmentParamsOpenAPISchema,
+  ChangePasswordOpenAPISchema,
   ClientParamsOpenAPISchema,
   ClientReviewerParamsOpenAPISchema,
   CompleteInternalOnboardingOpenAPISchema,
@@ -18,21 +19,27 @@ import {
   DeleteAttachmentParamsOpenAPISchema,
   DeleteCommentParamsOpenAPISchema,
   ForbiddenErrorResponseSchema,
+  ForgotPasswordOpenAPISchema,
   InternalErrorResponseSchema,
   InvitationTokenParamsOpenAPISchema,
   InviteInternalUserOpenAPISchema,
   InviteReviewerOpenAPISchema,
+  LoginOpenAPISchema,
   NotFoundErrorResponseSchema,
   NotificationParamsOpenAPISchema,
   RequestChangesOpenAPISchema,
+  ResendVerificationOpenAPISchema,
+  ResetPasswordOpenAPISchema,
   ReviewItemParamsOpenAPISchema,
   SendForReviewOpenAPISchema,
+  SignUpOpenAPISchema,
   UnauthorizedErrorResponseSchema,
   UpdateClientOpenAPISchema,
   UpdateOrganizationSettingsOpenAPISchema,
   UpdateUserRoleOpenAPISchema,
   UserParamsOpenAPISchema,
   ValidationErrorResponseSchema,
+  VerifyEmailOpenAPISchema,
 } from './openapi.registry'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -2132,6 +2139,671 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     },
   })
 
+  // ============================================================================
+  // Authentication Routes
+  // ============================================================================
+
+  // Session response schema
+  const SessionResponseSchema = (z.object({
+    actorType: z.enum(['INTERNAL', 'REVIEWER']),
+    userId: z.string().uuid().optional(),
+    reviewerId: z.string().uuid().optional(),
+    organizationId: z.string().uuid().optional(),
+    clientId: z.string().uuid().optional(),
+    role: z.enum(['OWNER', 'ADMIN', 'MEMBER']).optional(),
+    email: z.string().email(),
+    onboardingCompleted: z.boolean(),
+  }) as any).openapi({
+    description: 'Session information',
+    example: {
+      actorType: 'INTERNAL',
+      userId: '123e4567-e89b-12d3-a456-426614174000',
+      organizationId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
+      role: 'OWNER',
+      email: 'user@example.com',
+      onboardingCompleted: true,
+    },
+  })
+
+  const SuccessResponseSchema = (z.object({
+    success: z.boolean(),
+  }) as any).openapi({
+    description: 'Success response',
+    example: {
+      success: true,
+    },
+  })
+
+  const AuthorizationUrlResponseSchema = (z.object({
+    authorizationUrl: z.string().url(),
+  }) as any).openapi({
+    description: 'OAuth authorization URL',
+    example: {
+      authorizationUrl: 'https://cognito-idp.region.amazonaws.com/authorize?...',
+    },
+  })
+
+  // POST /auth/login
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/login',
+    tags: ['Authentication'],
+    summary: 'Initiate login flow',
+    description: 'Returns OAuth authorization URL for login',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: LoginOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Authorization URL returned',
+        content: {
+          'application/json': {
+            schema: AuthorizationUrlResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Invalid credentials',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // GET /auth/callback
+  registry.registerPath({
+    method: 'get',
+    path: '/auth/callback',
+    tags: ['Authentication'],
+    summary: 'OAuth callback',
+    description: 'Handles OAuth callback and redirects with session cookie',
+    request: {
+      query: z.object({
+        code: z.string(),
+        state: z.string(),
+      }),
+    },
+    responses: {
+      302: {
+        description: 'Redirect to frontend with session cookie',
+      },
+      400: {
+        description: 'Invalid callback parameters',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Authentication failed',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/logout
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/logout',
+    tags: ['Authentication'],
+    summary: 'Logout',
+    description: 'Clears session cookie',
+    responses: {
+      200: {
+        description: 'Logout successful',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // GET /auth/me
+  registry.registerPath({
+    method: 'get',
+    path: '/auth/me',
+    tags: ['Authentication'],
+    summary: 'Get current session',
+    description: 'Returns current user session information',
+    security: [{ bearerAuth: [] }],
+    responses: {
+      200: {
+        description: 'Session information',
+        content: {
+          'application/json': {
+            schema: SessionResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // GET /auth/reviewer/activate
+  registry.registerPath({
+    method: 'get',
+    path: '/auth/reviewer/activate',
+    tags: ['Authentication'],
+    summary: 'Activate reviewer account',
+    description: 'Activates a reviewer account using activation token',
+    request: {
+      query: z.object({
+        token: z.string(),
+      }),
+    },
+    responses: {
+      302: {
+        description: 'Redirect to frontend with session cookie',
+      },
+      400: {
+        description: 'Invalid or expired token',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      404: {
+        description: 'Token not found',
+        content: {
+          'application/json': {
+            schema: NotFoundErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/signup
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/signup',
+    tags: ['Authentication'],
+    summary: 'Sign up',
+    description: 'Create a new user account',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: SignUpOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Sign up successful',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      409: {
+        description: 'User already exists',
+        content: {
+          'application/json': {
+            schema: ConflictErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/verify-email
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/verify-email',
+    tags: ['Authentication'],
+    summary: 'Verify email',
+    description: 'Verify email address with verification code',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: VerifyEmailOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Email verified successfully',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error or invalid code',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Invalid verification code',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/resend-verification
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/resend-verification',
+    tags: ['Authentication'],
+    summary: 'Resend verification code',
+    description: 'Resend email verification code',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: ResendVerificationOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Verification code resent',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/complete-signup/internal
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/complete-signup/internal',
+    tags: ['Authentication', 'Onboarding'],
+    summary: 'Complete internal user onboarding',
+    description: 'Complete onboarding for internal users',
+    security: [{ bearerAuth: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CompleteInternalOnboardingOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Onboarding completed',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      403: {
+        description: 'Forbidden',
+        content: {
+          'application/json': {
+            schema: ForbiddenErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/complete-signup/reviewer
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/complete-signup/reviewer',
+    tags: ['Authentication', 'Onboarding'],
+    summary: 'Complete reviewer onboarding',
+    description: 'Complete onboarding for reviewers',
+    security: [{ bearerAuth: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CompleteReviewerOnboardingOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Onboarding completed',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      403: {
+        description: 'Forbidden',
+        content: {
+          'application/json': {
+            schema: ForbiddenErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/forgot-password
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/forgot-password',
+    tags: ['Authentication'],
+    summary: 'Request password reset',
+    description: 'Send password reset code to email',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: ForgotPasswordOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password reset code sent',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/reset-password
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/reset-password',
+    tags: ['Authentication'],
+    summary: 'Reset password',
+    description: 'Reset password using verification code',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: ResetPasswordOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password reset successful',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error or invalid code',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Invalid verification code',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
+  // POST /auth/change-password
+  registry.registerPath({
+    method: 'post',
+    path: '/auth/change-password',
+    tags: ['Authentication'],
+    summary: 'Change password',
+    description: 'Change password for authenticated user',
+    security: [{ bearerAuth: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: ChangePasswordOpenAPISchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password changed successfully',
+        content: {
+          'application/json': {
+            schema: SuccessResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: ValidationErrorResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized or invalid old password',
+        content: {
+          'application/json': {
+            schema: UnauthorizedErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: InternalErrorResponseSchema,
+          },
+        },
+      },
+    },
+  })
+
   // Generate the OpenAPI document
   const generator = new OpenAPIGenerator(registry.definitions, '3.1.0')
   
@@ -2152,6 +2824,10 @@ export function buildOpenAPISpec(): Record<string, unknown> {
       },
     ],
     tags: [
+      {
+        name: 'Authentication',
+        description: 'Authentication and session management endpoints',
+      },
       {
         name: 'Organization',
         description: 'Organization management endpoints',

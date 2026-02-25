@@ -14,7 +14,7 @@ function isAllowedOrigin(origin: string | undefined): boolean {
     return true
   }
 
-  if (origin.endsWith('.vercel.app')) {
+  if (origin.startsWith('http://localhost:') || origin.endsWith('.vercel.app')) {
     return true
   }
 
@@ -31,14 +31,20 @@ export function addCorsHeaders(
     return response
   }
 
-  const headers = response.headers || {}
+  const existingHeaders = response.headers || {}
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Credentials': 'true',
+  }
+
+  if (origin) {
+    corsHeaders['Access-Control-Allow-Origin'] = origin
+  }
 
   return {
     ...response,
     headers: {
-      ...headers,
-      ...(origin ? { 'Access-Control-Allow-Origin': origin } : {}),
-      'Access-Control-Allow-Credentials': 'true',
+      ...existingHeaders,
+      ...corsHeaders,
     },
   }
 }
@@ -78,7 +84,7 @@ export function handlePreflightRequest(
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     },
     body: '',
   }

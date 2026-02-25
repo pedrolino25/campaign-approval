@@ -7,9 +7,10 @@ resource "aws_apigatewayv2_api" "main" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins = var.enable_cors ? var.cors_allowed_origins : []
-    allow_methods = var.enable_cors ? var.cors_allowed_methods : []
-    allow_headers = var.enable_cors ? var.cors_allowed_headers : []
+    allow_origins     = var.enable_cors ? var.cors_allowed_origins : []
+    allow_methods     = var.enable_cors ? var.cors_allowed_methods : []
+    allow_headers     = var.enable_cors ? var.cors_allowed_headers : []
+    allow_credentials = var.enable_cors
   }
 
   tags = var.tags
@@ -115,15 +116,6 @@ resource "aws_apigatewayv2_route" "openapi_spec" {
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "auth_login" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /auth/login"
-
-  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
-
-  authorization_type = "NONE"
-}
-
 resource "aws_apigatewayv2_route" "auth_callback" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /auth/callback"
@@ -174,6 +166,70 @@ resource "aws_apigatewayv2_route" "auth_complete_signup_internal" {
 resource "aws_apigatewayv2_route" "auth_complete_signup_reviewer" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /auth/complete-signup/reviewer"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "auth_signup" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/signup"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_verify_email" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/verify-email"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_resend_verification" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/resend-verification"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_login" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/login"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_forgot_password" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/forgot-password"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_reset_password" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/reset-password"
+
+  target = "integrations/${aws_apigatewayv2_integration.auth.id}"
+
+  authorization_type = "NONE"
+}
+
+resource "aws_apigatewayv2_route" "auth_change_password" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/change-password"
 
   target = "integrations/${aws_apigatewayv2_integration.auth.id}"
 

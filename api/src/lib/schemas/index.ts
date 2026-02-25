@@ -9,6 +9,22 @@ export {
   DeleteAttachmentParamsSchema,
 } from './attachment.schema'
 export {
+  type ChangePasswordRequest,
+  ChangePasswordSchema,
+  type ForgotPasswordRequest,
+  ForgotPasswordSchema,
+  type LoginRequest,
+  LoginSchema,
+  type ResendVerificationRequest,
+  ResendVerificationSchema,
+  type ResetPasswordRequest,
+  ResetPasswordSchema,
+  type SignUpRequest,
+  SignUpSchema,
+  type VerifyEmailRequest,
+  VerifyEmailSchema,
+} from './auth.schema'
+export {
   type ClientParams,
   ClientParamsSchema,
   type ClientReviewerParams,

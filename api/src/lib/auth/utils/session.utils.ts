@@ -139,3 +139,60 @@ export async function buildSessionResponse(
 
   return response
 }
+
+/**
+ * Builds a JSON response with session data for embedded auth flows.
+ * Returns session information in JSON format instead of redirect.
+ */
+export async function buildSessionJsonResponse(
+  userId: string,
+  actor: Awaited<ReturnType<RBACService['resolve']>>,
+  user: Awaited<ReturnType<UserRepository['findByCognitoId']>> | null,
+  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>> | null,
+  organization: Awaited<ReturnType<OrganizationRepository['findById']>> | null,
+  email: string,
+  sessionService: SessionService,
+  _context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  const onboardingCompleted = calculateOnboardingStatus(
+    actor,
+    user,
+    reviewer,
+    organization
+  )
+
+  const normalizedEmail = email.toLowerCase().trim()
+  const canonicalSession = buildCanonicalSession(
+    userId,
+    actor,
+    normalizedEmail,
+    onboardingCompleted,
+    user,
+    reviewer
+  )
+
+  const signedSession = await sessionService.signSession(canonicalSession)
+
+  const response: APIGatewayProxyResult = {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      session: {
+        actorType: canonicalSession.actorType,
+        userId: canonicalSession.userId,
+        reviewerId: canonicalSession.reviewerId,
+        organizationId: canonicalSession.organizationId,
+        clientId: canonicalSession.clientId,
+        role: canonicalSession.role,
+        onboardingCompleted: canonicalSession.onboardingCompleted,
+        email: canonicalSession.email,
+      },
+    }),
+  }
+
+  sessionService.setSessionCookie(response, signedSession)
+
+  return response
+}

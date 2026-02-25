@@ -22,10 +22,13 @@ import {
   appendSetCookie,
   clearOAuthCookies,
   getSameSiteValue,
+  parseCookies,
 } from '../lib/auth/utils/cookie.utils'
+import { acceptInvitationForEmbeddedAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import { buildErrorResponse } from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
+import { createSessionFromTokens } from '../lib/auth/utils/token-session.utils'
 import {
   validateActivationToken,
   validateCallbackParams,
@@ -33,9 +36,17 @@ import {
 } from '../lib/auth/utils/validation.utils'
 import { createHandler, createPublicHandler } from '../lib/handlers'
 import {
+  ChangePasswordSchema,
   CompleteInternalOnboardingSchema,
   CompleteReviewerOnboardingSchema,
+  ForgotPasswordSchema,
+  LoginSchema,
+  ResendVerificationSchema,
+  ResetPasswordSchema,
+  SignUpSchema,
+  VerifyEmailSchema,
 } from '../lib/schemas'
+import { addCorsHeaders } from '../lib/utils/cors'
 import { logger } from '../lib/utils/logger'
 import {
   ActorType,
@@ -683,6 +694,445 @@ const handleReviewerActivate = async (
   )
 }
 
+const handleSignUp = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = SignUpSchema.parse(body)
+
+    await cognitoService.signUp(validated.email, validated.password)
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'SIGNUP_STARTED',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requiresEmailVerification: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'SIGNUP_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleVerifyEmail = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = VerifyEmailSchema.parse(body)
+
+    const tokens = await cognitoService.confirmSignUp(
+      validated.email,
+      validated.code,
+      validated.password
+    )
+
+    // Verify token to get userId
+    const authContext = await tokenVerifier.verify(tokens.idToken)
+
+    // Create session FIRST (before accepting invitation)
+    // This ensures authentication succeeds before consuming invitation
+    const sessionResponse = await createSessionFromTokens({
+      idToken: tokens.idToken,
+      inviteToken: undefined, // Don't pass inviteToken to session creation
+      reviewerActivationCompleted: false,
+      context,
+      userRepository,
+      reviewerRepository,
+      organizationRepository,
+      invitationRepository,
+      rbacService,
+      sessionService,
+      tokenVerifier,
+      returnJson: true, // Return JSON for embedded auth
+    })
+
+    if (validated.inviteToken) {
+      await acceptInvitationAfterSession(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context
+      )
+    }
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'EMAIL_VERIFIED',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return sessionResponse
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'EMAIL_VERIFICATION_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleResendVerification = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ResendVerificationSchema.parse(body)
+
+    await cognitoService.resendConfirmation(validated.email)
+
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch {
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  }
+}
+
+const handleEmbeddedLogin = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'LOGIN_STARTED',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = LoginSchema.parse(body)
+
+    const tokens = await cognitoService.login(validated.email, validated.password)
+
+    // Verify token to get userId
+    const authContext = await tokenVerifier.verify(tokens.idToken)
+
+    // Create session FIRST (before accepting invitation)
+    // This ensures authentication succeeds before consuming invitation
+    const sessionResponse = await createSessionFromTokens({
+      idToken: tokens.idToken,
+      inviteToken: undefined, // Don't pass inviteToken to session creation
+      reviewerActivationCompleted: false,
+      context,
+      userRepository,
+      reviewerRepository,
+      organizationRepository,
+      invitationRepository,
+      rbacService,
+      sessionService,
+      tokenVerifier,
+      returnJson: true, // Return JSON for embedded auth
+    })
+
+    if (validated.inviteToken) {
+      await acceptInvitationAfterSession(
+        validated.inviteToken,
+        authContext.userId,
+        validated.email,
+        context
+      )
+    }
+
+    return sessionResponse
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'LOGIN_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+const handleForgotPassword = async (
+  _event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const body = _event.body ? JSON.parse(_event.body) : {}
+    const validated = ForgotPasswordSchema.parse(body)
+
+    await cognitoService.forgotPassword(validated.email)
+
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch {
+    // Always return success to prevent enumeration
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  }
+}
+
+const handleResetPassword = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ResetPasswordSchema.parse(body)
+
+    await cognitoService.confirmForgotPassword(
+      validated.email,
+      validated.code,
+      validated.newPassword
+    )
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'PASSWORD_RESET_SUCCESS',
+        ...context,
+        metadata: { email: validated.email },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'PASSWORD_RESET_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
+function extractRefreshTokenFromCookies(
+  cookieString: string
+): string | undefined {
+  const cookies = parseCookies(cookieString)
+  return cookies['worklient_refresh_token'] || undefined
+}
+
+async function acceptInvitationAfterSession(
+  inviteToken: string,
+  userId: string,
+  email: string,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<void> {
+  try {
+    await acceptInvitationForEmbeddedAuth(
+      inviteToken,
+      userId,
+      email,
+      context,
+      invitationRepository,
+      invitationService
+    )
+  } catch (error) {
+    // Log error but don't fail the request - session is already created
+    try {
+      logger.warn({
+        source: 'auth',
+        event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+          email,
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+  }
+}
+
+async function changeUserPassword(
+  email: string,
+  oldPassword: string,
+  newPassword: string,
+  refreshToken?: string
+): Promise<void> {
+  let accessToken: string
+
+  // Try to use refresh token first if available (more efficient)
+  if (refreshToken) {
+    try {
+      const refreshResult = await cognitoService.refreshAccessToken(refreshToken)
+      accessToken = refreshResult.accessToken
+    } catch {
+      // If refresh token fails, fall back to old password
+      const loginResult = await cognitoService.login(email, oldPassword)
+      accessToken = loginResult.accessToken
+    }
+  } else {
+    // No refresh token available, use old password to get access token
+    const loginResult = await cognitoService.login(email, oldPassword)
+    accessToken = loginResult.accessToken
+  }
+
+  // Change password using the access token
+  await cognitoService.changePassword(accessToken, oldPassword, newPassword)
+}
+
+const handleChangePassword = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
+  try {
+    const body = event.body ? JSON.parse(event.body) : {}
+    const validated = ChangePasswordSchema.parse(body)
+
+    const email = event.authContext.email
+
+    // Try to get refresh token from cookies if available
+    const cookies = event.headers.cookie || event.headers.Cookie || ''
+    const refreshToken = extractRefreshTokenFromCookies(cookies)
+
+    await changeUserPassword(
+      email,
+      validated.oldPassword,
+      validated.newPassword,
+      refreshToken
+    )
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'PASSWORD_CHANGED',
+        actorType: event.authContext.actor.type,
+        ...context,
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+      }),
+    }
+  } catch (error) {
+    try {
+      logger.error({
+        source: 'auth',
+        event: 'PASSWORD_CHANGE_FAILURE',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+
+    return buildErrorResponse(error)
+  }
+}
+
 export const loginHandler = createPublicHandler(handleLogin)
 export const callbackHandler = createPublicHandler(handleCallback)
 export const logoutHandler = createPublicHandler(handleLogout)
@@ -690,6 +1140,13 @@ export const reviewerActivateHandler = createPublicHandler(handleReviewerActivat
 export const meHandler = createHandler(handleMe)
 export const completeSignupInternalHandler = createHandler(handleCompleteSignupInternal)
 export const completeSignupReviewerHandler = createHandler(handleCompleteSignupReviewer)
+export const signUpHandler = createPublicHandler(handleSignUp)
+export const verifyEmailHandler = createPublicHandler(handleVerifyEmail)
+export const resendVerificationHandler = createPublicHandler(handleResendVerification)
+export const embeddedLoginHandler = createPublicHandler(handleEmbeddedLogin)
+export const forgotPasswordHandler = createPublicHandler(handleForgotPassword)
+export const resetPasswordHandler = createPublicHandler(handleResetPassword)
+export const changePasswordHandler = createHandler(handleChangePassword)
 
 function getPath(event: APIGatewayProxyEvent): string {
   if (event.path) {
@@ -723,13 +1180,19 @@ const handleAuthRoute = async (
     string,
     (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
   > = {
-    'GET:/auth/login': loginHandler,
     'GET:/auth/callback': callbackHandler,
     'POST:/auth/logout': logoutHandler,
     'GET:/auth/me': meHandler,
     'GET:/auth/reviewer/activate': reviewerActivateHandler,
     'POST:/auth/complete-signup/internal': completeSignupInternalHandler,
     'POST:/auth/complete-signup/reviewer': completeSignupReviewerHandler,
+    'POST:/auth/signup': signUpHandler,
+    'POST:/auth/verify-email': verifyEmailHandler,
+    'POST:/auth/resend-verification': resendVerificationHandler,
+    'POST:/auth/login': embeddedLoginHandler,
+    'POST:/auth/forgot-password': forgotPasswordHandler,
+    'POST:/auth/reset-password': resetPasswordHandler,
+    'POST:/auth/change-password': changePasswordHandler,
   }
 
   const routeKey = `${method}:${path}`
@@ -739,13 +1202,14 @@ const handleAuthRoute = async (
     return await handler(event)
   }
 
-  return {
+  const notFoundResponse: APIGatewayProxyResult = {
     statusCode: 404,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify({ message: 'Not Found' }),
   }
+  return addCorsHeaders(event, notFoundResponse)
 }
 
 export const handler = handleAuthRoute

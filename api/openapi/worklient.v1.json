@@ -16,6 +16,10 @@
   ],
   "tags": [
     {
+      "name": "Authentication",
+      "description": "Authentication and session management endpoints"
+    },
+    {
       "name": "Organization",
       "description": "Organization management endpoints"
     },
@@ -1076,10 +1080,11 @@
     "/auth/complete-signup/internal": {
       "post": {
         "tags": [
+          "Authentication",
           "Onboarding"
         ],
-        "summary": "Complete internal onboarding",
-        "description": "Complete onboarding for an internal user",
+        "summary": "Complete internal user onboarding",
+        "description": "Complete onboarding for internal users",
         "security": [
           {
             "bearerAuth": []
@@ -1122,50 +1127,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "email": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "email"
-                      ]
-                    },
-                    "organization": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name"
-                      ]
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "user",
-                    "organization"
-                  ]
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
                 }
               }
             }
@@ -1558,10 +1530,11 @@
     "/auth/complete-signup/reviewer": {
       "post": {
         "tags": [
+          "Authentication",
           "Onboarding"
         ],
         "summary": "Complete reviewer onboarding",
-        "description": "Complete onboarding for a reviewer",
+        "description": "Complete onboarding for reviewers",
         "security": [
           {
             "bearerAuth": []
@@ -1598,30 +1571,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "reviewer": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                        "email"
-                      ]
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "reviewer"
-                  ]
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
                 }
               }
             }
@@ -15268,6 +15228,3311 @@
                     "error": {
                       "code": "NOT_FOUND",
                       "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Initiate login flow",
+        "description": "Returns OAuth authorization URL for login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "inviteToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false,
+                "description": "Login request",
+                "example": {
+                  "email": "user@example.com",
+                  "password": "SecurePassword123!",
+                  "inviteToken": "optional-invite-token"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization URL returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "authorizationUrl"
+                  ],
+                  "description": "OAuth authorization URL",
+                  "example": {
+                    "authorizationUrl": "https://cognito-idp.region.amazonaws.com/authorize?..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/callback": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "OAuth callback",
+        "description": "Handles OAuth callback and redirects with session cookie",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend with session cookie"
+          },
+          "400": {
+            "description": "Invalid callback parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "description": "Clears session cookie",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get current session",
+        "description": "Returns current user session information",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actorType": {
+                      "type": "string",
+                      "enum": [
+                        "INTERNAL",
+                        "REVIEWER"
+                      ]
+                    },
+                    "userId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "reviewerId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "organizationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "clientId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "OWNER",
+                        "ADMIN",
+                        "MEMBER"
+                      ]
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "onboardingCompleted": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "actorType",
+                    "email",
+                    "onboardingCompleted"
+                  ],
+                  "description": "Session information",
+                  "example": {
+                    "actorType": "INTERNAL",
+                    "userId": "123e4567-e89b-12d3-a456-426614174000",
+                    "organizationId": "987fcdeb-51a2-43d7-8f9e-123456789abc",
+                    "role": "OWNER",
+                    "email": "user@example.com",
+                    "onboardingCompleted": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reviewer/activate": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Activate reviewer account",
+        "description": "Activates a reviewer account using activation token",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend with session cookie"
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Not found error response",
+                  "example": {
+                    "error": {
+                      "code": "NOT_FOUND",
+                      "message": "Resource not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign up",
+        "description": "Create a new user account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  },
+                  "inviteToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false,
+                "description": "Sign up request",
+                "example": {
+                  "email": "user@example.com",
+                  "password": "SecurePassword123!",
+                  "inviteToken": "optional-invite-token"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sign up successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Conflict error response",
+                  "example": {
+                    "error": {
+                      "code": "CONFLICT",
+                      "message": "Resource conflict"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify email",
+        "description": "Verify email address with verification code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "inviteToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "code",
+                  "password"
+                ],
+                "additionalProperties": false,
+                "description": "Verify email request",
+                "example": {
+                  "email": "user@example.com",
+                  "code": "123456",
+                  "password": "SecurePassword123!",
+                  "inviteToken": "optional-invite-token"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Resend verification code",
+        "description": "Resend email verification code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Resend verification code request",
+                "example": {
+                  "email": "user@example.com"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification code resent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request password reset",
+        "description": "Send password reset code to email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Forgot password request",
+                "example": {
+                  "email": "user@example.com"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset code sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Reset password",
+        "description": "Reset password using verification code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "email",
+                  "code",
+                  "newPassword"
+                ],
+                "additionalProperties": false,
+                "description": "Reset password request",
+                "example": {
+                  "email": "user@example.com",
+                  "code": "123456",
+                  "newPassword": "NewSecurePassword123!"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Internal server error response",
+                  "example": {
+                    "error": {
+                      "code": "INTERNAL_ERROR",
+                      "message": "An unexpected error occurred"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change password",
+        "description": "Change password for authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "oldPassword": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "oldPassword",
+                  "newPassword"
+                ],
+                "additionalProperties": false,
+                "description": "Change password request",
+                "example": {
+                  "oldPassword": "OldPassword123!",
+                  "newPassword": "NewSecurePassword123!"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "description": "Success response",
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Validation error response",
+                  "example": {
+                    "error": {
+                      "code": "VALIDATION_ERROR",
+                      "message": "Invalid request payload",
+                      "details": [
+                        {
+                          "field": "email",
+                          "message": "Invalid email format"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized or invalid old password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "0": "B",
+                  "1": "a",
+                  "2": "s",
+                  "3": "e",
+                  "4": "E",
+                  "5": "r",
+                  "6": "r",
+                  "7": "o",
+                  "8": "r",
+                  "9": "R",
+                  "10": "e",
+                  "11": "s",
+                  "12": "p",
+                  "13": "o",
+                  "14": "n",
+                  "15": "s",
+                  "16": "e",
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "0": "E",
+                      "1": "r",
+                      "2": "r",
+                      "3": "o",
+                      "4": "r",
+                      "5": "O",
+                      "6": "b",
+                      "7": "j",
+                      "8": "e",
+                      "9": "c",
+                      "10": "t",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "0": "E",
+                            "1": "r",
+                            "2": "r",
+                            "3": "o",
+                            "4": "r",
+                            "5": "D",
+                            "6": "e",
+                            "7": "t",
+                            "8": "a",
+                            "9": "i",
+                            "10": "l",
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "Unauthorized error response",
+                  "example": {
+                    "error": {
+                      "code": "UNAUTHORIZED",
+                      "message": "Unauthorized"
                     }
                   }
                 }
