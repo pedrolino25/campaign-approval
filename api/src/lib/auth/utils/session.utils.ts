@@ -1,12 +1,14 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
 import { ActorType, InternalError } from '../../../models'
-import type { OrganizationRepository } from '../../../repositories'
-import type { ReviewerRepository } from '../../../repositories'
-import type { UserRepository } from '../../../repositories'
+import type {
+  OrganizationRepository,
+  ReviewerRepository,
+  UserRepository,
+} from '../../../repositories'
+import { config } from '../../utils/config'
 import type { RBACService } from '../rbac.service'
 import type { CanonicalSession, SessionService } from '../session.service'
-import { config } from '../../utils/config'
 import { clearActivationCookie } from './activation-token.utils'
 import { clearOAuthCookies } from './cookie.utils'
 
@@ -98,7 +100,7 @@ export async function buildSessionResponse(
   email: string,
   activationToken: string | undefined,
   sessionService: SessionService,
-  context: { ip?: string; userAgent?: string; requestId?: string }
+  _context: { ip?: string; userAgent?: string; requestId?: string }
 ): Promise<APIGatewayProxyResult> {
   const onboardingCompleted = calculateOnboardingStatus(
     actor,

@@ -1,9 +1,11 @@
-import type { OrganizationRepository } from '../../../repositories'
-import type { ReviewerRepository } from '../../../repositories'
-import type { UserRepository } from '../../../repositories'
+import { InternalError } from '../../../models'
+import type {
+  OrganizationRepository,
+  ReviewerRepository,
+  UserRepository,
+} from '../../../repositories'
 import type { OnboardingService } from '../../../services/onboarding.service'
 import type { RBACService } from '../rbac.service'
-import { InternalError } from '../../../models'
 
 export async function resolveActorFromTokens(
   userId: string,

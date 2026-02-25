@@ -1,5 +1,9 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
+import {
+  clearActivationCookie,
+  extractAndVerifyActivationToken,
+} from './activation-token.utils'
 import { parseCookies } from './cookie.utils'
 import {
   buildInvalidRequestResponse,
@@ -7,9 +11,6 @@ import {
   buildMissingStateResponse,
   buildOAuthErrorResponse,
 } from './response-builders'
-import { extractAndVerifyActivationToken } from './activation-token.utils'
-import { clearActivationCookie } from './activation-token.utils'
-import { appendSetCookie, getSameSiteValue } from './cookie.utils'
 
 export interface CallbackParams {
   valid: boolean
