@@ -3,6 +3,7 @@ import type {
   APIGatewayProxyResult,
 } from 'aws-lambda'
 
+import { validateBody } from '../lib'
 import { CognitoService } from '../lib/auth/cognito.service'
 import { OAuthService } from '../lib/auth/oauth.service'
 import { RBACService } from '../lib/auth/rbac.service'
@@ -27,8 +28,17 @@ import {
   validateReviewerInvitation,
 } from '../lib/auth/utils/validation.utils'
 import { createHandler, createPublicHandler } from '../lib/handlers'
+import {
+  CompleteInternalOnboardingSchema,
+  CompleteReviewerOnboardingSchema,
+} from '../lib/schemas'
 import { logger } from '../lib/utils/logger'
-import { ActorType, type AuthenticatedEvent } from '../models'
+import {
+  ActorType,
+  type AuthenticatedEvent,
+  ForbiddenError,
+  type HttpRequest,
+} from '../models'
 import {
   ClientReviewerRepository,
   InvitationRepository,
@@ -49,11 +59,6 @@ const organizationRepository = new OrganizationRepository()
 const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
 const rbacService = new RBACService(new ClientReviewerRepository())
-const onboardingService = new OnboardingService(
-  userRepository,
-  reviewerRepository,
-  organizationRepository
-)
 
 function extractSafeContext(
   event: APIGatewayProxyEvent | AuthenticatedEvent
@@ -204,8 +209,9 @@ async function buildSessionForUser(
       userRepository,
       reviewerRepository,
       organizationRepository,
+      invitationRepository,
       rbacService,
-      onboardingService
+      context
     )
 
   const sessionResponse = await buildSessionResponse(
@@ -417,6 +423,145 @@ const handleMe = async (
   })
 }
 
+const handleCompleteSignupInternal = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const queryParams: Record<string, string> = {}
+  if (event.queryStringParameters) {
+    for (const [key, value] of Object.entries(event.queryStringParameters)) {
+      if (value !== undefined && value !== null) {
+        queryParams[key] = value
+      }
+    }
+  }
+  const request: HttpRequest = {
+    auth: event.authContext,
+    body: event.body ? JSON.parse(event.body) : undefined,
+    query: queryParams,
+    params: {},
+    rawEvent: event,
+  }
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('This endpoint is only available for internal users')
+  }
+
+  if (actor.onboardingCompleted) {
+    throw new ForbiddenError('Onboarding has already been completed')
+  }
+
+  const validated = validateBody(CompleteInternalOnboardingSchema)(request)
+  const onboardingService = new OnboardingService(
+    new UserRepository(),
+    new ReviewerRepository(),
+    new OrganizationRepository()
+  )
+
+  const result = await onboardingService.completeInternalOnboarding({
+    userId: actor.userId,
+    organizationId: actor.organizationId,
+    userName: validated.body.userName,
+    organizationName: validated.body.organizationName,
+  })
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'COMPLETE_SIGNUP_INTERNAL',
+      actorType: 'INTERNAL',
+      actorId: actor.userId,
+      organizationId: actor.organizationId,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user: {
+        id: result.user.id,
+        name: (result.user as { name?: string }).name,
+        email: result.user.email,
+      },
+      organization: {
+        id: result.organization.id,
+        name: result.organization.name,
+      },
+    }),
+  }
+}
+
+const handleCompleteSignupReviewer = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const queryParams: Record<string, string> = {}
+  if (event.queryStringParameters) {
+    for (const [key, value] of Object.entries(event.queryStringParameters)) {
+      if (value !== undefined && value !== null) {
+        queryParams[key] = value
+      }
+    }
+  }
+  const request: HttpRequest = {
+    auth: event.authContext,
+    body: event.body ? JSON.parse(event.body) : undefined,
+    query: queryParams,
+    params: {},
+    rawEvent: event,
+  }
+  const actor = request.auth.actor
+
+  if (actor.type !== ActorType.Reviewer) {
+    throw new ForbiddenError('This endpoint is only available for reviewers')
+  }
+
+  if (actor.onboardingCompleted) {
+    throw new ForbiddenError('Onboarding has already been completed')
+  }
+
+  const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
+  const onboardingService = new OnboardingService(
+    new UserRepository(),
+    new ReviewerRepository(),
+    new OrganizationRepository()
+  )
+
+  const reviewer = await onboardingService.completeReviewerOnboarding({
+    reviewerId: actor.reviewerId,
+    name: validated.body.name,
+  })
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'COMPLETE_SIGNUP_REVIEWER',
+      actorType: 'REVIEWER',
+      actorId: actor.reviewerId,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      reviewer: {
+        id: reviewer.id,
+        name: reviewer.name,
+        email: reviewer.email,
+      },
+    }),
+  }
+}
+
 function buildOAuthRedirectResponse(
   authorizationUrl: string,
   codeVerifier: string,
@@ -520,6 +665,8 @@ export const callbackHandler = createPublicHandler(handleCallback)
 export const logoutHandler = createPublicHandler(handleLogout)
 export const reviewerActivateHandler = createPublicHandler(handleReviewerActivate)
 export const meHandler = createHandler(handleMe)
+export const completeSignupInternalHandler = createHandler(handleCompleteSignupInternal)
+export const completeSignupReviewerHandler = createHandler(handleCompleteSignupReviewer)
 
 function getPath(event: APIGatewayProxyEvent): string {
   if (event.path) {
@@ -558,6 +705,8 @@ const handleAuthRoute = async (
     'POST:/auth/logout': logoutHandler,
     'GET:/auth/me': meHandler,
     'GET:/auth/reviewer/activate': reviewerActivateHandler,
+    'POST:/auth/complete-signup/internal': completeSignupInternalHandler,
+    'POST:/auth/complete-signup/reviewer': completeSignupReviewerHandler,
   }
 
   const routeKey = `${method}:${path}`

@@ -211,7 +211,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'post',
-    path: '/onboarding/internal',
+    path: '/auth/complete-signup/internal',
     tags: ['Onboarding'],
     summary: 'Complete internal onboarding',
     description: 'Complete onboarding for an internal user',
@@ -292,7 +292,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'post',
-    path: '/onboarding/reviewer',
+    path: '/auth/complete-signup/reviewer',
     tags: ['Onboarding'],
     summary: 'Complete reviewer onboarding',
     description: 'Complete onboarding for a reviewer',

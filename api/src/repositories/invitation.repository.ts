@@ -25,6 +25,10 @@ export interface IInvitationRepository {
   create(data: CreateInvitationInput, tx?: Prisma.TransactionClient): Promise<Invitation>
   findById(id: string, organizationId: string): Promise<Invitation | null>
   findByToken(token: string): Promise<Invitation | null>
+  findPendingByEmailAndType(
+    email: string,
+    type: InvitationType
+  ): Promise<Invitation | null>
   listByOrganization(
     organizationId: string,
     pagination: CursorPaginationParams
@@ -70,6 +74,26 @@ export class InvitationRepository implements IInvitationRepository {
   async findByToken(token: string): Promise<Invitation | null> {
     return await prisma.invitation.findUnique({
       where: { token },
+    })
+  }
+
+  async findPendingByEmailAndType(
+    email: string,
+    type: InvitationType
+  ): Promise<Invitation | null> {
+    const normalizedEmail = email.toLowerCase().trim()
+    return await prisma.invitation.findFirst({
+      where: {
+        email: normalizedEmail,
+        type,
+        acceptedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
   }
 

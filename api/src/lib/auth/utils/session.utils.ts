@@ -87,8 +87,8 @@ export function getRedirectPath(
   }
 
   return actorType === ActorType.Internal
-    ? '/onboarding/internal'
-    : '/onboarding/reviewer'
+    ? '/complete-signup/internal'
+    : '/complete-signup/reviewer'
 }
 
 export async function buildSessionResponse(

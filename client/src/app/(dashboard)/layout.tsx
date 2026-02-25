@@ -18,10 +18,10 @@ export default async function DashboardLayout({
 
   if (!session.onboardingCompleted) {
     if (session.actorType === "INTERNAL") {
-      redirect("/onboarding/internal")
+      redirect("/complete-signup/internal")
     }
     if (session.actorType === "REVIEWER") {
-      redirect("/onboarding/reviewer")
+      redirect("/complete-signup/reviewer")
     }
   }
 
