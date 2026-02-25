@@ -14,7 +14,7 @@ notification_queue_visibility_timeout_seconds = 60
 notification_queue_message_retention_seconds  = 345600
 notification_queue_max_receive_count          = 5
 
-lambda_runtime            = "nodejs18.x"
+lambda_runtime            = "nodejs20.x"
 lambda_architecture       = "x86_64"
 lambda_memory_mb          = 512
 lambda_timeout_seconds    = 15

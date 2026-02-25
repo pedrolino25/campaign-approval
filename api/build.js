@@ -55,7 +55,7 @@ async function buildLambda() {
         entryPoints: [join(__dirname, entryPoint)],
         bundle: true,
         platform: "node",
-        target: "node18",
+        target: "node20",
         format: "cjs",
         outfile: join(distDir, `${outfile}.js`),
         minify: true,

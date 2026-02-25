@@ -66,7 +66,7 @@ variable "notification_queue_max_receive_count" {
 variable "lambda_runtime" {
   description = "Lambda runtime"
   type        = string
-  default     = "nodejs18.x"
+  default     = "nodejs20.x"
 }
 
 variable "lambda_architecture" {
