@@ -4,6 +4,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   const publicRoutes = [
+    '/',
     '/login',
     '/auth',
     '/blog',
