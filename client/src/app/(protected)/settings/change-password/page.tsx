@@ -5,9 +5,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
-import { useToast } from '@/lib/hooks/use-toast'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -26,7 +24,9 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { apiFetch } from '@/lib/api/client'
+import { type ApiError } from '@/lib/api/error-handler'
+import { useToast } from '@/lib/hooks/use-toast'
 
 const changePasswordSchema = z
   .object({
