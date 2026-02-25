@@ -103,6 +103,10 @@ module "lambdas" {
   sqs_queue_url         = module.sqs.queue_url
   cognito_user_pool_id  = module.cognito.user_pool_id
   cognito_app_client_id = module.cognito.app_client_id
+  cognito_domain        = module.cognito.domain
+  aws_region            = var.aws_region
+  frontend_url          = var.frontend_url
+  worklient_api_url     = "https://${var.dev_api_subdomain}"
 
   iam_roles = {
     organization    = module.iam.organization_role_arn
@@ -111,15 +115,18 @@ module "lambdas" {
     attachment      = module.iam.attachment_role_arn
     comment         = module.iam.comment_role_arn
     notification    = module.iam.notification_role_arn
+    auth            = module.iam.auth_role_arn
     email_worker    = module.iam.email_worker_role_arn
     review_reminder = module.iam.review_reminder_role_arn
   }
 
   sendgrid_api_key = var.sendgrid_api_key
 
-  database_url          = var.database_url
-  sendgrid_template_ids = var.sendgrid_template_ids
-  app_base_url          = var.app_base_url
+  database_url             = var.database_url
+  sendgrid_template_ids    = var.sendgrid_template_ids
+  app_base_url             = var.app_base_url
+  session_secret           = var.session_secret
+  activation_cookie_secret = var.activation_cookie_secret
 
   tags = var.resource_tags
 }

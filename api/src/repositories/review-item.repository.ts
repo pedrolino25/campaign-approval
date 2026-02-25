@@ -43,7 +43,6 @@ export interface IReviewItemRepository {
     status: ReviewStatus,
     expectedVersion: number
   ): Promise<ReviewItem>
-  findById(id: string): Promise<ReviewItem | null>
   findByIdScoped(id: string, organizationId: string): Promise<ReviewItem | null>
   listByOrganization(
     organizationId: string,
@@ -153,14 +152,14 @@ export class ReviewItemRepository implements IReviewItemRepository {
         organizationId,
         archivedAt: null,
       },
-    })
-  }
-
-  async findById(id: string): Promise<ReviewItem | null> {
-    return await prisma.reviewItem.findFirst({
-      where: {
-        id,
-        archivedAt: null,
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     })
   }

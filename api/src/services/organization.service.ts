@@ -1,6 +1,6 @@
 import { type Organization, type User,UserRole } from '@prisma/client'
 
-import { prisma, ValidationError } from '../lib'
+import { logger,prisma, ValidationError } from '../lib'
 import {
   ActivityLogActionType,
   type ActivityLogMetadataMap,
@@ -15,7 +15,6 @@ import {
   UserRepository,
 } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
-import { InvitationService } from './invitation.service'
 
 export type UpdateOrganizationParams = {
   organizationId: string
@@ -48,13 +47,11 @@ export class OrganizationService implements IOrganizationService {
   private readonly organizationRepository: OrganizationRepository
   private readonly userRepository: UserRepository
   private readonly activityLogService: ActivityLogService
-  private readonly invitationService: InvitationService
 
   constructor() {
     this.organizationRepository = new OrganizationRepository()
     this.userRepository = new UserRepository()
     this.activityLogService = new ActivityLogService()
-    this.invitationService = new InvitationService()
   }
 
   async updateOrganization(
@@ -68,7 +65,6 @@ export class OrganizationService implements IOrganizationService {
     return await prisma.$transaction(async (tx) => {
       const organization = await this.loadAndValidateOrganization(
         organizationId,
-        actor.type === ActorType.Internal ? actor.organizationId : ''
       )
 
       const { updateData, changes } = this.buildOrganizationUpdateData(
@@ -105,17 +101,12 @@ export class OrganizationService implements IOrganizationService {
 
   private async loadAndValidateOrganization(
     organizationId: string,
-    actorOrganizationId: string
   ): Promise<Organization> {
     const organization = await this.organizationRepository.findById(
       organizationId
     )
 
     if (!organization) {
-      throw new NotFoundError('Organization not found')
-    }
-
-    if (organizationId !== actorOrganizationId) {
       throw new NotFoundError('Organization not found')
     }
 
@@ -224,52 +215,135 @@ export class OrganizationService implements IOrganizationService {
         return
       }
 
-      if (targetUser.role === 'OWNER') {
-        if (actor.role !== 'OWNER') {
-          throw new ForbiddenError('Only OWNER can remove ADMIN')
-        }
+      await this.validateUserRemovalPermissions(
+        targetUser,
+        targetUserId,
+        organizationId,
+        actor
+      )
 
-        if (targetUserId === actor.userId) {
-          const ownerCount = await this.userRepository.countActiveByRole(
-            organizationId,
-            'OWNER'
-          )
+      await this.archiveUser(tx, targetUserId, organizationId)
 
-          if (ownerCount <= 1) {
-            throw new ForbiddenError(
-              'Cannot remove the last OWNER from the organization'
-            )
-          }
-        }
-      } else if (targetUser.role === 'ADMIN') {
-        if (actor.role !== 'OWNER') {
-          throw new ForbiddenError('Only OWNER can remove ADMIN')
-        }
+      this.logUserRemoval(targetUserId, organizationId, targetUser.role, actor)
+
+      await this.logUserRemovalActivity(tx, organizationId, targetUserId, actor)
+    })
+  }
+
+  private async validateUserRemovalPermissions(
+    targetUser: User,
+    targetUserId: string,
+    organizationId: string,
+    actor: ActorContext
+  ): Promise<void> {
+    if (actor.type !== ActorType.Internal) {
+      throw new ForbiddenError('Only internal users can remove users')
+    }
+
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+      role: UserRole
+      onboardingCompleted: boolean
+    }
+
+    if (targetUser.role === 'OWNER') {
+      if (internalActor.role !== 'OWNER') {
+        throw new ForbiddenError('Only OWNER can remove ADMIN')
       }
 
-      await tx.user.update({
-        where: {
-          id: targetUserId,
+      if (targetUserId === internalActor.userId) {
+        const ownerCount = await this.userRepository.countActiveByRole(
           organizationId,
-        },
-        data: {
-          archivedAt: new Date(),
-        },
-      })
+          'OWNER'
+        )
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_UPDATED] =
-        {
-          userId: targetUserId,
-          removedUserId: targetUserId,
+        if (ownerCount <= 1) {
+          throw new ForbiddenError(
+            'Cannot remove the last OWNER from the organization'
+          )
         }
+      }
+    } else if (targetUser.role === 'ADMIN') {
+      if (internalActor.role !== 'OWNER') {
+        throw new ForbiddenError('Only OWNER can remove ADMIN')
+      }
+    }
+  }
 
-      await this.activityLogService.log({
-        action: ActivityLogActionType.USER_UPDATED,
+  private async archiveUser(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    targetUserId: string,
+    organizationId: string
+  ): Promise<void> {
+    await tx.user.update({
+      where: {
+        id: targetUserId,
         organizationId,
-        actor,
-        metadata,
-        tx,
+      },
+      data: {
+        archivedAt: new Date(),
+        sessionVersion: {
+          increment: 1,
+        },
+      },
+    })
+  }
+
+  private logUserRemoval(
+    targetUserId: string,
+    organizationId: string,
+    role: UserRole,
+    actor: ActorContext
+  ): void {
+    if (actor.type !== ActorType.Internal) {
+      return
+    }
+
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+      role: UserRole
+      onboardingCompleted: boolean
+    }
+
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'MEMBERSHIP_REMOVED',
+        actorType: 'INTERNAL',
+        actorId: targetUserId,
+        organizationId,
+        metadata: {
+          removedBy: internalActor.userId,
+          role,
+        },
       })
+    } catch {
+      // Never throw if logging fails
+    }
+  }
+
+  private async logUserRemovalActivity(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string,
+    targetUserId: string,
+    actor: ActorContext
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_UPDATED] =
+      {
+        userId: targetUserId,
+        removedUserId: targetUserId,
+      }
+
+    await this.activityLogService.log({
+      action: ActivityLogActionType.USER_UPDATED,
+      organizationId,
+      actor,
+      metadata,
+      tx,
     })
   }
 
@@ -318,6 +392,23 @@ export class OrganizationService implements IOrganizationService {
         oldRole,
         newRole
       )
+
+      try {
+        logger.info({
+          source: 'auth',
+          event: 'ROLE_CHANGED',
+          actorType: 'INTERNAL',
+          actorId: targetUserId,
+          organizationId,
+          metadata: {
+            oldRole,
+            newRole,
+            changedBy: actor.userId,
+          },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
 
       await this.logUserRoleUpdate(
         tx,
@@ -393,6 +484,9 @@ export class OrganizationService implements IOrganizationService {
       },
       data: {
         role: newRole,
+        sessionVersion: {
+          increment: 1,
+        },
       },
     })
 

@@ -357,3 +357,41 @@ resource "aws_iam_role_policy" "review_reminder" {
     ]
   })
 }
+
+resource "aws_iam_role" "auth" {
+  name = "${local.environment_prefix}auth-api-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "auth" {
+  name = "${local.environment_prefix}auth-api-policy"
+  role = aws_iam_role.auth.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}

@@ -1,161 +1,217 @@
-import type { Organization, Reviewer, User } from '@prisma/client'
 import type { APIGatewayProxyEvent } from 'aws-lambda'
 
 import {
   type ActorContext,
   ActorType,
   type AuthenticatedEvent,
-  type AuthTokenExtractor,
-  NotFoundError,
-  type TokenVerifier,
+  type SessionExtractor,
+  UnauthorizedError,
 } from '../../models'
-import type { OrganizationRepository } from '../../repositories/organization.repository'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { UserRepository } from '../../repositories/user.repository'
-import type { OnboardingService } from '../../services/onboarding.service'
-import type { RBACService } from './rbac.service'
+import { logger } from '../utils/logger'
+import type { CanonicalSession } from './session.service'
 
 export class AuthService {
   constructor(
-    private readonly tokenExtractor: AuthTokenExtractor,
-    private readonly tokenVerifier: TokenVerifier,
-    private readonly rbacService: RBACService,
-    private readonly onboardingService: OnboardingService,
+    private readonly sessionExtractor: SessionExtractor,
     private readonly userRepository: UserRepository,
-    private readonly reviewerRepository: ReviewerRepository,
-    private readonly organizationRepository: OrganizationRepository
+    private readonly reviewerRepository: ReviewerRepository
   ) {}
 
   async authenticate(
     event: APIGatewayProxyEvent
   ): Promise<AuthenticatedEvent> {
-    const token = this.tokenExtractor.extract(event)
-    const authContext = await this.tokenVerifier.verify(token)
-    const organizationId = event.queryStringParameters?.organizationId
+    const session = await this.sessionExtractor.extract(event)
 
-    const { user, reviewer, organization } =
-      await this.resolveUserOrReviewer(
-        authContext.userId,
-        authContext.email
-      )
+    if (!session) {
+      throw new UnauthorizedError('Invalid session')
+    }
 
-    const actor = await this.rbacService.resolve(
-      authContext.userId,
-      organizationId,
-      user,
-      reviewer
-    )
+    // Verify session version matches database
+    await this.verifySessionVersion(session, event)
 
-    const enrichedActor = this.enrichActorWithOnboardingStatus(
-      actor,
-      user,
-      reviewer,
-      organization
-    )
+    const actor = this.buildActorFromSession(session)
+    const organizationId =
+      actor.type === ActorType.Internal ? actor.organizationId : undefined
 
     return {
       ...event,
       authContext: {
-        ...authContext,
-        actor: enrichedActor,
+        cognitoSub: session.cognitoSub,
+        email: session.email,
+        actor,
         organizationId,
       },
     }
   }
 
-  private async resolveUserOrReviewer(
-    cognitoUserId: string,
-    email: string
-  ): Promise<{
-    user: User | null
-    reviewer: Reviewer | null
-    organization: Organization | null
-  }> {
-    const [user, reviewer] = await Promise.all([
-      this.userRepository.findByCognitoId(cognitoUserId),
-      this.reviewerRepository.findByCognitoId(cognitoUserId),
-    ])
-
-    if (user) {
-      const organization = await this.organizationRepository.findById(
-        user.organizationId
-      )
-      return {
-        user,
-        reviewer: null,
-        organization,
-      }
-    }
-
-    if (reviewer) {
-      return {
-        user: null,
-        reviewer,
-        organization: null,
-      }
-    }
-
-    const result = await this.onboardingService.ensureInternalUserExists({
-      cognitoUserId,
-      email,
-    })
-
-    return {
-      user: result.user,
-      reviewer: null,
-      organization: result.organization,
+  async verifySessionVersion(
+    session: CanonicalSession,
+    event: APIGatewayProxyEvent
+  ): Promise<void> {
+    if (session.actorType === ActorType.Internal) {
+      await this.verifyInternalUserSession(session, event)
+    } else {
+      await this.verifyReviewerSession(session, event)
     }
   }
 
-  private enrichActorWithOnboardingStatus(
-    actor: Omit<ActorContext, 'onboardingCompleted'>,
-    user: User | null,
-    reviewer: Reviewer | null,
-    organization: Organization | null
-  ): ActorContext {
-    if (actor.type === ActorType.Internal) {
-      const internalActor = actor as Extract<
-        ActorContext,
-        { type: typeof ActorType.Internal }
-      >
+  private extractSafeContext(event: APIGatewayProxyEvent): {
+    ip?: string
+    userAgent?: string
+    requestId?: string
+  } {
+    try {
+      const requestContext = event.requestContext
+      const headers = event.headers || {}
 
-      if (!user || !organization) {
-        throw new NotFoundError('User or organization not found')
+      return {
+        ip:
+          (requestContext as { identity?: { sourceIp?: string } })?.identity
+            ?.sourceIp || undefined,
+        userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+        requestId:
+          (requestContext as { requestId?: string })?.requestId || undefined,
       }
+    } catch {
+      return {}
+    }
+  }
 
-      const userName = (user as { name?: string | null }).name
-      const onboardingCompleted =
-        this.isValidName(userName) && this.isValidName(organization.name)
+  private async verifyInternalUserSession(
+    session: CanonicalSession,
+    event: APIGatewayProxyEvent
+  ): Promise<void> {
+    if (!session.userId) {
+      throw new UnauthorizedError('Invalid session: missing userId')
+    }
+
+    const user = await this.userRepository.findById(
+      session.userId,
+      session.organizationId || ''
+    )
+
+    if (!user) {
+      throw new UnauthorizedError('User not found')
+    }
+
+    if (user.archivedAt !== null) {
+      const context = this.extractSafeContext(event)
+      try {
+        logger.warn({
+          source: 'auth',
+          event: 'SESSION_INVALIDATED',
+          actorType: 'INTERNAL',
+          actorId: session.userId,
+          organizationId: session.organizationId,
+          ...context,
+          metadata: { reason: 'User archived' },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
+      throw new UnauthorizedError('Session invalidated: user archived')
+    }
+
+    if (user.sessionVersion !== session.sessionVersion) {
+      const context = this.extractSafeContext(event)
+      try {
+        logger.warn({
+          source: 'auth',
+          event: 'SESSION_INVALIDATED',
+          actorType: 'INTERNAL',
+          actorId: session.userId,
+          organizationId: session.organizationId,
+          ...context,
+          metadata: { reason: 'Session version mismatch' },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
+      throw new UnauthorizedError('Session invalidated')
+    }
+  }
+
+  private async verifyReviewerSession(
+    session: CanonicalSession,
+    event: APIGatewayProxyEvent
+  ): Promise<void> {
+    if (!session.reviewerId) {
+      throw new UnauthorizedError('Invalid session: missing reviewerId')
+    }
+
+    const reviewer = await this.reviewerRepository.findById(session.reviewerId)
+
+    if (!reviewer) {
+      throw new UnauthorizedError('Reviewer not found')
+    }
+
+    if (reviewer.archivedAt !== null) {
+      const context = this.extractSafeContext(event)
+      try {
+        logger.warn({
+          source: 'auth',
+          event: 'SESSION_INVALIDATED',
+          actorType: 'REVIEWER',
+          actorId: session.reviewerId,
+          clientId: session.clientId,
+          ...context,
+          metadata: { reason: 'Reviewer archived' },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
+      throw new UnauthorizedError('Session invalidated: reviewer archived')
+    }
+
+    if (reviewer.sessionVersion !== session.sessionVersion) {
+      const context = this.extractSafeContext(event)
+      try {
+        logger.warn({
+          source: 'auth',
+          event: 'SESSION_INVALIDATED',
+          actorType: 'REVIEWER',
+          actorId: session.reviewerId,
+          clientId: session.clientId,
+          ...context,
+          metadata: { reason: 'Session version mismatch' },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
+      throw new UnauthorizedError('Session invalidated')
+    }
+  }
+
+  private buildActorFromSession(session: CanonicalSession): ActorContext {
+    if (session.actorType === ActorType.Internal) {
+      if (!session.userId || !session.organizationId || !session.role) {
+        throw new UnauthorizedError('Invalid internal user session')
+      }
 
       return {
         type: ActorType.Internal,
-        userId: internalActor.userId,
-        organizationId: internalActor.organizationId,
-        role: internalActor.role,
-        onboardingCompleted,
+        userId: session.userId,
+        organizationId: session.organizationId,
+        role: session.role,
+        onboardingCompleted: session.onboardingCompleted,
       }
     }
 
-    const reviewerActor = actor as Extract<
-      ActorContext,
-      { type: typeof ActorType.Reviewer }
-    >
-
-    if (!reviewer) {
-      throw new NotFoundError('Reviewer not found')
+    if (!session.reviewerId) {
+      throw new UnauthorizedError('Invalid reviewer session')
     }
 
-    const onboardingCompleted = this.isValidName(reviewer.name)
+    if (!session.clientId) {
+      throw new UnauthorizedError('Invalid reviewer session: missing clientId')
+    }
 
     return {
       type: ActorType.Reviewer,
-      reviewerId: reviewerActor.reviewerId,
-      clientId: reviewerActor.clientId,
-      onboardingCompleted,
+      reviewerId: session.reviewerId,
+      clientId: session.clientId,
+      onboardingCompleted: session.onboardingCompleted,
     }
-  }
-
-  private isValidName(name: string | null | undefined): boolean {
-    return Boolean(name?.trim())
   }
 }

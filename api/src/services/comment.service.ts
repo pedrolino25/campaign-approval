@@ -1,7 +1,7 @@
 import { type Comment, CommentAuthorType, type Prisma } from '@prisma/client'
 
 import { type CursorPaginationParams, type CursorPaginationResult, prisma } from '../lib'
-import { WorkflowEventDispatcher } from '../lib/workflow-events/workflow-event.dispatcher'
+import { type DispatchResult, WorkflowEventDispatcher } from '../lib/workflow-events/workflow-event.dispatcher'
 import {
   ForbiddenError,
   InvariantViolationError,
@@ -47,6 +47,7 @@ export class CommentService implements ICommentService {
   private readonly reviewItemRepository: ReviewItemRepository
   private readonly activityLogService: ActivityLogService
   private readonly workflowEventDispatcher: WorkflowEventDispatcher
+  private readonly notificationService: NotificationService
 
   constructor(
     commentRepository: CommentRepository,
@@ -55,16 +56,14 @@ export class CommentService implements ICommentService {
     this.commentRepository = commentRepository
     this.reviewItemRepository = reviewItemRepository
     this.activityLogService = new ActivityLogService()
-    this.workflowEventDispatcher = new WorkflowEventDispatcher(new NotificationService())
+    this.notificationService = new NotificationService()
+    this.workflowEventDispatcher = new WorkflowEventDispatcher(this.notificationService)
   }
 
   async listComments(params: ListCommentsParams): Promise<CursorPaginationResult<Comment>> {
     const { reviewItemId, actor, pagination } = params
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    const organizationId = await this.resolveOrganizationId(actor)
 
     const reviewItem = await this.reviewItemRepository.findByIdScoped(
       reviewItemId,
@@ -87,19 +86,16 @@ export class CommentService implements ICommentService {
     this.validateCoordinates(xCoordinate, yCoordinate)
     this.validateTimestamp(timestampSeconds)
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    const organizationId = await this.resolveOrganizationId(actor)
 
-    return await prisma.$transaction(async (tx) => {
+    const { comment, dispatchResult } = await prisma.$transaction(async (tx) => {
       const reviewItem = await this.loadAndValidateReviewItem(
         reviewItemId,
         organizationId,
         actor
       )
 
-      const comment = await this.createCommentInTransaction(
+      const commentRecord = await this.createCommentInTransaction(
         tx,
         reviewItemId,
         trimmedContent,
@@ -111,17 +107,30 @@ export class CommentService implements ICommentService {
 
       await this.logCommentActivity(
         tx,
-        comment,
+        commentRecord,
         reviewItem,
         xCoordinate,
         yCoordinate,
         timestampSeconds,
         actor
       )
-      await this.dispatchCommentEvent(tx, reviewItem, actor)
+      const result = await this.dispatchCommentEvent(tx, reviewItem, actor)
 
-      return comment
+      return { comment: commentRecord,
+dispatchResult: result }
     })
+
+    // Enqueue emails AFTER transaction commits
+    if (dispatchResult.reviewItem) {
+      for (const notification of dispatchResult.notifications) {
+        await this.notificationService.enqueueEmailJobForNotification(
+          notification,
+          dispatchResult.reviewItem
+        )
+      }
+    }
+
+    return comment
   }
 
   private validateAndTrimContent(content: string): string {
@@ -244,8 +253,8 @@ export class CommentService implements ICommentService {
       Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>
     >,
     actor: ActorContext
-  ): Promise<void> {
-    await this.workflowEventDispatcher.dispatch({
+  ): Promise<DispatchResult> {
+    return await this.workflowEventDispatcher.dispatch({
       type: WorkflowEventType.COMMENT_ADDED,
       payload: {
         reviewItemId: reviewItem.id,
@@ -262,78 +271,121 @@ export class CommentService implements ICommentService {
   async deleteComment(params: DeleteCommentParams): Promise<void> {
     const { reviewItemId, commentId, actor } = params
 
-    const organizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    const organizationId = await this.resolveOrganizationId(actor)
 
     await prisma.$transaction(async (tx) => {
-      // Validate review item scoping
-      const reviewItem = await this.reviewItemRepository.findByIdScoped(
+      const reviewItem = await this.loadAndValidateReviewItemForDeletion(
+        reviewItemId,
+        organizationId,
+        actor
+      )
+
+      const comment = await this.loadAndValidateCommentForDeletion(
+        commentId,
         reviewItemId,
         organizationId
       )
 
-      if (!reviewItem) {
-        throw new NotFoundError('Review item not found')
+      this.validateCommentDeletionPermission(comment, actor)
+
+      await this.commentRepository.deleteScoped(commentId, organizationId)
+
+      await this.logCommentDeletionActivity(tx, comment, reviewItem, actor)
+    })
+  }
+
+  private async resolveOrganizationId(actor: ActorContext): Promise<string> {
+    if (actor.type === ActorType.Internal) {
+      return actor.organizationId
+    }
+
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      actor.clientId,
+      actor.reviewerId
+    )
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+    return client.organizationId
+  }
+
+  private async loadAndValidateReviewItemForDeletion(
+    reviewItemId: string,
+    organizationId: string,
+    actor: ActorContext
+  ): Promise<
+    NonNullable<Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>>
+  > {
+    const reviewItem = await this.reviewItemRepository.findByIdScoped(
+      reviewItemId,
+      organizationId
+    )
+
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    if (reviewItem.archivedAt !== null) {
+      throw new ForbiddenError('Cannot delete comment on archived review item')
+    }
+
+    this.validateReviewItemAccess(reviewItem, actor, organizationId)
+    return reviewItem
+  }
+
+  private async loadAndValidateCommentForDeletion(
+    commentId: string,
+    reviewItemId: string,
+    organizationId: string
+  ): Promise<Comment> {
+    const comment = await this.commentRepository.findByIdScoped(
+      commentId,
+      organizationId
+    )
+
+    if (!comment) {
+      throw new NotFoundError('Comment not found')
+    }
+
+    if (comment.reviewItemId !== reviewItemId) {
+      throw new NotFoundError('Comment not found')
+    }
+
+    return comment
+  }
+
+  private validateCommentDeletionPermission(
+    comment: Comment,
+    actor: ActorContext
+  ): void {
+    if (actor.type === ActorType.Reviewer) {
+      if (comment.authorReviewerId !== actor.reviewerId) {
+        throw new ForbiddenError('Reviewers can only delete their own comments')
       }
+    }
+    // Internal user deletion rules are enforced by RBAC in the handler
+  }
 
-      if (reviewItem.archivedAt !== null) {
-        throw new ForbiddenError('Cannot delete comment on archived review item')
-      }
+  private async logCommentDeletionActivity(
+    tx: Prisma.TransactionClient,
+    comment: Comment,
+    reviewItem: NonNullable<
+      Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>
+    >,
+    actor: ActorContext
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.COMMENT_DELETED] = {
+      commentId: comment.id,
+    }
 
-      this.validateReviewItemAccess(reviewItem, actor, organizationId)
-
-      // Load comment
-      const comment = await tx.comment.findUnique({
-        where: { id: commentId },
-      })
-
-      if (!comment) {
-        throw new NotFoundError('Comment not found')
-      }
-
-      if (comment.reviewItemId !== reviewItemId) {
-        throw new NotFoundError('Comment not found')
-      }
-
-      // Enforce deletion rules
-      if (actor.type === ActorType.Reviewer) {
-        // Reviewer can only delete their own comments
-        if (comment.authorReviewerId !== actor.reviewerId) {
-          throw new ForbiddenError('Reviewers can only delete their own comments')
-        }
-      } else {
-        // Internal user deletion rules
-        if (comment.authorUserId === actor.userId) {
-          // Own comment - allowed
-        } else if (comment.authorReviewerId !== null) {
-          // Reviewer comment - only ADMIN or OWNER can delete
-          // This is enforced by RBAC in the handler
-        } else {
-          // Other internal user's comment - only ADMIN or OWNER can delete
-          // This is enforced by RBAC in the handler
-        }
-      }
-
-      // Delete comment
-      await tx.comment.delete({
-        where: { id: commentId },
-      })
-
-      // Create ActivityLog
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.COMMENT_DELETED] = {
-        commentId: comment.id,
-      }
-
-      await this.activityLogService.log({
-        action: ActivityLogActionType.COMMENT_DELETED,
-        organizationId: reviewItem.organizationId,
-        actor,
-        metadata,
-        reviewItemId: reviewItem.id,
-        tx,
-      })
+    await this.activityLogService.log({
+      action: ActivityLogActionType.COMMENT_DELETED,
+      organizationId: reviewItem.organizationId,
+      actor,
+      metadata,
+      reviewItemId: reviewItem.id,
+      tx,
     })
   }
 
@@ -342,12 +394,8 @@ export class CommentService implements ICommentService {
       Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>
     >,
     actor: ActorContext,
-    actorOrganizationId: string
+    _actorOrganizationId: string
   ): void {
-    if (reviewItem.organizationId !== actorOrganizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-
     if (actor.type === ActorType.Reviewer) {
       if (reviewItem.clientId !== actor.clientId) {
         throw new ForbiddenError('Reviewer cannot access review items from other clients')
@@ -375,16 +423,5 @@ export class CommentService implements ICommentService {
         throw new InvariantViolationError('INVALID_COMMENT_AUTHOR')
       }
     }
-  }
-
-  private async getOrganizationIdFromClient(clientId: string): Promise<string> {
-    const clientRepository = new ClientRepository()
-    const organizationId = await clientRepository.getOrganizationId(clientId)
-
-    if (!organizationId) {
-      throw new NotFoundError('Client not found')
-    }
-
-    return organizationId
   }
 }

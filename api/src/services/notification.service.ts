@@ -1,4 +1,4 @@
-import type { ClientReviewer, Notification, NotificationType, Prisma, Reviewer, User } from '@prisma/client'
+import type { ClientReviewer, Notification, NotificationType, Prisma, User } from '@prisma/client'
 
 import { logger, SQSService } from '../lib'
 import type {
@@ -52,7 +52,7 @@ export class NotificationService {
     payload: WorkflowEventPayloadMap[T]
     actor: ActorContext
     tx: Prisma.TransactionClient
-  }): Promise<void> {
+  }): Promise<Notification[]> {
     const { type, payload, actor, tx } = params
 
     const reviewItem = await tx.reviewItem.findFirst({
@@ -76,7 +76,7 @@ export class NotificationService {
         organizationId: payload.organizationId,
         eventType: type,
       })
-      return
+      return []
     }
 
     const recipients = await this.resolveRecipients(
@@ -85,8 +85,9 @@ export class NotificationService {
       actor
     )
 
+    const notifications: Notification[] = []
     for (const recipient of recipients) {
-      await this.createNotificationForRecipient({
+      const notification = await this.createNotificationForRecipient({
         type,
         payload,
         recipient,
@@ -94,7 +95,10 @@ export class NotificationService {
         actor,
         tx,
       })
+      notifications.push(notification)
     }
+
+    return notifications
   }
 
   private async resolveRecipients(
@@ -154,19 +158,15 @@ export class NotificationService {
       return []
     }
 
-    // Query Reviewer records to get emails
-    const reviewers = await Promise.all(
-      reviewerIds.map((id) => this.reviewerRepository.findById(id))
-    )
+    // Batch query Reviewer records to get emails (fixes N+1 query issue)
+    const reviewers = await this.reviewerRepository.findByIds(reviewerIds)
 
-    const validReviewers = reviewers.filter(
-      (r): r is Reviewer => r !== null
-    )
-
-    return validReviewers.map((reviewer) => ({
-      reviewerId: reviewer.id,
-      email: reviewer.email,
-    }))
+    return reviewers
+      .filter((reviewer) => reviewer.email) // Filter out reviewers without email
+      .map((reviewer) => ({
+        reviewerId: reviewer.id,
+        email: reviewer.email,
+      }))
   }
 
   private async getInternalUsers(
@@ -197,7 +197,7 @@ export class NotificationService {
     reviewItem: { id: string; title: string; organizationId: string }
     actor: ActorContext
     tx: Prisma.TransactionClient
-  }): Promise<void> {
+  }): Promise<Notification> {
     const { type, recipient, reviewItem, tx } = params
 
     if (!this.isValidRecipient(recipient)) {
@@ -206,7 +206,7 @@ export class NotificationService {
         reviewItemId: reviewItem.id,
         eventType: type,
       })
-      return
+      throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
     }
 
     const recipientId = recipient.userId || recipient.reviewerId || recipient.email || ''
@@ -225,7 +225,7 @@ export class NotificationService {
       tx
     )
 
-    await this.sendEmailIfNeeded(notification, recipient, reviewItem, type)
+    return notification
   }
 
   private isValidRecipient(recipient: Recipient): boolean {
@@ -289,12 +289,17 @@ export class NotificationService {
     tx: Prisma.TransactionClient
   ): Promise<void> {
     if (recipient.userId) {
-      const user = await tx.user.findUnique({
-        where: { id: recipient.userId },
+      // Use scoped method to validate user belongs to organization
+      const user = await tx.user.findFirst({
+        where: {
+          id: recipient.userId,
+          organizationId,
+          archivedAt: null,
+        },
         select: { organizationId: true },
       })
 
-      if (!user || user.organizationId !== organizationId) {
+      if (!user) {
         throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
       }
     }
@@ -317,49 +322,6 @@ export class NotificationService {
     }
   }
 
-  private async sendEmailIfNeeded(
-    notification: Notification,
-    recipient: Recipient,
-    reviewItem: { id: string; title: string },
-    type: WorkflowEventType
-  ): Promise<void> {
-    const recipientEmail = await this.resolveRecipientEmail(recipient, notification.organizationId)
-
-    if (!recipientEmail) {
-      return
-    }
-
-    await this.enqueueEmailJob({
-      notificationId: notification.id,
-      organizationId: notification.organizationId,
-      to: recipientEmail,
-      templateId: type,
-      dynamicData: {
-        reviewItemId: reviewItem.id,
-        reviewItemTitle: reviewItem.title,
-        ...this.getDynamicDataForEventType(type, reviewItem),
-      },
-    })
-  }
-
-  private async resolveRecipientEmail(
-    recipient: Recipient,
-    organizationId: string
-  ): Promise<string | null> {
-    if (recipient.email) {
-      return recipient.email
-    }
-
-    if (recipient.userId) {
-      return await this.getEmailForUserId(recipient.userId, organizationId)
-    }
-
-    if (recipient.reviewerId) {
-      return await this.getEmailForReviewerId(recipient.reviewerId)
-    }
-
-    return null
-  }
 
   private async getEmailForUserId(
     userId: string,
@@ -406,6 +368,78 @@ export class NotificationService {
       reviewItemId: reviewItem.id,
       reviewItemTitle: reviewItem.title,
     }
+  }
+
+  async enqueueEmailJobForNotification(notification: Notification, reviewItem: { id: string; title: string }): Promise<void> {
+    const recipientEmail = await this.resolveRecipientEmailFromNotification(notification)
+
+    if (!recipientEmail) {
+      logger.warn({
+        message: 'Cannot enqueue email: no recipient email found',
+        notificationId: notification.id,
+      })
+      return
+    }
+
+    const eventType = this.mapNotificationTypeToEventType(notification.type)
+    if (!eventType) {
+      logger.warn({
+        message: 'Cannot enqueue email: unknown notification type',
+        notificationId: notification.id,
+        notificationType: notification.type,
+      })
+      return
+    }
+
+    try {
+      await this.sqsService.enqueueEmailJob({
+        notificationId: notification.id,
+        organizationId: notification.organizationId,
+        to: recipientEmail,
+        templateId: eventType,
+        dynamicData: {
+          reviewItemId: reviewItem.id,
+          reviewItemTitle: reviewItem.title,
+          ...this.getDynamicDataForEventType(eventType, reviewItem),
+        },
+      })
+    } catch (error) {
+      logger.error({
+        message: 'Failed to enqueue email job',
+        notificationId: notification.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      // Do NOT throw - DB state is already committed
+    }
+  }
+
+  private async resolveRecipientEmailFromNotification(notification: Notification): Promise<string | null> {
+    if (notification.email) {
+      return notification.email
+    }
+
+    if (notification.userId) {
+      return await this.getEmailForUserId(notification.userId, notification.organizationId)
+    }
+
+    if (notification.reviewerId) {
+      return await this.getEmailForReviewerId(notification.reviewerId)
+    }
+
+    return null
+  }
+
+  private mapNotificationTypeToEventType(notificationType: NotificationType): WorkflowEventType | null {
+    const mapping: Record<NotificationType, WorkflowEventType | null> = {
+      REVIEW_ASSIGNED: WorkflowEventType.REVIEW_SENT,
+      REVIEW_APPROVED: WorkflowEventType.REVIEW_APPROVED,
+      REVIEW_CHANGES_REQUESTED: WorkflowEventType.REVIEW_CHANGES_REQUESTED,
+      REVIEW_COMMENT: WorkflowEventType.COMMENT_ADDED,
+      INVITATION_CREATED: null,
+      INVITATION_SENT: null,
+      INVITATION_ACCEPTED: null,
+    }
+    return mapping[notificationType] ?? null
   }
 
   private async enqueueEmailJob(payload: {

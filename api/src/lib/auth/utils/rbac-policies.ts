@@ -99,12 +99,6 @@ function checkClientScope(
       'Access denied: resource belongs to a different client'
     )
   }
-
-  if (resource.organizationId !== undefined) {
-    throw new ForbiddenError(
-      'Access denied: reviewers cannot access organization-level resources'
-    )
-  }
 }
 
 function checkSoftDeletion(

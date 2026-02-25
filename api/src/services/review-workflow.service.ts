@@ -5,6 +5,7 @@ import {
 } from '@prisma/client'
 
 import { prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
+import type { DispatchResult } from '../lib/workflow-events/workflow-event.dispatcher'
 import {
   BusinessRuleViolationError,
   ConflictError,
@@ -65,30 +66,42 @@ export interface IReviewWorkflowService {
 export class ReviewWorkflowService implements IReviewWorkflowService {
   private readonly activityLogService: ActivityLogService
   private readonly workflowEventDispatcher: WorkflowEventDispatcher
+  private readonly notificationService: NotificationService
 
   constructor(
     private readonly reviewItemRepository: ReviewItemRepository,
     private readonly attachmentRepository: AttachmentRepository
   ) {
     this.activityLogService = new ActivityLogService()
+    this.notificationService = new NotificationService()
     this.workflowEventDispatcher = new WorkflowEventDispatcher(
-      new NotificationService()
+      this.notificationService
     )
   }
 
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
     const { reviewItemId, action, actor, expectedVersion } = input
 
-    const actorOrganizationId =
-      actor.type === ActorType.Internal
-        ? actor.organizationId
-        : await this.getOrganizationIdFromClient(actor.clientId)
+    let actorOrganizationId: string
+    if (actor.type === ActorType.Internal) {
+      actorOrganizationId = actor.organizationId
+    } else {
+      // For reviewers, derive organizationId from their clientId
+      const clientRepository = new ClientRepository()
+      const client = await clientRepository.findByIdForReviewer(
+        actor.clientId,
+        actor.reviewerId
+      )
+      if (!client) {
+        throw new NotFoundError('Client not found')
+      }
+      actorOrganizationId = client.organizationId
+    }
 
     const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
 
-    this.validateHardConstraints(reviewItem, actor, actorOrganizationId, expectedVersion)
+    this.validateHardConstraints(reviewItem, actor)
     this.validateActorPermissions(actor, action)
-    await this.validateBusinessRules(action, reviewItemId)
 
     const previousStatus = reviewItem.status
     const newStatus = transition(previousStatus, action)
@@ -126,8 +139,6 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   private validateHardConstraints(
     reviewItem: ReviewItem,
     actor: ActorContext,
-    actorOrganizationId: string,
-    _expectedVersion: number
   ): void {
     if (reviewItem.archivedAt !== null) {
       throw new InvalidStateTransitionError(
@@ -135,33 +146,13 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       )
     }
 
-    if (reviewItem.organizationId !== actorOrganizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-
     if (actor.type === ActorType.Reviewer) {
       if (reviewItem.clientId !== actor.clientId) {
         throw new NotFoundError('Review item not found')
       }
     }
-
-    // Version conflict is handled by the transaction (P2025 -> ConflictError)
-    // Do not check version here to allow transaction to handle optimistic locking
   }
 
-  private async validateBusinessRules(
-    action: WorkflowAction,
-    reviewItemId: string
-  ): Promise<void> {
-    if (action === WorkflowAction.SEND_FOR_REVIEW) {
-      const hasAttachments = await this.attachmentRepository.hasAnyByReviewItem(
-        reviewItemId
-      )
-      if (!hasAttachments) {
-        throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
-      }
-    }
-  }
 
   private async executeTransition(
     reviewItem: ReviewItem,
@@ -175,8 +166,21 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     const shouldIncrementVersion = 
       action === WorkflowAction.UPLOAD_NEW_VERSION || shouldUpdateStatus
 
-    return await prisma.$transaction(async (tx) => {
-      const updated = await this.updateReviewItem(
+    const { updated, dispatchResult } = await prisma.$transaction(async (tx) => {
+      // Validate attachment existence inside transaction to prevent TOCTOU race condition
+      if (action === WorkflowAction.SEND_FOR_REVIEW) {
+        const attachmentCount = await tx.attachment.count({
+          where: {
+            reviewItemId: reviewItem.id,
+          },
+        })
+
+        if (attachmentCount === 0) {
+          throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
+        }
+      }
+
+      const updatedItem = await this.updateReviewItem(
         tx,
         reviewItem,
         newStatus,
@@ -187,28 +191,42 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
       await this.createActivityLog(
         tx,
-        updated,
+        updatedItem,
         actor,
         action,
         previousStatus,
         newStatus
       )
 
+      let dispatchResult: DispatchResult | null = null
       const eventType = mapWorkflowActionToWorkflowEventType(action)
       if (eventType && shouldUpdateStatus) {
-        await this.workflowEventDispatcher.dispatch({
+        dispatchResult = await this.workflowEventDispatcher.dispatch({
           type: eventType,
           payload: {
-            reviewItemId: updated.id,
-            organizationId: updated.organizationId,
+            reviewItemId: updatedItem.id,
+            organizationId: updatedItem.organizationId,
           },
           actor,
           tx,
         })
       }
 
-      return updated
+      return { updated: updatedItem,
+dispatchResult }
     })
+
+    // Enqueue emails AFTER transaction commits
+    if (dispatchResult?.reviewItem) {
+      for (const notification of dispatchResult.notifications) {
+        await this.notificationService.enqueueEmailJobForNotification(
+          notification,
+          dispatchResult.reviewItem
+        )
+      }
+    }
+
+    return updated
   }
 
   private async updateReviewItem(
@@ -254,8 +272,12 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       )
     }
 
-    const updated = await tx.reviewItem.findUnique({
-      where: { id: reviewItem.id },
+    // Fetch updated review item using scoped method
+    const updated = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItem.id,
+        organizationId: reviewItem.organizationId,
+      },
     })
 
     if (!updated) {
@@ -354,18 +376,5 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       }
       return
     }
-  }
-
-  private async getOrganizationIdFromClient(
-    clientId: string
-  ): Promise<string> {
-    const clientRepository = new ClientRepository()
-    const organizationId = await clientRepository.getOrganizationId(clientId)
-
-    if (!organizationId) {
-      throw new NotFoundError('Client not found')
-    }
-
-    return organizationId
   }
 }

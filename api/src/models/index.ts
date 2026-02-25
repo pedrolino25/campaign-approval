@@ -7,6 +7,7 @@ export type {
   AuthContext,
   AuthenticatedEvent,
   AuthTokenExtractor,
+  SessionExtractor,
   TokenVerifier,
 } from './auth'
 export {
@@ -26,7 +27,7 @@ export {
   Action,
   type ActorContext,
   ActorType,
-  type ResourceContext
+  type ResourceContext,
 } from './rbac'
 export {
   type HttpRequest,

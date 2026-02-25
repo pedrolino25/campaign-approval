@@ -17,3 +17,8 @@ output "issuer_url" {
   description = "Cognito issuer URL"
   value       = aws_cognito_user_pool.main.endpoint
 }
+
+output "domain" {
+  description = "Cognito domain (hosted UI domain)"
+  value       = "${replace(aws_cognito_user_pool.main.name, "_", "-")}.auth.${data.aws_region.current.id}.amazoncognito.com"
+}

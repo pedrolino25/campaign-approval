@@ -95,6 +95,7 @@ model User {
   name           String?
   email          String
   role           UserRole
+  sessionVersion Int       @default(1) @map("session_version")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   archivedAt     DateTime? @map("archived_at")
@@ -113,13 +114,14 @@ model User {
 }
 
 model Reviewer {
-  id            String    @id @default(uuid())
-  cognitoUserId String    @unique @map("cognito_user_id")
-  email         String    @unique
-  name          String?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  archivedAt    DateTime? @map("archived_at")
+  id             String    @id @default(uuid())
+  cognitoUserId  String    @unique @map("cognito_user_id")
+  email          String    @unique
+  name           String?
+  sessionVersion Int       @default(1) @map("session_version")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  archivedAt     DateTime? @map("archived_at")
 
   clientLinks   ClientReviewer[]
   comments      Comment[]
@@ -213,6 +215,7 @@ model Attachment {
 
   reviewItem ReviewItem @relation(fields: [reviewItemId], references: [id])
 
+  @@unique([reviewItemId, s3Key])
   @@index([reviewItemId])
   @@map("attachments")
 }

@@ -2,6 +2,8 @@ terraform {
   required_version = ">= 1.5.0"
 }
 
+data "aws_region" "current" {}
+
 resource "aws_cognito_user_pool" "main" {
   name = var.user_pool_name
 

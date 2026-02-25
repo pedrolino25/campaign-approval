@@ -3,15 +3,20 @@ import type {
   APIGatewayProxyResult,
 } from 'aws-lambda'
 
-import type { AuthenticatedEvent } from '../../models'
+import {
+  type AuthenticatedEvent,
+} from '../../models'
+import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { AuthService } from '../auth'
 import { onboardingGuard } from '../auth/utils/onboarding-guard'
 import type { ErrorService } from '../errors/error.service'
+import { addCorsHeaders, handlePreflightRequest } from '../utils/cors'
 
 export class ApiHandlerFactory {
   constructor(
     private readonly authService: AuthService,
-    private readonly errorService: ErrorService
+    private readonly errorService: ErrorService,
+    private readonly reviewerRepository: ReviewerRepository
   ) {}
 
   create(
@@ -22,18 +27,26 @@ export class ApiHandlerFactory {
     return async (
       event: APIGatewayProxyEvent
     ): Promise<APIGatewayProxyResult> => {
+      const preflightResponse = handlePreflightRequest(event)
+      if (preflightResponse) {
+        return preflightResponse
+      }
+
       try {
         const authenticatedEvent = await this.authService.authenticate(event)
         const guardedEvent = onboardingGuard(authenticatedEvent)
-        return await handler(guardedEvent)
+        const response = await handler(guardedEvent)
+        return addCorsHeaders(event, response)
       } catch (error) {
         const requestId =
           event.requestContext.requestId || event.headers['x-request-id']
 
-        return this.errorService.handle(error, {
+        const errorResponse = this.errorService.handle(error, {
           requestId,
         })
+        return addCorsHeaders(event, errorResponse)
       }
     }
   }
+
 }

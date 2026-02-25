@@ -120,10 +120,6 @@ const handleGetAttachments = async (
     if (reviewItem.clientId !== actor.clientId) {
       throw new NotFoundError('Review item not found')
     }
-  } else {
-    if (reviewItem.organizationId !== actor.organizationId) {
-      throw new NotFoundError('Review item not found')
-    }
   }
 
   authorizeOrThrow(actor, Action.VIEW_ATTACHMENT, {

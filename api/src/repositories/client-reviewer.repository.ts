@@ -18,7 +18,6 @@ export type CreateClientReviewerInput = {
 
 export interface IClientReviewerRepository {
   create(data: CreateClientReviewerInput): Promise<ClientReviewer>
-  findById(id: string): Promise<ClientReviewer | null>
   findByReviewerId(reviewerId: string): Promise<ClientReviewer[]>
   findByReviewerIdAndOrganization(
     reviewerId: string,
@@ -51,12 +50,6 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
         clientId: data.clientId,
         reviewerId: data.reviewerId,
       },
-    })
-  }
-
-  async findById(id: string): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findUnique({
-      where: { id },
     })
   }
 

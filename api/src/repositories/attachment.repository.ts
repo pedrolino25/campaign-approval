@@ -21,11 +21,18 @@ export type CreateAttachmentInput = {
 
 export interface IAttachmentRepository {
   create(data: CreateAttachmentInput): Promise<Attachment>
-  findById(id: string): Promise<Attachment | null>
+  findByIdScoped(id: string, organizationId: string): Promise<Attachment | null>
   listByReviewItem(
     reviewItemId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Attachment>>
+  listByReviewItemAndVersion(
+    reviewItemId: string,
+    version: number
+  ): Promise<Attachment[]>
+  listByReviewItemGroupedByVersion(
+    reviewItemId: string
+  ): Promise<Map<number, Attachment[]>>
   hasAnyByReviewItem(reviewItemId: string): Promise<boolean>
   deleteScoped(id: string, reviewItemId: string): Promise<void>
 }
@@ -44,9 +51,17 @@ export class AttachmentRepository implements IAttachmentRepository {
     })
   }
 
-  async findById(id: string): Promise<Attachment | null> {
-    return await prisma.attachment.findUnique({
-      where: { id },
+  async findByIdScoped(
+    id: string,
+    organizationId: string
+  ): Promise<Attachment | null> {
+    return await prisma.attachment.findFirst({
+      where: {
+        id,
+        reviewItem: {
+          organizationId,
+        },
+      },
     })
   }
 
@@ -73,6 +88,44 @@ export class AttachmentRepository implements IAttachmentRepository {
       data,
       nextCursor: determineNextCursor(data, limit),
     }
+  }
+
+  async listByReviewItemAndVersion(
+    reviewItemId: string,
+    version: number
+  ): Promise<Attachment[]> {
+    return await prisma.attachment.findMany({
+      where: {
+        reviewItemId,
+        version,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+  }
+
+  async listByReviewItemGroupedByVersion(
+    reviewItemId: string
+  ): Promise<Map<number, Attachment[]>> {
+    const attachments = await prisma.attachment.findMany({
+      where: {
+        reviewItemId,
+      },
+      orderBy: [
+        { version: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    })
+
+    const grouped = new Map<number, Attachment[]>()
+    for (const attachment of attachments) {
+      const versionAttachments = grouped.get(attachment.version) || []
+      versionAttachments.push(attachment)
+      grouped.set(attachment.version, versionAttachments)
+    }
+
+    return grouped
   }
 
   async hasAnyByReviewItem(reviewItemId: string): Promise<boolean> {

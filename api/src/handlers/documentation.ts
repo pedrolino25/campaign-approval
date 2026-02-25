@@ -2,8 +2,10 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-const handleApiDocs = async (): Promise<APIGatewayProxyResult> => {
-  const html = `<!DOCTYPE html>
+import { createPublicHandler } from '../lib/handlers'
+import { config } from '../lib/utils/config'
+
+const API_DOCS_HTML = `<!DOCTYPE html>
 <html>
   <head>
     <title>Worklient API Docs</title>
@@ -65,16 +67,40 @@ const handleApiDocs = async (): Promise<APIGatewayProxyResult> => {
   </body>
 </html>`
 
+const handleApiDocs = async (
+  _event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  if (config.ENVIRONMENT === 'prod') {
+    return Promise.resolve({
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ message: 'Not Found' }),
+    })
+  }
+
   return Promise.resolve({
     statusCode: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
     },
-    body: html,
+    body: API_DOCS_HTML,
   })
 }
 
-const handleOpenApiSpec = async (): Promise<APIGatewayProxyResult> => {
+const handleOpenApiSpec = async (
+  _event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  if (config.ENVIRONMENT === 'prod') {
+    return Promise.resolve({
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ message: 'Not Found' }),
+    })
+  }
   const possiblePaths = [
     '/var/task/openapi/worklient.v1.json',
     join(process.cwd(), 'openapi', 'worklient.v1.json'),
@@ -120,75 +146,56 @@ const handleOpenApiSpec = async (): Promise<APIGatewayProxyResult> => {
   })
 }
 
-const getPath = (event: APIGatewayProxyEvent): string => {
-  const eventWithRawPath = event as APIGatewayProxyEvent & {
-    rawPath?: string
-    requestContext?: APIGatewayProxyEvent['requestContext'] & {
-      http?: { path?: string }
-      path?: string
-    }
+function getPath(event: APIGatewayProxyEvent): string {
+  if (event.path) {
+    return event.path
   }
-
-  return (
-    eventWithRawPath.rawPath ||
-    event.path ||
-    eventWithRawPath.requestContext?.http?.path ||
-    eventWithRawPath.requestContext?.path ||
-    ''
-  )
+  const requestContext = event.requestContext as {
+    http?: { path?: string }
+    path?: string
+  }
+  return requestContext.http?.path || requestContext.path || ''
 }
 
-const createErrorResponse = async (
-  error: unknown
+function getMethod(event: APIGatewayProxyEvent): string {
+  if (event.httpMethod) {
+    return event.httpMethod
+  }
+  const requestContext = event.requestContext as {
+    http?: { method?: string }
+    httpMethod?: string
+  }
+  return requestContext.http?.method || requestContext.httpMethod || ''
+}
+
+const handleDocumentationRoute = async (
+  event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  return Promise.resolve({
-    statusCode: 500,
+  const path = getPath(event)
+  const method = getMethod(event)
+
+  const routeMap: Record<
+    string,
+    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+  > = {
+    'GET:/api-docs': handleApiDocs,
+    'GET:/openapi/worklient.v1.json': handleOpenApiSpec,
+  }
+
+  const routeKey = `${method}:${path}`
+  const handler = routeMap[routeKey]
+
+  if (handler) {
+    return await handler(event)
+  }
+
+  return {
+    statusCode: 404,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },
-    body: JSON.stringify({
-      message: 'Internal Server Error',
-      error: error instanceof Error ? error.message : String(error),
-    }),
-  })
-}
-
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-
-    if (process.env.ENVIRONMENT === 'prod') {
-      return {
-        statusCode: 404,
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-        body: JSON.stringify({ message: 'Not Found' }),
-      }
-    }
-
-    const path = getPath(event)
-
-    if (
-      path === '/openapi/worklient.v1.json' ||
-      path.endsWith('/openapi/worklient.v1.json')
-    ) {
-      try {
-
-        const response = await handleOpenApiSpec()
-        return response
-      } catch (error) {
-        return await createErrorResponse(error)
-      }
-    }
-
-    try {
-      return await handleApiDocs()
-    } catch (error) {
-      return await createErrorResponse(error)
-    }
-  } catch (error) {
-    return await createErrorResponse(error)
+    body: JSON.stringify({ message: 'Not Found' }),
   }
 }
+
+export const handler = createPublicHandler(handleDocumentationRoute)

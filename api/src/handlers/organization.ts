@@ -13,8 +13,6 @@ import {
 } from '../lib'
 import { authorizeOrThrow } from '../lib/auth/utils/authorize'
 import {
-  CompleteInternalOnboardingSchema,
-  CompleteReviewerOnboardingSchema,
   CursorPaginationQuerySchema,
   InviteInternalUserSchema,
   UpdateOrganizationSettingsSchema,
@@ -30,14 +28,12 @@ import {
 import {
   InvitationRepository,
   OrganizationRepository,
-  ReviewerRepository,
   UserRepository,
 } from '../repositories'
 import {
   InvitationService,
   OrganizationService,
 } from '../services'
-import { OnboardingService } from '../services/onboarding.service'
 
 const handleGetOrganization = async (
   request: HttpRequest
@@ -108,86 +104,6 @@ const handlePatchOrganization = async (
       reminderIntervalDays: updated.reminderIntervalDays,
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
-    },
-  }
-}
-
-const handlePostInternalOnboarding = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  const actor = request.auth.actor
-
-  if (actor.type !== ActorType.Internal) {
-    throw new ForbiddenError('This endpoint is only available for internal users')
-  }
-
-  if (actor.onboardingCompleted) {
-    throw new ForbiddenError('Onboarding has already been completed')
-  }
-
-  const validated = validateBody(CompleteInternalOnboardingSchema)(request)
-  const onboardingService = new OnboardingService(
-    new UserRepository(),
-    new ReviewerRepository(),
-    new OrganizationRepository()
-  )
-
-  const result = await onboardingService.completeInternalOnboarding({
-    userId: actor.userId,
-    organizationId: actor.organizationId,
-    userName: validated.body.userName,
-    organizationName: validated.body.organizationName,
-  })
-
-  return {
-    statusCode: 200,
-    body: {
-      user: {
-        id: result.user.id,
-        name: (result.user as { name?: string }).name,
-        email: result.user.email,
-      },
-      organization: {
-        id: result.organization.id,
-        name: result.organization.name,
-      },
-    },
-  }
-}
-
-const handlePostReviewerOnboarding = async (
-  request: HttpRequest
-): Promise<HttpResponse> => {
-  const actor = request.auth.actor
-
-  if (actor.type !== ActorType.Reviewer) {
-    throw new ForbiddenError('This endpoint is only available for reviewers')
-  }
-
-  if (actor.onboardingCompleted) {
-    throw new ForbiddenError('Onboarding has already been completed')
-  }
-
-  const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
-  const onboardingService = new OnboardingService(
-    new UserRepository(),
-    new ReviewerRepository(),
-    new OrganizationRepository()
-  )
-
-  const reviewer = await onboardingService.completeReviewerOnboarding({
-    reviewerId: actor.reviewerId,
-    name: validated.body.name,
-  })
-
-  return {
-    statusCode: 200,
-    body: {
-      reviewer: {
-        id: reviewer.id,
-        name: reviewer.name,
-        email: reviewer.email,
-      },
     },
   }
 }
@@ -338,7 +254,7 @@ const handlePostAcceptInvitation = async (
     throw new NotFoundError('Invitation token not found')
   }
 
-  const cognitoUserId = request.auth.userId
+  const cognitoUserId = request.auth.cognitoSub
 
   if (!cognitoUserId) {
     throw new NotFoundError('User ID not found')
@@ -443,8 +359,6 @@ const handlePatchUserRole = async (
 const routes: RouteDefinition[] = [
   RouteBuilder.get('/organization', handleGetOrganization),
   RouteBuilder.patch('/organization', handlePatchOrganization),
-  RouteBuilder.post('/onboarding/internal', handlePostInternalOnboarding),
-  RouteBuilder.post('/onboarding/reviewer', handlePostReviewerOnboarding),
   RouteBuilder.get('/organization/users', handleGetUsers),
   RouteBuilder.post('/organization/users/invite', handlePostInvite),
   RouteBuilder.get('/organization/invitations', handleGetInvitations),
