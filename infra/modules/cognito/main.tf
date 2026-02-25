@@ -30,12 +30,6 @@ resource "aws_cognito_user_pool" "main" {
     email_message        = "Your verification code is {####}"
   }
 
-  # Password reset email template (for ForgotPassword flow)
-  password_reset_message_template {
-    email_subject = "Worklient - Reset your password"
-    email_message = "Your password reset code is {####}"
-  }
-
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
   }
