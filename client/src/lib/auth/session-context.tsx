@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { usePathname } from 'next/navigation'
 import { createContext, useContext, useEffect } from 'react'
 
 import { apiFetch } from '@/lib/api/client'
@@ -21,16 +22,43 @@ interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | null>(null)
 
+const publicRoutes = [
+  '/',
+  '/login',
+  '/signup',
+  '/verify-email',
+  '/forgot-password',
+  '/reset-password',
+  '/auth',
+  '/blog',
+  '/audit-traceability',
+  '/approval-workflows',
+  '/version-integrity',
+  '/operational-visibility',
+  '/client-experience',
+  '/pricing',
+  '/terms-of-service',
+  '/privacy-policy',
+]
+
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
+  const pathname = usePathname()
+  const isPublic = isPublicRoute(pathname)
 
   const { data: session, isLoading, error } = useQuery<Session>({
     queryKey: ['session'],
     queryFn: () => apiFetch<Session>('/auth/me'),
     retry: false,
+    enabled: !isPublic,
   })
 
-  // Listen for session invalidation events (from 401 handling)
   useEffect(() => {
     const handleSessionInvalidated = async () => {
       await queryClient.invalidateQueries({ queryKey: ['session'] })
@@ -43,15 +71,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  // If error (especially 401), session is null
-  // Otherwise use the session data
-  const sessionValue: Session | null = error ? null : session || null
+  const sessionValue: Session | null = isPublic ? null : error ? null : session || null
+  const isLoadingValue = isPublic ? false : isLoading
 
   return (
     <SessionContext.Provider
       value={{
         session: sessionValue,
-        isLoading,
+        isLoading: isLoadingValue,
       }}
     >
       {children}
