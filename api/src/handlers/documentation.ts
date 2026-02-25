@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 import { createPublicHandler } from '../lib/handlers'
+import { config } from '../lib/utils/config'
 
 const API_DOCS_HTML = `<!DOCTYPE html>
 <html>
@@ -69,7 +70,7 @@ const API_DOCS_HTML = `<!DOCTYPE html>
 const handleApiDocs = async (
   _event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  if (process.env.ENVIRONMENT === 'prod') {
+  if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
       statusCode: 404,
       headers: {
@@ -91,7 +92,7 @@ const handleApiDocs = async (
 const handleOpenApiSpec = async (
   _event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  if (process.env.ENVIRONMENT === 'prod') {
+  if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
       statusCode: 404,
       headers: {
@@ -167,9 +168,6 @@ function getMethod(event: APIGatewayProxyEvent): string {
   return requestContext.http?.method || requestContext.httpMethod || ''
 }
 
-export const apiDocsHandler = createPublicHandler(handleApiDocs)
-export const openApiSpecHandler = createPublicHandler(handleOpenApiSpec)
-
 const handleDocumentationRoute = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -180,8 +178,8 @@ const handleDocumentationRoute = async (
     string,
     (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
   > = {
-    'GET:/api-docs': apiDocsHandler,
-    'GET:/openapi/worklient.v1.json': openApiSpecHandler,
+    'GET:/api-docs': handleApiDocs,
+    'GET:/openapi/worklient.v1.json': handleOpenApiSpec,
   }
 
   const routeKey = `${method}:${path}`
@@ -200,4 +198,4 @@ const handleDocumentationRoute = async (
   }
 }
 
-export const handler = handleDocumentationRoute
+export const handler = createPublicHandler(handleDocumentationRoute)
