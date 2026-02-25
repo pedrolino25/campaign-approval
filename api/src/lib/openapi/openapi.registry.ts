@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
 
 import { ErrorCode } from '../../models/errors'
@@ -27,6 +26,7 @@ import {
   UpdateOrganizationSettingsSchema,
   UpdateUserRoleSchema,
 } from '../schemas'
+import { extendZodWithOpenApi } from './openapi-adapter'
 
 extendZodWithOpenApi(z)
 
