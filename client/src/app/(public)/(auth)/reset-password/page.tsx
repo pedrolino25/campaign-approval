@@ -172,7 +172,7 @@ export default function ResetPasswordPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" disabled={isLoading} className="w-full">
+                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
                       <Spinner className="mr-2" />

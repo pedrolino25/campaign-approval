@@ -76,7 +76,7 @@ function ReviewerActivateContent() {
                 Invitation expired or invalid.
               </AlertDescription>
             </Alert>
-            <Button onClick={() => (window.location.href = '/login')} className="w-full">
+            <Button size="sm" onClick={() => (window.location.href = '/login')} className="w-full">
               Go to Login
             </Button>
           </CardContent>

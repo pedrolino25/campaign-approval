@@ -104,8 +104,9 @@ async function buildLambda() {
   }
 
   // Auto-generated API index
+  // Exclude auth handler as it's accessed directly via api.handlers.auth.handler
   const apiHandlers = Object.keys(entryPoints)
-    .filter((key) => key.startsWith("api/") && !key.includes("workers"))
+    .filter((key) => key.startsWith("api/") && !key.includes("workers") && !key.includes("handlers/"))
     .map((key) => key.replace("api/", ""))
 
   const apiIndexContent = `// Auto-generated index for Lambda handler resolution
