@@ -20,6 +20,10 @@ export interface IReviewerRepository {
   findByEmail(email: string): Promise<Reviewer | null>
   update(id: string, data: UpdateReviewerInput): Promise<Reviewer>
   archive(id: string): Promise<void>
+  hasAccessToOrganization(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<boolean>
 }
 
 export class ReviewerRepository implements IReviewerRepository {
@@ -77,5 +81,26 @@ export class ReviewerRepository implements IReviewerRepository {
         },
       },
     })
+  }
+
+  async hasAccessToOrganization(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<boolean> {
+    const result = await prisma.clientReviewer.findFirst({
+      where: {
+        reviewerId,
+        archivedAt: null,
+        client: {
+          organizationId,
+          archivedAt: null,
+        },
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    return result !== null
   }
 }

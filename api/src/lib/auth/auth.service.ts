@@ -32,7 +32,8 @@ export class AuthService {
     await this.verifySessionVersion(session, event)
 
     const actor = this.buildActorFromSession(session)
-    const organizationId = event.queryStringParameters?.organizationId
+    const organizationId =
+      actor.type === ActorType.Internal ? actor.organizationId : undefined
 
     return {
       ...event,

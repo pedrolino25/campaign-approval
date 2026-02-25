@@ -294,7 +294,7 @@ export class NotificationService {
         select: { organizationId: true },
       })
 
-      if (!user || user.organizationId !== organizationId) {
+      if (!user) {
         throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
       }
     }

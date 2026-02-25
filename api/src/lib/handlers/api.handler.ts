@@ -3,7 +3,12 @@ import type {
   APIGatewayProxyResult,
 } from 'aws-lambda'
 
-import type { AuthenticatedEvent } from '../../models'
+import {
+  ActorType,
+  type AuthenticatedEvent,
+  ForbiddenError,
+} from '../../models'
+import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { AuthService } from '../auth'
 import { onboardingGuard } from '../auth/utils/onboarding-guard'
 import type { ErrorService } from '../errors/error.service'
@@ -12,7 +17,8 @@ import { addCorsHeaders, handlePreflightRequest } from '../utils/cors'
 export class ApiHandlerFactory {
   constructor(
     private readonly authService: AuthService,
-    private readonly errorService: ErrorService
+    private readonly errorService: ErrorService,
+    private readonly reviewerRepository: ReviewerRepository
   ) {}
 
   create(
@@ -30,6 +36,7 @@ export class ApiHandlerFactory {
 
       try {
         const authenticatedEvent = await this.authService.authenticate(event)
+        await this.enforceOrganizationAccess(authenticatedEvent)
         const guardedEvent = onboardingGuard(authenticatedEvent)
         const response = await handler(guardedEvent)
         return addCorsHeaders(event, response)
@@ -41,6 +48,49 @@ export class ApiHandlerFactory {
           requestId,
         })
         return addCorsHeaders(event, errorResponse)
+      }
+    }
+  }
+
+  private async enforceOrganizationAccess(
+    event: AuthenticatedEvent
+  ): Promise<void> {
+    const actor = event.authContext.actor
+    const userOrgId = event.authContext.organizationId
+
+    let requestedOrgId: string | undefined =
+      event.queryStringParameters?.organizationId
+
+    if (!requestedOrgId && event.body) {
+      try {
+        const body = JSON.parse(event.body)
+        requestedOrgId = body.organizationId
+      } catch {
+        // If body parsing fails, ignore - organizationId might not be in body
+      }
+    }
+
+    if (!requestedOrgId) {
+      return
+    }
+
+    if (actor.type === ActorType.Internal) {
+      if (requestedOrgId !== userOrgId) {
+        throw new ForbiddenError('Cross-tenant access denied')
+      }
+      return
+    }
+
+    if (actor.type === ActorType.Reviewer) {
+      const hasAccess = await this.reviewerRepository.hasAccessToOrganization(
+        actor.reviewerId,
+        requestedOrgId
+      )
+
+      if (!hasAccess) {
+        throw new ForbiddenError(
+          'Reviewer not authorized for this organization'
+        )
       }
     }
   }

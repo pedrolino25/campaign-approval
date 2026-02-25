@@ -181,11 +181,24 @@ const handleGetReviewItem = async (
   const repository = new ReviewItemRepository()
   
   let reviewItem: Awaited<ReturnType<typeof repository.findByIdScoped>> | null
-  
+  let organizationId: string
+
   if (actor.type === ActorType.Internal) {
-    reviewItem = await repository.findByIdScoped(reviewItemId, actor.organizationId)
+    organizationId = actor.organizationId
+    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
   } else {
-    reviewItem = await repository.findById(reviewItemId)
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
+    }
+    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+    
+    const clientReviewerRepository = new ClientReviewerRepository()
+    actor = await enrichReviewerActorFromOrganization(
+      actor,
+      organizationId,
+      clientReviewerRepository
+    )
   }
 
   if (!reviewItem) {
@@ -193,21 +206,6 @@ const handleGetReviewItem = async (
   }
 
   if (actor.type === ActorType.Reviewer) {
-    const clientReviewerRepository = new ClientReviewerRepository()
-    actor = await enrichReviewerActorFromOrganization(
-      actor,
-      reviewItem.organizationId,
-      clientReviewerRepository
-    )
-  }
-
-  // Validate scoping
-  if (actor.type === ActorType.Internal) {
-    if (reviewItem.organizationId !== actor.organizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-  } else {
-    // REVIEWER
     if (reviewItem.clientId !== actor.clientId) {
       throw new NotFoundError('Review item not found')
     }
@@ -247,20 +245,26 @@ const handleSendReviewItem = async (
 
   const reviewItemRepository = new ReviewItemRepository()
   
-  // For reviewers, enrich actor from resource context
-  if (actor.type === ActorType.Reviewer) {
-    // Load reviewItem to get organizationId
-    const reviewItem = await reviewItemRepository.findById(reviewItemId)
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
     }
     
     const clientReviewerRepository = new ClientReviewerRepository()
     actor = await enrichReviewerActorFromOrganization(
       actor,
-      reviewItem.organizationId,
+      organizationId,
       clientReviewerRepository
     )
+  }
+  
+  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
   }
 
   authorizeOrThrow(actor, Action.SEND_FOR_REVIEW, {
@@ -298,20 +302,26 @@ const handleApproveReviewItem = async (
 
   const reviewItemRepository = new ReviewItemRepository()
   
-  // For reviewers, enrich actor from resource context
-  if (actor.type === ActorType.Reviewer) {
-    // Load reviewItem to get organizationId
-    const reviewItem = await reviewItemRepository.findById(reviewItemId)
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
     }
     
     const clientReviewerRepository = new ClientReviewerRepository()
     actor = await enrichReviewerActorFromOrganization(
       actor,
-      reviewItem.organizationId,
+      organizationId,
       clientReviewerRepository
     )
+  }
+  
+  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
   }
 
   authorizeOrThrow(actor, Action.APPROVE_REVIEW_ITEM, {
@@ -349,20 +359,26 @@ const handleRequestChanges = async (
 
   const reviewItemRepository = new ReviewItemRepository()
   
-  // For reviewers, enrich actor from resource context
-  if (actor.type === ActorType.Reviewer) {
-    // Load reviewItem to get organizationId
-    const reviewItem = await reviewItemRepository.findById(reviewItemId)
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
     }
     
     const clientReviewerRepository = new ClientReviewerRepository()
     actor = await enrichReviewerActorFromOrganization(
       actor,
-      reviewItem.organizationId,
+      organizationId,
       clientReviewerRepository
     )
+  }
+  
+  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
   }
 
   authorizeOrThrow(actor, Action.REQUEST_CHANGES, {
@@ -419,10 +435,15 @@ const handleGetActivity = async (
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
   const actor = request.auth.actor
-  const organizationId = actor.type === ActorType.Internal ? actor.organizationId : undefined
-
-  if (!organizationId) {
-    throw new NotFoundError('Organization not found')
+  let organizationId: string
+  
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
+    }
   }
 
   const reviewItemId = validatedQuery.params.id!
@@ -433,13 +454,7 @@ const handleGetActivity = async (
     throw new NotFoundError('Review item not found')
   }
 
-  // Validate scoping
-  if (actor.type === ActorType.Internal) {
-    if (reviewItem.organizationId !== actor.organizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-  } else {
-    // REVIEWER
+  if (actor.type === ActorType.Reviewer) {
     if (reviewItem.clientId !== actor.clientId) {
       throw new NotFoundError('Review item not found')
     }

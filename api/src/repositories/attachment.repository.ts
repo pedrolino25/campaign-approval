@@ -21,7 +21,7 @@ export type CreateAttachmentInput = {
 
 export interface IAttachmentRepository {
   create(data: CreateAttachmentInput): Promise<Attachment>
-  findById(id: string): Promise<Attachment | null>
+  findByIdScoped(id: string, organizationId: string): Promise<Attachment | null>
   listByReviewItem(
     reviewItemId: string,
     pagination: CursorPaginationParams
@@ -51,9 +51,17 @@ export class AttachmentRepository implements IAttachmentRepository {
     })
   }
 
-  async findById(id: string): Promise<Attachment | null> {
-    return await prisma.attachment.findUnique({
-      where: { id },
+  async findByIdScoped(
+    id: string,
+    organizationId: string
+  ): Promise<Attachment | null> {
+    return await prisma.attachment.findFirst({
+      where: {
+        id,
+        reviewItem: {
+          organizationId,
+        },
+      },
     })
   }
 

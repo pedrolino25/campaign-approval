@@ -80,25 +80,15 @@ const validateNotificationOwnership = (
     reviewerId?: string
     organizationId?: string
   },
-  expectedOrganizationId: string
+  _expectedOrganizationId: string
 ): void => {
   if (actor.type === ActorType.Internal) {
     if (notification.userId !== actor.userId) {
       throw new ForbiddenError('Cannot access another user\'s notification')
     }
-    if (notification.organizationId !== actor.organizationId) {
-      throw new ForbiddenError(
-        'Notification belongs to a different organization'
-      )
-    }
   } else {
     if (notification.reviewerId !== actor.reviewerId) {
       throw new ForbiddenError('Cannot access another reviewer\'s notification')
-    }
-    if (notification.organizationId !== expectedOrganizationId) {
-      throw new ForbiddenError(
-        'Notification belongs to a different organization'
-      )
     }
   }
 }

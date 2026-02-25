@@ -104,9 +104,5 @@ export class ActivityLogService implements IActivityLogService {
     if (!reviewItem) {
       throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
     }
-
-    if (reviewItem.organizationId !== organizationId) {
-      throw new InvariantViolationError('CROSS_ORGANIZATION_ACTIVITY')
-    }
   }
 }

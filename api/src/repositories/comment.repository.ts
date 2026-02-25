@@ -24,7 +24,7 @@ export type CreateCommentInput = {
 
 export interface ICommentRepository {
   create(data: CreateCommentInput): Promise<Comment>
-  findById(id: string): Promise<Comment | null>
+  findByIdScoped(id: string, organizationId: string): Promise<Comment | null>
   listByReviewItem(
     reviewItemId: string,
     pagination: CursorPaginationParams
@@ -48,9 +48,17 @@ export class CommentRepository implements ICommentRepository {
     })
   }
 
-  async findById(id: string): Promise<Comment | null> {
-    return await prisma.comment.findUnique({
-      where: { id },
+  async findByIdScoped(
+    id: string,
+    organizationId: string
+  ): Promise<Comment | null> {
+    return await prisma.comment.findFirst({
+      where: {
+        id,
+        reviewItem: {
+          organizationId,
+        },
+      },
     })
   }
 

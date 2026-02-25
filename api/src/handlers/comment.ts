@@ -69,20 +69,27 @@ const handlePostComment = async (
   let actor = request.auth.actor
   const reviewItemId = validated.params.id!
 
-  const reviewItemRepository = new ReviewItemRepository()
-  
-  if (actor.type === ActorType.Reviewer) {
-    const reviewItem = await reviewItemRepository.findById(reviewItemId)
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
     }
     
     const clientReviewerRepository = new ClientReviewerRepository()
     actor = await enrichReviewerActorFromOrganization(
       actor,
-      reviewItem.organizationId,
+      organizationId,
       clientReviewerRepository
     )
+  }
+  
+  const reviewItemRepository = new ReviewItemRepository()
+  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
   }
 
   authorizeOrThrow(actor, Action.ADD_COMMENT, {
@@ -116,8 +123,18 @@ const handleDeleteComment = async (
   const commentId = validated.params.commentId!
   const reviewItemId = validated.params.id!
 
+  let organizationId: string
+  if (actor.type === ActorType.Internal) {
+    organizationId = actor.organizationId
+  } else {
+    organizationId = request.query?.organizationId as string
+    if (!organizationId) {
+      throw new NotFoundError('Organization not found')
+    }
+  }
+
   const commentRepository = new CommentRepository()
-  const comment = await commentRepository.findById(commentId)
+  const comment = await commentRepository.findByIdScoped(commentId, organizationId)
 
   if (!comment || comment.reviewItemId !== reviewItemId) {
     throw new NotFoundError('Comment not found')

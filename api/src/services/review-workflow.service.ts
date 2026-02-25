@@ -86,7 +86,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
     const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
 
-    this.validateHardConstraints(reviewItem, actor, actorOrganizationId, expectedVersion)
+    this.validateHardConstraints(reviewItem, actor)
     this.validateActorPermissions(actor, action)
     await this.validateBusinessRules(action, reviewItemId)
 
@@ -126,8 +126,6 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   private validateHardConstraints(
     reviewItem: ReviewItem,
     actor: ActorContext,
-    actorOrganizationId: string,
-    _expectedVersion: number
   ): void {
     if (reviewItem.archivedAt !== null) {
       throw new InvalidStateTransitionError(
@@ -135,18 +133,11 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       )
     }
 
-    if (reviewItem.organizationId !== actorOrganizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-
     if (actor.type === ActorType.Reviewer) {
       if (reviewItem.clientId !== actor.clientId) {
         throw new NotFoundError('Review item not found')
       }
     }
-
-    // Version conflict is handled by the transaction (P2025 -> ConflictError)
-    // Do not check version here to allow transaction to handle optimistic locking
   }
 
   private async validateBusinessRules(

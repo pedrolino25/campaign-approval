@@ -102,10 +102,6 @@ export class ReviewItemService implements IReviewItemService {
         throw new NotFoundError('Review item not found')
       }
 
-      if (reviewItem.organizationId !== organizationId) {
-        throw new NotFoundError('Review item not found')
-      }
-
       if (actor.type === ActorType.Reviewer) {
         if (reviewItem.clientId !== actor.clientId) {
           throw new NotFoundError('Review item not found')

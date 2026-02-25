@@ -65,7 +65,6 @@ export class OrganizationService implements IOrganizationService {
     return await prisma.$transaction(async (tx) => {
       const organization = await this.loadAndValidateOrganization(
         organizationId,
-        actor.type === ActorType.Internal ? actor.organizationId : ''
       )
 
       const { updateData, changes } = this.buildOrganizationUpdateData(
@@ -102,17 +101,12 @@ export class OrganizationService implements IOrganizationService {
 
   private async loadAndValidateOrganization(
     organizationId: string,
-    actorOrganizationId: string
   ): Promise<Organization> {
     const organization = await this.organizationRepository.findById(
       organizationId
     )
 
     if (!organization) {
-      throw new NotFoundError('Organization not found')
-    }
-
-    if (organizationId !== actorOrganizationId) {
       throw new NotFoundError('Organization not found')
     }
 

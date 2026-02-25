@@ -342,12 +342,8 @@ export class CommentService implements ICommentService {
       Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>
     >,
     actor: ActorContext,
-    actorOrganizationId: string
+    _actorOrganizationId: string
   ): void {
-    if (reviewItem.organizationId !== actorOrganizationId) {
-      throw new NotFoundError('Review item not found')
-    }
-
     if (actor.type === ActorType.Reviewer) {
       if (reviewItem.clientId !== actor.clientId) {
         throw new ForbiddenError('Reviewer cannot access review items from other clients')

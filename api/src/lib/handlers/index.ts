@@ -16,7 +16,11 @@ const authService = new AuthService(
   reviewerRepository
 )
 const errorService = new ErrorService()
-const apiHandlerFactory = new ApiHandlerFactory(authService, errorService)
+const apiHandlerFactory = new ApiHandlerFactory(
+  authService,
+  errorService,
+  reviewerRepository
+)
 const publicHandlerFactory = new PublicHandlerFactory(errorService)
 
 export const createHandler = apiHandlerFactory.create.bind(apiHandlerFactory)

@@ -131,10 +131,6 @@ export class AttachmentService implements IAttachmentService {
         throw new ForbiddenError('Cannot upload attachment to archived review item')
       }
 
-      if (reviewItem.organizationId !== organizationId) {
-        throw new NotFoundError('Review item not found')
-      }
-
       const { finalVersion } = await this.incrementVersionIfNeeded(
         tx,
         reviewItem,
@@ -181,10 +177,6 @@ export class AttachmentService implements IAttachmentService {
 
       if (reviewItem.archivedAt !== null) {
         throw new ForbiddenError('Cannot upload attachment to archived review item')
-      }
-
-      if (reviewItem.organizationId !== organizationId) {
-        throw new NotFoundError('Review item not found')
       }
 
       // Version was already incremented in generatePresignedUpload
@@ -259,10 +251,6 @@ export class AttachmentService implements IAttachmentService {
 
       if (reviewItem.archivedAt !== null) {
         throw new ForbiddenError('Cannot delete attachment from archived review item')
-      }
-
-      if (reviewItem.organizationId !== organizationId) {
-        throw new NotFoundError('Review item not found')
       }
 
       const attachment = await tx.attachment.findUnique({
