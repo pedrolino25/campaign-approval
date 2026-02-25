@@ -10,7 +10,7 @@ output "api_execution_arn" {
 
 output "api_stage_name" {
   description = "API Gateway stage name"
-  value       = aws_apigatewayv2_stage.main.name
+  value       = var.stage_name
 }
 
 output "api_domain_target" {
@@ -25,5 +25,5 @@ output "api_url" {
 
 output "api_stage_arn" {
   description = "API Gateway stage ARN (for WAF association)"
-  value       = "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.main.id}/stages/${aws_apigatewayv2_stage.main.name}"
+  value       = "arn:aws:apigateway:${data.aws_region.current.id}::/apis/${aws_apigatewayv2_api.main.id}/stages/${var.stage_name}"
 }
