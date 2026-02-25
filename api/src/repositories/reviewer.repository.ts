@@ -16,6 +16,7 @@ export type UpdateReviewerInput = {
 export interface IReviewerRepository {
   create(data: CreateReviewerInput): Promise<Reviewer>
   findById(id: string): Promise<Reviewer | null>
+  findByIds(ids: string[]): Promise<Reviewer[]>
   findByCognitoId(cognitoUserId: string): Promise<Reviewer | null>
   findByEmail(email: string): Promise<Reviewer | null>
   update(id: string, data: UpdateReviewerInput): Promise<Reviewer>
@@ -41,6 +42,18 @@ export class ReviewerRepository implements IReviewerRepository {
     return await prisma.reviewer.findFirst({
       where: {
         id,
+        archivedAt: null,
+      },
+    })
+  }
+
+  async findByIds(ids: string[]): Promise<Reviewer[]> {
+    if (ids.length === 0) {
+      return []
+    }
+    return await prisma.reviewer.findMany({
+      where: {
+        id: { in: ids },
         archivedAt: null,
       },
     })

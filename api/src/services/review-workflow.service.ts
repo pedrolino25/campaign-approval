@@ -102,7 +102,6 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
     this.validateHardConstraints(reviewItem, actor)
     this.validateActorPermissions(actor, action)
-    await this.validateBusinessRules(action, reviewItemId)
 
     const previousStatus = reviewItem.status
     const newStatus = transition(previousStatus, action)
@@ -154,19 +153,6 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     }
   }
 
-  private async validateBusinessRules(
-    action: WorkflowAction,
-    reviewItemId: string
-  ): Promise<void> {
-    if (action === WorkflowAction.SEND_FOR_REVIEW) {
-      const hasAttachments = await this.attachmentRepository.hasAnyByReviewItem(
-        reviewItemId
-      )
-      if (!hasAttachments) {
-        throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
-      }
-    }
-  }
 
   private async executeTransition(
     reviewItem: ReviewItem,
@@ -181,6 +167,19 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       action === WorkflowAction.UPLOAD_NEW_VERSION || shouldUpdateStatus
 
     const { updated, dispatchResult } = await prisma.$transaction(async (tx) => {
+      // Validate attachment existence inside transaction to prevent TOCTOU race condition
+      if (action === WorkflowAction.SEND_FOR_REVIEW) {
+        const attachmentCount = await tx.attachment.count({
+          where: {
+            reviewItemId: reviewItem.id,
+          },
+        })
+
+        if (attachmentCount === 0) {
+          throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
+        }
+      }
+
       const updatedItem = await this.updateReviewItem(
         tx,
         reviewItem,

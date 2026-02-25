@@ -1,4 +1,4 @@
-import type { ClientReviewer, Notification, NotificationType, Prisma, Reviewer, User } from '@prisma/client'
+import type { ClientReviewer, Notification, NotificationType, Prisma, User } from '@prisma/client'
 
 import { logger, SQSService } from '../lib'
 import type {
@@ -158,19 +158,15 @@ export class NotificationService {
       return []
     }
 
-    // Query Reviewer records to get emails
-    const reviewers = await Promise.all(
-      reviewerIds.map((id) => this.reviewerRepository.findById(id))
-    )
+    // Batch query Reviewer records to get emails (fixes N+1 query issue)
+    const reviewers = await this.reviewerRepository.findByIds(reviewerIds)
 
-    const validReviewers = reviewers.filter(
-      (r): r is Reviewer => r !== null
-    )
-
-    return validReviewers.map((reviewer) => ({
-      reviewerId: reviewer.id,
-      email: reviewer.email,
-    }))
+    return reviewers
+      .filter((reviewer) => reviewer.email) // Filter out reviewers without email
+      .map((reviewer) => ({
+        reviewerId: reviewer.id,
+        email: reviewer.email,
+      }))
   }
 
   private async getInternalUsers(
