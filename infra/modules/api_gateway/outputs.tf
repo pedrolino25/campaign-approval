@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 output "api_id" {
   description = "API Gateway API ID"
   value       = aws_apigatewayv2_api.main.id
@@ -23,11 +25,9 @@ output "api_url" {
   value       = replace(aws_apigatewayv2_stage.main.invoke_url, "/$", "")
 }
 
-data "aws_caller_identity" "current" {}
-
 output "api_stage_arn" {
   description = "API Gateway stage ARN (for WAF association)"
   # For API Gateway v2 HTTP APIs, WAF requires the stage ARN with account ID
   # Format: arn:aws:apigateway:region:account-id:/apis/api-id/stages/stage-name
-  value       = "arn:aws:apigateway:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:/apis/${aws_apigatewayv2_api.main.id}/stages/${var.stage_name}"
+  value = "arn:aws:apigateway:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:/apis/${aws_apigatewayv2_api.main.id}/stages/${var.stage_name}"
 }
