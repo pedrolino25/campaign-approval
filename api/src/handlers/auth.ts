@@ -13,6 +13,7 @@ import {
   SessionService,
 } from '../lib/auth'
 import { CognitoService } from '../lib/auth/cognito.service'
+import type { CanonicalSession } from '../lib/auth/session.service'
 import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
 import {
   clearActivationCookie,
@@ -430,62 +431,43 @@ const handleLogout = (
   return Promise.resolve(response)
 }
 
-const handleMe = async (
-  event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  const sessionToken = sessionService.getSessionFromCookie(cookies)
-
-  if (!sessionToken) {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'SESSION_TOKEN_MISSING',
-        },
-      }),
-    })
-  }
-
-  const session = await sessionService.verifySession(sessionToken)
-
-  if (!session) {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'SESSION_INVALID_OR_EXPIRED',
-        },
-      }),
-    })
-  }
-
+function logSessionCheckFailure(
+  context: { ip?: string; userAgent?: string; requestId?: string },
+  reason: string,
+  metadata?: Record<string, unknown>
+): void {
   try {
-    await authService.verifySessionVersion(session, event)
-  } catch (error) {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
+    logger.warn({
+      source: 'auth',
+      event: 'SESSION_CHECK_FAILED',
+      ...context,
+      metadata: {
+        reason,
+        ...metadata,
       },
-      body: JSON.stringify({
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'SESSION_VERSION_MISMATCH',
-        },
-      }),
     })
+  } catch {
+    // Never throw if logging fails
   }
+}
 
-  return Promise.resolve({
+function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
+  return {
+    statusCode: 401,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      error: {
+        code: 'UNAUTHORIZED',
+        message,
+      },
+    }),
+  }
+}
+
+function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult {
+  return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -500,7 +482,47 @@ const handleMe = async (
       onboardingCompleted: session.onboardingCompleted,
       email: session.email,
     }),
-  })
+  }
+}
+
+const handleMe = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const cookies = event.headers.cookie || event.headers.Cookie || ''
+  const sessionToken = sessionService.getSessionFromCookie(cookies)
+  const context = extractSafeContext(event)
+
+  if (!sessionToken) {
+    logSessionCheckFailure(context, 'SESSION_TOKEN_MISSING', {
+      hasCookies: !!cookies,
+      cookieCount: cookies.split(';').length,
+    })
+    return createUnauthorizedResponse('SESSION_TOKEN_MISSING')
+  }
+
+  const session = await sessionService.verifySession(sessionToken)
+
+  if (!session) {
+    logSessionCheckFailure(context, 'SESSION_INVALID_OR_EXPIRED', {
+      hasToken: !!sessionToken,
+    })
+    return createUnauthorizedResponse('SESSION_INVALID_OR_EXPIRED')
+  }
+
+  try {
+    await authService.verifySessionVersion(session, event)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    logSessionCheckFailure(context, 'SESSION_VERSION_MISMATCH', {
+      error: errorMessage,
+      sessionUserId: session.userId,
+      sessionVersion: session.sessionVersion,
+      actorType: session.actorType,
+    })
+    return createUnauthorizedResponse('SESSION_VERSION_MISMATCH')
+  }
+
+  return createSessionResponse(session)
 }
 
 const handleCompleteSignupInternal = async (
@@ -804,6 +826,23 @@ const handleSignUp = async (
   }
 }
 
+function logEmailVerificationEvent(
+  event: string,
+  context: { ip?: string; userAgent?: string; requestId?: string },
+  metadata: Record<string, unknown>
+): void {
+  try {
+    logger.info({
+      source: 'auth',
+      event,
+      ...context,
+      metadata,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+}
+
 async function processEmailVerification(
   validated: {
     email: string
@@ -819,14 +858,17 @@ async function processEmailVerification(
     validated.password
   )
 
-  // Verify token to get userId
   const authContext = await tokenVerifier.verify(tokens.idToken)
+  const { userId, email } = authContext
 
-  // Create session FIRST (before accepting invitation)
-  // This ensures authentication succeeds before consuming invitation
+  logEmailVerificationEvent('EMAIL_VERIFICATION_STARTED', context, {
+    email,
+    userId,
+  })
+
   const sessionResponse = await createSessionFromTokens({
     idToken: tokens.idToken,
-    inviteToken: undefined, // Don't pass inviteToken to session creation
+    inviteToken: undefined,
     reviewerActivationCompleted: false,
     context,
     userRepository,
@@ -836,28 +878,30 @@ async function processEmailVerification(
     rbacService,
     sessionService,
     tokenVerifier,
-    returnJson: true, // Return JSON for embedded auth
+    returnJson: true,
+  })
+
+  const hasCookie = sessionResponse.multiValueHeaders?.['Set-Cookie']?.some(
+    (cookie) => typeof cookie === 'string' && cookie.startsWith('worklient_session=')
+  )
+
+  logEmailVerificationEvent('SESSION_CREATED', context, {
+    email,
+    userId,
+    hasCookie: !!hasCookie,
+    cookieCount: sessionResponse.multiValueHeaders?.['Set-Cookie']?.length || 0,
   })
 
   if (validated.inviteToken) {
     await acceptInvitationAfterSession(
       validated.inviteToken,
-      authContext.userId,
-      validated.email,
+      userId,
+      email,
       context
     )
   }
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'EMAIL_VERIFIED',
-      ...context,
-      metadata: { email: validated.email },
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logEmailVerificationEvent('EMAIL_VERIFIED', context, { email })
 
   return sessionResponse
 }
