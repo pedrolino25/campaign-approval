@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
 
 const completeSignupSchema = z.object({
@@ -65,9 +65,9 @@ export default function InternalCompleteSignupPage() {
       await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/dashboard')
     },
-    onError: (err: { status?: number; message?: string }) => {
+    onError: (err: unknown) => {
       form.setError('root', {
-        message: err.message || 'Failed to complete signup',
+        message: getErrorMessage(err),
       })
     },
   })

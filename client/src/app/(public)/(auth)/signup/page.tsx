@@ -26,8 +26,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
 
 const signupSchema = z
   .object({
@@ -75,13 +74,7 @@ export default function SignupPage() {
 
       router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
     } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'EMAIL_ALREADY_EXISTS') {
-        setError('An account with this email already exists.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

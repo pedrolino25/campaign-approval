@@ -24,8 +24,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
 import { useToast } from '@/lib/hooks/use-toast'
 
 const changePasswordSchema = z
@@ -75,8 +74,7 @@ export default function ChangePasswordPage() {
 
       form.reset()
     } catch (err) {
-      const apiError = err as ApiError
-      setError(apiError.message || 'An error occurred')
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

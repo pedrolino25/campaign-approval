@@ -25,8 +25,8 @@ export const colors = {
     900: '#000000',
   },
   // Semantic Colors
-  primary: '#a0affa',
-  primarySoft: '#c4c5f4',
+  primary: '#714B96',
+  primarySoft: '#704B9566',
   success: '#4fad55',
   danger: '#ff2244',
   // Text Tokens

@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
 
 export default function ReviewerCompleteSignupPage() {
@@ -87,8 +87,7 @@ export default function ReviewerCompleteSignupPage() {
               {mutation.isError && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {(mutation.error as { message?: string })?.message ||
-                      'Failed to complete setup'}
+                    {getErrorMessage(mutation.error)}
                   </AlertDescription>
                 </Alert>
               )}

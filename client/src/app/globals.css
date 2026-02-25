@@ -30,7 +30,7 @@
     
     /* Worklient Primary Color */
     /* #a0affa -> HSL: 234 88% 78% */
-    --primary: 234 88% 78%;
+    --primary: 270 33% 44%;
     --primary-foreground: 0 0% 0%; /* neutral-900: #000000 */
     
     /* Worklient Secondary Colors */
@@ -81,7 +81,7 @@
     
     /* Worklient Primary Color */
     /* #a0affa -> HSL: 234 88% 78% */
-    --primary: 234 88% 78%;
+    --primary: 270 33% 44%;
     --primary-foreground: 0 0% 0%; /* neutral-900: #000000 */
     
     /* Worklient Secondary Colors */
@@ -109,7 +109,7 @@
     /* neutral-300: #ececec -> HSL: 0 0% 93% */
     --border: 0 0% 93%;
     --input: 0 0% 93%;
-    --ring: 234 88% 78%; /* primary color */
+    --ring: 270 33% 44% / 0.4; /* primary color */
     
     /* Worklient Border Radius */
     /* Using radius-md: 16px */

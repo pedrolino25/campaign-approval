@@ -26,8 +26,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
 
 const resetPasswordSchema = z
   .object({
@@ -74,15 +73,7 @@ export default function ResetPasswordPage() {
 
       router.push('/login')
     } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'INVALID_CODE') {
-        setError('Invalid verification code.')
-      } else if (apiError.code === 'CODE_EXPIRED') {
-        setError('Verification code expired. Please request a new one.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

@@ -27,8 +27,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
+import type { ParsedError } from '@/lib/errors'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -64,18 +64,14 @@ export default function LoginPage() {
       await queryClient.invalidateQueries({ queryKey: ['session'] })
       router.push('/')
     } catch (err) {
-      const apiError = err as ApiError
+      const error = err as ParsedError
 
-      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
+      if (error.code === 'EMAIL_NOT_VERIFIED') {
         router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
         return
       }
 
-      if (apiError.code === 'INVALID_CREDENTIALS') {
-        setError('Invalid email or password.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
