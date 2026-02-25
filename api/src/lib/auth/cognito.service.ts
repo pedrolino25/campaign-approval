@@ -30,7 +30,6 @@ import {
   ValidationError,
 } from '../../models'
 import { config } from '../utils/config'
-import { logger } from '../utils/logger'
 
 export class CognitoService {
   private readonly client: CognitoIdentityProviderClient
@@ -137,24 +136,7 @@ export class CognitoService {
       }
       if (error instanceof InvalidParameterException) {
         const errorMessage = error.message || ''
-        const errorName = error.name || 'InvalidParameterException'
-        
-        // Log the actual Cognito error for debugging
-        logger.error({
-          source: 'cognito',
-          event: 'SIGNUP_INVALID_PARAMETER',
-          metadata: {
-            email,
-            emailLength: email.length,
-            emailBytes: Buffer.from(email).toString('hex'),
-            cognitoErrorName: errorName,
-            cognitoErrorMessage: errorMessage,
-            cognitoErrorCode: error.$metadata?.httpStatusCode,
-            cognitoRequestId: error.$metadata?.requestId,
-            fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-          },
-        })
-        
+
         if (errorMessage.includes('email') || errorMessage.includes('Email')) {
           throw new ValidationError('INVALID_EMAIL_FORMAT')
         }

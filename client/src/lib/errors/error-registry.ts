@@ -146,7 +146,6 @@ export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
     technicalMessage: 'OAuth client configuration error',
     retryable: true,
   },
-
   VALIDATION_ERROR: {
     code: 'VALIDATION_ERROR',
     category: ErrorCategory.VALIDATION,
