@@ -16,22 +16,6 @@ resource "aws_apigatewayv2_api" "main" {
   tags = var.tags
 }
 
-resource "aws_apigatewayv2_authorizer" "jwt" {
-  api_id           = aws_apigatewayv2_api.main.id
-  authorizer_type  = "JWT"
-  identity_sources = ["$request.header.Authorization"]
-  name             = "${var.environment}-jwt-authorizer"
-
-  jwt_configuration {
-    audience = [var.cognito_app_client_id]
-    issuer   = "https://cognito-idp.${data.aws_region.current.id}.amazonaws.com/${var.cognito_user_pool_id}"
-  }
-
-  lifecycle {
-    ignore_changes = [name]
-  }
-}
-
 data "aws_region" "current" {}
 
 resource "aws_apigatewayv2_integration" "organization" {
@@ -239,8 +223,7 @@ resource "aws_apigatewayv2_route" "organization_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_patch" {
@@ -249,8 +232,7 @@ resource "aws_apigatewayv2_route" "organization_patch" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_users_get" {
@@ -259,8 +241,7 @@ resource "aws_apigatewayv2_route" "organization_users_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_users_invite" {
@@ -269,8 +250,7 @@ resource "aws_apigatewayv2_route" "organization_users_invite" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_invitations_get" {
@@ -279,8 +259,7 @@ resource "aws_apigatewayv2_route" "organization_invitations_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_invitations_accept" {
@@ -289,8 +268,7 @@ resource "aws_apigatewayv2_route" "organization_invitations_accept" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_users_delete" {
@@ -299,8 +277,7 @@ resource "aws_apigatewayv2_route" "organization_users_delete" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_users_role_patch" {
@@ -309,8 +286,7 @@ resource "aws_apigatewayv2_route" "organization_users_role_patch" {
 
   target = "integrations/${aws_apigatewayv2_integration.organization.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_get" {
@@ -319,8 +295,7 @@ resource "aws_apigatewayv2_route" "clients_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_post" {
@@ -329,8 +304,7 @@ resource "aws_apigatewayv2_route" "clients_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_patch" {
@@ -339,8 +313,7 @@ resource "aws_apigatewayv2_route" "clients_patch" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_archive" {
@@ -349,8 +322,7 @@ resource "aws_apigatewayv2_route" "clients_archive" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_reviewers_get" {
@@ -359,8 +331,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_reviewers_post" {
@@ -369,8 +340,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
@@ -379,8 +349,7 @@ resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
 
   target = "integrations/${aws_apigatewayv2_integration.client.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_get" {
@@ -389,8 +358,7 @@ resource "aws_apigatewayv2_route" "review_items_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_post" {
@@ -399,8 +367,7 @@ resource "aws_apigatewayv2_route" "review_items_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_get_id" {
@@ -409,8 +376,7 @@ resource "aws_apigatewayv2_route" "review_items_get_id" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_send" {
@@ -419,8 +385,7 @@ resource "aws_apigatewayv2_route" "review_items_send" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_approve" {
@@ -429,8 +394,7 @@ resource "aws_apigatewayv2_route" "review_items_approve" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_request_changes" {
@@ -439,8 +403,7 @@ resource "aws_apigatewayv2_route" "review_items_request_changes" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_archive" {
@@ -449,8 +412,7 @@ resource "aws_apigatewayv2_route" "review_items_archive" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_activity_get" {
@@ -459,8 +421,7 @@ resource "aws_apigatewayv2_route" "review_items_activity_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.review.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "attachments_presign" {
@@ -469,8 +430,7 @@ resource "aws_apigatewayv2_route" "attachments_presign" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_attachments_post" {
@@ -479,8 +439,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_attachments_get" {
@@ -489,8 +448,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_attachments_delete" {
@@ -499,8 +457,7 @@ resource "aws_apigatewayv2_route" "review_items_attachments_delete" {
 
   target = "integrations/${aws_apigatewayv2_integration.attachment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_comments_get" {
@@ -509,8 +466,7 @@ resource "aws_apigatewayv2_route" "review_items_comments_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_comments_post" {
@@ -519,8 +475,7 @@ resource "aws_apigatewayv2_route" "review_items_comments_post" {
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "review_items_comments_delete" {
@@ -529,8 +484,7 @@ resource "aws_apigatewayv2_route" "review_items_comments_delete" {
 
   target = "integrations/${aws_apigatewayv2_integration.comment.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "notifications_get" {
@@ -539,8 +493,7 @@ resource "aws_apigatewayv2_route" "notifications_get" {
 
   target = "integrations/${aws_apigatewayv2_integration.notification.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "notifications_read_patch" {
@@ -549,8 +502,7 @@ resource "aws_apigatewayv2_route" "notifications_read_patch" {
 
   target = "integrations/${aws_apigatewayv2_integration.notification.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_stage" "main" {
