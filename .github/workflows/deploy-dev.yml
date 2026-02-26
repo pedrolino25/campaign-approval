@@ -35,6 +35,10 @@ jobs:
         working-directory: api
         run: npm ci
 
+      - name: Generate Prisma Client
+        working-directory: api
+        run: npx prisma generate
+
       - name: Run API typecheck
         working-directory: api
         run: npm run typecheck
@@ -43,71 +47,6 @@ jobs:
         working-directory: api
         run: npm run lint
 
-      - name: Generate Prisma migration
-        working-directory: api
-        run: |
-          set +e
-          MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
-          MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
-          
-          # Generate migration SQL using migrate diff (non-interactive)
-          # Compare current database state to desired schema
-          MIGRATION_SQL=$(npx prisma migrate diff \
-            --from-url "$DATABASE_URL" \
-            --to-schema-datamodel prisma/schema.prisma \
-            --script 2>&1)
-          EXIT_CODE=$?
-          
-          # Check for errors (but allow empty migrations)
-          if [ $EXIT_CODE -ne 0 ] && ! echo "$MIGRATION_SQL" | grep -qi "no.*change"; then
-            echo "Migration generation failed: $MIGRATION_SQL"
-            exit $EXIT_CODE
-          fi
-          
-          # Check if migration SQL is empty or just whitespace/comments
-          CLEAN_SQL=$(echo "$MIGRATION_SQL" | grep -v "^\s*--" | tr -d '[:space:]')
-          if [ -z "$CLEAN_SQL" ]; then
-            echo "No schema changes detected, skipping migration generation"
-            exit 0
-          fi
-          
-          # Create migration directory and file
-          mkdir -p "$MIGRATION_DIR"
-          echo "$MIGRATION_SQL" > "$MIGRATION_DIR/migration.sql"
-          
-          echo "Migration generated: $MIGRATION_NAME"
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-
-      - name: Apply Prisma migrations
-        working-directory: api
-        run: |
-          set -e
-          npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-
-      - name: Commit migration files
-        working-directory: api
-        run: |
-          # Remove any empty migrations before committing
-          find prisma/migrations -name "migration.sql" -type f | while read file; do
-            if grep -q "This is an empty migration" "$file" 2>/dev/null; then
-              echo "Removing empty migration: $(dirname "$file")"
-              rm -rf "$(dirname "$file")"
-            fi
-          done
-          # Only commit if there are actual migration changes
-          if [ -n "$(git status --porcelain prisma/migrations)" ]; then
-            git config --local user.email "github-actions[bot]@users.noreply.github.com"
-            git config --local user.name "github-actions[bot]"
-            git add prisma/migrations/
-            git commit -m "chore: auto-generate Prisma migration [skip ci]"
-            git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
-          else
-            echo "No migration changes to commit"
-          fi
-
       - name: Build Lambda artifact
         working-directory: api
         run: |
@@ -115,11 +54,9 @@ jobs:
           npm run build
           if [ ! -f dist/lambda.zip ]; then
             echo "::error::Build failed - lambda.zip not created"
-            echo "Contents of dist directory:"
             ls -la dist/ || echo "dist directory does not exist"
             exit 1
           fi
-          echo "Lambda artifact created: $(ls -lh dist/lambda.zip)"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -140,7 +77,7 @@ jobs:
       - name: Check if backend bucket exists
         run: |
           if ! aws s3 ls s3://worklient-terraform-state-dev 2>/dev/null; then
-            echo "::error::Terraform backend bucket does not exist. Please run the 'Bootstrap Terraform Backend' workflow first."
+            echo "::error::Terraform backend bucket does not exist."
             exit 1
           fi
 
