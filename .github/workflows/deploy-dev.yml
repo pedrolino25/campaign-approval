@@ -51,10 +51,10 @@ jobs:
           MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
           
           MIGRATION_SQL=$(npx prisma migrate diff \
-          --from-migrations prisma/migrations \
+          --from-url "$DATABASE_URL" \
           --to-schema-datamodel prisma/schema.prisma \
-          --shadow-database-url "$MIGRATIONS_DATABASE_URL" \
-          --script 2>&1)
+          --script \
+          --exit-code 2>&1)
 
           EXIT_CODE=$?
 
@@ -82,7 +82,6 @@ jobs:
           echo "Migration generated: $MIGRATION_NAME"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-          MIGRATIONS_DATABASE_URL: ${{ secrets.MIGRATIONS_DATABASE_URL }}
 
       - name: Apply Prisma migrations
         working-directory: api
