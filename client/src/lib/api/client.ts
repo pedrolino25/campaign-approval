@@ -6,8 +6,6 @@ if (!API_URL) {
   throw new Error('NEXT_PUBLIC_API_URL is not defined')
 }
 
-let isHandling401 = false
-
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit
@@ -34,22 +32,8 @@ export async function apiFetch<T>(
   if (!response.ok) {
     const parsedError = await handleError(null, response, {
       onError: (error) => {
-        if (
-          error.statusCode === 401 &&
-          typeof window !== 'undefined' &&
-          !isHandling401
-        ) {
-          isHandling401 = true
-
+        if (error.statusCode === 401 && typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('session-invalidated'))
-
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login'
-          }
-
-          setTimeout(() => {
-            isHandling401 = false
-          }, 1000) // 1 second
         }
       },
     })
