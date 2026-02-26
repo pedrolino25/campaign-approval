@@ -55,6 +55,7 @@ import {
   type AuthenticatedEvent,
   ForbiddenError,
   type HttpRequest,
+  InternalError,
   UnauthorizedError,
 } from '../models'
 import {
@@ -525,6 +526,51 @@ const handleMe = async (
   return createSessionResponse(session)
 }
 
+function buildInternalSessionAfterOnboarding(
+  cognitoSub: string,
+  email: string,
+  updatedUser: Awaited<ReturnType<UserRepository['findById']>>
+): CanonicalSession {
+  if (!updatedUser) {
+    throw new InternalError('User not found when building session')
+  }
+  return {
+    cognitoSub,
+    actorType: ActorType.Internal,
+    userId: updatedUser.id,
+    organizationId: updatedUser.organizationId,
+    role: updatedUser.role,
+    onboardingCompleted: true,
+    email,
+    sessionVersion: updatedUser.sessionVersion,
+  }
+}
+
+function buildInternalOnboardingResponse(
+  result: Awaited<ReturnType<OnboardingService['completeInternalOnboarding']>>,
+  sessionToken: string
+): APIGatewayProxyResult {
+  const response: APIGatewayProxyResult = {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user: {
+        id: result.user.id,
+        name: (result.user as { name?: string }).name,
+        email: result.user.email,
+      },
+      organization: {
+        id: result.organization.id,
+        name: result.organization.name,
+      },
+    }),
+  }
+  sessionService.setSessionCookie(response, sessionToken)
+  return response
+}
+
 const handleCompleteSignupInternal = async (
   event: AuthenticatedEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -567,6 +613,23 @@ const handleCompleteSignupInternal = async (
     organizationName: validated.body.organizationName,
   })
 
+  const updatedUser = await userRepository.findById(
+    actor.userId,
+    actor.organizationId
+  )
+
+  if (!updatedUser) {
+    throw new InternalError('User not found after onboarding completion')
+  }
+
+  const newSessionPayload = buildInternalSessionAfterOnboarding(
+    event.authContext.cognitoSub,
+    event.authContext.email,
+    updatedUser
+  )
+
+  const newSessionToken = await sessionService.signSession(newSessionPayload)
+
   try {
     logger.info({
       source: 'auth',
@@ -579,23 +642,51 @@ const handleCompleteSignupInternal = async (
     // Never throw if logging fails
   }
 
+  return buildInternalOnboardingResponse(result, newSessionToken)
+}
+
+function buildReviewerSessionAfterOnboarding(
+  cognitoSub: string,
+  email: string,
+  clientId: string,
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>
+): CanonicalSession {
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found when building session')
+  }
   return {
+    cognitoSub,
+    actorType: ActorType.Reviewer,
+    reviewerId: updatedReviewer.id,
+    clientId,
+    onboardingCompleted: true,
+    email,
+    sessionVersion: updatedReviewer.sessionVersion,
+  }
+}
+
+function buildReviewerOnboardingResponse(
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
+  sessionToken: string
+): APIGatewayProxyResult {
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found when building response')
+  }
+  const response: APIGatewayProxyResult = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      user: {
-        id: result.user.id,
-        name: (result.user as { name?: string }).name,
-        email: result.user.email,
-      },
-      organization: {
-        id: result.organization.id,
-        name: result.organization.name,
+      reviewer: {
+        id: updatedReviewer.id,
+        name: updatedReviewer.name,
+        email: updatedReviewer.email,
       },
     }),
   }
+  sessionService.setSessionCookie(response, sessionToken)
+  return response
 }
 
 const handleCompleteSignupReviewer = async (
@@ -633,10 +724,31 @@ const handleCompleteSignupReviewer = async (
     new OrganizationRepository()
   )
 
-  const reviewer = await onboardingService.completeReviewerOnboarding({
+  await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
     name: validated.body.name,
   })
+
+  const updatedReviewer = await reviewerRepository.findById(actor.reviewerId)
+
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found after onboarding completion')
+  }
+
+  const reviewerActor = actor as {
+    type: typeof ActorType.Reviewer
+    reviewerId: string
+    clientId: string
+  }
+
+  const newSessionPayload = buildReviewerSessionAfterOnboarding(
+    event.authContext.cognitoSub,
+    event.authContext.email,
+    reviewerActor.clientId,
+    updatedReviewer
+  )
+
+  const newSessionToken = await sessionService.signSession(newSessionPayload)
 
   try {
     logger.info({
@@ -649,19 +761,7 @@ const handleCompleteSignupReviewer = async (
     // Never throw if logging fails
   }
 
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      reviewer: {
-        id: reviewer.id,
-        name: reviewer.name,
-        email: reviewer.email,
-      },
-    }),
-  }
+  return buildReviewerOnboardingResponse(updatedReviewer, newSessionToken)
 }
 
 function buildOAuthRedirectResponse(

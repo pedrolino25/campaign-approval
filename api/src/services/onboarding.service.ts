@@ -88,6 +88,9 @@ export class OnboardingService {
           },
           data: {
             name: params.userName || null,
+            sessionVersion: {
+              increment: 1,
+            },
           },
         }),
         tx.organization.update({
@@ -111,8 +114,16 @@ export class OnboardingService {
     reviewerId: string
     name: string
   }): Promise<Awaited<ReturnType<ReviewerRepository['update']>>> {
-    return await this.reviewerRepository.update(params.reviewerId, {
-      name: params.name,
+    return await prisma.$transaction(async (tx) => {
+      return await tx.reviewer.update({
+        where: { id: params.reviewerId },
+        data: {
+          name: params.name,
+          sessionVersion: {
+            increment: 1,
+          },
+        },
+      })
     })
   }
 }
