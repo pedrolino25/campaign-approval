@@ -3,6 +3,7 @@ import { type AuthenticatedEvent,ForbiddenError } from '../../../models'
 const ALLOWED_ROUTES = new Set([
   'POST /auth/complete-signup/internal',
   'POST /auth/complete-signup/reviewer',
+  'POST /auth/change-password',
   'GET /auth/me',
 ])
 
