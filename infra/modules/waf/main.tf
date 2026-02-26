@@ -8,6 +8,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
+############################################
+# WAF Web ACL (CloudFront Scope)
+############################################
+
 resource "aws_wafv2_web_acl" "cloudfront" {
   provider    = aws.us_east_1
   name        = "${var.environment}-worklient-cloudfront-waf"
@@ -17,6 +21,10 @@ resource "aws_wafv2_web_acl" "cloudfront" {
   default_action {
     allow {}
   }
+
+  ############################################
+  # AWS Managed Rules - Common Protection
+  ############################################
 
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
@@ -40,6 +48,10 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     }
   }
 
+  ############################################
+  # AWS Managed Rules - Known Bad Inputs
+  ############################################
+
   rule {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 2
@@ -62,6 +74,36 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     }
   }
 
+  ############################################
+  # Optional Rate Limiting (Recommended)
+  ############################################
+
+  rule {
+    name     = "RateLimitRule"
+    priority = 10
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 2000
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "RateLimitMetric"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  ############################################
+  # Global Visibility Config
+  ############################################
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.environment}-worklient-cloudfront-waf"
@@ -71,11 +113,47 @@ resource "aws_wafv2_web_acl" "cloudfront" {
   tags = var.tags
 }
 
+############################################
+# CloudWatch Log Group (us-east-1)
+############################################
+
 resource "aws_cloudwatch_log_group" "waf" {
   provider          = aws.us_east_1
   name              = "/aws/waf/${var.environment}-worklient-cloudfront"
   retention_in_days = 30
 }
+
+############################################
+# REQUIRED: CloudWatch Resource Policy
+# Allows WAF to write logs
+############################################
+
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  provider    = aws.us_east_1
+  policy_name = "${var.environment}-waf-logging-policy"
+
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AWSWAFLoggingPermissions"
+        Effect = "Allow"
+        Principal = {
+          Service = "waf.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.waf.arn}:*"
+      }
+    ]
+  })
+}
+
+############################################
+# WAF Logging Configuration
+############################################
 
 resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
   provider     = aws.us_east_1
@@ -83,5 +161,9 @@ resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
 
   log_destination_configs = [
     aws_cloudwatch_log_group.waf.arn
+  ]
+
+  depends_on = [
+    aws_cloudwatch_log_resource_policy.waf
   ]
 }
