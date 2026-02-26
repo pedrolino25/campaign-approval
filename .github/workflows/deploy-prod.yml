@@ -39,14 +39,6 @@ jobs:
         working-directory: api
         run: npm run lint
 
-      - name: Apply Prisma migrations
-        working-directory: api
-        run: |
-          set -e
-          npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
-
       - name: Build Lambda artifact
         working-directory: api
         run: |

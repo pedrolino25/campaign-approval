@@ -11,7 +11,9 @@
     "build": "npm run build:lambda",
     "build:lambda": "node build.js",
     "generate:openapi": "tsx scripts/generate-openapi.ts",
-    "domain:audit": "tsx scripts/domain-audit.ts"
+    "domain:audit": "tsx scripts/domain-audit.ts",
+    "migrate:dev": "dotenv -e .env.dev -- bash scripts/migrate-dev.sh",
+    "migrate:prod": "dotenv -e .env.prod -- bash scripts/migrate-prod.sh"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^3.2.0",
@@ -32,6 +34,7 @@
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "archiver": "^7.0.1",
+    "dotenv-cli": "^11.0.0",
     "esbuild": "^0.19.11",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
