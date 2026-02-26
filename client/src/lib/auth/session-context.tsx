@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext, useContext, useEffect } from 'react'
 
-import { apiFetch } from '@/lib/api/client'
+import { apiFetch } from '../api/client'
 
 export type Session = {
   actorType: 'INTERNAL' | 'REVIEWER'
@@ -26,7 +26,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const { data: session, isLoading, error } = useQuery<Session>({
     queryKey: ['session'],
-    queryFn: () => apiFetch<Session>('/auth/me'),
+    queryFn: async () => {
+      const sessionData = await apiFetch<Session>('/auth/me')
+      await apiFetch('/api/auth/session', {
+        method: 'POST',
+      }).catch(() => { })
+
+      return sessionData
+    },
     retry: false,
     staleTime: 0,
     gcTime: 0,
