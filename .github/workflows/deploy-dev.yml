@@ -43,18 +43,6 @@ jobs:
         working-directory: api
         run: npm run lint
 
-      - name: Generate Prisma migration
-        working-directory: api
-        run: |
-          set -e
-          MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
-          
-          npx prisma migrate dev \
-            --name "$MIGRATION_NAME" \
-            --create-only
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-
       - name: Apply Prisma migrations
         working-directory: api
         run: |
@@ -62,26 +50,6 @@ jobs:
           npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
-
-      - name: Commit migration files
-        working-directory: api
-        run: |
-          find prisma/migrations -name "migration.sql" -type f | while read file; do
-            if grep -q "This is an empty migration" "$file" 2>/dev/null; then
-              echo "Removing empty migration: $(dirname "$file")"
-              rm -rf "$(dirname "$file")"
-            fi
-          done
-
-          if [ -n "$(git status --porcelain prisma/migrations)" ]; then
-            git config --local user.email "github-actions[bot]@users.noreply.github.com"
-            git config --local user.name "github-actions[bot]"
-            git add prisma/migrations/
-            git commit -m "chore: auto-generate Prisma migration [skip ci]"
-            git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
-          else
-            echo "No migration changes to commit"
-          fi
 
       - name: Build Lambda artifact
         working-directory: api
