@@ -28,6 +28,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['session'],
     queryFn: () => apiFetch<Session>('/auth/me'),
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
+    placeholderData: (previousData) => previousData,
   })
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  const sessionValue: Session | null = error ? null : session || null
+  const sessionValue: Session | null = error && !session ? null : session || null
   const isLoadingValue = isLoading
 
   return (
