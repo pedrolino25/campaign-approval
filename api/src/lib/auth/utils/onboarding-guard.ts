@@ -16,9 +16,23 @@ const ALLOWED_PATTERNS: ReadonlyArray<{ method: string; pathPattern: RegExp }> =
   ] as const
 
 function extractRoute(event: AuthenticatedEvent): { method: string; path: string } {
+  const method =
+    event.httpMethod ||
+    (event.requestContext as { http?: { method?: string }; httpMethod?: string })
+      ?.http?.method ||
+    (event.requestContext as { httpMethod?: string })?.httpMethod ||
+    'GET'
+
+  const path =
+    event.path ||
+    (event.requestContext as { http?: { path?: string }; path?: string })?.http
+      ?.path ||
+    (event.requestContext as { path?: string })?.path ||
+    '/'
+
   return {
-    method: event.requestContext.httpMethod || event.httpMethod || 'GET',
-    path: event.requestContext.path || event.path || '/',
+    method,
+    path,
   }
 }
 
