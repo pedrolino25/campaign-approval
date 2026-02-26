@@ -7,7 +7,6 @@ const publicRoutes = [
   '/verify-email',
   '/forgot-password',
   '/reset-password',
-  '/auth',
   '/blog',
   '/audit-traceability',
   '/approval-workflows',

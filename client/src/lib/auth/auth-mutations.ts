@@ -79,7 +79,7 @@ export function useVerifyEmailMutation() {
     },
     onSuccess: async (response) => {
       await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push(getRedirectPath(response.session, '/auth/complete-signup/internal'))
+      router.push(getRedirectPath(response.session))
     },
   })
 }
