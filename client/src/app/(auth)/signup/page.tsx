@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -25,50 +26,53 @@ import {
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
-import { useResetPasswordMutation } from '@/lib/auth/auth-mutations'
+import { useSignupMutation } from '@/services/auth.service'
 
-const resetPasswordSchema = z
+const signupSchema = z
   .object({
     email: z.string().email('Invalid email address'),
-    code: z.string().length(6, 'Code must be 6 characters'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
   })
 
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
+type SignupFormValues = z.infer<typeof signupSchema>
 
-export default function ResetPasswordPage() {
-  const resetPasswordMutation = useResetPasswordMutation()
+export default function SignupPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+  const signupMutation = useSignupMutation({
+    onSuccess: (_, variables) => {
+      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
+    },
+    onError: (err) => {
+      form.setError('root', {
+        message: getErrorMessage(err),
+      })
+    },
+  })
+
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       email: '',
-      code: '',
-      newPassword: '',
+      password: '',
       confirmPassword: '',
     },
   })
 
-  const onSubmit = (values: ResetPasswordFormValues) => {
-    resetPasswordMutation.mutate(
-      {
-        email: values.email,
-        code: values.code,
-        newPassword: values.newPassword,
-      },
-      {
-        onError: (err) => {
-          form.setError('root', {
-            message: getErrorMessage(err),
-          })
-        },
-      }
-    )
+  const onSubmit = (values: SignupFormValues) => {
+    const inviteToken = searchParams.get('inviteToken')
+
+    signupMutation.mutate({
+      email: values.email,
+      password: values.password,
+      ...(inviteToken && { inviteToken }),
+    })
   }
 
   const error = form.formState.errors.root?.message
@@ -77,9 +81,9 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
-          <CardTitle>Reset your password</CardTitle>
+          <CardTitle>Create an account</CardTitle>
           <CardDescription>
-            Enter your email, verification code, and new password
+            Enter your information to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,29 +115,10 @@ export default function ResetPasswordPage() {
 
               <FormField
                 control={form.control}
-                name="code"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Verification Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="000000"
-                        maxLength={6}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -160,22 +145,22 @@ export default function ResetPasswordPage() {
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={resetPasswordMutation.isPending}
+                  disabled={signupMutation.isPending}
                   className="w-full"
                 >
-                  {resetPasswordMutation.isPending ? (
+                  {signupMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
-                      Resetting password...
+                      Creating account...
                     </>
                   ) : (
-                    'Reset password'
+                    'Create account'
                   )}
                 </Button>
 
                 <div className="text-center text-sm">
                   <Link href="/login" className="text-primary hover:underline">
-                    Back to sign in
+                    Already have an account? Sign in
                   </Link>
                 </div>
               </div>

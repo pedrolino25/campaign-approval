@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ClientExperience() {
+export default async function ClientExperience() {
   return (
     <>
       <Navbar />

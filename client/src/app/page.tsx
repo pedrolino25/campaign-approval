@@ -6,7 +6,7 @@ import HeroSection from '@/components/landing-pages/sections/hero'
 import TestimonialsSection from '@/components/landing-pages/sections/testimonials'
 import { Container } from '@/components/ui/container'
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <>
       <Navbar />

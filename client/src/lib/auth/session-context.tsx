@@ -26,8 +26,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const { data: session, isLoading, error } = useQuery<Session>({
     queryKey: ['session'],
-    queryFn: () => apiFetch<Session>('/auth/me'),
+    queryFn: async () => {
+      const sessionData = await apiFetch<Session>('/auth/me')
+      await apiFetch('/api/auth/session', {
+        method: 'POST',
+      }).catch(() => { })
+      return sessionData
+    },
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
+    placeholderData: (previousData) => previousData,
   })
 
   useEffect(() => {
@@ -42,7 +51,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  const sessionValue: Session | null = error ? null : session || null
+  const sessionValue: Session | null = error && !session ? null : session || null
   const isLoadingValue = isLoading
 
   return (

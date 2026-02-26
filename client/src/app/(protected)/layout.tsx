@@ -28,9 +28,9 @@ export default function ProtectedLayout({
     // Onboarding enforcement
     if (!session.onboardingCompleted) {
       if (session.actorType === 'INTERNAL') {
-        router.push('/auth/complete-signup/internal')
+        router.push('/complete-signup/internal')
       } else if (session.actorType === 'REVIEWER') {
-        router.push('/auth/complete-signup/reviewer')
+        router.push('/complete-signup/reviewer')
       }
     }
   }, [session, isLoading, router])

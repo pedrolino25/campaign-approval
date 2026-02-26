@@ -1,10 +1,9 @@
 'use client'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { LogOut, User } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
+import { ButtonLogout } from '@/components/ui/button-logout'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,30 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { apiFetch } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
+import { useLogoutMutation } from '@/services/auth.service'
 
 export function MainShell({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
   const { session } = useSession()
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      return apiFetch('/auth/logout', {
-        method: 'POST',
-      })
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/login')
-    },
-    onError: async () => {
-      // Even if logout fails, clear session and redirect
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/login')
-    },
-  })
+  const logoutMutation = useLogoutMutation()
 
   const handleLogout = () => {
     logoutMutation.mutate()
@@ -55,33 +36,36 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-10 border-b bg-background">
           <div className="flex items-center justify-between p-4">
             <div>Header</div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span className="text-sm">{session?.email || 'User'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{session?.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {session?.actorType === 'INTERNAL' ? 'Internal User' : 'Reviewer'}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  disabled={logoutMutation.isPending}
-                  className="cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <ButtonLogout />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm">{session?.email || 'User'}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{session?.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {session?.actorType === 'INTERNAL' ? 'Internal User' : 'Reviewer'}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    disabled={logoutMutation.isPending}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
