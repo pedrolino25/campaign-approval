@@ -46,40 +46,12 @@ jobs:
       - name: Generate Prisma migration
         working-directory: api
         run: |
-          set +e
+          set -e
           MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
-          MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
           
-          MIGRATION_SQL=$(npx prisma migrate diff \
-          --from-url "$DATABASE_URL" \
-          --to-schema-datamodel prisma/schema.prisma \
-          --script \
-          --exit-code 2>&1)
-
-          EXIT_CODE=$?
-
-          # If DB is fresh (no _prisma_migrations), skip generation
-          if echo "$MIGRATION_SQL" | grep -qi "_prisma_migrations"; then
-            echo "Fresh database detected. Skipping migration generation."
-            exit 0
-          fi
-
-          # Check for real errors (but allow empty migrations)
-          if [ $EXIT_CODE -ne 0 ] && ! echo "$MIGRATION_SQL" | grep -qi "no.*change"; then
-            echo "Migration generation failed: $MIGRATION_SQL"
-            exit $EXIT_CODE
-          fi
-          
-          CLEAN_SQL=$(echo "$MIGRATION_SQL" | grep -v "^\s*--" | tr -d '[:space:]')
-          if [ -z "$CLEAN_SQL" ]; then
-            echo "No schema changes detected, skipping migration generation"
-            exit 0
-          fi
-          
-          mkdir -p "$MIGRATION_DIR"
-          echo "$MIGRATION_SQL" > "$MIGRATION_DIR/migration.sql"
-          
-          echo "Migration generated: $MIGRATION_NAME"
+          npx prisma migrate dev \
+            --name "$MIGRATION_NAME" \
+            --create-only
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
 
@@ -94,14 +66,13 @@ jobs:
       - name: Commit migration files
         working-directory: api
         run: |
-          # Remove any empty migrations before committing
           find prisma/migrations -name "migration.sql" -type f | while read file; do
             if grep -q "This is an empty migration" "$file" 2>/dev/null; then
               echo "Removing empty migration: $(dirname "$file")"
               rm -rf "$(dirname "$file")"
             fi
           done
-          # Only commit if there are actual migration changes
+
           if [ -n "$(git status --porcelain prisma/migrations)" ]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
