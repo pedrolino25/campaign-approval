@@ -217,160 +217,6 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   registry.registerPath({
-    method: 'post',
-    path: '/auth/complete-signup/internal',
-    tags: ['Onboarding'],
-    summary: 'Complete internal onboarding',
-    description: 'Complete onboarding for an internal user',
-    security: [{ bearerAuth: [] }],
-    request: {
-      body: {
-        content: {
-          'application/json': {
-            schema: CompleteInternalOnboardingOpenAPISchema,
-          },
-        },
-      },
-    },
-      responses: {
-      200: {
-        description: 'Onboarding completed',
-        content: {
-          'application/json': {
-            schema: z.object({
-              user: z.object({
-                id: z.string().uuid(),
-                name: z.string().nullable(),
-                email: z.string(),
-              }),
-              organization: z.object({
-                id: z.string().uuid(),
-                name: z.string(),
-              }),
-            }),
-            example: {
-              user: {
-                id: '123e4567-e89b-12d3-a456-426614174000',
-                name: 'John Doe',
-                email: 'john.doe@example.com',
-              },
-              organization: {
-                id: '987fcdeb-51a2-43d7-8f9e-123456789abc',
-                name: 'Acme Corporation',
-              },
-            },
-          },
-        },
-      },
-      400: {
-        description: 'Validation error',
-        content: {
-          'application/json': {
-            schema: ValidationErrorResponseSchema,
-          },
-        },
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: UnauthorizedErrorResponseSchema,
-          },
-        },
-      },
-      403: {
-        description: 'Forbidden',
-        content: {
-          'application/json': {
-            schema: ForbiddenErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: InternalErrorResponseSchema,
-          },
-        },
-      },
-    },
-  })
-
-  registry.registerPath({
-    method: 'post',
-    path: '/auth/complete-signup/reviewer',
-    tags: ['Onboarding'],
-    summary: 'Complete reviewer onboarding',
-    description: 'Complete onboarding for a reviewer',
-    security: [{ bearerAuth: [] }],
-    request: {
-      body: {
-        content: {
-          'application/json': {
-            schema: CompleteReviewerOnboardingOpenAPISchema,
-          },
-        },
-      },
-    },
-      responses: {
-      200: {
-        description: 'Onboarding completed',
-        content: {
-          'application/json': {
-            schema: z.object({
-              reviewer: z.object({
-                id: z.string().uuid(),
-                name: z.string(),
-                email: z.string(),
-              }),
-            }),
-            example: {
-              reviewer: {
-                id: '123e4567-e89b-12d3-a456-426614174000',
-                name: 'Jane Reviewer',
-                email: 'jane.reviewer@example.com',
-              },
-            },
-          },
-        },
-      },
-      400: {
-        description: 'Validation error',
-        content: {
-          'application/json': {
-            schema: ValidationErrorResponseSchema,
-          },
-        },
-      },
-      401: {
-        description: 'Unauthorized',
-        content: {
-          'application/json': {
-            schema: UnauthorizedErrorResponseSchema,
-          },
-        },
-      },
-      403: {
-        description: 'Forbidden',
-        content: {
-          'application/json': {
-            schema: ForbiddenErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal server error',
-        content: {
-          'application/json': {
-            schema: InternalErrorResponseSchema,
-          },
-        },
-      },
-    },
-  })
-
-  registry.registerPath({
     method: 'get',
     path: '/organization/users',
     tags: ['Organization'],
@@ -2537,7 +2383,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/auth/complete-signup/internal',
-    tags: ['Authentication', 'Onboarding'],
+    tags: ['Authentication'],
     summary: 'Complete internal user onboarding',
     description: 'Complete onboarding for internal users',
     security: [{ bearerAuth: [] }],
@@ -2598,7 +2444,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   registry.registerPath({
     method: 'post',
     path: '/auth/complete-signup/reviewer',
-    tags: ['Authentication', 'Onboarding'],
+    tags: ['Authentication'],
     summary: 'Complete reviewer onboarding',
     description: 'Complete onboarding for reviewers',
     security: [{ bearerAuth: [] }],
