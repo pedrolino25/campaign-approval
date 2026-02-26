@@ -2,6 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -42,17 +44,27 @@ const resetPasswordSchema = z
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
 export default function ResetPasswordPage() {
+  const searchParams = useSearchParams()
   const resetPasswordMutation = useResetPasswordMutation()
+
+  const emailFromQuery = searchParams.get('email') || ''
+  const emailSent = searchParams.get('sent') === 'true'
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: '',
+      email: emailFromQuery,
       code: '',
       newPassword: '',
       confirmPassword: '',
     },
   })
+
+  useEffect(() => {
+    if (emailFromQuery) {
+      form.setValue('email', emailFromQuery)
+    }
+  }, [emailFromQuery, form])
 
   const onSubmit = (values: ResetPasswordFormValues) => {
     resetPasswordMutation.mutate(
@@ -85,6 +97,15 @@ export default function ResetPasswordPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {emailSent && (
+                <Alert>
+                  <AlertDescription>
+                    If the account exists, password reset instructions have been
+                    sent to your email. Please enter the code below.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -101,6 +122,7 @@ export default function ResetPasswordPage() {
                       <Input
                         type="email"
                         placeholder="you@example.com"
+                        disabled
                         {...field}
                       />
                     </FormControl>

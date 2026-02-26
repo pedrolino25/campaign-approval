@@ -2,11 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -34,7 +33,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
-  const [success, setSuccess] = useState(false)
+  const router = useRouter()
   const forgotPasswordMutation = useForgotPasswordMutation()
 
   const form = useForm<ForgotPasswordFormValues>({
@@ -45,13 +44,16 @@ export default function ForgotPasswordPage() {
   })
 
   const onSubmit = (values: ForgotPasswordFormValues) => {
-    setSuccess(false)
     forgotPasswordMutation.mutate(values.email, {
       onSuccess: () => {
-        setSuccess(true)
+        router.push(
+          `/reset-password?email=${encodeURIComponent(values.email)}&sent=true`
+        )
       },
       onError: () => {
-        setSuccess(true)
+        router.push(
+          `/reset-password?email=${encodeURIComponent(values.email)}&sent=true`
+        )
       },
     })
   }
@@ -69,15 +71,6 @@ export default function ForgotPasswordPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {success && (
-                <Alert>
-                  <AlertDescription>
-                    If the account exists, password reset instructions have been
-                    sent.
-                  </AlertDescription>
-                </Alert>
-              )}
-
               <FormField
                 control={form.control}
                 name="email"
