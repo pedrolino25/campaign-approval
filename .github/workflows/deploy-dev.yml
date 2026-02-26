@@ -93,6 +93,7 @@ jobs:
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
           TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
           TF_VAR_activation_cookie_secret: ${{ secrets.ACTIVATION_COOKIE_SECRET }}
+          TF_VAR_cloudfront_request_id_secret: ${{ secrets.CLOUDFRONT_REQUEST_ID_SECRET }}
 
       - name: Terraform validate
         working-directory: infra/env/dev
@@ -106,6 +107,7 @@ jobs:
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
           TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
           TF_VAR_activation_cookie_secret: ${{ secrets.ACTIVATION_COOKIE_SECRET }}
+          TF_VAR_cloudfront_request_id_secret: ${{ secrets.CLOUDFRONT_REQUEST_ID_SECRET }}
 
       - name: Terraform plan
         working-directory: infra/env/dev
@@ -119,6 +121,7 @@ jobs:
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
           TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
           TF_VAR_activation_cookie_secret: ${{ secrets.ACTIVATION_COOKIE_SECRET }}
+          TF_VAR_cloudfront_request_id_secret: ${{ secrets.CLOUDFRONT_REQUEST_ID_SECRET }}
 
       - name: Terraform apply
         working-directory: infra/env/dev
@@ -132,3 +135,4 @@ jobs:
           TF_VAR_sendgrid_template_ids: ${{ secrets.SENDGRID_TEMPLATE_IDS }}
           TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
           TF_VAR_activation_cookie_secret: ${{ secrets.ACTIVATION_COOKIE_SECRET }}
+          TF_VAR_cloudfront_request_id_secret: ${{ secrets.CLOUDFRONT_REQUEST_ID_SECRET }}

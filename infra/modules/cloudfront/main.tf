@@ -8,70 +8,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Cache policy that disables caching for dynamic API endpoints
-resource "aws_cloudfront_cache_policy" "api_no_cache" {
-  name        = "${var.environment}-worklient-api-no-cache"
-  comment     = "No caching policy for dynamic API Gateway endpoints"
-  default_ttl = 0
-  max_ttl     = 0
-  min_ttl     = 0
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    enable_accept_encoding_brotli = true
-    enable_accept_encoding_gzip   = true
-
-    cookies_config {
-      cookie_behavior = "all"
-    }
-
-    headers_config {
-      header_behavior = "whitelist"
-      headers {
-        items = [
-          "Authorization",
-          "Content-Type",
-          "Cookie",
-          "X-CloudFront-Request-Id"
-        ]
-      }
-    }
-
-    query_strings_config {
-      query_string_behavior = "all"
-    }
-  }
-}
-
-# Origin request policy to forward all headers and query strings
-resource "aws_cloudfront_origin_request_policy" "api_forward_all" {
-  name    = "${var.environment}-worklient-api-forward-all"
-  comment = "Forward all headers, cookies, and query strings to API Gateway"
-
-  cookies_config {
-    cookie_behavior = "all"
-  }
-
-  headers_config {
-    header_behavior = "whitelist"
-    headers {
-      items = [
-        "Authorization",
-        "Content-Type",
-        "Cookie",
-        "Host",
-        "Origin",
-        "Referer",
-        "User-Agent",
-        "X-CloudFront-Request-Id"
-      ]
-    }
-  }
-
-  query_strings_config {
-    query_string_behavior = "all"
-  }
-}
-
 # CloudFront distribution
 # 
 # Security Note: The custom header X-CloudFront-Request-Id is added to all requests
@@ -91,6 +27,7 @@ resource "aws_cloudfront_distribution" "api" {
   comment             = "CloudFront distribution for ${var.environment} API Gateway"
   default_root_object = ""
   price_class         = var.price_class
+  web_acl_id          = var.waf_web_acl_arn
 
   aliases = [var.domain_name]
 
@@ -112,15 +49,24 @@ resource "aws_cloudfront_distribution" "api" {
   }
 
   default_cache_behavior {
-    allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods           = ["GET", "HEAD"]
-    target_origin_id         = "api-gateway-${var.environment}"
-    compress                 = true
-    viewer_protocol_policy   = "redirect-to-https"
-    cache_policy_id          = aws_cloudfront_cache_policy.api_no_cache.id
-    origin_request_policy_id = aws_cloudfront_origin_request_policy.api_forward_all.id
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "api-gateway-${var.environment}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
 
-    web_acl_id = var.waf_web_acl_arn
+    # Legacy cache behavior settings (required when using web_acl_id)
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
   }
 
   restrictions {
@@ -136,6 +82,4 @@ resource "aws_cloudfront_distribution" "api" {
   }
 
   tags = var.tags
-
-  depends_on = [var.waf_web_acl_arn]
 }
