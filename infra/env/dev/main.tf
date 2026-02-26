@@ -208,12 +208,6 @@ module "cloudfront" {
   waf_web_acl_arn              = module.waf.web_acl_arn
   cloudfront_request_id_secret = var.cloudfront_request_id_secret
   tags                         = var.resource_tags
-
-  depends_on = [
-    module.domain_mapping,
-    module.acm_cloudfront,
-    module.waf
-  ]
 }
 
 # --------------------------------------------
