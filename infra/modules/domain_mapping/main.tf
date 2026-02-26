@@ -20,14 +20,16 @@ resource "aws_apigatewayv2_api_mapping" "main" {
   stage       = var.stage_name
 }
 
-resource "aws_route53_record" "api" {
-  name    = var.domain_name
-  type    = "A"
-  zone_id = var.hosted_zone_id
-
-  alias {
-    name                   = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
+# Route53 record is now created separately in environment main.tf to point to CloudFront
+# This allows seamless migration: API Gateway domain remains, DNS points to CloudFront
+# resource "aws_route53_record" "api" {
+#   name    = var.domain_name
+#   type    = "A"
+#   zone_id = var.hosted_zone_id
+#
+#   alias {
+#     name                   = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
+#     zone_id                = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].hosted_zone_id
+#     evaluate_target_health = false
+#   }
+# }

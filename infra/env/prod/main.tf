@@ -172,3 +172,64 @@ module "domain_mapping" {
   tags = var.resource_tags
 }
 
+# --------------------------------------------
+# 10. ACM for CloudFront (us-east-1)
+# --------------------------------------------
+
+module "acm_cloudfront" {
+  source         = "../../modules/acm_cloudfront"
+  domain_name    = var.prod_api_subdomain
+  hosted_zone_id = module.route53.hosted_zone_id
+  tags           = var.resource_tags
+}
+
+# --------------------------------------------
+# 11. WAF for CloudFront
+# --------------------------------------------
+
+module "waf" {
+  source             = "../../modules/waf"
+  environment        = var.environment
+  log_retention_days = var.lambda_log_retention_days
+  tags               = var.resource_tags
+}
+
+# --------------------------------------------
+# 12. CloudFront Distribution
+# --------------------------------------------
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  environment                  = var.environment
+  domain_name                  = var.prod_api_subdomain
+  api_origin_domain            = module.domain_mapping.api_domain_name
+  certificate_arn              = module.acm_cloudfront.certificate_arn
+  waf_web_acl_arn              = module.waf.web_acl_arn
+  cloudfront_request_id_secret = var.cloudfront_request_id_secret
+  tags                         = var.resource_tags
+
+  depends_on = [
+    module.domain_mapping,
+    module.acm_cloudfront,
+    module.waf
+  ]
+}
+
+# --------------------------------------------
+# 13. Route53 Record for CloudFront
+# --------------------------------------------
+
+resource "aws_route53_record" "api_cloudfront" {
+  name    = var.prod_api_subdomain
+  type    = "A"
+  zone_id = module.route53.hosted_zone_id
+
+  alias {
+    name                   = module.cloudfront.distribution_domain_name
+    zone_id                = module.cloudfront.distribution_hosted_zone_id
+    evaluate_target_health = false
+  }
+
+  depends_on = [module.cloudfront]
+}
