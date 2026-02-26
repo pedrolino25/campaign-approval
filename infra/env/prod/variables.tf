@@ -238,20 +238,3 @@ variable "activation_cookie_secret" {
   sensitive   = true
 }
 
-variable "waf_auth_rate_limit" {
-  description = "WAF rate limit for /auth/* endpoints (requests per 5 minutes per IP)"
-  type        = number
-  default     = 100
-}
-
-variable "waf_activation_rate_limit" {
-  description = "WAF rate limit for /auth/reviewer/activate endpoint (requests per 5 minutes per IP)"
-  type        = number
-  default     = 20
-}
-
-variable "waf_log_retention_days" {
-  description = "WAF CloudWatch log retention in days"
-  type        = number
-  default     = 30
-}
