@@ -50,28 +50,31 @@ jobs:
           MIGRATION_NAME="auto_$(date +%Y%m%d_%H%M%S)"
           MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
           
-          # Generate migration SQL using migrate diff (non-interactive)
-          # Compare current database state to desired schema
           MIGRATION_SQL=$(npx prisma migrate diff \
             --from-url "$DATABASE_URL" \
             --to-schema-datamodel prisma/schema.prisma \
             --script 2>&1)
+
           EXIT_CODE=$?
-          
-          # Check for errors (but allow empty migrations)
+
+          # If DB is fresh (no _prisma_migrations), skip generation
+          if echo "$MIGRATION_SQL" | grep -qi "_prisma_migrations"; then
+            echo "Fresh database detected. Skipping migration generation."
+            exit 0
+          fi
+
+          # Check for real errors (but allow empty migrations)
           if [ $EXIT_CODE -ne 0 ] && ! echo "$MIGRATION_SQL" | grep -qi "no.*change"; then
             echo "Migration generation failed: $MIGRATION_SQL"
             exit $EXIT_CODE
           fi
           
-          # Check if migration SQL is empty or just whitespace/comments
           CLEAN_SQL=$(echo "$MIGRATION_SQL" | grep -v "^\s*--" | tr -d '[:space:]')
           if [ -z "$CLEAN_SQL" ]; then
             echo "No schema changes detected, skipping migration generation"
             exit 0
           fi
           
-          # Create migration directory and file
           mkdir -p "$MIGRATION_DIR"
           echo "$MIGRATION_SQL" > "$MIGRATION_DIR/migration.sql"
           
