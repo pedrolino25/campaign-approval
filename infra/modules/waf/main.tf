@@ -73,10 +73,8 @@ resource "aws_wafv2_web_acl" "cloudfront" {
 
 resource "aws_cloudwatch_log_group" "waf" {
   provider          = aws.us_east_1
-  name              = "/aws/waf/${var.environment}-worklient-cloudfront"
-  retention_in_days = var.log_retention_days
-
-  tags = var.tags
+  name              = "/aws/waf/${var.environment}-cloudfront"
+  retention_in_days = 30
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
