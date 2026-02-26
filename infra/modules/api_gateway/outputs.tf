@@ -26,8 +26,7 @@ output "api_url" {
 }
 
 output "api_stage_arn" {
-  description = "API Gateway stage ARN (for WAF association)"
-  # For API Gateway v2 HTTP APIs, WAF requires the stage ARN without account ID
+  description = "API Gateway stage ARN"
   # Format: arn:aws:apigateway:region::/apis/api-id/stages/stage-name
   value = "arn:aws:apigateway:${data.aws_region.current.id}::/apis/${aws_apigatewayv2_api.main.id}/stages/${var.stage_name}"
 }

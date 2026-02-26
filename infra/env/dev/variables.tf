@@ -237,3 +237,9 @@ variable "activation_cookie_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "cloudfront_request_id_secret" {
+  description = "Secret value for X-CloudFront-Request-Id header to prevent direct API Gateway access"
+  type        = string
+  sensitive   = true
+}
