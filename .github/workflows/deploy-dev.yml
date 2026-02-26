@@ -51,9 +51,10 @@ jobs:
           MIGRATION_DIR="prisma/migrations/${MIGRATION_NAME}"
           
           MIGRATION_SQL=$(npx prisma migrate diff \
-            --from-migrations prisma/migrations \
-            --to-schema-datamodel prisma/schema.prisma \
-            --script 2>&1)
+          --from-migrations prisma/migrations \
+          --to-schema-datamodel prisma/schema.prisma \
+          --shadow-database-url "$DATABASE_URL" \
+          --script 2>&1)
 
           EXIT_CODE=$?
 
