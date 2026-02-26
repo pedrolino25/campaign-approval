@@ -1,15 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/worklient_session=([^;]+)/)
+  const sessionCookie = request.cookies.get('worklient_session')
 
-  if (!match) {
-    return NextResponse.json({ success: false }, { status: 400 })
+  if (!sessionCookie) {
+    return NextResponse.json({ success: true })
   }
 
-  const isProduction = process.env.NODE_ENV === 'production'
-  const cookie = `worklient_session=${match[1]}; Path=/; HttpOnly; SameSite=Lax${isProduction ? '; Secure' : ''}; Max-Age=${8 * 60 * 60}`
+  const isSecure = process.env.NODE_ENV !== 'test'
+  const sameSite = 'Lax'
+  
+  const cookie = `worklient_session=${sessionCookie.value}; Path=/; HttpOnly; SameSite=${sameSite}${isSecure ? '; Secure' : ''}; Max-Age=${8 * 60 * 60}`
 
   const response = NextResponse.json({ success: true })
   response.headers.set('Set-Cookie', cookie)
