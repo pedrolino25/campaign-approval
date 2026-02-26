@@ -2,8 +2,9 @@ import type {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
 } from 'aws-lambda'
+import { type z, ZodError } from 'zod'
 
-import { validateBody } from '../lib'
+import { validateBody, ValidationError } from '../lib'
 import {
   AuthService,
   CookieTokenExtractor,
@@ -12,6 +13,7 @@ import {
   SessionService,
 } from '../lib/auth'
 import { CognitoService } from '../lib/auth/cognito.service'
+import type { CanonicalSession } from '../lib/auth/session.service'
 import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
 import {
   clearActivationCookie,
@@ -53,6 +55,8 @@ import {
   type AuthenticatedEvent,
   ForbiddenError,
   type HttpRequest,
+  InternalError,
+  UnauthorizedError,
 } from '../models'
 import {
   ClientReviewerRepository,
@@ -101,6 +105,52 @@ function extractSafeContext(
     }
   } catch {
     return {}
+  }
+}
+
+function parseAndValidateBody<T>(
+  event: APIGatewayProxyEvent,
+  schema: z.ZodSchema<T>
+): T {
+  let body: unknown
+  try {
+    body = event.body ? JSON.parse(event.body) : {}
+  } catch {
+    throw new ValidationError('INVALID_JSON_BODY')
+  }
+
+  try {
+    return schema.parse(body)
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw ValidationError.fromZodError(error)
+    }
+    throw error
+  }
+}
+
+function logAuthError(
+  event: string,
+  context: { ip?: string; userAgent?: string; requestId?: string },
+  error: unknown
+): void {
+  try {
+    logger.error({
+      source: 'auth',
+      event,
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        errorCode:
+          error instanceof ValidationError ||
+          error instanceof UnauthorizedError ||
+          error instanceof ForbiddenError
+            ? error.code
+            : undefined,
+      },
+    })
+  } catch {
+    // Never throw if logging fails
   }
 }
 
@@ -333,18 +383,7 @@ const handleCallback = async (
       context
     )
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'LOGIN_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logAuthError('LOGIN_FAILURE', context, error)
 
     const errorResponse = buildErrorResponse(error)
 
@@ -393,53 +432,43 @@ const handleLogout = (
   return Promise.resolve(response)
 }
 
-const handleMe = async (
-  event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  const sessionToken = sessionService.getSessionFromCookie(cookies)
-
-  if (!sessionToken) {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: 'Unauthorized',
-      }),
-    })
-  }
-
-  const session = await sessionService.verifySession(sessionToken)
-
-  if (!session) {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: 'Unauthorized',
-      }),
-    })
-  }
-
+function logSessionCheckFailure(
+  context: { ip?: string; userAgent?: string; requestId?: string },
+  reason: string,
+  metadata?: Record<string, unknown>
+): void {
   try {
-    await authService.verifySessionVersion(session, event)
-  } catch {
-    return Promise.resolve({
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
+    logger.warn({
+      source: 'auth',
+      event: 'SESSION_CHECK_FAILED',
+      ...context,
+      metadata: {
+        reason,
+        ...metadata,
       },
-      body: JSON.stringify({
-        message: 'Unauthorized',
-      }),
     })
+  } catch {
+    // Never throw if logging fails
   }
+}
 
-  return Promise.resolve({
+function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
+  return {
+    statusCode: 401,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      error: {
+        code: 'UNAUTHORIZED',
+        message,
+      },
+    }),
+  }
+}
+
+function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult {
+  return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -454,7 +483,92 @@ const handleMe = async (
       onboardingCompleted: session.onboardingCompleted,
       email: session.email,
     }),
-  })
+  }
+}
+
+const handleMe = async (
+  event: AuthenticatedEvent
+): Promise<APIGatewayProxyResult> => {
+  const cookies = event.headers.cookie || event.headers.Cookie || ''
+  const sessionToken = sessionService.getSessionFromCookie(cookies)
+  const context = extractSafeContext(event)
+
+  if (!sessionToken) {
+    logSessionCheckFailure(context, 'SESSION_TOKEN_MISSING', {
+      hasCookies: !!cookies,
+      cookieCount: cookies.split(';').length,
+    })
+    return createUnauthorizedResponse('SESSION_TOKEN_MISSING')
+  }
+
+  const session = await sessionService.verifySession(sessionToken)
+
+  if (!session) {
+    logSessionCheckFailure(context, 'SESSION_INVALID_OR_EXPIRED', {
+      hasToken: !!sessionToken,
+    })
+    return createUnauthorizedResponse('SESSION_INVALID_OR_EXPIRED')
+  }
+
+  try {
+    await authService.verifySessionVersion(session, event)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    logSessionCheckFailure(context, 'SESSION_VERSION_MISMATCH', {
+      error: errorMessage,
+      sessionUserId: session.userId,
+      sessionVersion: session.sessionVersion,
+      actorType: session.actorType,
+    })
+    return createUnauthorizedResponse('SESSION_VERSION_MISMATCH')
+  }
+
+  return createSessionResponse(session)
+}
+
+function buildInternalSessionAfterOnboarding(
+  cognitoSub: string,
+  email: string,
+  updatedUser: Awaited<ReturnType<UserRepository['findById']>>
+): CanonicalSession {
+  if (!updatedUser) {
+    throw new InternalError('User not found when building session')
+  }
+  return {
+    cognitoSub,
+    actorType: ActorType.Internal,
+    userId: updatedUser.id,
+    organizationId: updatedUser.organizationId,
+    role: updatedUser.role,
+    onboardingCompleted: true,
+    email,
+    sessionVersion: updatedUser.sessionVersion,
+  }
+}
+
+function buildInternalOnboardingResponse(
+  result: Awaited<ReturnType<OnboardingService['completeInternalOnboarding']>>,
+  sessionToken: string
+): APIGatewayProxyResult {
+  const response: APIGatewayProxyResult = {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user: {
+        id: result.user.id,
+        name: (result.user as { name?: string }).name,
+        email: result.user.email,
+      },
+      organization: {
+        id: result.organization.id,
+        name: result.organization.name,
+      },
+    }),
+  }
+  sessionService.setSessionCookie(response, sessionToken)
+  return response
 }
 
 const handleCompleteSignupInternal = async (
@@ -499,6 +613,23 @@ const handleCompleteSignupInternal = async (
     organizationName: validated.body.organizationName,
   })
 
+  const updatedUser = await userRepository.findById(
+    actor.userId,
+    actor.organizationId
+  )
+
+  if (!updatedUser) {
+    throw new InternalError('User not found after onboarding completion')
+  }
+
+  const newSessionPayload = buildInternalSessionAfterOnboarding(
+    event.authContext.cognitoSub,
+    event.authContext.email,
+    updatedUser
+  )
+
+  const newSessionToken = await sessionService.signSession(newSessionPayload)
+
   try {
     logger.info({
       source: 'auth',
@@ -511,23 +642,51 @@ const handleCompleteSignupInternal = async (
     // Never throw if logging fails
   }
 
+  return buildInternalOnboardingResponse(result, newSessionToken)
+}
+
+function buildReviewerSessionAfterOnboarding(
+  cognitoSub: string,
+  email: string,
+  clientId: string,
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>
+): CanonicalSession {
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found when building session')
+  }
   return {
+    cognitoSub,
+    actorType: ActorType.Reviewer,
+    reviewerId: updatedReviewer.id,
+    clientId,
+    onboardingCompleted: true,
+    email,
+    sessionVersion: updatedReviewer.sessionVersion,
+  }
+}
+
+function buildReviewerOnboardingResponse(
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
+  sessionToken: string
+): APIGatewayProxyResult {
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found when building response')
+  }
+  const response: APIGatewayProxyResult = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      user: {
-        id: result.user.id,
-        name: (result.user as { name?: string }).name,
-        email: result.user.email,
-      },
-      organization: {
-        id: result.organization.id,
-        name: result.organization.name,
+      reviewer: {
+        id: updatedReviewer.id,
+        name: updatedReviewer.name,
+        email: updatedReviewer.email,
       },
     }),
   }
+  sessionService.setSessionCookie(response, sessionToken)
+  return response
 }
 
 const handleCompleteSignupReviewer = async (
@@ -565,10 +724,31 @@ const handleCompleteSignupReviewer = async (
     new OrganizationRepository()
   )
 
-  const reviewer = await onboardingService.completeReviewerOnboarding({
+  await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
     name: validated.body.name,
   })
+
+  const updatedReviewer = await reviewerRepository.findById(actor.reviewerId)
+
+  if (!updatedReviewer) {
+    throw new InternalError('Reviewer not found after onboarding completion')
+  }
+
+  const reviewerActor = actor as {
+    type: typeof ActorType.Reviewer
+    reviewerId: string
+    clientId: string
+  }
+
+  const newSessionPayload = buildReviewerSessionAfterOnboarding(
+    event.authContext.cognitoSub,
+    event.authContext.email,
+    reviewerActor.clientId,
+    updatedReviewer
+  )
+
+  const newSessionToken = await sessionService.signSession(newSessionPayload)
 
   try {
     logger.info({
@@ -581,19 +761,7 @@ const handleCompleteSignupReviewer = async (
     // Never throw if logging fails
   }
 
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      reviewer: {
-        id: reviewer.id,
-        name: reviewer.name,
-        email: reviewer.email,
-      },
-    }),
-  }
+  return buildReviewerOnboardingResponse(updatedReviewer, newSessionToken)
 }
 
 function buildOAuthRedirectResponse(
@@ -700,8 +868,22 @@ const handleSignUp = async (
   const context = extractSafeContext(event)
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = SignUpSchema.parse(body)
+    let body: unknown
+    try {
+      body = event.body ? JSON.parse(event.body) : {}
+    } catch {
+      throw new ValidationError('INVALID_JSON_BODY')
+    }
+
+    let validated: { email: string; password: string; inviteToken?: string }
+    try {
+      validated = SignUpSchema.parse(body)
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZodError(error)
+      }
+      throw error
+    }
 
     await cognitoService.signUp(validated.email, validated.password)
 
@@ -733,6 +915,7 @@ const handleSignUp = async (
         ...context,
         metadata: {
           error: error instanceof Error ? error.message : String(error),
+          errorCode: error instanceof ValidationError ? error.code : undefined,
         },
       })
     } catch {
@@ -741,6 +924,86 @@ const handleSignUp = async (
 
     return buildErrorResponse(error)
   }
+}
+
+function logEmailVerificationEvent(
+  event: string,
+  context: { ip?: string; userAgent?: string; requestId?: string },
+  metadata: Record<string, unknown>
+): void {
+  try {
+    logger.info({
+      source: 'auth',
+      event,
+      ...context,
+      metadata,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+}
+
+async function processEmailVerification(
+  validated: {
+    email: string
+    code: string
+    password: string
+    inviteToken?: string
+  },
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  const tokens = await cognitoService.confirmSignUp(
+    validated.email,
+    validated.code,
+    validated.password
+  )
+
+  const authContext = await tokenVerifier.verify(tokens.idToken)
+  const { userId, email } = authContext
+
+  logEmailVerificationEvent('EMAIL_VERIFICATION_STARTED', context, {
+    email,
+    userId,
+  })
+
+  const sessionResponse = await createSessionFromTokens({
+    idToken: tokens.idToken,
+    inviteToken: undefined,
+    reviewerActivationCompleted: false,
+    context,
+    userRepository,
+    reviewerRepository,
+    organizationRepository,
+    invitationRepository,
+    rbacService,
+    sessionService,
+    tokenVerifier,
+    returnJson: true,
+  })
+
+  const hasCookie = sessionResponse.multiValueHeaders?.['Set-Cookie']?.some(
+    (cookie) => typeof cookie === 'string' && cookie.startsWith('worklient_session=')
+  )
+
+  logEmailVerificationEvent('SESSION_CREATED', context, {
+    email,
+    userId,
+    hasCookie: !!hasCookie,
+    cookieCount: sessionResponse.multiValueHeaders?.['Set-Cookie']?.length || 0,
+  })
+
+  if (validated.inviteToken) {
+    await acceptInvitationAfterSession(
+      validated.inviteToken,
+      userId,
+      email,
+      context
+    )
+  }
+
+  logEmailVerificationEvent('EMAIL_VERIFIED', context, { email })
+
+  return sessionResponse
 }
 
 const handleVerifyEmail = async (
@@ -749,70 +1012,10 @@ const handleVerifyEmail = async (
   const context = extractSafeContext(event)
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = VerifyEmailSchema.parse(body)
-
-    const tokens = await cognitoService.confirmSignUp(
-      validated.email,
-      validated.code,
-      validated.password
-    )
-
-    // Verify token to get userId
-    const authContext = await tokenVerifier.verify(tokens.idToken)
-
-    // Create session FIRST (before accepting invitation)
-    // This ensures authentication succeeds before consuming invitation
-    const sessionResponse = await createSessionFromTokens({
-      idToken: tokens.idToken,
-      inviteToken: undefined, // Don't pass inviteToken to session creation
-      reviewerActivationCompleted: false,
-      context,
-      userRepository,
-      reviewerRepository,
-      organizationRepository,
-      invitationRepository,
-      rbacService,
-      sessionService,
-      tokenVerifier,
-      returnJson: true, // Return JSON for embedded auth
-    })
-
-    if (validated.inviteToken) {
-      await acceptInvitationAfterSession(
-        validated.inviteToken,
-        authContext.userId,
-        validated.email,
-        context
-      )
-    }
-
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'EMAIL_VERIFIED',
-        ...context,
-        metadata: { email: validated.email },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-
-    return sessionResponse
+    const validated = parseAndValidateBody(event, VerifyEmailSchema)
+    return await processEmailVerification(validated, context)
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'EMAIL_VERIFICATION_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-
+    logAuthError('EMAIL_VERIFICATION_FAILURE', context, error)
     return buildErrorResponse(error)
   }
 }
@@ -820,9 +1023,53 @@ const handleVerifyEmail = async (
 const handleResendVerification = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const context = extractSafeContext(event)
+
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = ResendVerificationSchema.parse(body)
+    let body: unknown
+    try {
+      body = event.body ? JSON.parse(event.body) : {}
+    } catch {
+      // Invalid JSON - return success to prevent enumeration
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+        }),
+      }
+    }
+
+    let validated: { email: string }
+    try {
+      validated = ResendVerificationSchema.parse(body)
+    } catch (error) {
+      // Validation error - return success to prevent enumeration
+      // But log it for debugging
+      try {
+        logger.warn({
+          source: 'auth',
+          event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
+          ...context,
+          metadata: {
+            error: error instanceof Error ? error.message : String(error),
+          },
+        })
+      } catch {
+        // Never throw if logging fails
+      }
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+        }),
+      }
+    }
 
     await cognitoService.resendConfirmation(validated.email)
 
@@ -850,6 +1097,41 @@ const handleResendVerification = async (
   }
 }
 
+async function processEmbeddedLogin(
+  validated: { email: string; password: string; inviteToken?: string },
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  const tokens = await cognitoService.login(validated.email, validated.password)
+
+  const authContext = await tokenVerifier.verify(tokens.idToken)
+
+  const sessionResponse = await createSessionFromTokens({
+    idToken: tokens.idToken,
+    inviteToken: undefined,
+    reviewerActivationCompleted: false,
+    context,
+    userRepository,
+    reviewerRepository,
+    organizationRepository,
+    invitationRepository,
+    rbacService,
+    sessionService,
+    tokenVerifier,
+    returnJson: true,
+  })
+
+  if (validated.inviteToken) {
+    await acceptInvitationAfterSession(
+      validated.inviteToken,
+      authContext.userId,
+      validated.email,
+      context
+    )
+  }
+
+  return sessionResponse
+}
+
 const handleEmbeddedLogin = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -866,55 +1148,10 @@ const handleEmbeddedLogin = async (
   }
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = LoginSchema.parse(body)
-
-    const tokens = await cognitoService.login(validated.email, validated.password)
-
-    // Verify token to get userId
-    const authContext = await tokenVerifier.verify(tokens.idToken)
-
-    // Create session FIRST (before accepting invitation)
-    // This ensures authentication succeeds before consuming invitation
-    const sessionResponse = await createSessionFromTokens({
-      idToken: tokens.idToken,
-      inviteToken: undefined, // Don't pass inviteToken to session creation
-      reviewerActivationCompleted: false,
-      context,
-      userRepository,
-      reviewerRepository,
-      organizationRepository,
-      invitationRepository,
-      rbacService,
-      sessionService,
-      tokenVerifier,
-      returnJson: true, // Return JSON for embedded auth
-    })
-
-    if (validated.inviteToken) {
-      await acceptInvitationAfterSession(
-        validated.inviteToken,
-        authContext.userId,
-        validated.email,
-        context
-      )
-    }
-
-    return sessionResponse
+    const validated = parseAndValidateBody(event, LoginSchema)
+    return await processEmbeddedLogin(validated, context)
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'LOGIN_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-
+    logAuthError('LOGIN_FAILURE', context, error)
     return buildErrorResponse(error)
   }
 }
@@ -958,8 +1195,22 @@ const handleResetPassword = async (
   const context = extractSafeContext(event)
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = ResetPasswordSchema.parse(body)
+    let body: unknown
+    try {
+      body = event.body ? JSON.parse(event.body) : {}
+    } catch {
+      throw new ValidationError('INVALID_JSON_BODY')
+    }
+
+    let validated: { email: string; code: string; newPassword: string }
+    try {
+      validated = ResetPasswordSchema.parse(body)
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ValidationError.fromZodError(error)
+      }
+      throw error
+    }
 
     await cognitoService.confirmForgotPassword(
       validated.email,
@@ -995,6 +1246,7 @@ const handleResetPassword = async (
         ...context,
         metadata: {
           error: error instanceof Error ? error.message : String(error),
+          errorCode: error instanceof ValidationError ? error.code : undefined,
         },
       })
     } catch {
@@ -1073,62 +1325,56 @@ async function changeUserPassword(
   await cognitoService.changePassword(accessToken, oldPassword, newPassword)
 }
 
+async function processPasswordChange(
+  validated: { oldPassword: string; newPassword: string },
+  email: string,
+  refreshToken: string | undefined,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): Promise<APIGatewayProxyResult> {
+  await changeUserPassword(
+    email,
+    validated.oldPassword,
+    validated.newPassword,
+    refreshToken
+  )
+
+  try {
+    logger.info({
+      source: 'auth',
+      event: 'PASSWORD_CHANGED',
+      ...context,
+    })
+  } catch {
+    // Never throw if logging fails
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      success: true,
+    }),
+  }
+}
+
 const handleChangePassword = async (
   event: AuthenticatedEvent
 ): Promise<APIGatewayProxyResult> => {
   const context = extractSafeContext(event)
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {}
-    const validated = ChangePasswordSchema.parse(body)
-
+    const validated = parseAndValidateBody(event, ChangePasswordSchema)
     const email = event.authContext.email
 
     // Try to get refresh token from cookies if available
     const cookies = event.headers.cookie || event.headers.Cookie || ''
     const refreshToken = extractRefreshTokenFromCookies(cookies)
 
-    await changeUserPassword(
-      email,
-      validated.oldPassword,
-      validated.newPassword,
-      refreshToken
-    )
-
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'PASSWORD_CHANGED',
-        actorType: event.authContext.actor.type,
-        ...context,
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-      }),
-    }
+    return await processPasswordChange(validated, email, refreshToken, context)
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'PASSWORD_CHANGE_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-
+    logAuthError('PASSWORD_CHANGE_FAILURE', context, error)
     return buildErrorResponse(error)
   }
 }

@@ -28,7 +28,6 @@ export class AuthService {
       throw new UnauthorizedError('Invalid session')
     }
 
-    // Verify session version matches database
     await this.verifySessionVersion(session, event)
 
     const actor = this.buildActorFromSession(session)

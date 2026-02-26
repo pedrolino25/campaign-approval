@@ -19,13 +19,15 @@ resource "aws_cognito_user_pool" "main" {
     case_sensitive = false
   }
 
-  alias_attributes         = ["email"]
+  # Use email as the primary username identifier (not just an alias)
+  username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
   verification_message_template {
-    default_email_option  = "CONFIRM_WITH_LINK"
-    email_subject_by_link = "Worklient - Verify your email"
-    email_message_by_link = "Please click the link below to verify your email address: {##Verify Email##}"
+    # Use CODE mode since the application uses ConfirmSignUpCommand with verification codes
+    default_email_option = "CONFIRM_WITH_CODE"
+    email_subject        = "Worklient - Verify your email"
+    email_message        = "Your verification code is {####}"
   }
 
   email_configuration {

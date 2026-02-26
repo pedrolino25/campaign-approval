@@ -59,6 +59,24 @@ export class OAuthService {
     }
   }
 
+  private parseOAuthError(errorText: string): string {
+    try {
+      const errorJson = JSON.parse(errorText)
+      if (errorJson.error === 'invalid_grant') {
+        return 'OAUTH_CODE_INVALID_OR_EXPIRED'
+      }
+      if (errorJson.error === 'invalid_client') {
+        return 'OAUTH_CLIENT_ERROR'
+      }
+      if (errorJson.error) {
+        return `OAUTH_ERROR_${errorJson.error.toUpperCase()}`
+      }
+    } catch {
+      // Not JSON, use generic message
+    }
+    return 'OAUTH_TOKEN_EXCHANGE_FAILED'
+  }
+
   async exchangeCodeForTokens(
     code: string,
     codeVerifier: string,
@@ -90,9 +108,8 @@ export class OAuthService {
 
       if (!response.ok) {
         const errorText = await response.text()
-        throw new UnauthorizedError(
-          `Token exchange failed: ${response.status} ${errorText}`
-        )
+        const errorMessage = this.parseOAuthError(errorText)
+        throw new UnauthorizedError(errorMessage)
       }
 
       const tokenData = (await response.json()) as {

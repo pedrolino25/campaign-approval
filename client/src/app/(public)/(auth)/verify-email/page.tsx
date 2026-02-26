@@ -1,10 +1,9 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -25,14 +24,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { apiFetch, getErrorMessage } from '@/lib/api/client'
+import { useVerifyEmailMutation } from '@/lib/auth/auth-mutations'
+import { useSession } from '@/lib/auth/use-session'
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, 'Code must be 6 characters'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(1, 'Password is required'),
 })
 
 type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
@@ -40,10 +41,8 @@ type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 export default function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const queryClient = useQueryClient()
-  const [isLoading, setIsLoading] = useState(false)
+  const { session, isLoading: sessionLoading } = useSession()
   const [isResending, setIsResending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [resendSuccess, setResendSuccess] = useState(false)
 
   const email = searchParams.get('email') || ''
@@ -56,44 +55,61 @@ export default function VerifyEmailPage() {
     },
   })
 
-  const onSubmit = async (values: VerifyEmailFormValues) => {
-    setIsLoading(true)
-    setError(null)
+  const verifyEmailMutation = useVerifyEmailMutation()
 
-    try {
-      const inviteToken = searchParams.get('inviteToken')
-
-      await apiFetch('/auth/verify-email', {
-        method: 'POST',
-        body: JSON.stringify({
-          email,
-          code: values.code,
-          password: values.password,
-          ...(inviteToken && { inviteToken }),
-        }),
-      })
-
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/')
-    } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'INVALID_CODE') {
-        setError('Invalid verification code.')
-      } else if (apiError.code === 'CODE_EXPIRED') {
-        setError('Verification code expired. Please request a new one.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
-    } finally {
-      setIsLoading(false)
+  // Handle session redirects per Section 8
+  useEffect(() => {
+    if (sessionLoading) {
+      return
     }
+
+    // If no email param, redirect to signup
+    if (!email) {
+      router.push('/signup')
+      return
+    }
+
+    // If session already exists, redirect based on onboarding status
+    if (session) {
+      if (!session.onboardingCompleted) {
+        router.push('/auth/complete-signup/internal')
+      } else {
+        router.push('/dashboard')
+      }
+    }
+  }, [session, sessionLoading, email, router])
+
+  const onSubmit = async (values: VerifyEmailFormValues) => {
+    if (!email) {
+      router.push('/signup')
+      return
+    }
+
+    const inviteToken = searchParams.get('inviteToken')
+
+    verifyEmailMutation.mutate(
+      {
+        email,
+        code: values.code,
+        password: values.password,
+        ...(inviteToken && { inviteToken }),
+      },
+      {
+        onError: (err) => {
+          form.setError('root', {
+            message: getErrorMessage(err),
+          })
+        },
+      }
+    )
   }
+
+  const error = form.formState.errors.root?.message
 
   const handleResend = async () => {
     setIsResending(true)
     setResendSuccess(false)
-    setError(null)
+    form.clearErrors()
 
     try {
       await apiFetch('/auth/resend-verification', {
@@ -109,13 +125,28 @@ export default function VerifyEmailPage() {
     }
   }
 
+  // Show loader while checking session
+  if (sessionLoading) {
+    return <FullScreenLoader />
+  }
+
+  // Show loader while redirecting if session exists
+  if (session) {
+    return <FullScreenLoader />
+  }
+
+  // If no email param, show loader while redirecting
+  if (!email) {
+    return <FullScreenLoader />
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Verify your email</CardTitle>
           <CardDescription>
-            Enter the 6-digit code sent to {email || 'your email'}
+            Enter the 6-digit code and your password
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -161,7 +192,11 @@ export default function VerifyEmailPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="Enter your password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -169,8 +204,13 @@ export default function VerifyEmailPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
-                  {isLoading ? (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={verifyEmailMutation.isPending}
+                  className="w-full"
+                >
+                  {verifyEmailMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Verifying...

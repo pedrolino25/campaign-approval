@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
+import { useForgotPasswordMutation } from '@/lib/auth/auth-mutations'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -34,8 +34,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const forgotPasswordMutation = useForgotPasswordMutation()
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -44,22 +44,16 @@ export default function ForgotPasswordPage() {
     },
   })
 
-  const onSubmit = async (values: ForgotPasswordFormValues) => {
-    setIsLoading(true)
+  const onSubmit = (values: ForgotPasswordFormValues) => {
     setSuccess(false)
-
-    try {
-      await apiFetch('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify(values),
-      })
-
-      setSuccess(true)
-    } catch {
-      setSuccess(true)
-    } finally {
-      setIsLoading(false)
-    }
+    forgotPasswordMutation.mutate(values.email, {
+      onSuccess: () => {
+        setSuccess(true)
+      },
+      onError: () => {
+        setSuccess(true)
+      },
+    })
   }
 
   return (
@@ -103,8 +97,13 @@ export default function ForgotPasswordPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
-                  {isLoading ? (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={forgotPasswordMutation.isPending}
+                  className="w-full"
+                >
+                  {forgotPasswordMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Sending...

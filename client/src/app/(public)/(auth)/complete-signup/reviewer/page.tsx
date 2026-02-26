@@ -1,6 +1,5 @@
 'use client'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -13,46 +12,34 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
-import { apiFetch } from '@/lib/api/client'
+import { getErrorMessage } from '@/lib/api/client'
+import { useCompleteSignupReviewerMutation } from '@/lib/auth/auth-mutations'
 import { useSession } from '@/lib/auth/use-session'
 
 export default function ReviewerCompleteSignupPage() {
   const { session, isLoading: sessionLoading } = useSession()
   const router = useRouter()
-  const queryClient = useQueryClient()
 
-  const mutation = useMutation({
-    mutationFn: async () => {
-      return await apiFetch('/auth/complete-signup/reviewer', {
-        method: 'POST',
-        body: JSON.stringify({ name: session?.email.split('@')[0] || '' }),
-      })
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/dashboard')
-    },
-    onError: () => {
-      // Error will be shown via Alert
-    },
-  })
+  const mutation = useCompleteSignupReviewerMutation()
 
-  // Show loading while checking session
   if (sessionLoading) {
     return <FullScreenLoader />
   }
 
-  // If already onboarded, redirect to dashboard
   if (session?.onboardingCompleted) {
     router.push('/dashboard')
     return <FullScreenLoader />
   }
 
-  // Show error if no session or wrong actor type (don't redirect - this is a public page)
   const showError = !session || session.actorType !== 'REVIEWER'
 
   const handleContinue = () => {
-    mutation.mutate()
+    const name = session?.email.split('@')[0] || ''
+    mutation.mutate(name, {
+      onError: () => {
+        // Error will be shown via Alert
+      },
+    })
   }
 
   return (
@@ -87,8 +74,7 @@ export default function ReviewerCompleteSignupPage() {
               {mutation.isError && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {(mutation.error as { message?: string })?.message ||
-                      'Failed to complete setup'}
+                    {getErrorMessage(mutation.error)}
                   </AlertDescription>
                 </Alert>
               )}

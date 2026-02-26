@@ -1,5 +1,7 @@
 import type { APIGatewayProxyResult } from 'aws-lambda'
 
+import { logger } from '../../../lib/utils/logger'
+import { ActorType } from '../../../models'
 import type {
   InvitationRepository,
   OrganizationRepository,
@@ -30,10 +32,6 @@ export interface CreateSessionFromTokensParams {
   returnJson?: boolean
 }
 
-/**
- * Verifies Cognito idToken and creates a session.
- * This is a shared utility used by both OAuth callback and embedded auth flows.
- */
 export async function createSessionFromTokens(
   params: CreateSessionFromTokensParams
 ): Promise<APIGatewayProxyResult> {
@@ -52,11 +50,9 @@ export async function createSessionFromTokens(
     returnJson = false,
   } = params
 
-  // Verify idToken and extract sub + email
   const authContext = await tokenVerifier.verify(idToken)
   const { userId, email } = authContext
 
-  // Resolve actor from tokens
   const { actor, user, reviewer, organization } = await resolveActorFromTokens(
     userId,
     email,
@@ -69,7 +65,22 @@ export async function createSessionFromTokens(
     context
   )
 
-  // Build and return session response
+  if (actor.type === ActorType.Internal && user) {
+    try {
+      logger.info({
+        source: 'auth',
+        event: 'SESSION_CREATION_STARTED',
+        actorType: 'INTERNAL',
+        actorId: user.id,
+        organizationId: user.organizationId,
+        sessionVersion: user.sessionVersion,
+        ...context,
+      })
+    } catch {
+      // Never throw if logging fails
+    }
+  }
+
   if (returnJson) {
     return await buildSessionJsonResponse(
       userId,

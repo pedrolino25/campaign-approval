@@ -2,8 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -26,8 +24,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { getErrorMessage } from '@/lib/api/client'
+import { useResetPasswordMutation } from '@/lib/auth/auth-mutations'
 
 const resetPasswordSchema = z
   .object({
@@ -44,9 +42,7 @@ const resetPasswordSchema = z
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const resetPasswordMutation = useResetPasswordMutation()
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -58,35 +54,24 @@ export default function ResetPasswordPage() {
     },
   })
 
-  const onSubmit = async (values: ResetPasswordFormValues) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      await apiFetch('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: values.email,
-          code: values.code,
-          newPassword: values.newPassword,
-        }),
-      })
-
-      router.push('/login')
-    } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'INVALID_CODE') {
-        setError('Invalid verification code.')
-      } else if (apiError.code === 'CODE_EXPIRED') {
-        setError('Verification code expired. Please request a new one.')
-      } else {
-        setError(apiError.message || 'An error occurred')
+  const onSubmit = (values: ResetPasswordFormValues) => {
+    resetPasswordMutation.mutate(
+      {
+        email: values.email,
+        code: values.code,
+        newPassword: values.newPassword,
+      },
+      {
+        onError: (err) => {
+          form.setError('root', {
+            message: getErrorMessage(err),
+          })
+        },
       }
-    } finally {
-      setIsLoading(false)
-    }
+    )
   }
+
+  const error = form.formState.errors.root?.message
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -172,8 +157,13 @@ export default function ResetPasswordPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
-                  {isLoading ? (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={resetPasswordMutation.isPending}
+                  className="w-full"
+                >
+                  {resetPasswordMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Resetting password...

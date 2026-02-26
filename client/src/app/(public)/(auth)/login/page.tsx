@@ -1,10 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -27,8 +24,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { getErrorMessage } from '@/lib/api/client'
+import { useLoginMutation } from '@/lib/auth/auth-mutations'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -38,11 +35,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -51,35 +43,19 @@ export default function LoginPage() {
     },
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true)
-    setError(null)
+  const loginMutation = useLoginMutation()
 
-    try {
-      await apiFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(values),
-      })
-
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/')
-    } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
-        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
-        return
-      }
-
-      if (apiError.code === 'INVALID_CREDENTIALS') {
-        setError('Invalid email or password.')
-      } else {
-        setError(apiError.message || 'An error occurred')
-      }
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = (values: LoginFormValues) => {
+    loginMutation.mutate(values, {
+      onError: (err) => {
+        form.setError('root', {
+          message: getErrorMessage(err),
+        })
+      },
+    })
   }
+
+  const error = form.formState.errors.root?.message
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -132,8 +108,13 @@ export default function LoginPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
-                  {isLoading ? (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={loginMutation.isPending}
+                  className="w-full"
+                >
+                  {loginMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Signing in...

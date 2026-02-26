@@ -2,8 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -26,8 +25,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch } from '@/lib/api/client'
-import { type ApiError } from '@/lib/api/error-handler'
+import { getErrorMessage } from '@/lib/api/client'
+import { useSignupMutation } from '@/lib/auth/auth-mutations'
 
 const signupSchema = z
   .object({
@@ -43,10 +42,8 @@ const signupSchema = z
 type SignupFormValues = z.infer<typeof signupSchema>
 
 export default function SignupPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const signupMutation = useSignupMutation()
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -57,35 +54,26 @@ export default function SignupPage() {
     },
   })
 
-  const onSubmit = async (values: SignupFormValues) => {
-    setIsLoading(true)
-    setError(null)
+  const onSubmit = (values: SignupFormValues) => {
+    const inviteToken = searchParams.get('inviteToken')
 
-    try {
-      const inviteToken = searchParams.get('inviteToken')
-
-      await apiFetch('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-          ...(inviteToken && { inviteToken }),
-        }),
-      })
-
-      router.push(`/verify-email?email=${encodeURIComponent(values.email)}`)
-    } catch (err) {
-      const apiError = err as ApiError
-
-      if (apiError.code === 'EMAIL_ALREADY_EXISTS') {
-        setError('An account with this email already exists.')
-      } else {
-        setError(apiError.message || 'An error occurred')
+    signupMutation.mutate(
+      {
+        email: values.email,
+        password: values.password,
+        ...(inviteToken && { inviteToken }),
+      },
+      {
+        onError: (err) => {
+          form.setError('root', {
+            message: getErrorMessage(err),
+          })
+        },
       }
-    } finally {
-      setIsLoading(false)
-    }
+    )
   }
+
+  const error = form.formState.errors.root?.message
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -152,8 +140,13 @@ export default function SignupPage() {
               />
 
               <div className="flex flex-col gap-2">
-                <Button type="submit" size="sm" disabled={isLoading} className="w-full">
-                  {isLoading ? (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={signupMutation.isPending}
+                  className="w-full"
+                >
+                  {signupMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Creating account...

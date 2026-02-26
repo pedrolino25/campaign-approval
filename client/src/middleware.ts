@@ -28,7 +28,6 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
-
     if (isPublicRoute(pathname)) {
       return NextResponse.next()
     }

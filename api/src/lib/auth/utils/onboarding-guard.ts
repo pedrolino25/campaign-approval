@@ -3,7 +3,8 @@ import { type AuthenticatedEvent,ForbiddenError } from '../../../models'
 const ALLOWED_ROUTES = new Set([
   'POST /auth/complete-signup/internal',
   'POST /auth/complete-signup/reviewer',
-  'GET /organization',
+  'POST /auth/change-password',
+  'GET /auth/me',
 ])
 
 const ALLOWED_PATTERNS: ReadonlyArray<{ method: string; pathPattern: RegExp }> =

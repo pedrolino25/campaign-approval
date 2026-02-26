@@ -132,9 +132,14 @@ export class CognitoService {
         throw new ConflictError('EMAIL_ALREADY_EXISTS')
       }
       if (error instanceof InvalidPasswordException) {
-        throw new ValidationError('INVALID_PASSWORD')
+        throw new ValidationError('PASSWORD_DOES_NOT_MEET_REQUIREMENTS')
       }
       if (error instanceof InvalidParameterException) {
+        const errorMessage = error.message || ''
+
+        if (errorMessage.includes('email') || errorMessage.includes('Email')) {
+          throw new ValidationError('INVALID_EMAIL_FORMAT')
+        }
         throw new ValidationError('INVALID_INPUT')
       }
       throw new InternalError('COGNITO_SIGNUP_FAILED')
@@ -160,30 +165,41 @@ export class CognitoService {
       )
     } catch (error) {
       if (error instanceof CodeMismatchException) {
-        throw new ValidationError('INVALID_CODE')
+        throw new ValidationError('VERIFICATION_CODE_INCORRECT')
       }
       if (error instanceof ExpiredCodeException) {
-        throw new ValidationError('CODE_EXPIRED')
+        throw new ValidationError('VERIFICATION_CODE_EXPIRED')
       }
       if (error instanceof UserNotFoundException) {
-        throw new ValidationError('INVALID_CODE')
+        throw new ValidationError('ACCOUNT_NOT_FOUND')
+      }
+      if (error instanceof InvalidParameterException) {
+        throw new ValidationError('INVALID_VERIFICATION_CODE_FORMAT')
       }
       throw new InternalError('COGNITO_CONFIRM_FAILED')
     }
 
     // Immediately authenticate after confirmation
-    const authResult = await this.login(email, password)
-    return authResult
+    try {
+      const authResult = await this.login(email, password)
+      return authResult
+    } catch (loginError) {
+      // If login fails after confirmation, it might be a password issue
+      if (loginError instanceof UnauthorizedError) {
+        throw new UnauthorizedError('INVALID_CREDENTIALS_AFTER_VERIFICATION')
+      }
+      throw loginError
+    }
   }
 
   private handleLoginError(error: unknown): never {
     if (error instanceof UserNotConfirmedException) {
       throw new BusinessRuleViolationError('EMAIL_NOT_VERIFIED')
     }
-    if (
-      error instanceof NotAuthorizedException ||
-      error instanceof UserNotFoundException
-    ) {
+    if (error instanceof NotAuthorizedException) {
+      throw new UnauthorizedError('INVALID_CREDENTIALS')
+    }
+    if (error instanceof UserNotFoundException) {
       throw new UnauthorizedError('INVALID_CREDENTIALS')
     }
     if (
@@ -280,10 +296,19 @@ export class CognitoService {
       )
     } catch (error) {
       if (error instanceof CodeMismatchException) {
-        throw new ValidationError('INVALID_CODE')
+        throw new ValidationError('RESET_CODE_INCORRECT')
       }
       if (error instanceof ExpiredCodeException) {
-        throw new ValidationError('CODE_EXPIRED')
+        throw new ValidationError('RESET_CODE_EXPIRED')
+      }
+      if (error instanceof InvalidPasswordException) {
+        throw new ValidationError('PASSWORD_DOES_NOT_MEET_REQUIREMENTS')
+      }
+      if (error instanceof UserNotFoundException) {
+        throw new ValidationError('ACCOUNT_NOT_FOUND')
+      }
+      if (error instanceof InvalidParameterException) {
+        throw new ValidationError('INVALID_RESET_CODE_FORMAT')
       }
       throw new InternalError('COGNITO_RESET_FAILED')
     }
@@ -343,7 +368,17 @@ export class CognitoService {
       )
     } catch (error) {
       if (error instanceof NotAuthorizedException) {
-        throw new ValidationError('INVALID_OLD_PASSWORD')
+        throw new ValidationError('CURRENT_PASSWORD_INCORRECT')
+      }
+      if (error instanceof InvalidPasswordException) {
+        const errorMessage = error.message || ''
+        if (errorMessage.includes('previous') || errorMessage.includes('same')) {
+          throw new ValidationError('NEW_PASSWORD_MUST_BE_DIFFERENT')
+        }
+        throw new ValidationError('PASSWORD_DOES_NOT_MEET_REQUIREMENTS')
+      }
+      if (error instanceof InvalidParameterException) {
+        throw new ValidationError('INVALID_PASSWORD_FORMAT')
       }
       throw new InternalError('COGNITO_CHANGE_PASSWORD_FAILED')
     }

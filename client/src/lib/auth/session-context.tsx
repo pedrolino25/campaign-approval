@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { usePathname } from 'next/navigation'
 import { createContext, useContext, useEffect } from 'react'
 
 import { apiFetch } from '@/lib/api/client'
@@ -22,41 +21,13 @@ interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | null>(null)
 
-const publicRoutes = [
-  '/',
-  '/login',
-  '/signup',
-  '/verify-email',
-  '/forgot-password',
-  '/reset-password',
-  '/auth',
-  '/blog',
-  '/audit-traceability',
-  '/approval-workflows',
-  '/version-integrity',
-  '/operational-visibility',
-  '/client-experience',
-  '/pricing',
-  '/terms-of-service',
-  '/privacy-policy',
-]
-
-function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
-}
-
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
-  const pathname = usePathname()
-  const isPublic = isPublicRoute(pathname)
 
   const { data: session, isLoading, error } = useQuery<Session>({
     queryKey: ['session'],
     queryFn: () => apiFetch<Session>('/auth/me'),
     retry: false,
-    enabled: !isPublic,
   })
 
   useEffect(() => {
@@ -71,8 +42,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
-  const sessionValue: Session | null = isPublic ? null : error ? null : session || null
-  const isLoadingValue = isPublic ? false : isLoading
+  const sessionValue: Session | null = error ? null : session || null
+  const isLoadingValue = isLoading
 
   return (
     <SessionContext.Provider
