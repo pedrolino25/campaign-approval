@@ -4,6 +4,6 @@ output "api_base_url" {
 }
 
 output "api_domain_name" {
-  description = "API Gateway custom domain name (for CloudFront origin)"
-  value       = var.domain_name
+  description = "API Gateway custom domain target domain name (for CloudFront origin)"
+  value       = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
 }
