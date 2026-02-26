@@ -1103,14 +1103,11 @@ async function processEmbeddedLogin(
 ): Promise<APIGatewayProxyResult> {
   const tokens = await cognitoService.login(validated.email, validated.password)
 
-  // Verify token to get userId
   const authContext = await tokenVerifier.verify(tokens.idToken)
 
-  // Create session FIRST (before accepting invitation)
-  // This ensures authentication succeeds before consuming invitation
   const sessionResponse = await createSessionFromTokens({
     idToken: tokens.idToken,
-    inviteToken: undefined, // Don't pass inviteToken to session creation
+    inviteToken: undefined,
     reviewerActivationCompleted: false,
     context,
     userRepository,
@@ -1120,7 +1117,7 @@ async function processEmbeddedLogin(
     rbacService,
     sessionService,
     tokenVerifier,
-    returnJson: true, // Return JSON for embedded auth
+    returnJson: true,
   })
 
   if (validated.inviteToken) {
