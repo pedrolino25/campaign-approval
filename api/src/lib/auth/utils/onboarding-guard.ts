@@ -1,9 +1,9 @@
 import { type AuthenticatedEvent,ForbiddenError } from '../../../models'
 
 const ALLOWED_ROUTES = new Set([
-  'POST /complete-signup/internal',
-  'POST /complete-signup/reviewer',
-  'GET /organization',
+  'POST /auth/complete-signup/internal',
+  'POST /auth/complete-signup/reviewer',
+  'GET /auth/me',
 ])
 
 const ALLOWED_PATTERNS: ReadonlyArray<{ method: string; pathPattern: RegExp }> =
