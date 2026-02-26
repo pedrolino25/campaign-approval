@@ -140,8 +140,7 @@ resource "aws_apigatewayv2_route" "auth_me" {
 
   target = "integrations/${aws_apigatewayv2_integration.auth.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "auth_reviewer_activate" {
@@ -159,8 +158,7 @@ resource "aws_apigatewayv2_route" "auth_complete_signup_internal" {
 
   target = "integrations/${aws_apigatewayv2_integration.auth.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "auth_complete_signup_reviewer" {
@@ -169,8 +167,7 @@ resource "aws_apigatewayv2_route" "auth_complete_signup_reviewer" {
 
   target = "integrations/${aws_apigatewayv2_integration.auth.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "auth_signup" {
@@ -233,8 +230,7 @@ resource "aws_apigatewayv2_route" "auth_change_password" {
 
   target = "integrations/${aws_apigatewayv2_integration.auth.id}"
 
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  authorization_type = "JWT"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_route" "organization_get" {
