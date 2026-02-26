@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
-import { useResetPasswordMutation } from '@/lib/auth/auth-mutations'
+import { useResetPasswordMutation } from '@/services/auth.service'
 
 const resetPasswordSchema = z
   .object({
@@ -44,8 +44,18 @@ const resetPasswordSchema = z
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
 export default function ResetPasswordPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const resetPasswordMutation = useResetPasswordMutation()
+  const resetPasswordMutation = useResetPasswordMutation({
+    onSuccess: () => {
+      router.push('/login')
+    },
+    onError: (err) => {
+      form.setError('root', {
+        message: getErrorMessage(err),
+      })
+    },
+  })
 
   const emailFromQuery = searchParams.get('email') || ''
   const emailSent = searchParams.get('sent') === 'true'
@@ -67,20 +77,11 @@ export default function ResetPasswordPage() {
   }, [emailFromQuery, form])
 
   const onSubmit = (values: ResetPasswordFormValues) => {
-    resetPasswordMutation.mutate(
-      {
-        email: values.email,
-        code: values.code,
-        newPassword: values.newPassword,
-      },
-      {
-        onError: (err) => {
-          form.setError('root', {
-            message: getErrorMessage(err),
-          })
-        },
-      }
-    )
+    resetPasswordMutation.mutate({
+      email: values.email,
+      code: values.code,
+      newPassword: values.newPassword,
+    })
   }
 
   const error = form.formState.errors.root?.message

@@ -1,7 +1,9 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -25,7 +27,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
-import { useLoginMutation } from '@/lib/auth/auth-mutations'
+import type { ParsedError } from '@/lib/errors'
+import { type SessionResponse, useLoginMutation } from '@/services/auth.service'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -34,7 +37,25 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
+function getRedirectPath(
+  session: SessionResponse['session'],
+  defaultPath: string = '/dashboard'
+): string {
+  if (session && !session.onboardingCompleted) {
+    if (session.actorType === 'INTERNAL') {
+      return '/complete-signup/internal'
+    }
+    if (session.actorType === 'REVIEWER') {
+      return '/complete-signup/reviewer'
+    }
+  }
+  return defaultPath
+}
+
 export default function LoginPage() {
+  const router = useRouter()
+  const queryClient = useQueryClient()
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -43,16 +64,27 @@ export default function LoginPage() {
     },
   })
 
-  const loginMutation = useLoginMutation()
+  const loginMutation = useLoginMutation({
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
+      router.push(getRedirectPath(response.session))
+    },
+    onError: async (err, variables) => {
+      const error = err as ParsedError
+
+      if (error.code === 'EMAIL_NOT_VERIFIED') {
+        router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
+        return
+      }
+
+      form.setError('root', {
+        message: getErrorMessage(err),
+      })
+    },
+  })
 
   const onSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values, {
-      onError: (err) => {
-        form.setError('root', {
-          message: getErrorMessage(err),
-        })
-      },
-    })
+    loginMutation.mutate(values)
   }
 
   const error = form.formState.errors.root?.message

@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -27,9 +28,13 @@ import {
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch, getErrorMessage } from '@/lib/api/client'
-import { useVerifyEmailMutation } from '@/lib/auth/auth-mutations'
+import { getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
+import {
+  type SessionResponse,
+  useResendVerificationMutation,
+  useVerifyEmailMutation,
+} from '@/services/auth.service'
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, 'Code must be 6 characters'),
@@ -38,11 +43,26 @@ const verifyEmailSchema = z.object({
 
 type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
+function getRedirectPath(
+  session: SessionResponse['session'],
+  defaultPath: string = '/dashboard'
+): string {
+  if (session && !session.onboardingCompleted) {
+    if (session.actorType === 'INTERNAL') {
+      return '/complete-signup/internal'
+    }
+    if (session.actorType === 'REVIEWER') {
+      return '/complete-signup/reviewer'
+    }
+  }
+  return defaultPath
+}
+
 export default function VerifyEmailPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const { session, isLoading: sessionLoading } = useSession()
-  const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
 
   const email = searchParams.get('email') || ''
@@ -55,9 +75,19 @@ export default function VerifyEmailPage() {
     },
   })
 
-  const verifyEmailMutation = useVerifyEmailMutation()
+  const verifyEmailMutation = useVerifyEmailMutation({
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
+      router.push(getRedirectPath(response.session))
+    },
+    onError: (err) => {
+      form.setError('root', {
+        message: getErrorMessage(err),
+      })
+    },
+  })
+  const resendVerificationMutation = useResendVerificationMutation()
 
-  // Handle session redirects per Section 8
   useEffect(() => {
     if (sessionLoading) {
       return
@@ -87,42 +117,26 @@ export default function VerifyEmailPage() {
 
     const inviteToken = searchParams.get('inviteToken')
 
-    verifyEmailMutation.mutate(
-      {
-        email,
-        code: values.code,
-        password: values.password,
-        ...(inviteToken && { inviteToken }),
-      },
-      {
-        onError: (err) => {
-          form.setError('root', {
-            message: getErrorMessage(err),
-          })
-        },
-      }
-    )
+    verifyEmailMutation.mutate({
+      email,
+      code: values.code,
+      password: values.password,
+      ...(inviteToken && { inviteToken }),
+    })
   }
 
   const error = form.formState.errors.root?.message
 
-  const handleResend = async () => {
-    setIsResending(true)
+  useEffect(() => {
+    if (resendVerificationMutation.isSuccess) {
+      setResendSuccess(true)
+    }
+  }, [resendVerificationMutation.isSuccess])
+
+  const handleResend = () => {
     setResendSuccess(false)
     form.clearErrors()
-
-    try {
-      await apiFetch('/auth/resend-verification', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      })
-
-      setResendSuccess(true)
-    } catch {
-      setResendSuccess(true)
-    } finally {
-      setIsResending(false)
-    }
+    resendVerificationMutation.mutate({ email })
   }
 
   // Show loader while checking session
@@ -224,11 +238,11 @@ export default function VerifyEmailPage() {
                   type="button"
                   variant="outline"
                   onClick={handleResend}
-                  disabled={isResending}
+                  disabled={resendVerificationMutation.isPending}
                   className="w-full"
                   size="sm"
                 >
-                  {isResending ? (
+                  {resendVerificationMutation.isPending ? (
                     <>
                       <Spinner className="mr-2" />
                       Resending...

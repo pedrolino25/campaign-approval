@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { useForgotPasswordMutation } from '@/lib/auth/auth-mutations'
+import { useForgotPasswordMutation } from '@/services/auth.service'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),

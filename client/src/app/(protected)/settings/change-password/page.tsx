@@ -1,7 +1,6 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -24,8 +23,9 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { apiFetch, getErrorMessage } from '@/lib/api/client'
+import { getErrorMessage } from '@/lib/api/client'
 import { useToast } from '@/lib/hooks/use-toast'
+import { useChangePasswordMutation } from '@/services/auth.service'
 
 const changePasswordSchema = z
   .object({
@@ -42,8 +42,7 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
 export default function ChangePasswordPage() {
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const changePasswordMutation = useChangePasswordMutation()
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -54,31 +53,30 @@ export default function ChangePasswordPage() {
     },
   })
 
-  const onSubmit = async (values: ChangePasswordFormValues) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      await apiFetch('/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          oldPassword: values.oldPassword,
-          newPassword: values.newPassword,
-        }),
-      })
-
-      toast({
-        title: 'Success',
-        description: 'Password updated successfully.',
-      })
-
-      form.reset()
-    } catch (err) {
-      setError(getErrorMessage(err))
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = (values: ChangePasswordFormValues) => {
+    changePasswordMutation.mutate(
+      {
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Success',
+            description: 'Password updated successfully.',
+          })
+          form.reset()
+        },
+        onError: (err) => {
+          form.setError('root', {
+            message: getErrorMessage(err),
+          })
+        },
+      }
+    )
   }
+
+  const error = form.formState.errors.root?.message
 
   return (
     <div className="container max-w-2xl py-8">
@@ -140,8 +138,8 @@ export default function ChangePasswordPage() {
                 )}
               />
 
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" disabled={changePasswordMutation.isPending}>
+                {changePasswordMutation.isPending ? (
                   <>
                     <Spinner className="mr-2" />
                     Updating...
