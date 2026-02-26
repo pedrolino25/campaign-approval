@@ -120,7 +120,7 @@ resource "aws_cloudfront_distribution" "api" {
     cache_policy_id          = aws_cloudfront_cache_policy.api_no_cache.id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api_forward_all.id
 
-    web_acl_id = var.waf_web_acl_arn
+    web_acl_arn = var.waf_web_acl_arn
   }
 
   restrictions {
@@ -136,6 +136,4 @@ resource "aws_cloudfront_distribution" "api" {
   }
 
   tags = var.tags
-
-  depends_on = [var.waf_web_acl_arn]
 }
