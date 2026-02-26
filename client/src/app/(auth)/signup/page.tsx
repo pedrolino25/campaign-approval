@@ -44,6 +44,7 @@ type SignupFormValues = z.infer<typeof signupSchema>
 export default function SignupPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
   const signupMutation = useSignupMutation({
     onSuccess: (_, variables) => {
       router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)

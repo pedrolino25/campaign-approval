@@ -28,11 +28,11 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
+    const sessionCookie = request.cookies.get('worklient_session')
+
     if (isPublicRoute(pathname)) {
       return NextResponse.next()
     }
-
-    const sessionCookie = request.cookies.get('worklient_session')
 
     if (!sessionCookie) {
       const url = request.nextUrl.clone()
