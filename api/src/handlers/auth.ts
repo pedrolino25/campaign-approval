@@ -7,7 +7,6 @@ import { type z, ZodError } from 'zod'
 import { validateBody, ValidationError } from '../lib'
 import {
   AuthService,
-  CookieTokenExtractor,
   OAuthService,
   RBACService,
   SessionService,
@@ -78,7 +77,6 @@ const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
 const rbacService = new RBACService(new ClientReviewerRepository())
 const authService = new AuthService(
-  new CookieTokenExtractor(),
   userRepository,
   reviewerRepository
 )
@@ -290,9 +288,10 @@ async function buildSessionForUser(
     reviewer,
     organization,
     email,
-    activationToken,
     sessionService,
-    context
+    {
+      activationToken,
+    }
   )
 
   logLoginSuccess(actor, context)

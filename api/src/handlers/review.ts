@@ -1,7 +1,10 @@
+import { ReviewStatus } from '@prisma/client'
+
 import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
+  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -21,19 +24,64 @@ import {
 import {
   Action,
   ActorType,
+  ConflictError,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ActivityLogActionType } from '../models/activity-log'
+import {
+  ActivityLogActionType,
+  type ActivityLogMetadataMap,
+} from '../models/activity-log'
+import type { ActorContext } from '../models/rbac'
 import {
   ActivityLogRepository,
   AttachmentRepository,
+  ClientRepository,
   ReviewItemRepository,
 } from '../repositories'
-import {
-  ReviewItemService,
-  ReviewWorkflowService,
-} from '../services'
+import { ActivityLogService } from '../services/activity-log.service'
+import { ReviewWorkflowService } from '../services/review-workflow.service'
+
+async function resolveOrganizationId(actor: ActorContext): Promise<string> {
+  if (actor.type === ActorType.Internal) {
+    return actor.organizationId
+  }
+
+  const clientRepository = new ClientRepository()
+  const client = await clientRepository.findByIdForReviewer(
+    actor.clientId,
+    actor.reviewerId
+  )
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+  return client.organizationId
+}
+
+async function loadReviewItemForActor(
+  reviewItemId: string,
+  actor: ActorContext,
+  repository: ReviewItemRepository
+): Promise<{
+  reviewItem: NonNullable<Awaited<ReturnType<ReviewItemRepository['findByIdScoped']>>>
+  organizationId: string
+}> {
+  const organizationId = await resolveOrganizationId(actor)
+  const reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
+
+  if (!reviewItem) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+    throw new NotFoundError('Review item not found')
+  }
+
+  return {
+    reviewItem,
+    organizationId,
+  }
+}
 
 const buildVersionHistory = async (
   reviewItemId: string,
@@ -117,18 +165,7 @@ const handleGetReviewItems = async (
       limit: validatedQuery.query.limit as number | undefined,
     })
   } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    const organizationId = client.organizationId
-    
+    const organizationId = await resolveOrganizationId(actor)
     result = await repository.listByClient(actor.clientId, organizationId, {
       cursor: validatedQuery.query.cursor,
       limit: validatedQuery.query.limit as number | undefined,
@@ -161,12 +198,45 @@ const handlePostReviewItems = async (
     organizationId: organizationId,
   })
 
-  const service = new ReviewItemService()
-  const reviewItem = await service.createReviewItem({
-    actor,
-    clientId: validated.body.clientId,
-    title: validated.body.title,
-    description: validated.body.description,
+  const activityLogService = new ActivityLogService()
+  const reviewItem = await prisma.$transaction(async (tx) => {
+    const client = await tx.client.findFirst({
+      where: {
+        id: validated.body.clientId,
+        organizationId,
+        archivedAt: null,
+      },
+    })
+    if (!client) {
+      throw new NotFoundError('Client not found')
+    }
+
+    const reviewItem = await tx.reviewItem.create({
+      data: {
+        organizationId,
+        clientId: validated.body.clientId,
+        title: validated.body.title,
+        description: validated.body.description,
+        status: ReviewStatus.DRAFT,
+        createdByUserId: actor.userId,
+        version: 1,
+      },
+    })
+
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.REVIEW_CREATED] = {
+      reviewItemId: reviewItem.id,
+    }
+
+    await activityLogService.log({
+      action: ActivityLogActionType.REVIEW_CREATED,
+      organizationId,
+      actor,
+      metadata,
+      reviewItemId: reviewItem.id,
+      tx,
+    })
+
+    return reviewItem
   })
   
   return {
@@ -184,36 +254,7 @@ const handleGetReviewItem = async (
   const reviewItemId = validated.params.id!
   const repository = new ReviewItemRepository()
   
-  let reviewItem: Awaited<ReturnType<typeof repository.findByIdScoped>> | null
-  let organizationId: string
-
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
-  } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    organizationId = client.organizationId
-    reviewItem = await repository.findByIdScoped(reviewItemId, organizationId)
-  }
-
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  if (actor.type === ActorType.Reviewer) {
-    if (reviewItem.clientId !== actor.clientId) {
-      throw new NotFoundError('Review item not found')
-    }
-  }
+  const { reviewItem } = await loadReviewItemForActor(reviewItemId, actor, repository)
 
   authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
     organizationId: reviewItem.organizationId,
@@ -248,28 +289,7 @@ const handleSendReviewItem = async (
   const expectedVersion = validatedBody.body.expectedVersion
 
   const reviewItemRepository = new ReviewItemRepository()
-  
-  let organizationId: string
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-  } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    organizationId = client.organizationId
-  }
-  
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
+  const { reviewItem } = await loadReviewItemForActor(reviewItemId, actor, reviewItemRepository)
 
   authorizeOrThrow(actor, Action.SEND_FOR_REVIEW, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
@@ -286,6 +306,7 @@ const handleSendReviewItem = async (
     action: WorkflowAction.SEND_FOR_REVIEW,
     actor,
     expectedVersion,
+    preloadedReviewItem: reviewItem,
   })
 
   return {
@@ -305,28 +326,7 @@ const handleApproveReviewItem = async (
   const expectedVersion = validatedBody.body.expectedVersion
 
   const reviewItemRepository = new ReviewItemRepository()
-  
-  let organizationId: string
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-  } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    organizationId = client.organizationId
-  }
-  
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
+  const { reviewItem } = await loadReviewItemForActor(reviewItemId, actor, reviewItemRepository)
 
   authorizeOrThrow(actor, Action.APPROVE_REVIEW_ITEM, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
@@ -343,6 +343,7 @@ const handleApproveReviewItem = async (
     action: WorkflowAction.APPROVE,
     actor,
     expectedVersion,
+    preloadedReviewItem: reviewItem,
   })
 
   return {
@@ -362,28 +363,7 @@ const handleRequestChanges = async (
   const expectedVersion = validatedBody.body.expectedVersion
 
   const reviewItemRepository = new ReviewItemRepository()
-  
-  let organizationId: string
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-  } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    organizationId = client.organizationId
-  }
-  
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
+  const { reviewItem } = await loadReviewItemForActor(reviewItemId, actor, reviewItemRepository)
 
   authorizeOrThrow(actor, Action.REQUEST_CHANGES, {
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
@@ -400,6 +380,7 @@ const handleRequestChanges = async (
     action: WorkflowAction.REQUEST_CHANGES,
     actor,
     expectedVersion,
+    preloadedReviewItem: reviewItem,
   })
 
   return {
@@ -420,10 +401,53 @@ const handleArchiveReviewItem = async (
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
-  const service = new ReviewItemService()
-  await service.archiveReviewItem({
-    actor,
-    reviewItemId,
+  const activityLogService = new ActivityLogService()
+  const organizationId = await resolveOrganizationId(actor)
+  
+  await prisma.$transaction(async (tx) => {
+    const reviewItem = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItemId,
+        organizationId,
+        archivedAt: null,
+      },
+    })
+
+    if (!reviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    const result = await tx.reviewItem.updateMany({
+      where: {
+        id: reviewItemId,
+        organizationId,
+        archivedAt: null,
+      },
+      data: {
+        archivedAt: new Date(),
+      },
+    })
+
+    if (result.count === 0) {
+      throw new ConflictError('Review item has already been archived')
+    }
+
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.REVIEW_ARCHIVED] = {
+      reviewItemId: reviewItem.id,
+    }
+
+    await activityLogService.log({
+      action: ActivityLogActionType.REVIEW_ARCHIVED,
+      organizationId,
+      actor,
+      metadata,
+      reviewItemId: reviewItem.id,
+      tx,
+    })
   })
 
   return {
@@ -439,37 +463,9 @@ const handleGetActivity = async (
   const validatedQuery = validateQuery(CursorPaginationQuerySchema)(validatedParams)
   
   const actor = request.auth.actor
-  let organizationId: string
-  
-  if (actor.type === ActorType.Internal) {
-    organizationId = actor.organizationId
-  } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
-      actor.reviewerId
-    )
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-    organizationId = client.organizationId
-  }
-
   const reviewItemId = validatedQuery.params.id!
   const reviewItemRepository = new ReviewItemRepository()
-  const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
-
-  if (!reviewItem) {
-    throw new NotFoundError('Review item not found')
-  }
-
-  if (actor.type === ActorType.Reviewer) {
-    if (reviewItem.clientId !== actor.clientId) {
-      throw new NotFoundError('Review item not found')
-    }
-  }
+  const { reviewItem } = await loadReviewItemForActor(reviewItemId, actor, reviewItemRepository)
 
   authorizeOrThrow(actor, Action.VIEW_ACTIVITY_LOG, {
     organizationId: reviewItem.organizationId,

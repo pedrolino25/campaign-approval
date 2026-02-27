@@ -4,28 +4,37 @@ import {
   type ActorContext,
   ActorType,
   type AuthenticatedEvent,
-  type SessionExtractor,
   UnauthorizedError,
 } from '../../models'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { UserRepository } from '../../repositories/user.repository'
 import { logger } from '../utils/logger'
-import type { CanonicalSession } from './session.service'
+import { type CanonicalSession, SessionService } from './session.service'
 
 export class AuthService {
+  private readonly sessionService: SessionService
+
   constructor(
-    private readonly sessionExtractor: SessionExtractor,
     private readonly userRepository: UserRepository,
     private readonly reviewerRepository: ReviewerRepository
-  ) {}
+  ) {
+    this.sessionService = new SessionService()
+  }
 
   async authenticate(
     event: APIGatewayProxyEvent
   ): Promise<AuthenticatedEvent> {
-    const session = await this.sessionExtractor.extract(event)
+    const cookies = event.headers.cookie || event.headers.Cookie
+    const sessionToken = this.sessionService.getSessionFromCookie(cookies)
+
+    if (!sessionToken) {
+      throw new UnauthorizedError('Missing session cookie')
+    }
+
+    const session = await this.sessionService.verifySession(sessionToken)
 
     if (!session) {
-      throw new UnauthorizedError('Invalid session')
+      throw new UnauthorizedError('Invalid or expired session')
     }
 
     await this.verifySessionVersion(session, event)

@@ -2,16 +2,14 @@ import {
   ReviewerRepository,
   UserRepository,
 } from '../../repositories'
-import { AuthService, CookieTokenExtractor } from '../auth'
+import { AuthService } from '../auth'
 import { ErrorService } from '../errors/error.service'
 import { ApiHandlerFactory } from './api.handler'
 import { PublicHandlerFactory } from './public.handler'
 
-const sessionExtractor = new CookieTokenExtractor()
 const userRepository = new UserRepository()
 const reviewerRepository = new ReviewerRepository()
 const authService = new AuthService(
-  sessionExtractor,
   userRepository,
   reviewerRepository
 )

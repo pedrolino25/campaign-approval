@@ -57,6 +57,7 @@ export type ApplyWorkflowActionInput = {
   action: WorkflowAction
   actor: ActorContext
   expectedVersion: number
+  preloadedReviewItem?: ReviewItem
 }
 
 export interface IReviewWorkflowService {
@@ -80,25 +81,30 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   }
 
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
-    const { reviewItemId, action, actor, expectedVersion } = input
+    const { reviewItemId, action, actor, expectedVersion, preloadedReviewItem } = input
 
-    let actorOrganizationId: string
-    if (actor.type === ActorType.Internal) {
-      actorOrganizationId = actor.organizationId
+    let reviewItem: ReviewItem
+    if (preloadedReviewItem) {
+      reviewItem = preloadedReviewItem
     } else {
-      // For reviewers, derive organizationId from their clientId
-      const clientRepository = new ClientRepository()
-      const client = await clientRepository.findByIdForReviewer(
-        actor.clientId,
-        actor.reviewerId
-      )
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      let actorOrganizationId: string
+      if (actor.type === ActorType.Internal) {
+        actorOrganizationId = actor.organizationId
+      } else {
+        // For reviewers, derive organizationId from their clientId
+        const clientRepository = new ClientRepository()
+        const client = await clientRepository.findByIdForReviewer(
+          actor.clientId,
+          actor.reviewerId
+        )
+        if (!client) {
+          throw new NotFoundError('Client not found')
+        }
+        actorOrganizationId = client.organizationId
       }
-      actorOrganizationId = client.organizationId
-    }
 
-    const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
+      reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
+    }
 
     this.validateHardConstraints(reviewItem, actor)
     this.validateActorPermissions(actor, action)

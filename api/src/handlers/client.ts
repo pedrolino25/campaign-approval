@@ -2,6 +2,7 @@ import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
+  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -20,11 +21,18 @@ import {
 import {
   Action,
   ActorType,
+  ForbiddenError,
   NotFoundError,
   type RouteDefinition,
+  ValidationError,
 } from '../models'
+import {
+  ActivityLogActionType,
+  type ActivityLogMetadataMap,
+} from '../models/activity-log'
 import { ClientRepository, ClientReviewerRepository } from '../repositories'
 import { ClientService } from '../services'
+import { ActivityLogService } from '../services/activity-log.service'
 
 const handleGetClients = async (
   request: HttpRequest
@@ -69,14 +77,48 @@ const handlePostClients = async (
     throw new NotFoundError('Organization not found')
   }
 
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can create clients')
+  }
+
   authorizeOrThrow(actor, Action.CREATE_CLIENT, {
     organizationId: organizationId,
   })
 
-  const clientService = new ClientService()
-  const client = await clientService.createClient({
-    name: validated.body.name,
-    actor,
+  const clientRepository = new ClientRepository()
+  const activityLogService = new ActivityLogService()
+  
+  const existingClient = await clientRepository.findByNameCaseInsensitive(
+    validated.body.name,
+    organizationId
+  )
+
+  if (existingClient) {
+    throw new ValidationError('Client name must be unique within organization')
+  }
+
+  const client = await prisma.$transaction(async (tx) => {
+    const client = await tx.client.create({
+      data: {
+        organizationId,
+        name: validated.body.name.trim(),
+      },
+    })
+
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_CREATED] = {
+      clientId: client.id,
+      name: client.name,
+    }
+
+    await activityLogService.log({
+      action: ActivityLogActionType.CLIENT_CREATED,
+      organizationId: client.organizationId,
+      actor,
+      metadata,
+      tx,
+    })
+
+    return client
   })
   
   return {
