@@ -114,7 +114,8 @@ export class SessionService {
   }
 
   buildSessionCookie(jwt: string): string {
-    return `${SESSION_COOKIE_NAME}=${jwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
+    const encodedJwt = encodeURIComponent(jwt)
+    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {
@@ -130,6 +131,16 @@ export class SessionService {
 
     const cookieString = Array.isArray(cookies) ? cookies.join('; ') : cookies
     const cookieMap = parseCookies(cookieString)
-    return cookieMap[SESSION_COOKIE_NAME] || null
+    const encodedJwt = cookieMap[SESSION_COOKIE_NAME]
+    
+    if (!encodedJwt) {
+      return null
+    }
+
+    try {
+      return decodeURIComponent(encodedJwt)
+    } catch {
+      return null
+    }
   }
 }

@@ -37,7 +37,9 @@ export function addCorsHeaders(
     Vary: 'Origin',
   }
 
-  if (process.env.IS_OFFLINE && response.cookies?.length) {
+  const isOffline = process.env.IS_OFFLINE === 'true'
+
+  if (isOffline && response.cookies?.length) {
     const firstCookie = response.cookies[0]
 
     if (typeof firstCookie === 'string') {
