@@ -20,6 +20,40 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   return false
 }
 
+export function attachCookies(
+  response: APIGatewayProxyStructuredResultV2,
+  cookies: string[]
+): APIGatewayProxyStructuredResultV2 {
+  if (!cookies || cookies.length === 0) {
+    return response
+  }
+
+  const isOffline = process.env.IS_OFFLINE === 'true'
+
+  if (isOffline) {
+    const headers = {
+      ...(response.headers ?? {}),
+    } as Record<string, unknown>
+
+    const strippedCookies = cookies.map((cookie) => {
+      const [pair] = cookie.split(';')
+      return pair
+    })
+
+    headers['Set-Cookie'] = strippedCookies
+
+    return {
+      ...response,
+      headers: headers as Record<string, string | number | boolean>,
+    }
+  }
+
+  return {
+    ...response,
+    cookies,
+  }
+}
+
 export function addCorsHeaders(
   event: APIGatewayProxyEvent,
   response: APIGatewayProxyStructuredResultV2
@@ -35,23 +69,6 @@ export function addCorsHeaders(
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
     Vary: 'Origin',
-  }
-
-  const isOffline = process.env.IS_OFFLINE === 'true'
-
-  if (isOffline && response.cookies?.length) {
-    const firstCookie = response.cookies[0]
-
-    if (typeof firstCookie === 'string') {
-      headers['Set-Cookie'] = firstCookie
-    }
-
-    const { cookies: _cookies, ...rest } = response
-
-    return {
-      ...rest,
-      headers,
-    }
   }
 
   return {

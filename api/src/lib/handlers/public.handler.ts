@@ -6,7 +6,10 @@ import { randomUUID } from 'crypto'
 
 import type { ErrorService } from '../errors/error.service'
 import { runWithRequestContext } from '../request-context'
-import { addCorsHeaders, handlePreflightRequest } from '../utils/cors'
+import {
+  addCorsHeaders,
+  handlePreflightRequest,
+} from '../utils/cors'
 
 export class PublicHandlerFactory {
   constructor(private readonly errorService: ErrorService) {}
@@ -25,7 +28,7 @@ export class PublicHandlerFactory {
         randomUUID()
 
       return runWithRequestContext(
-        Object.freeze({ requestId }),
+        { requestId },
         async () => {
           try {
             const preflightResponse = handlePreflightRequest(event)
@@ -39,7 +42,6 @@ export class PublicHandlerFactory {
             const errorResponse = this.errorService.handle(error, {
               requestId,
             })
-
             return addCorsHeaders(event, errorResponse)
           }
         }

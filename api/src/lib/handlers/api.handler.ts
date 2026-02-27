@@ -16,7 +16,10 @@ import {
   runWithRequestContext,
   updateRequestContext,
 } from '../request-context'
-import { addCorsHeaders, handlePreflightRequest } from '../utils/cors'
+import {
+  addCorsHeaders,
+  handlePreflightRequest,
+} from '../utils/cors'
 
 export class ApiHandlerFactory {
   constructor(
@@ -39,7 +42,7 @@ export class ApiHandlerFactory {
         randomUUID()
 
       return runWithRequestContext(
-        Object.freeze({ requestId }),
+        { requestId },
         async () => {
           try {
             const preflightResponse = handlePreflightRequest(event)
