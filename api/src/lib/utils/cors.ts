@@ -26,19 +26,35 @@ export function addCorsHeaders(
 ): APIGatewayProxyStructuredResultV2 {
   const origin = event.headers.origin || event.headers.Origin
 
-  if (!isAllowedOrigin(origin)) {
+  if (!origin || !isAllowedOrigin(origin)) {
     return response
+  }
+
+  const headers: Record<string, string | number | boolean> = {
+    ...(response.headers ?? {}),
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    Vary: 'Origin',
+  }
+
+  if (process.env.IS_OFFLINE && response.cookies?.length) {
+    const firstCookie = response.cookies[0]
+
+    if (typeof firstCookie === 'string') {
+      headers['Set-Cookie'] = firstCookie
+    }
+
+    const { cookies: _cookies, ...rest } = response
+
+    return {
+      ...rest,
+      headers,
+    }
   }
 
   return {
     ...response,
-    headers: {
-      ...(response.headers || {}),
-      'Access-Control-Allow-Origin': origin!,
-      'Access-Control-Allow-Credentials': 'true',
-      'Vary': 'Origin',
-    },
-    cookies: response.cookies,
+    headers,
   }
 }
 
@@ -51,14 +67,13 @@ export function handlePreflightRequest(
 
   const origin = event.headers.origin || event.headers.Origin
 
-  if (!isAllowedOrigin(origin) || !origin) {
+  if (!origin || !isAllowedOrigin(origin)) {
     return {
       statusCode: 403,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: 'Forbidden' }),
-      cookies: undefined,
     }
   }
 
@@ -69,9 +84,8 @@ export function handlePreflightRequest(
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
-      'Vary': 'Origin',
+      Vary: 'Origin',
     },
     body: '',
-    cookies: undefined,
   }
 }
