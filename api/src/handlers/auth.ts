@@ -21,7 +21,6 @@ import {
 import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
 import {
   clearOAuthCookies,
-  getSameSiteValue,
   parseCookies,
 } from '../lib/auth/utils/cookie.utils'
 import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
@@ -344,9 +343,8 @@ const handleLogin = (
     }),
   }
 
-  const sameSite = getSameSiteValue()
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
   response.cookies = [verifierCookie, stateCookie]
 
@@ -471,7 +469,32 @@ const handleCallback = async (
   }
 }
 
-const handleLogout = (
+function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
+  const cookies: string[] = [sessionService.buildClearSessionCookie()]
+
+  const response: APIGatewayProxyStructuredResultV2 = {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      success: true,
+    }),
+    cookies,
+  }
+
+  clearOAuthCookies(response)
+
+  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+  if (!response.cookies) {
+    response.cookies = []
+  }
+  response.cookies.push(clearActivationCookieValue)
+
+  return response
+}
+
+const handleLogout = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
@@ -482,30 +505,61 @@ const handleLogout = (
     ...context,
   })
 
-  const cookies: string[] = [sessionService.buildClearSessionCookie()]
+  try {
+    const authenticatedEvent = await authService.authenticate(event)
+    const actor = authenticatedEvent.authContext.actor
 
-  const response: APIGatewayProxyStructuredResultV2 = {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      success: true,
-      message: 'Logged out successfully',
-    }),
-    cookies,
+    if (actor.type === ActorType.Internal && actor.userId && actor.organizationId) {
+      await userRepository.incrementSessionVersion(actor.userId, actor.organizationId)
+      
+      logger.info({
+        source: 'auth',
+        event: 'LOGOUT_SESSION_INVALIDATED',
+        actorType: 'INTERNAL',
+        actorId: actor.userId,
+        organizationId: actor.organizationId,
+        ...context,
+      })
+    } else if (actor.type === ActorType.Reviewer && actor.reviewerId) {
+      await reviewerRepository.incrementSessionVersion(actor.reviewerId)
+      
+      logger.info({
+        source: 'auth',
+        event: 'LOGOUT_SESSION_INVALIDATED',
+        actorType: 'REVIEWER',
+        actorId: actor.reviewerId,
+        ...context,
+      })
+    }
+
+    return buildLogoutSuccessResponse()
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return buildLogoutSuccessResponse()
+    }
+
+    logger.error({
+      service: 'AuthService',
+      operation: 'logout',
+      event: 'LOGOUT_INVALIDATION_FAILED',
+      isSecurityEvent: true,
+      error,
+      ...context,
+    })
+
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred',
+        },
+      }),
+    }
   }
-
-  clearOAuthCookies(response)
-
-  const sameSite = getSameSiteValue()
-  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-  if (!response.cookies) {
-    response.cookies = []
-  }
-  response.cookies.push(clearActivationCookieValue)
-
-  return Promise.resolve(response)
 }
 
 function logSessionCheckFailure(
@@ -830,9 +884,8 @@ async function buildOAuthRedirectResponse(
   state: string,
   activationToken: string
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  const sameSite = getSameSiteValue()
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,

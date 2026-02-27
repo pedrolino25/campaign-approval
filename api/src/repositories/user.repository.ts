@@ -35,6 +35,7 @@ export interface IUserRepository {
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<User>>
   archive(id: string, organizationId: string): Promise<void>
+  incrementSessionVersion(id: string, organizationId: string): Promise<void>
   countActiveByRole(
     organizationId: string,
     role: UserRole
@@ -135,6 +136,20 @@ export class UserRepository implements IUserRepository {
       },
       data: {
         archivedAt: new Date(),
+        sessionVersion: {
+          increment: 1,
+        },
+      },
+    })
+  }
+
+  async incrementSessionVersion(id: string, organizationId: string): Promise<void> {
+    await prisma.user.update({
+      where: {
+        id,
+        organizationId,
+      },
+      data: {
         sessionVersion: {
           increment: 1,
         },
