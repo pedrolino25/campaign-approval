@@ -19,67 +19,67 @@ resource "aws_apigatewayv2_api" "main" {
 data "aws_region" "current" {}
 
 resource "aws_apigatewayv2_integration" "organization" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.organization
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.organization
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "client" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.client
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.client
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "review" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.review
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.review
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "attachment" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.attachment
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.attachment
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "comment" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.comment
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.comment
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "notification" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.notification
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.notification
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "documentation" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.documentation
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.documentation
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_integration" "auth" {
-  api_id           = aws_apigatewayv2_api.main.id
-  integration_type = "AWS_PROXY"
-
-  integration_method = "POST"
-  integration_uri    = var.lambda_invoke_arns.auth
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = var.lambda_invoke_arns.auth
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "api_docs" {

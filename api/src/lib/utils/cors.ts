@@ -49,11 +49,6 @@ export function attachCookies(
     }
   }
 
-  // eslint-disable-next-line no-console
-  console.log('ATTACH_COOKIES', {
-    isOffline,
-    cookies,
-  })
   return {
     ...response,
     cookies,

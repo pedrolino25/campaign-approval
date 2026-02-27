@@ -37,10 +37,7 @@ export class PublicHandlerFactory {
             }
 
             const response = await handler(event)
-            const finalResponse = addCorsHeaders(event, response)
-            // eslint-disable-next-line no-console
-            console.log('FINAL_RESPONSE', finalResponse)
-            return finalResponse
+            return addCorsHeaders(event, response)
           } catch (error) {
             const errorResponse = this.errorService.handle(error, {
               requestId,

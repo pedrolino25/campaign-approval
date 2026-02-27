@@ -48,6 +48,29 @@ resource "aws_cloudfront_distribution" "api" {
     }
   }
 
+  ordered_cache_behavior {
+    path_pattern           = "/auth/*"
+    target_origin_id       = "api-gateway-${var.environment}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    allowed_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods  = ["GET", "HEAD"]
+
+    compress = true
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
@@ -55,7 +78,6 @@ resource "aws_cloudfront_distribution" "api" {
     compress               = true
     viewer_protocol_policy = "redirect-to-https"
 
-    # Legacy cache behavior settings (required when using web_acl_id)
     forwarded_values {
       query_string = true
       headers      = ["*"]
