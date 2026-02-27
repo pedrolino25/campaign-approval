@@ -9,8 +9,8 @@ This repository is structured as a full-stack monorepo with clear separation bet
 
 This document provides a high-level architectural overview. For detailed local setup instructions, see:
 
-* Backend setup → `api/README.md`
-* Frontend setup → `client/README.md`
+- **[Backend setup](./api/README.md)**
+- **[Frontend setup](./client/README.md)**
 
 ---
 
@@ -123,7 +123,7 @@ This covers:
 See:
 
 ```
-client/README.md
+- **[Frontend setup](./client/README.md)**
 ```
 
 This covers:

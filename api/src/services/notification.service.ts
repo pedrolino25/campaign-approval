@@ -85,20 +85,112 @@ export class NotificationService {
       actor
     )
 
-    const notifications: Notification[] = []
-    for (const recipient of recipients) {
-      const notification = await this.createNotificationForRecipient({
-        type,
-        payload,
-        recipient,
-        reviewItem,
-        actor,
-        tx,
-      })
-      notifications.push(notification)
+    if (recipients.length === 0) {
+      return []
     }
 
-    return notifications
+    // Pre-validate all recipients BEFORE transaction
+    await this.validateAllRecipients(recipients, reviewItem.organizationId, tx)
+
+    // Build notification data array
+    const notificationDataArray = this.buildNotificationDataArray(
+      recipients,
+      reviewItem,
+      type
+    )
+
+    // Batch create notifications and return all
+    return await this.batchCreateNotifications(notificationDataArray, tx)
+  }
+
+  private buildNotificationDataArray(
+    recipients: Recipient[],
+    reviewItem: ReviewItemSelect,
+    eventType: WorkflowEventType
+  ): Array<{
+    organizationId: string
+    userId?: string
+    reviewerId?: string
+    email?: string
+    type: NotificationType
+    payload: Prisma.InputJsonValue
+    idempotencyKey: string
+  }> {
+    const notificationType = this.mapEventTypeToNotificationType(eventType)
+    const notificationPayload: Prisma.InputJsonValue = {
+      reviewItemId: reviewItem.id,
+      reviewItemTitle: reviewItem.title,
+      eventType,
+    }
+
+    return recipients.map((recipient) => {
+      const recipientId = recipient.userId || recipient.reviewerId || recipient.email || ''
+      const idempotencyKey = this.generateIdempotencyKey(
+        reviewItem.organizationId,
+        eventType,
+        reviewItem.id,
+        recipientId
+      )
+
+      return {
+        organizationId: reviewItem.organizationId,
+        userId: recipient.userId,
+        reviewerId: recipient.reviewerId,
+        email: recipient.email,
+        type: notificationType,
+        payload: notificationPayload,
+        idempotencyKey,
+      }
+    })
+  }
+
+  private async batchCreateNotifications(
+    notificationDataArray: Array<{
+      organizationId: string
+      userId?: string
+      reviewerId?: string
+      email?: string
+      type: NotificationType
+      payload: Prisma.InputJsonValue
+      idempotencyKey: string
+    }>,
+    tx: Prisma.TransactionClient
+  ): Promise<Notification[]> {
+    // Get idempotency keys for batch query
+    const idempotencyKeys = notificationDataArray.map((data) => data.idempotencyKey)
+
+    // Check existing notifications (batch query)
+    const existingNotifications = await tx.notification.findMany({
+      where: {
+        idempotencyKey: {
+          in: idempotencyKeys,
+        },
+      },
+    })
+
+    const existingKeys = new Set(existingNotifications.map((n) => n.idempotencyKey))
+
+    // Filter to only new notifications
+    const newNotificationData = notificationDataArray.filter(
+      (data) => !existingKeys.has(data.idempotencyKey)
+    )
+
+    // Batch create new notifications
+    if (newNotificationData.length > 0) {
+      await tx.notification.createMany({
+        data: newNotificationData,
+        skipDuplicates: true,
+      })
+    }
+
+    // Fetch all notifications (existing + newly created) to return
+    return await tx.notification.findMany({
+      where: {
+        idempotencyKey: {
+          in: idempotencyKeys,
+        },
+      },
+    })
   }
 
   private async resolveRecipients(
@@ -280,6 +372,70 @@ export class NotificationService {
 
     if (count !== 1) {
       throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+    }
+  }
+
+  private async validateAllRecipients(
+    recipients: Recipient[],
+    organizationId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    // Validate recipient invariants first
+    for (const recipient of recipients) {
+      this.validateRecipientInvariant(recipient)
+    }
+
+    // Batch validate users
+    const userIds = recipients
+      .filter((r) => r.userId)
+      .map((r) => r.userId!)
+    
+    if (userIds.length > 0) {
+      const validUsers = await tx.user.findMany({
+        where: {
+          id: { in: userIds },
+          organizationId,
+          archivedAt: null,
+        },
+        select: { id: true },
+      })
+
+      const validUserIds = new Set(validUsers.map((u) => u.id))
+      const invalidUserRecipients = recipients.filter(
+        (r) => r.userId && !validUserIds.has(r.userId)
+      )
+
+      if (invalidUserRecipients.length > 0) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
+    }
+
+    // Batch validate reviewers
+    const reviewerIds = recipients
+      .filter((r) => r.reviewerId)
+      .map((r) => r.reviewerId!)
+
+    if (reviewerIds.length > 0) {
+      const validClientReviewers = await tx.clientReviewer.findMany({
+        where: {
+          reviewerId: { in: reviewerIds },
+          archivedAt: null,
+          client: {
+            organizationId,
+            archivedAt: null,
+          },
+        },
+        select: { reviewerId: true },
+      })
+
+      const validReviewerIds = new Set(validClientReviewers.map((cr) => cr.reviewerId))
+      const invalidReviewerRecipients = recipients.filter(
+        (r) => r.reviewerId && !validReviewerIds.has(r.reviewerId)
+      )
+
+      if (invalidReviewerRecipients.length > 0) {
+        throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
+      }
     }
   }
 
