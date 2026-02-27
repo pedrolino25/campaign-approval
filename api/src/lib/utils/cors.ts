@@ -5,23 +5,53 @@ import type {
 
 const allowedOrigins = [
   'https://worklient.com',
-  'http://localhost:3000',
+  'https://app.local.worklient.test:3000',
 ]
 
 function isAllowedOrigin(origin: string | undefined): boolean {
-  if (!origin) {
-    return false
-  }
+  if (!origin) return false
 
-  if (allowedOrigins.includes(origin)) {
-    return true
-  }
+  if (allowedOrigins.includes(origin)) return true
 
-  if (origin.startsWith('http://localhost:') || origin.endsWith('.vercel.app')) {
-    return true
-  }
+  if (origin.startsWith('https://app.local.worklient.test:')) return true
+
+  if (origin.endsWith('.vercel.app')) return true
 
   return false
+}
+
+export function attachCookies(
+  response: APIGatewayProxyStructuredResultV2,
+  cookies: string[]
+): APIGatewayProxyStructuredResultV2 {
+  if (!cookies || cookies.length === 0) {
+    return response
+  }
+
+  const isOffline = process.env.IS_OFFLINE === 'true'
+
+  if (isOffline) {
+    const headers = {
+      ...(response.headers ?? {}),
+    } as Record<string, unknown>
+
+    const strippedCookies = cookies.map((cookie) => {
+      const [pair] = cookie.split(';')
+      return pair
+    })
+
+    headers['Set-Cookie'] = strippedCookies
+
+    return {
+      ...response,
+      headers: headers as Record<string, string | number | boolean>,
+    }
+  }
+
+  return {
+    ...response,
+    cookies,
+  }
 }
 
 export function addCorsHeaders(
@@ -30,26 +60,20 @@ export function addCorsHeaders(
 ): APIGatewayProxyStructuredResultV2 {
   const origin = event.headers.origin || event.headers.Origin
 
-  if (!isAllowedOrigin(origin)) {
+  if (!origin || !isAllowedOrigin(origin)) {
     return response
   }
 
-  const existingHeaders = response.headers || {}
-  const corsHeaders: Record<string, string> = {
+  const headers: Record<string, string | number | boolean> = {
+    ...(response.headers ?? {}),
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-  }
-
-  if (origin) {
-    corsHeaders['Access-Control-Allow-Origin'] = origin
+    Vary: 'Origin',
   }
 
   return {
     ...response,
-    headers: {
-      ...existingHeaders,
-      ...corsHeaders,
-    },
-    cookies: response.cookies,
+    headers,
   }
 }
 
@@ -62,25 +86,13 @@ export function handlePreflightRequest(
 
   const origin = event.headers.origin || event.headers.Origin
 
-  if (!isAllowedOrigin(origin)) {
+  if (!origin || !isAllowedOrigin(origin)) {
     return {
       statusCode: 403,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: 'Forbidden' }),
-      cookies: undefined,
-    }
-  }
-
-  if (!origin) {
-    return {
-      statusCode: 403,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: 'Forbidden' }),
-      cookies: undefined,
     }
   }
 
@@ -91,8 +103,8 @@ export function handlePreflightRequest(
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+      Vary: 'Origin',
     },
     body: '',
-    cookies: undefined,
   }
 }

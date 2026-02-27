@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import React from "react"
 
+import { performLogout } from "@/lib/auth/logout.utils"
 import { cn } from "@/lib/utils"
 import { useLogoutMutation } from "@/services/auth.service"
 
@@ -16,13 +17,11 @@ const ButtonLogout = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const queryClient = useQueryClient()
 
     const logoutMutation = useLogoutMutation({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: ['session'] })
-        router.push('/login')
+      onSuccess: () => {
+        performLogout(queryClient, router)
       },
-      onError: async () => {
-        await queryClient.invalidateQueries({ queryKey: ['session'] })
-        router.push('/login')
+      onError: () => {
+        performLogout(queryClient, router)
       },
     })
 

@@ -8,7 +8,7 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
-    "dev:offline": "dotenv -e .env.local -- serverless offline --config serverless.local.yml",
+    "dev:offline": "dotenv -e .env.local -- serverless offline --config serverless.yml",
     "dev:https": "node server.cjs",
     "dev": "concurrently -k -n OFFLINE,HTTPS -c blue,green \"npm run dev:offline\" \"npm run dev:https\"",
     "build": "npm run build:lambda",

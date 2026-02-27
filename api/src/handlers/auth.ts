@@ -51,7 +51,7 @@ import {
   SignUpSchema,
   VerifyEmailSchema,
 } from '../lib/schemas'
-import { addCorsHeaders } from '../lib/utils/cors'
+import { addCorsHeaders, attachCookies } from '../lib/utils/cors'
 import { logger } from '../lib/utils/logger'
 import {
   ActorType,
@@ -346,9 +346,7 @@ const handleLogin = (
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
-  response.cookies = [verifierCookie, stateCookie]
-
-  return Promise.resolve(response)
+  return Promise.resolve(attachCookies(response, [verifierCookie, stateCookie]))
 }
 
 function handleCallbackValidationError(
@@ -458,20 +456,18 @@ const handleCallback = async (
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
 
-    const errorResponse = buildErrorResponse(error)
+    let errorResponse = buildErrorResponse(error)
 
     if (activationToken) {
-      clearActivationCookie(errorResponse)
+      errorResponse = clearActivationCookie(errorResponse)
     }
 
-    clearOAuthCookies(errorResponse)
+    errorResponse = clearOAuthCookies(errorResponse)
     return errorResponse
   }
 }
 
 function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
-  const cookies: string[] = [sessionService.buildClearSessionCookie()]
-
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
@@ -480,18 +476,15 @@ function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
     body: JSON.stringify({
       success: true,
     }),
-    cookies,
   }
 
-  clearOAuthCookies(response)
+  let result = attachCookies(response, [sessionService.buildClearSessionCookie()])
+  result = clearOAuthCookies(result)
 
   const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-  if (!response.cookies) {
-    response.cookies = []
-  }
-  response.cookies.push(clearActivationCookieValue)
+  result = attachCookies(result, [clearActivationCookieValue])
 
-  return response
+  return result
 }
 
 const handleLogout = async (
@@ -692,9 +685,8 @@ function buildInternalOnboardingResponse(
         name: result.organization.name,
       },
     }),
-    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  return response
+  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupInternal = async (
@@ -797,9 +789,8 @@ function buildReviewerOnboardingResponse(
         email: updatedReviewer.email,
       },
     }),
-    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  return response
+  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupReviewer = async (
@@ -895,13 +886,10 @@ async function buildOAuthRedirectResponse(
     body: '',
   }
 
-  if (!response.cookies) {
-    response.cookies = []
-  }
-  response.cookies.push(verifierCookie, stateCookie)
-  await setActivationCookie(response, activationToken)
+  let result = attachCookies(response, [verifierCookie, stateCookie])
+  result = await setActivationCookie(result, activationToken)
 
-  return response
+  return result
 }
 
 const handleReviewerActivate = async (
@@ -1218,6 +1206,18 @@ async function processLogin(
     returnJson: true,
   })
 
+  logger.info({
+    source: 'auth',
+    event: 'PROCESS_LOGIN_RESPONSE_AUDIT',
+    ...context,
+    metadata: {
+      hasCookies: !!sessionResponse.cookies,
+      cookiesLength: sessionResponse.cookies?.length ?? 0,
+      cookiesContent: sessionResponse.cookies,
+      statusCode: sessionResponse.statusCode,
+    },
+  })
+
   if (validated.inviteToken) {
     await acceptInvitationAfterSession(
       validated.inviteToken,
@@ -1528,7 +1528,8 @@ const handleAuthRoute = async (
   const handler = routeMap[routeKey]
 
   if (handler) {
-    return await handler(event)
+    const response = await handler(event)
+    return response
   }
 
   const notFoundResponse: APIGatewayProxyStructuredResultV2 = {

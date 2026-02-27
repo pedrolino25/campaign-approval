@@ -1,6 +1,8 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { parse } from 'cookie'
 
+import { attachCookies } from '../../utils/cors'
+
 
 export function parseCookies(cookieHeader: string | undefined): Record<string, string> {
   if (!cookieHeader) return {}
@@ -14,13 +16,9 @@ export function parseCookies(cookieHeader: string | undefined): Record<string, s
   return result
 }
 
-export function clearOAuthCookies(response: APIGatewayProxyStructuredResultV2): void {
+export function clearOAuthCookies(response: APIGatewayProxyStructuredResultV2): APIGatewayProxyStructuredResultV2 {
   const clearVerifierCookie = `oauth_code_verifier=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
   const clearStateCookie = `oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
 
-  if (!response.cookies) {
-    response.cookies = []
-  }
-
-  response.cookies.push(clearVerifierCookie, clearStateCookie)
+  return attachCookies(response, [clearVerifierCookie, clearStateCookie])
 }

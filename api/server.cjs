@@ -20,7 +20,16 @@ https.createServer(options, (req, res) => {
       headers: req.headers,
     },
     (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers)
+      res.statusCode = proxyRes.statusCode
+
+      Object.entries(proxyRes.headers).forEach(([key, value]) => {
+        if (key.toLowerCase() === "set-cookie" && Array.isArray(value)) {
+          value.forEach((cookie) => res.setHeader("Set-Cookie", cookie))
+        } else if (value !== undefined) {
+          res.setHeader(key, value)
+        }
+      })
+
       proxyRes.pipe(res, { end: true })
     }
   )

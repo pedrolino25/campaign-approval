@@ -1,6 +1,8 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { LogOut, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { ButtonLogout } from '@/components/ui/button-logout'
@@ -12,12 +14,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { performLogout } from '@/lib/auth/logout.utils'
 import { useSession } from '@/lib/auth/use-session'
 import { useLogoutMutation } from '@/services/auth.service'
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const { session } = useSession()
-  const logoutMutation = useLogoutMutation()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const logoutMutation = useLogoutMutation({
+    onSuccess: () => {
+      performLogout(queryClient, router)
+    },
+    onError: () => {
+      performLogout(queryClient, router)
+    },
+  })
 
   const handleLogout = () => {
     logoutMutation.mutate()

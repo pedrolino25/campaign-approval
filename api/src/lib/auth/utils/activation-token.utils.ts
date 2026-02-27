@@ -2,6 +2,7 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { jwtVerify, SignJWT } from 'jose'
 
 import { config } from '../../../lib/utils/config'
+import { attachCookies } from '../../../lib/utils/cors'
 
 function getActivationSecret(): Uint8Array {
   const secret = config.ACTIVATION_COOKIE_SECRET
@@ -50,7 +51,7 @@ export async function extractAndVerifyActivationToken(
 export async function setActivationCookie(
   response: APIGatewayProxyStructuredResultV2,
   token: string
-): Promise<void> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const normalizedToken = token.toLowerCase()
   const secret = getActivationSecret()
   const now = Math.floor(Date.now() / 1000)
@@ -58,24 +59,16 @@ export async function setActivationCookie(
   const jwt = await new SignJWT({ activationToken: normalizedToken })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt(now)
-    .setExpirationTime('10m') // 10 minutes
+    .setExpirationTime('10m')
     .sign(secret)
 
   const activationCookie = `reviewer_activation_token=${jwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
-  if (!response.cookies) {
-    response.cookies = []
-  }
-
-  response.cookies.push(activationCookie)
+  return attachCookies(response, [activationCookie])
 }
 
-export function clearActivationCookie(response: APIGatewayProxyStructuredResultV2): void {
+export function clearActivationCookie(response: APIGatewayProxyStructuredResultV2): APIGatewayProxyStructuredResultV2 {
   const clearCookie = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
 
-  if (!response.cookies) {
-    response.cookies = []
-  }
-
-  response.cookies.push(clearCookie)
+  return attachCookies(response, [clearCookie])
 }

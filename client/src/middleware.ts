@@ -1,3 +1,4 @@
+import { decodeJwt } from 'jose'
 import { type NextRequest, NextResponse } from 'next/server'
 
 const publicRoutes = [
@@ -28,13 +29,39 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
-    const sessionCookie = request.cookies.get('worklient_session')
 
     if (isPublicRoute(pathname)) {
       return NextResponse.next()
     }
 
+    const sessionCookie = request.cookies.get('worklient_session')
+
     if (!sessionCookie) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    try {
+      const payload = decodeJwt(sessionCookie.value)
+
+      const exp = payload.exp
+
+      if (typeof exp !== 'number') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+
+      if (exp < now) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+      }
+
+    } catch {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)

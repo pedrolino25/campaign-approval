@@ -18,6 +18,7 @@ provider:
     SQS_QUEUE_URL: ${env:SQS_QUEUE_URL}
     SENDGRID_API_KEY: ${env:SENDGRID_API_KEY}
     SENDGRID_FROM_EMAIL: ${env:SENDGRID_FROM_EMAIL}
+    IS_OFFLINE: "true"
 
 plugins:
   - serverless-offline

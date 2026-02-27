@@ -7,6 +7,7 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { config } from '../../utils/config'
+import { attachCookies } from '../../utils/cors'
 import type { RBACService } from '../rbac.service'
 import type { CanonicalSession, SessionService } from '../session.service'
 import { clearActivationCookie } from './activation-token.utils'
@@ -79,7 +80,7 @@ function buildJsonResponse(
   signedSession: string,
   sessionService: SessionService
 ): APIGatewayProxyStructuredResultV2 {
-  return {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -96,8 +97,8 @@ function buildJsonResponse(
         email: session.email,
       },
     }),
-    cookies: [sessionService.buildSessionCookie(signedSession)],
   }
+  return attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
 }
 
 function buildRedirectResponse(
@@ -113,19 +114,19 @@ function buildRedirectResponse(
       ? '/complete-signup/internal'
       : '/complete-signup/reviewer'
 
-  const response: APIGatewayProxyStructuredResultV2 = {
+  let response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
       Location: `${config.FRONTEND_URL}${redirectPath}`,
     },
     body: '',
-    cookies: [sessionService.buildSessionCookie(signedSession)],
   }
 
-  clearOAuthCookies(response)
+  response = attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
+  response = clearOAuthCookies(response)
 
   if (activationToken) {
-    clearActivationCookie(response)
+    response = clearActivationCookie(response)
   }
 
   return response

@@ -2,6 +2,8 @@ import { handleError, type ParsedError } from '../errors'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
+let isSessionInvalidating = false
+
 if (!API_URL) {
   throw new Error('NEXT_PUBLIC_API_URL is not defined')
 }
@@ -34,7 +36,13 @@ export async function apiFetch<T>(
     const parsedError = await handleError(null, response, {
       onError: (error) => {
         if (error.statusCode === 401 && typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('session-invalidated'))
+          if (!isSessionInvalidating) {
+            isSessionInvalidating = true
+            window.dispatchEvent(new CustomEvent('session-invalidated'))
+            setTimeout(() => {
+              isSessionInvalidating = false
+            }, 100)
+          }
         }
       },
     })
