@@ -22,6 +22,7 @@ export interface IReviewerRepository {
   findByEmail(email: string): Promise<Reviewer | null>
   updateScoped(id: string, organizationId: string, data: UpdateReviewerInput): Promise<Reviewer>
   archiveScoped(id: string, organizationId: string): Promise<void>
+  incrementSessionVersion(id: string): Promise<void>
   hasAccessToOrganization(
     reviewerId: string,
     organizationId: string
@@ -111,6 +112,17 @@ export class ReviewerRepository implements IReviewerRepository {
       where: { id },
       data: {
         archivedAt: new Date(),
+        sessionVersion: {
+          increment: 1,
+        },
+      },
+    })
+  }
+
+  async incrementSessionVersion(id: string): Promise<void> {
+    await prisma.reviewer.update({
+      where: { id },
+      data: {
         sessionVersion: {
           increment: 1,
         },

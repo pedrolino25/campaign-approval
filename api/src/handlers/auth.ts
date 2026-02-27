@@ -471,17 +471,7 @@ const handleCallback = async (
   }
 }
 
-const handleLogout = (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyStructuredResultV2> => {
-  const context = extractSafeContext(event)
-
-  logger.info({
-    source: 'auth',
-    event: 'LOGOUT',
-    ...context,
-  })
-
+function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
   const cookies: string[] = [sessionService.buildClearSessionCookie()]
 
   const response: APIGatewayProxyStructuredResultV2 = {
@@ -491,7 +481,6 @@ const handleLogout = (
     },
     body: JSON.stringify({
       success: true,
-      message: 'Logged out successfully',
     }),
     cookies,
   }
@@ -505,7 +494,75 @@ const handleLogout = (
   }
   response.cookies.push(clearActivationCookieValue)
 
-  return Promise.resolve(response)
+  return response
+}
+
+const handleLogout = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyStructuredResultV2> => {
+  const context = extractSafeContext(event)
+
+  logger.info({
+    source: 'auth',
+    event: 'LOGOUT',
+    ...context,
+  })
+
+  try {
+    const authenticatedEvent = await authService.authenticate(event)
+    const actor = authenticatedEvent.authContext.actor
+
+    if (actor.type === ActorType.Internal && actor.userId && actor.organizationId) {
+      await userRepository.incrementSessionVersion(actor.userId, actor.organizationId)
+      
+      logger.info({
+        source: 'auth',
+        event: 'LOGOUT_SESSION_INVALIDATED',
+        actorType: 'INTERNAL',
+        actorId: actor.userId,
+        organizationId: actor.organizationId,
+        ...context,
+      })
+    } else if (actor.type === ActorType.Reviewer && actor.reviewerId) {
+      await reviewerRepository.incrementSessionVersion(actor.reviewerId)
+      
+      logger.info({
+        source: 'auth',
+        event: 'LOGOUT_SESSION_INVALIDATED',
+        actorType: 'REVIEWER',
+        actorId: actor.reviewerId,
+        ...context,
+      })
+    }
+
+    return buildLogoutSuccessResponse()
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return buildLogoutSuccessResponse()
+    }
+
+    logger.error({
+      service: 'AuthService',
+      operation: 'logout',
+      event: 'LOGOUT_INVALIDATION_FAILED',
+      isSecurityEvent: true,
+      error,
+      ...context,
+    })
+
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred',
+        },
+      }),
+    }
+  }
 }
 
 function logSessionCheckFailure(
