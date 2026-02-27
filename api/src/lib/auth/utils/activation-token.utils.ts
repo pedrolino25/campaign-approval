@@ -1,81 +1,46 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
-import { createHmac, timingSafeEqual } from 'crypto'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
+import { jwtVerify, SignJWT } from 'jose'
 
 import { config } from '../../../lib/utils/config'
-import { appendSetCookie, getSameSiteValue } from './cookie.utils'
+import { getSameSiteValue } from './cookie.utils'
 
-function base64url(input: Buffer): string {
-  return input
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
+function getActivationSecret(): Uint8Array {
+  const secret = config.ACTIVATION_COOKIE_SECRET
+  return new TextEncoder().encode(secret)
 }
 
-function hmacSign(value: string): string {
-  const hmac = createHmac('sha256', config.ACTIVATION_COOKIE_SECRET)
-  hmac.update(value)
-  return base64url(hmac.digest())
-}
-
-function timingSafeEqualStrings(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8')
-  const bBuf = Buffer.from(b, 'utf8')
-  if (aBuf.length !== bBuf.length) {
-    return false
-  }
-  return timingSafeEqual(aBuf, bBuf)
-}
-
-export function verifyActivationCookie(cookieValue: string): string | null {
+export async function verifyActivationCookie(
+  cookieValue: string
+): Promise<string | null> {
   try {
-    let base64 = cookieValue.replace(/-/g, '+').replace(/_/g, '/')
-    const padding = base64.length % 4
-    if (padding) {
-      base64 += '='.repeat(4 - padding)
-    }
+    const secret = getActivationSecret()
+    const { payload } = await jwtVerify(cookieValue, secret, {
+      algorithms: ['HS256'],
+    })
 
-    const decoded = Buffer.from(base64, 'base64')
-    const payload = decoded.toString('utf8')
-
-    const parts = payload.split('.')
-    if (parts.length !== 2) {
+    if (
+      !payload.activationToken ||
+      typeof payload.activationToken !== 'string'
+    ) {
       return null
     }
 
-    const [token, signature] = parts
-
-    if (!token || !signature) {
-      return null
-    }
-
-    const tokenPattern = /^[a-fA-F0-9]{64}$/
-    if (!tokenPattern.test(token)) {
-      return null
-    }
-
-    const expectedSignature = hmacSign(token)
-
-    if (!timingSafeEqualStrings(signature, expectedSignature)) {
-      return null
-    }
-
-    return token.toLowerCase()
+    return payload.activationToken
   } catch {
     return null
   }
 }
 
-export function extractAndVerifyActivationToken(
+export async function extractAndVerifyActivationToken(
   cookieMap: Record<string, string>
-): string | undefined | false {
+): Promise<string | undefined | false> {
   const activationCookieValue = cookieMap['reviewer_activation_token']
 
   if (!activationCookieValue) {
     return undefined
   }
 
-  const verifiedToken = verifyActivationCookie(activationCookieValue)
+  const verifiedToken = await verifyActivationCookie(activationCookieValue)
   if (!verifiedToken) {
     return false
   }
@@ -83,27 +48,37 @@ export function extractAndVerifyActivationToken(
   return verifiedToken
 }
 
-export function setActivationCookie(
-  response: APIGatewayProxyResult,
+export async function setActivationCookie(
+  response: APIGatewayProxyStructuredResultV2,
   token: string
-): void {
+): Promise<void> {
   const normalizedToken = token.toLowerCase()
+  const secret = getActivationSecret()
+  const now = Math.floor(Date.now() / 1000)
 
-  const signature = hmacSign(normalizedToken)
-
-  const payload = `${normalizedToken}.${signature}`
-
-  const encoded = base64url(Buffer.from(payload, 'utf8'))
+  const jwt = await new SignJWT({ activationToken: normalizedToken })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt(now)
+    .setExpirationTime('10m') // 10 minutes
+    .sign(secret)
 
   const sameSite = getSameSiteValue()
-  const activationCookie = `reviewer_activation_token=${encoded}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const activationCookie = `reviewer_activation_token=${jwt}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  appendSetCookie(response, activationCookie)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+
+  response.cookies.push(activationCookie)
 }
 
-export function clearActivationCookie(response: APIGatewayProxyResult): void {
+export function clearActivationCookie(response: APIGatewayProxyStructuredResultV2): void {
   const sameSite = getSameSiteValue()
   const clearCookie = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
 
-  appendSetCookie(response, clearCookie)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+
+  response.cookies.push(clearCookie)
 }

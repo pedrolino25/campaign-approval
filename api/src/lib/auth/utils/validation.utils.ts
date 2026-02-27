@@ -1,4 +1,7 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyStructuredResultV2,
+} from 'aws-lambda'
 
 import {
   clearActivationCookie,
@@ -14,7 +17,7 @@ import {
 
 export interface CallbackParams {
   valid: boolean
-  errorResponse?: APIGatewayProxyResult
+  errorResponse?: APIGatewayProxyStructuredResultV2
   code?: string
   state?: string
   codeVerifier?: string
@@ -22,9 +25,9 @@ export interface CallbackParams {
   activationToken?: string
 }
 
-export function validateCallbackParams(
+export async function validateCallbackParams(
   event: APIGatewayProxyEvent
-): CallbackParams {
+): Promise<CallbackParams> {
   const queryParams = event.queryStringParameters || {}
   const code = queryParams.code
   const state = queryParams.state
@@ -57,11 +60,9 @@ export function validateCallbackParams(
     }
   }
 
-  // Extract and verify activation cookie if present
-  const activationTokenResult = extractAndVerifyActivationToken(cookieMap)
+  const activationTokenResult = await extractAndVerifyActivationToken(cookieMap)
 
   if (activationTokenResult === false) {
-    // Invalid signature or format - clear cookie and return error
     const errorResponse = buildInvalidRequestResponse()
     clearActivationCookie(errorResponse)
     return {
@@ -85,7 +86,7 @@ export function validateActivationToken(
 ): {
   valid: boolean
   normalizedToken?: string
-  errorResponse?: APIGatewayProxyResult
+  errorResponse?: APIGatewayProxyStructuredResultV2
 } {
   if (!token) {
     return {
@@ -94,7 +95,6 @@ export function validateActivationToken(
     }
   }
 
-  // Case-insensitive hex validation
   const tokenPattern = /^[a-fA-F0-9]{64}$/
   if (!tokenPattern.test(token)) {
     return {
@@ -103,7 +103,6 @@ export function validateActivationToken(
     }
   }
 
-  // Normalize to lowercase for DB lookup
   const normalizedToken = token.toLowerCase()
 
   return {
@@ -118,7 +117,7 @@ export function validateReviewerInvitation(
     acceptedAt: Date | null
     expiresAt: Date
   } | null
-): { valid: boolean; errorResponse?: APIGatewayProxyResult } {
+): { valid: boolean; errorResponse?: APIGatewayProxyStructuredResultV2 } {
   if (!invitation) {
     return {
       valid: false,

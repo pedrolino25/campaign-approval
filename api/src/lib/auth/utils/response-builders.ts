@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import { DomainError } from '../../../models/errors'
 import { ValidationError } from '../../errors/error.service'
@@ -6,7 +6,7 @@ import { ValidationError } from '../../errors/error.service'
 export function buildOAuthErrorResponse(
   error: string,
   errorDescription?: string
-): APIGatewayProxyResult {
+): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 400,
     headers: {
@@ -19,7 +19,7 @@ export function buildOAuthErrorResponse(
   }
 }
 
-export function buildMissingParamsResponse(): APIGatewayProxyResult {
+export function buildMissingParamsResponse(): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 400,
     headers: {
@@ -31,7 +31,7 @@ export function buildMissingParamsResponse(): APIGatewayProxyResult {
   }
 }
 
-export function buildMissingStateResponse(): APIGatewayProxyResult {
+export function buildMissingStateResponse(): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 400,
     headers: {
@@ -43,7 +43,7 @@ export function buildMissingStateResponse(): APIGatewayProxyResult {
   }
 }
 
-export function buildErrorResponse(error: unknown): APIGatewayProxyResult {
+export function buildErrorResponse(error: unknown): APIGatewayProxyStructuredResultV2 {
   // Handle ValidationError with details (from Zod validation)
   if (error instanceof ValidationError && error.details.length > 0) {
     return {
@@ -98,7 +98,7 @@ export function buildErrorResponse(error: unknown): APIGatewayProxyResult {
   }
 }
 
-export function buildInvalidRequestResponse(): APIGatewayProxyResult {
+export function buildInvalidRequestResponse(): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 400,
     headers: {

@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import {
   DomainError,
@@ -68,7 +68,7 @@ export class ErrorService {
       field: string
       message: string
     }>
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     const response: ErrorResponse = {
       error: {
         code,
@@ -89,7 +89,7 @@ export class ErrorService {
   private handleDomainError(
     error: DomainError,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     const logData: Record<string, unknown> = {
       errorCode: error.code,
       errorMessage: error.message,
@@ -117,7 +117,7 @@ export class ErrorService {
   private handleGenericError(
     error: Error,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     logger.error(
       {
         errorName: error.name,
@@ -139,7 +139,7 @@ export class ErrorService {
   private handleUnknownError(
     error: unknown,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     logger.error(
       {
         error: String(error),
@@ -157,7 +157,7 @@ export class ErrorService {
     )
   }
 
-  handle(error: unknown, context?: ErrorContext): APIGatewayProxyResult {
+  handle(error: unknown, context?: ErrorContext): APIGatewayProxyStructuredResultV2 {
     if (error instanceof DomainError) {
       return this.handleDomainError(error, context)
     }

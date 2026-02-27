@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import type { InvitationRepository } from '../../../repositories'
 import type { InvitationService } from '../../../services/invitation.service'
@@ -42,7 +42,7 @@ function logActivationSuccess(context: ActivationContext): void {
   }
 }
 
-function buildErrorResponse(): APIGatewayProxyResult {
+function buildErrorResponse(): APIGatewayProxyStructuredResultV2 {
   const errorResponse = buildInvalidRequestResponse()
   clearActivationCookie(errorResponse)
   return errorResponse
@@ -88,7 +88,7 @@ export async function processReviewerActivation(
   context: ActivationContext,
   invitationRepository: InvitationRepository,
   invitationService: InvitationService
-): Promise<{ success: boolean; errorResponse?: APIGatewayProxyResult }> {
+): Promise<{ success: boolean; errorResponse?: APIGatewayProxyStructuredResultV2 }> {
   try {
     const invitation = await invitationRepository.findByToken(activationToken)
     const validation = validateInvitation(invitation, email)

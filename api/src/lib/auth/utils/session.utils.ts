@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import { ActorType, InternalError } from '../../../models'
 import type {
@@ -101,7 +101,7 @@ export async function buildSessionResponse(
   activationToken: string | undefined,
   sessionService: SessionService,
   _context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const onboardingCompleted = calculateOnboardingStatus(
     actor,
     user,
@@ -122,15 +122,17 @@ export async function buildSessionResponse(
   const signedSession = await sessionService.signSession(canonicalSession)
   const redirectPath = getRedirectPath(onboardingCompleted, actor.type)
 
-  const response: APIGatewayProxyResult = {
+  const cookies: string[] = [sessionService.buildSessionCookie(signedSession)]
+
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
       Location: `${config.FRONTEND_URL}${redirectPath}`,
     },
     body: '',
+    cookies,
   }
 
-  sessionService.setSessionCookie(response, signedSession)
   clearOAuthCookies(response)
 
   if (activationToken) {
@@ -140,10 +142,6 @@ export async function buildSessionResponse(
   return response
 }
 
-/**
- * Builds a JSON response with session data for auth flows.
- * Returns session information in JSON format instead of redirect.
- */
 export async function buildSessionJsonResponse(
   userId: string,
   actor: Awaited<ReturnType<RBACService['resolve']>>,
@@ -153,7 +151,7 @@ export async function buildSessionJsonResponse(
   email: string,
   sessionService: SessionService,
   _context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const onboardingCompleted = calculateOnboardingStatus(
     actor,
     user,
@@ -173,7 +171,7 @@ export async function buildSessionJsonResponse(
 
   const signedSession = await sessionService.signSession(canonicalSession)
 
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -190,9 +188,8 @@ export async function buildSessionJsonResponse(
         email: canonicalSession.email,
       },
     }),
+    cookies: [sessionService.buildSessionCookie(signedSession)],
   }
-
-  sessionService.setSessionCookie(response, signedSession)
 
   return response
 }

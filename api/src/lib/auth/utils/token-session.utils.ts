@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import { logger } from '../../../lib/utils/logger'
 import { ActorType } from '../../../models'
@@ -34,7 +34,7 @@ export interface CreateSessionFromTokensParams {
 
 export async function createSessionFromTokens(
   params: CreateSessionFromTokensParams
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const {
     idToken,
     inviteToken,

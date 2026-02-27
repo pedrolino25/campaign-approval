@@ -1,6 +1,6 @@
 import type {
   APIGatewayProxyEvent,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 import { type z, ZodError } from 'zod'
 
@@ -21,7 +21,6 @@ import {
 } from '../lib/auth/utils/activation-token.utils'
 import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
 import {
-  appendSetCookie,
   clearOAuthCookies,
   getSameSiteValue,
   parseCookies,
@@ -221,7 +220,7 @@ async function processOAuthCallback(
   userId: string
   email: string
   reviewerActivationCompleted: boolean
-  errorResponse?: APIGatewayProxyResult
+  errorResponse?: APIGatewayProxyStructuredResultV2
 }> {
   const tokenResponse = await oauthService.exchangeCodeForTokens(
     code,
@@ -270,7 +269,7 @@ async function buildSessionForUser(
   reviewerActivationCompleted: boolean,
   activationToken: string | undefined,
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const { actor, user, reviewer, organization } =
     await resolveActorFromTokens(
       userId,
@@ -303,7 +302,7 @@ async function buildSessionForUser(
 
 const handleLogin = (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -319,7 +318,7 @@ const handleLogin = (
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
 
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -333,17 +332,16 @@ const handleLogin = (
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  appendSetCookie(response, verifierCookie)
-  appendSetCookie(response, stateCookie)
+  response.cookies = [verifierCookie, stateCookie]
 
   return Promise.resolve(response)
 }
 
 const handleCallback = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
-  const validation = validateCallbackParams(event)
+  const validation = await validateCallbackParams(event)
 
   if (!validation.valid) {
     try {
@@ -398,7 +396,7 @@ const handleCallback = async (
 
 const handleLogout = (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -411,7 +409,9 @@ const handleLogout = (
     // Never throw if logging fails
   }
 
-  const response: APIGatewayProxyResult = {
+  const cookies: string[] = [sessionService.buildClearSessionCookie()]
+
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -420,14 +420,17 @@ const handleLogout = (
       success: true,
       message: 'Logged out successfully',
     }),
+    cookies,
   }
 
-  sessionService.clearSessionCookie(response)
   clearOAuthCookies(response)
 
   const sameSite = getSameSiteValue()
   const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-  appendSetCookie(response, clearActivationCookieValue)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+  response.cookies.push(clearActivationCookieValue)
 
   return Promise.resolve(response)
 }
@@ -452,7 +455,7 @@ function logSessionCheckFailure(
   }
 }
 
-function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
+function createUnauthorizedResponse(message: string): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 401,
     headers: {
@@ -467,7 +470,7 @@ function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
   }
 }
 
-function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult {
+function createSessionResponse(session: CanonicalSession): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 200,
     headers: {
@@ -488,7 +491,7 @@ function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult
 
 const handleMe = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const cookies = event.headers.cookie || event.headers.Cookie || ''
   const sessionToken = sessionService.getSessionFromCookie(cookies)
   const context = extractSafeContext(event)
@@ -549,8 +552,8 @@ function buildInternalSessionAfterOnboarding(
 function buildInternalOnboardingResponse(
   result: Awaited<ReturnType<OnboardingService['completeInternalOnboarding']>>,
   sessionToken: string
-): APIGatewayProxyResult {
-  const response: APIGatewayProxyResult = {
+): APIGatewayProxyStructuredResultV2 {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -566,14 +569,14 @@ function buildInternalOnboardingResponse(
         name: result.organization.name,
       },
     }),
+    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  sessionService.setSessionCookie(response, sessionToken)
   return response
 }
 
 const handleCompleteSignupInternal = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const queryParams: Record<string, string> = {}
   if (event.queryStringParameters) {
     for (const [key, value] of Object.entries(event.queryStringParameters)) {
@@ -668,11 +671,11 @@ function buildReviewerSessionAfterOnboarding(
 function buildReviewerOnboardingResponse(
   updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
   sessionToken: string
-): APIGatewayProxyResult {
+): APIGatewayProxyStructuredResultV2 {
   if (!updatedReviewer) {
     throw new InternalError('Reviewer not found when building response')
   }
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -684,14 +687,14 @@ function buildReviewerOnboardingResponse(
         email: updatedReviewer.email,
       },
     }),
+    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  sessionService.setSessionCookie(response, sessionToken)
   return response
 }
 
 const handleCompleteSignupReviewer = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const queryParams: Record<string, string> = {}
   if (event.queryStringParameters) {
     for (const [key, value] of Object.entries(event.queryStringParameters)) {
@@ -764,17 +767,17 @@ const handleCompleteSignupReviewer = async (
   return buildReviewerOnboardingResponse(updatedReviewer, newSessionToken)
 }
 
-function buildOAuthRedirectResponse(
+async function buildOAuthRedirectResponse(
   authorizationUrl: string,
   codeVerifier: string,
   state: string,
   activationToken: string
-): APIGatewayProxyResult {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const sameSite = getSameSiteValue()
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
       Location: authorizationUrl,
@@ -782,16 +785,18 @@ function buildOAuthRedirectResponse(
     body: '',
   }
 
-  appendSetCookie(response, verifierCookie)
-  appendSetCookie(response, stateCookie)
-  setActivationCookie(response, activationToken)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+  response.cookies.push(verifierCookie, stateCookie)
+  await setActivationCookie(response, activationToken)
 
   return response
 }
 
 const handleReviewerActivate = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -854,7 +859,7 @@ const handleReviewerActivate = async (
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
 
-  return buildOAuthRedirectResponse(
+  return await buildOAuthRedirectResponse(
     authorizationUrl,
     codeVerifier,
     state,
@@ -864,7 +869,7 @@ const handleReviewerActivate = async (
 
 const handleSignUp = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -951,7 +956,7 @@ async function processEmailVerification(
     inviteToken?: string
   },
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const tokens = await cognitoService.confirmSignUp(
     validated.email,
     validated.code,
@@ -981,15 +986,14 @@ async function processEmailVerification(
     returnJson: true,
   })
 
-  const hasCookie = sessionResponse.multiValueHeaders?.['Set-Cookie']?.some(
-    (cookie) => typeof cookie === 'string' && cookie.startsWith('worklient_session=')
-  )
+  const hasCookie = sessionResponse.cookies?.some((cookie) =>
+    cookie.includes('worklient_session=')
+  ) ?? false
 
   logEmailVerificationEvent('SESSION_CREATED', context, {
     email,
     userId,
-    hasCookie: !!hasCookie,
-    cookieCount: sessionResponse.multiValueHeaders?.['Set-Cookie']?.length || 0,
+    hasCookie,
   })
 
   if (validated.inviteToken) {
@@ -1008,7 +1012,7 @@ async function processEmailVerification(
 
 const handleVerifyEmail = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1022,7 +1026,7 @@ const handleVerifyEmail = async (
 
 const handleResendVerification = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1100,7 +1104,7 @@ const handleResendVerification = async (
 async function processLogin(
   validated: { email: string; password: string; inviteToken?: string },
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const tokens = await cognitoService.login(validated.email, validated.password)
 
   const authContext = await tokenVerifier.verify(tokens.idToken)
@@ -1134,7 +1138,7 @@ async function processLogin(
 
 const handleEmailPasswordLogin = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1151,6 +1155,8 @@ const handleEmailPasswordLogin = async (
     const validated = parseAndValidateBody(event, LoginSchema)
     return await processLogin(validated, context)
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
     logAuthError('LOGIN_FAILURE', context, error)
     return buildErrorResponse(error)
   }
@@ -1158,7 +1164,7 @@ const handleEmailPasswordLogin = async (
 
 const handleForgotPassword = async (
   _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
     const body = _event.body ? JSON.parse(_event.body) : {}
     const validated = ForgotPasswordSchema.parse(body)
@@ -1191,7 +1197,7 @@ const handleForgotPassword = async (
 
 const handleResetPassword = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1330,7 +1336,7 @@ async function processPasswordChange(
   email: string,
   refreshToken: string | undefined,
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   await changeUserPassword(
     email,
     validated.oldPassword,
@@ -1361,7 +1367,7 @@ async function processPasswordChange(
 
 const handleChangePassword = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1418,13 +1424,13 @@ function getMethod(event: APIGatewayProxyEvent): string {
 
 const handleAuthRoute = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const path = getPath(event)
   const method = getMethod(event)
 
   const routeMap: Record<
     string,
-    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
   > = {
     'GET:/auth/callback': callbackHandler,
     'POST:/auth/logout': logoutHandler,
@@ -1448,7 +1454,7 @@ const handleAuthRoute = async (
     return await handler(event)
   }
 
-  const notFoundResponse: APIGatewayProxyResult = {
+  const notFoundResponse: APIGatewayProxyStructuredResultV2 = {
     statusCode: 404,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
