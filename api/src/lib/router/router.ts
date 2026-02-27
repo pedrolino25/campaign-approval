@@ -9,6 +9,7 @@ import {
   type RouteDefinition,
 } from '../../models'
 import { ErrorService } from '../errors/error.service'
+import { getMethod, getPath } from '../utils/cors'
 import { PathMatcherFactory } from './utils/path-matcher'
 import { PathNormalizer } from './utils/path-normalizer'
 
@@ -50,8 +51,8 @@ export class Router {
       event.requestContext.requestId || event.headers['x-request-id']
 
     try {
-      const normalizedPath = this.pathNormalizer.normalize(event.path)
-      const method = event.httpMethod
+      const normalizedPath = this.pathNormalizer.normalize(getPath(event))
+      const method = getMethod(event)
 
       const matchedRoute = this.findMatchingRoute(
         method,

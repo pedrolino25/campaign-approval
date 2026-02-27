@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
 import {
   type AuthTokenExtractor,
@@ -6,7 +6,7 @@ import {
 } from '../../../models'
 
 export class BearerTokenExtractor implements AuthTokenExtractor {
-  extract(event: APIGatewayProxyEvent): string {
+  extract(event: APIGatewayProxyEventV2): string {
     const authHeader = event.headers.authorization || event.headers.Authorization
 
     if (!authHeader) {

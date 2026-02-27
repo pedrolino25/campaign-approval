@@ -1,5 +1,5 @@
 import type {
-  APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 
@@ -56,7 +56,7 @@ export function attachCookies(
 }
 
 export function addCorsHeaders(
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2,
   response: APIGatewayProxyStructuredResultV2
 ): APIGatewayProxyStructuredResultV2 {
   const origin = event.headers.origin || event.headers.Origin
@@ -79,9 +79,9 @@ export function addCorsHeaders(
 }
 
 export function handlePreflightRequest(
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): APIGatewayProxyStructuredResultV2 | null {
-  if (event.httpMethod !== 'OPTIONS') {
+  if (getMethod(event) !== 'OPTIONS') {
     return null
   }
 
@@ -108,4 +108,17 @@ export function handlePreflightRequest(
     },
     body: '',
   }
+}
+
+export function getPath(event: APIGatewayProxyEventV2): string {
+  return event.requestContext.http.path
+}
+
+export function getMethod(event: APIGatewayProxyEventV2): string {
+  return event.requestContext.http.method
+}
+
+export function getCookies(event: APIGatewayProxyEventV2): string[] {
+  const cookies = event.headers.cookie || event.headers.Cookie || ''
+  return cookies.split(';')
 }

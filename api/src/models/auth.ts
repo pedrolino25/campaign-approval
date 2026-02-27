@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
 import type { CanonicalSession } from '../lib/auth/session.service'
 import type { ActorContext } from './rbac'
@@ -10,12 +10,12 @@ export interface AuthContext {
   organizationId?: string
 }
 
-export interface AuthenticatedEvent extends APIGatewayProxyEvent {
+export interface AuthenticatedEvent extends APIGatewayProxyEventV2 {
   authContext: AuthContext
 }
 
 export interface SessionExtractor {
-  extract(event: APIGatewayProxyEvent): Promise<CanonicalSession>
+  extract(event: APIGatewayProxyEventV2): Promise<CanonicalSession>
 }
 
 export interface TokenVerifier {
@@ -23,5 +23,5 @@ export interface TokenVerifier {
 }
 
 export interface AuthTokenExtractor {
-  extract(event: APIGatewayProxyEvent): string
+  extract(event: APIGatewayProxyEventV2): string
 }

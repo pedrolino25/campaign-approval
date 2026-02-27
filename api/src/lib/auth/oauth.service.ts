@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 import { randomBytes } from 'crypto'
 
 import { InternalError, UnauthorizedError, ValidationError } from '../../models'
@@ -39,7 +39,7 @@ export class OAuthService {
     this.region = region
   }
 
-  generateAuthorizationUrl(_event: APIGatewayProxyEvent): AuthorizationResponse {
+  generateAuthorizationUrl(_event: APIGatewayProxyEventV2): AuthorizationResponse {
     const codeVerifier = generateCodeVerifier()
     const codeChallenge = generateCodeChallenge(codeVerifier)
     const state = this.generateState()

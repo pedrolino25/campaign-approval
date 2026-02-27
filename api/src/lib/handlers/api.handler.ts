@@ -1,5 +1,5 @@
 import type {
-  APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 import { randomUUID } from 'crypto'
@@ -31,10 +31,10 @@ export class ApiHandlerFactory {
   create(
     handler: (event: AuthenticatedEvent) => Promise<APIGatewayProxyStructuredResultV2>
   ): (
-    event: APIGatewayProxyEvent
+    event: APIGatewayProxyEventV2
   ) => Promise<APIGatewayProxyStructuredResultV2> {
     return async (
-      event: APIGatewayProxyEvent
+      event: APIGatewayProxyEventV2
     ): Promise<APIGatewayProxyStructuredResultV2> => {
       const requestId =
         event.requestContext?.requestId ||

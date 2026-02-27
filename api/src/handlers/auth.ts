@@ -1,5 +1,5 @@
 import type {
-  APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 import { type z, ZodError } from 'zod'
@@ -51,7 +51,7 @@ import {
   SignUpSchema,
   VerifyEmailSchema,
 } from '../lib/schemas'
-import { addCorsHeaders, attachCookies } from '../lib/utils/cors'
+import { addCorsHeaders, attachCookies, getCookies, getMethod, getPath } from '../lib/utils/cors'
 import { logger } from '../lib/utils/logger'
 import {
   ActorType,
@@ -89,7 +89,7 @@ const authService = new AuthService(
 )
 
 function extractSafeContext(
-  event: APIGatewayProxyEvent | AuthenticatedEvent
+  event: APIGatewayProxyEventV2 | AuthenticatedEvent
 ): {
   ip?: string
   userAgent?: string
@@ -109,7 +109,7 @@ function extractSafeContext(
 }
 
 function parseAndValidateBody<T>(
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2,
   schema: z.ZodSchema<T>
 ): T {
   let body: unknown
@@ -320,7 +320,7 @@ async function buildSessionForUser(
 }
 
 const handleLogin = (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -351,7 +351,7 @@ const handleLogin = (
 
 function handleCallbackValidationError(
   error: unknown,
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2,
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): APIGatewayProxyStructuredResultV2 | null {
   if (!(error instanceof ValidationError)) {
@@ -417,7 +417,7 @@ function handleCallbackValidationError(
 }
 
 const handleCallback = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -488,7 +488,7 @@ function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
 }
 
 const handleLogout = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -608,14 +608,14 @@ function createSessionResponse(session: CanonicalSession): APIGatewayProxyStruct
 const handleMe = async (
   event: AuthenticatedEvent
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
+  const cookies = getCookies(event)
   const sessionToken = sessionService.getSessionFromCookie(cookies)
   const context = extractSafeContext(event)
 
   if (!sessionToken) {
     logSessionCheckFailure(context, 'SESSION_TOKEN_MISSING', {
       hasCookies: !!cookies,
-      cookieCount: cookies.split(';').length,
+      cookieCount: cookies.length,
     })
     return createUnauthorizedResponse('SESSION_TOKEN_MISSING')
   }
@@ -893,7 +893,7 @@ async function buildOAuthRedirectResponse(
 }
 
 const handleReviewerActivate = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -964,7 +964,7 @@ const handleReviewerActivate = async (
 }
 
 const handleSignUp = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -1097,7 +1097,7 @@ async function processEmailVerification(
 }
 
 const handleVerifyEmail = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -1111,7 +1111,7 @@ const handleVerifyEmail = async (
 }
 
 const handleResendVerification = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -1231,7 +1231,7 @@ async function processLogin(
 }
 
 const handleEmailPasswordLogin = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -1251,7 +1251,7 @@ const handleEmailPasswordLogin = async (
 }
 
 const handleForgotPassword = async (
-  _event: APIGatewayProxyEvent
+  _event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
     const body = _event.body ? JSON.parse(_event.body) : {}
@@ -1284,7 +1284,7 @@ const handleForgotPassword = async (
 }
 
 const handleResetPassword = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
@@ -1346,10 +1346,11 @@ const handleResetPassword = async (
 }
 
 function extractRefreshTokenFromCookies(
-  cookieString: string
+  cookies: string[]
 ): string | undefined {
-  const cookies = parseCookies(cookieString)
-  return cookies['worklient_refresh_token'] || undefined
+  const cookieString = cookies.join('; ')
+  const cookieMap = parseCookies(cookieString)
+  return cookieMap['worklient_refresh_token'] || undefined
 }
 
 async function acceptInvitationAfterSession(
@@ -1451,8 +1452,7 @@ const handleChangePassword = async (
     const validated = parseAndValidateBody(event, ChangePasswordSchema)
     const email = event.authContext.email
 
-    // Try to get refresh token from cookies if available
-    const cookies = event.headers.cookie || event.headers.Cookie || ''
+    const cookies = getCookies(event)
     const refreshToken = extractRefreshTokenFromCookies(cookies)
 
     return await processPasswordChange(validated, email, refreshToken, context)
@@ -1477,37 +1477,15 @@ export const forgotPasswordHandler = createPublicHandler(handleForgotPassword)
 export const resetPasswordHandler = createPublicHandler(handleResetPassword)
 export const changePasswordHandler = createHandler(handleChangePassword)
 
-function getPath(event: APIGatewayProxyEvent): string {
-  if (event.path) {
-    return event.path
-  }
-  const requestContext = event.requestContext as {
-    http?: { path?: string }
-    path?: string
-  }
-  return requestContext.http?.path || requestContext.path || ''
-}
-
-function getMethod(event: APIGatewayProxyEvent): string {
-  if (event.httpMethod) {
-    return event.httpMethod
-  }
-  const requestContext = event.requestContext as {
-    http?: { method?: string }
-    httpMethod?: string
-  }
-  return requestContext.http?.method || requestContext.httpMethod || ''
-}
-
 const handleAuthRoute = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const path = getPath(event)
   const method = getMethod(event)
 
   const routeMap: Record<
     string,
-    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
+    (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
   > = {
     'GET:/auth/callback': callbackHandler,
     'POST:/auth/logout': logoutHandler,
