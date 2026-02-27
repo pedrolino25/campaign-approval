@@ -48,7 +48,7 @@ function logInvitationSuccess(
   }
 }
 
-function validateInvitationForEmbeddedAuth(
+function validateInvitationForAuth(
   invitation: Invitation,
   email: string,
   context: InvitationContext
@@ -90,11 +90,11 @@ function validateInvitationForEmbeddedAuth(
 
 /**
  * Accepts an invitation for either INTERNAL_USER or REVIEWER type.
- * This is used for embedded auth flows (signup/login with inviteToken).
+ * This is used for auth flows (signup/login with inviteToken).
  *
  * DO NOT use this for reviewer activation flow - use processReviewerActivation instead.
  */
-export async function acceptInvitationForEmbeddedAuth(
+export async function acceptInvitationForAuth(
   inviteToken: string,
   cognitoUserId: string,
   email: string,
@@ -105,7 +105,7 @@ export async function acceptInvitationForEmbeddedAuth(
   try {
     const invitation = await invitationRepository.findByToken(inviteToken)
 
-    const validation = validateInvitationForEmbeddedAuth(
+    const validation = validateInvitationForAuth(
       invitation,
       email,
       context

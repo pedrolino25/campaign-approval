@@ -179,13 +179,13 @@ Internal users sign up through a multi-step process: signup → email verificati
 ## 2. Internal User Login Flow
 
 ### Overview
-Internal users can login via embedded login (email/password) or OAuth flow.
+Internal users can login via login (email/password) or OAuth flow.
 
-### Embedded Login Flow
+### Login Flow
 
 #### POST /auth/login
-**Handler:** `handleEmbeddedLogin` (api/src/handlers/auth.ts:1135)  
-**Service:** `processEmbeddedLogin` (api/src/handlers/auth.ts:1100)
+**Handler:** `handleEmailPasswordLogin` (api/src/handlers/auth.ts:1135)  
+**Service:** `processLogin` (api/src/handlers/auth.ts:1100)
 
 **Request Body:**
 ```json

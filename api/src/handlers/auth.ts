@@ -26,7 +26,7 @@ import {
   getSameSiteValue,
   parseCookies,
 } from '../lib/auth/utils/cookie.utils'
-import { acceptInvitationForEmbeddedAuth } from '../lib/auth/utils/invitation-acceptance.utils'
+import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import { buildErrorResponse } from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
@@ -1097,7 +1097,7 @@ const handleResendVerification = async (
   }
 }
 
-async function processEmbeddedLogin(
+async function processLogin(
   validated: { email: string; password: string; inviteToken?: string },
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): Promise<APIGatewayProxyResult> {
@@ -1132,7 +1132,7 @@ async function processEmbeddedLogin(
   return sessionResponse
 }
 
-const handleEmbeddedLogin = async (
+const handleEmailPasswordLogin = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   const context = extractSafeContext(event)
@@ -1149,7 +1149,7 @@ const handleEmbeddedLogin = async (
 
   try {
     const validated = parseAndValidateBody(event, LoginSchema)
-    return await processEmbeddedLogin(validated, context)
+    return await processLogin(validated, context)
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
     return buildErrorResponse(error)
@@ -1271,7 +1271,7 @@ async function acceptInvitationAfterSession(
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): Promise<void> {
   try {
-    await acceptInvitationForEmbeddedAuth(
+    await acceptInvitationForAuth(
       inviteToken,
       userId,
       email,
@@ -1389,7 +1389,7 @@ export const completeSignupReviewerHandler = createHandler(handleCompleteSignupR
 export const signUpHandler = createPublicHandler(handleSignUp)
 export const verifyEmailHandler = createPublicHandler(handleVerifyEmail)
 export const resendVerificationHandler = createPublicHandler(handleResendVerification)
-export const embeddedLoginHandler = createPublicHandler(handleEmbeddedLogin)
+export const emailPasswordLoginHandler = createPublicHandler(handleEmailPasswordLogin)
 export const forgotPasswordHandler = createPublicHandler(handleForgotPassword)
 export const resetPasswordHandler = createPublicHandler(handleResetPassword)
 export const changePasswordHandler = createHandler(handleChangePassword)
@@ -1435,7 +1435,7 @@ const handleAuthRoute = async (
     'POST:/auth/signup': signUpHandler,
     'POST:/auth/verify-email': verifyEmailHandler,
     'POST:/auth/resend-verification': resendVerificationHandler,
-    'POST:/auth/login': embeddedLoginHandler,
+    'POST:/auth/login': emailPasswordLoginHandler,
     'POST:/auth/forgot-password': forgotPasswordHandler,
     'POST:/auth/reset-password': resetPasswordHandler,
     'POST:/auth/change-password': changePasswordHandler,

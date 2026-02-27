@@ -141,7 +141,7 @@ export async function buildSessionResponse(
 }
 
 /**
- * Builds a JSON response with session data for embedded auth flows.
+ * Builds a JSON response with session data for auth flows.
  * Returns session information in JSON format instead of redirect.
  */
 export async function buildSessionJsonResponse(
