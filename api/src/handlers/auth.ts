@@ -21,7 +21,6 @@ import {
 import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
 import {
   clearOAuthCookies,
-  getSameSiteValue,
   parseCookies,
 } from '../lib/auth/utils/cookie.utils'
 import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
@@ -344,9 +343,8 @@ const handleLogin = (
     }),
   }
 
-  const sameSite = getSameSiteValue()
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
   response.cookies = [verifierCookie, stateCookie]
 
@@ -487,8 +485,7 @@ function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
 
   clearOAuthCookies(response)
 
-  const sameSite = getSameSiteValue()
-  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
+  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
   if (!response.cookies) {
     response.cookies = []
   }
@@ -887,9 +884,8 @@ async function buildOAuthRedirectResponse(
   state: string,
   activationToken: string
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  const sameSite = getSameSiteValue()
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
+  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
+  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
 
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,

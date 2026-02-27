@@ -27,11 +27,9 @@ function getSecret(): Uint8Array {
 
 export class SessionService {
   private readonly maxAge: number
-  private readonly isProduction: boolean
 
   constructor() {
     this.maxAge = SESSION_MAX_AGE
-    this.isProduction = config.ENVIRONMENT === 'prod'
   }
 
   async signSession(session: CanonicalSession): Promise<string> {
@@ -116,13 +114,11 @@ export class SessionService {
   }
 
   buildSessionCookie(jwt: string): string {
-    const sameSite = this.isProduction ? 'Lax' : 'None'
-    return `${SESSION_COOKIE_NAME}=${jwt}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=${this.maxAge}`
+    return `${SESSION_COOKIE_NAME}=${jwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {
-    const sameSite = this.isProduction ? 'Lax' : 'None'
-    return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
+    return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
   }
 
   getSessionFromCookie(
