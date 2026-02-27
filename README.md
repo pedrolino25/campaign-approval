@@ -104,9 +104,9 @@ To run the project locally, follow the detailed guides:
 
 See:
 
-```
+
 - **[Backend setup](./api/README.md)**
-```
+
 
 This covers:
 
@@ -122,9 +122,8 @@ This covers:
 
 See:
 
-```
 - **[Frontend setup](./client/README.md)**
-```
+
 
 This covers:
 
