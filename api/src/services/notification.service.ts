@@ -487,8 +487,11 @@ export class NotificationService {
     return user?.email || null
   }
 
-  private async getEmailForReviewerId(reviewerId: string): Promise<string | null> {
-    const reviewer = await this.reviewerRepository.findById(reviewerId)
+  private async getEmailForReviewerId(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<string | null> {
+    const reviewer = await this.reviewerRepository.findByIdScoped(reviewerId, organizationId)
     return reviewer?.email || null
   }
 
@@ -579,7 +582,7 @@ export class NotificationService {
     }
 
     if (notification.reviewerId) {
-      return await this.getEmailForReviewerId(notification.reviewerId)
+      return await this.getEmailForReviewerId(notification.reviewerId, notification.organizationId)
     }
 
     return null

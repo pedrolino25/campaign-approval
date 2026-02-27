@@ -6,6 +6,7 @@ import {
   type AuthenticatedEvent,
   UnauthorizedError,
 } from '../../models'
+import { ClientRepository } from '../../repositories'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { UserRepository } from '../../repositories/user.repository'
 import { logger } from '../utils/logger'
@@ -137,7 +138,24 @@ export class AuthService {
       throw new UnauthorizedError('Invalid session: missing reviewerId')
     }
 
-    const reviewer = await this.reviewerRepository.findById(session.reviewerId)
+    if (!session.clientId) {
+      throw new UnauthorizedError('Invalid session: missing clientId')
+    }
+
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      session.clientId,
+      session.reviewerId
+    )
+
+    if (!client) {
+      throw new UnauthorizedError('Client not found')
+    }
+
+    const reviewer = await this.reviewerRepository.findByIdScoped(
+      session.reviewerId,
+      client.organizationId
+    )
 
     if (!reviewer) {
       throw new UnauthorizedError('Reviewer not found')

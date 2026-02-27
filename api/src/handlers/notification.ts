@@ -19,7 +19,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ClientReviewerRepository } from '../repositories'
+import { ClientRepository, ClientReviewerRepository } from '../repositories'
 import { NotificationService } from '../services'
 
 type SanitizedNotification = {
@@ -127,8 +127,6 @@ const handleGetNotifications = async (
     }
   } else {
     const reviewerId = actor.reviewerId
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
     const clientRepository = new ClientRepository()
     const client = await clientRepository.findByIdForReviewer(
       actor.clientId,
@@ -177,8 +175,6 @@ const handlePatchNotificationRead = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId!
   } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
     const clientRepository = new ClientRepository()
     const client = await clientRepository.findByIdForReviewer(
       actor.clientId,

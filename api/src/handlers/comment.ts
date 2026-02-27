@@ -21,7 +21,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { CommentRepository, ReviewItemRepository } from '../repositories'
+import { ClientRepository, CommentRepository, ReviewItemRepository } from '../repositories'
 import { CommentService } from '../services'
 
 const handleGetComments = async (
@@ -72,7 +72,6 @@ const handlePostComment = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    const { ClientRepository } = await import('../repositories')
     const clientRepository = new ClientRepository()
     const client = await clientRepository.findByIdForReviewer(
       actor.clientId,
@@ -125,8 +124,6 @@ const handleDeleteComment = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    // REVIEWER: Derive organizationId from clientId
-    const { ClientRepository } = await import('../repositories')
     const clientRepository = new ClientRepository()
     const client = await clientRepository.findByIdForReviewer(
       actor.clientId,

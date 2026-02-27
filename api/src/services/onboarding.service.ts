@@ -112,9 +112,31 @@ export class OnboardingService {
 
   async completeReviewerOnboarding(params: {
     reviewerId: string
+    organizationId: string
     name: string
-  }): Promise<Awaited<ReturnType<ReviewerRepository['update']>>> {
+  }): Promise<Awaited<ReturnType<ReviewerRepository['updateScoped']>>> {
     return await prisma.$transaction(async (tx) => {
+      // Verify reviewer is linked to organization before updating
+      const reviewer = await tx.reviewer.findFirst({
+        where: {
+          id: params.reviewerId,
+          archivedAt: null,
+          clientLinks: {
+            some: {
+              archivedAt: null,
+              client: {
+                organizationId: params.organizationId,
+                archivedAt: null,
+              },
+            },
+          },
+        },
+      })
+
+      if (!reviewer) {
+        throw new NotFoundError('Reviewer not found or not linked to organization')
+      }
+
       return await tx.reviewer.update({
         where: { id: params.reviewerId },
         data: {

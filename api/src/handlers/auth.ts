@@ -60,9 +60,11 @@ import {
   ForbiddenError,
   type HttpRequest,
   InternalError,
+  NotFoundError,
   UnauthorizedError,
 } from '../models'
 import {
+  ClientRepository,
   ClientReviewerRepository,
   InvitationRepository,
   OrganizationRepository,
@@ -662,7 +664,7 @@ function buildReviewerSessionAfterOnboarding(
   cognitoSub: string,
   email: string,
   clientId: string,
-  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>
 ): CanonicalSession {
   if (!updatedReviewer) {
     throw new InternalError('Reviewer not found when building session')
@@ -679,7 +681,7 @@ function buildReviewerSessionAfterOnboarding(
 }
 
 function buildReviewerOnboardingResponse(
-  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>,
   sessionToken: string
 ): APIGatewayProxyStructuredResultV2 {
   if (!updatedReviewer) {
@@ -731,6 +733,22 @@ const handleCompleteSignupReviewer = async (
   }
 
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
+  
+  // Derive organizationId from clientId for tenant scoping
+  const clientRepository = new ClientRepository()
+  const reviewerActor = actor as {
+    type: typeof ActorType.Reviewer
+    reviewerId: string
+    clientId: string
+  }
+  const client = await clientRepository.findByIdForReviewer(
+    reviewerActor.clientId,
+    reviewerActor.reviewerId
+  )
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
   const onboardingService = new OnboardingService(
     new UserRepository(),
     new ReviewerRepository(),
@@ -739,14 +757,9 @@ const handleCompleteSignupReviewer = async (
 
   const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
+    organizationId: client.organizationId,
     name: validated.body.name,
   })
-
-  const reviewerActor = actor as {
-    type: typeof ActorType.Reviewer
-    reviewerId: string
-    clientId: string
-  }
 
   const newSessionPayload = buildReviewerSessionAfterOnboarding(
     event.authContext.cognitoSub,

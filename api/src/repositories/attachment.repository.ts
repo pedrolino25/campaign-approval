@@ -22,8 +22,9 @@ export type CreateAttachmentInput = {
 export interface IAttachmentRepository {
   create(data: CreateAttachmentInput): Promise<Attachment>
   findByIdScoped(id: string, organizationId: string): Promise<Attachment | null>
-  listByReviewItem(
+  listByReviewItemScoped(
     reviewItemId: string,
+    organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Attachment>>
   listByReviewItemAndVersion(
@@ -33,7 +34,7 @@ export interface IAttachmentRepository {
   listByReviewItemGroupedByVersion(
     reviewItemId: string
   ): Promise<Map<number, Attachment[]>>
-  hasAnyByReviewItem(reviewItemId: string): Promise<boolean>
+  hasAnyByReviewItem(reviewItemId: string, organizationId: string): Promise<boolean>
   deleteScoped(id: string, reviewItemId: string): Promise<void>
 }
 
@@ -65,8 +66,9 @@ export class AttachmentRepository implements IAttachmentRepository {
     })
   }
 
-  async listByReviewItem(
+  async listByReviewItemScoped(
     reviewItemId: string,
+    organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<Attachment>> {
     const { cursor, limit } = normalizePaginationParams(pagination)
@@ -75,6 +77,10 @@ export class AttachmentRepository implements IAttachmentRepository {
     const items = await prisma.attachment.findMany({
       where: {
         reviewItemId,
+        reviewItem: {
+          organizationId,
+          archivedAt: null,
+        },
         ...cursorWhere,
       },
       orderBy: CURSOR_ORDER_BY,
@@ -128,8 +134,8 @@ export class AttachmentRepository implements IAttachmentRepository {
     return grouped
   }
 
-  async hasAnyByReviewItem(reviewItemId: string): Promise<boolean> {
-    const result = await this.listByReviewItem(reviewItemId, { limit: 1 })
+  async hasAnyByReviewItem(reviewItemId: string, organizationId: string): Promise<boolean> {
+    const result = await this.listByReviewItemScoped(reviewItemId, organizationId, { limit: 1 })
     return result.data.length > 0
   }
 
