@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
 
-    if (isPublicRoute(pathname)) {
+    if (process.env.NODE_ENV === 'development' || isPublicRoute(pathname)) {
       return NextResponse.next()
     }
 
