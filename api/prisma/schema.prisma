@@ -110,6 +110,8 @@ model User {
   @@index([organizationId])
   @@index([cognitoUserId])
   @@index([email])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, archivedAt])
   @@map("users")
 }
 
@@ -147,6 +149,7 @@ model Client {
 
   @@index([organizationId])
   @@index([organizationId, createdAt])
+  @@index([organizationId, archivedAt])
   @@map("clients")
 }
 

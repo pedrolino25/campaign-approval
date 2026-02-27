@@ -160,7 +160,8 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
         reviewItem.id,
         actorOrganizationId,
         actor,
-        action
+        action,
+        expectedVersion
       )
 
       const updatedItem = await this.updateReviewItem(
@@ -206,18 +207,35 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     reviewItemId: string,
     actorOrganizationId: string,
     actor: ActorContext,
-    action: WorkflowAction
-  ): Promise<ReviewItem> {
+    action: WorkflowAction,
+    expectedVersion: number
+  ): Promise<Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>> {
+    // Reload only minimal fields needed for locking validation
     const currentReviewItem = await tx.reviewItem.findFirst({
       where: {
         id: reviewItemId,
         organizationId: actorOrganizationId,
         archivedAt: null,
       },
+      select: {
+        id: true,
+        status: true,
+        version: true,
+        clientId: true,
+        organizationId: true,
+        archivedAt: true,
+      },
     })
 
     if (!currentReviewItem) {
       throw new NotFoundError('Review item not found')
+    }
+
+    // Validate version for optimistic locking
+    if (currentReviewItem.version !== expectedVersion) {
+      throw new ConflictError(
+        'Review item version mismatch. Please refresh and try again.'
+      )
     }
 
     if (actor.type === ActorType.Reviewer) {
@@ -276,14 +294,24 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
   private async updateReviewItem(
     tx: Prisma.TransactionClient,
-    reviewItem: ReviewItem,
+    reviewItem: Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>,
     newStatus: ReviewStatus,
     shouldIncrementVersion: boolean,
     shouldUpdateStatus: boolean,
     expectedVersion: number
   ): Promise<ReviewItem> {
     if (!shouldIncrementVersion && !shouldUpdateStatus) {
-      return reviewItem
+      // If no update needed, reload full entity to return
+      const fullItem = await tx.reviewItem.findFirst({
+        where: {
+          id: reviewItem.id,
+          organizationId: reviewItem.organizationId,
+        },
+      })
+      if (!fullItem) {
+        throw new NotFoundError('Review item not found')
+      }
+      return fullItem
     }
 
     const where = {
@@ -306,30 +334,25 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       data.version = { increment: 1 }
     }
 
-    const result = await tx.reviewItem.updateMany({
-      where,
-      data,
-    })
-
-    if (result.count === 0) {
-      throw new ConflictError(
-        'Review item version mismatch or item has been archived. Please refresh and try again.'
-      )
+    // Use update() instead of updateMany() to get updated entity directly
+    // This eliminates the need for a separate findFirst() query
+    try {
+      const updated = await tx.reviewItem.update({
+        where,
+        data,
+      })
+      return updated
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new ConflictError(
+          'Review item version mismatch or item has been archived. Please refresh and try again.'
+        )
+      }
+      throw error
     }
-
-    // Fetch updated review item using scoped method
-    const updated = await tx.reviewItem.findFirst({
-      where: {
-        id: reviewItem.id,
-        organizationId: reviewItem.organizationId,
-      },
-    })
-
-    if (!updated) {
-      throw new NotFoundError('Review item not found after update')
-    }
-
-    return updated
   }
 
   private async createActivityLog(
