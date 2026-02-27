@@ -1,13 +1,12 @@
 import type {
   APIGatewayProxyEvent,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 import { type z, ZodError } from 'zod'
 
 import { validateBody, ValidationError } from '../lib'
 import {
   AuthService,
-  CookieTokenExtractor,
   OAuthService,
   RBACService,
   SessionService,
@@ -21,14 +20,19 @@ import {
 } from '../lib/auth/utils/activation-token.utils'
 import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
 import {
-  appendSetCookie,
   clearOAuthCookies,
   getSameSiteValue,
   parseCookies,
 } from '../lib/auth/utils/cookie.utils'
-import { acceptInvitationForEmbeddedAuth } from '../lib/auth/utils/invitation-acceptance.utils'
+import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
-import { buildErrorResponse } from '../lib/auth/utils/response-builders'
+import {
+  buildErrorResponse,
+  buildInvalidRequestResponse,
+  buildMissingParamsResponse,
+  buildMissingStateResponse,
+  buildOAuthErrorResponse,
+} from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
 import { createSessionFromTokens } from '../lib/auth/utils/token-session.utils'
 import {
@@ -79,7 +83,6 @@ const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
 const rbacService = new RBACService(new ClientReviewerRepository())
 const authService = new AuthService(
-  new CookieTokenExtractor(),
   userRepository,
   reviewerRepository
 )
@@ -91,20 +94,16 @@ function extractSafeContext(
   userAgent?: string
   requestId?: string
 } {
-  try {
-    const requestContext = event.requestContext
-    const headers = event.headers || {}
+  const requestContext = event.requestContext
+  const headers = event.headers || {}
 
-    return {
-      ip:
-        (requestContext as { identity?: { sourceIp?: string } })?.identity
-          ?.sourceIp || undefined,
-      userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
-      requestId:
-        (requestContext as { requestId?: string })?.requestId || undefined,
-    }
-  } catch {
-    return {}
+  return {
+    ip:
+      (requestContext as { identity?: { sourceIp?: string } })?.identity
+        ?.sourceIp || undefined,
+    userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+    requestId:
+      (requestContext as { requestId?: string })?.requestId || undefined,
   }
 }
 
@@ -134,79 +133,71 @@ function logAuthError(
   context: { ip?: string; userAgent?: string; requestId?: string },
   error: unknown
 ): void {
-  try {
-    logger.error({
-      source: 'auth',
-      event,
-      ...context,
-      metadata: {
-        error: error instanceof Error ? error.message : String(error),
-        errorCode:
-          error instanceof ValidationError ||
-          error instanceof UnauthorizedError ||
-          error instanceof ForbiddenError
-            ? error.code
-            : undefined,
-      },
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.error({
+    source: 'auth',
+    event,
+    ...context,
+    metadata: {
+      error: error instanceof Error ? error.message : String(error),
+      errorCode:
+        error instanceof ValidationError ||
+        error instanceof UnauthorizedError ||
+        error instanceof ForbiddenError
+          ? error.code
+          : undefined,
+    },
+  })
 }
 
 function logLoginSuccess(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): void {
-  try {
-    const baseLogData = {
-      source: 'auth' as const,
-      actorType: actor.type,
-      ...context,
+  const baseLogData = {
+    source: 'auth' as const,
+    actorType: actor.type,
+    ...context,
+  }
+
+  if (actor.type === ActorType.Internal) {
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+      role: 'OWNER' | 'ADMIN' | 'MEMBER'
     }
+    logger.info({
+      ...baseLogData,
+      event: 'LOGIN_SUCCESS',
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
 
-    if (actor.type === ActorType.Internal) {
-      const internalActor = actor as {
-        type: typeof ActorType.Internal
-        userId: string
-        organizationId: string
-        role: 'OWNER' | 'ADMIN' | 'MEMBER'
-      }
-      logger.info({
-        ...baseLogData,
-        event: 'LOGIN_SUCCESS',
-        actorId: internalActor.userId,
-        organizationId: internalActor.organizationId,
-      })
-
-      logger.info({
-        ...baseLogData,
-        event: 'SESSION_CREATED',
-        actorId: internalActor.userId,
-        organizationId: internalActor.organizationId,
-      })
-    } else {
-      const reviewerActor = actor as {
-        type: typeof ActorType.Reviewer
-        reviewerId: string
-        clientId: string | null
-      }
-      logger.info({
-        ...baseLogData,
-        event: 'LOGIN_SUCCESS',
-        actorId: reviewerActor.reviewerId,
-        clientId: reviewerActor.clientId,
-      })
-
-      logger.info({
-        ...baseLogData,
-        event: 'SESSION_CREATED',
-        actorId: reviewerActor.reviewerId,
-        clientId: reviewerActor.clientId,
-      })
+    logger.info({
+      ...baseLogData,
+      event: 'SESSION_CREATED',
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
+  } else {
+    const reviewerActor = actor as {
+      type: typeof ActorType.Reviewer
+      reviewerId: string
+      clientId: string | null
     }
-  } catch {
-    // Never throw if logging fails
+    logger.info({
+      ...baseLogData,
+      event: 'LOGIN_SUCCESS',
+      actorId: reviewerActor.reviewerId,
+      clientId: reviewerActor.clientId,
+    })
+
+    logger.info({
+      ...baseLogData,
+      event: 'SESSION_CREATED',
+      actorId: reviewerActor.reviewerId,
+      clientId: reviewerActor.clientId,
+    })
   }
 }
 
@@ -221,7 +212,6 @@ async function processOAuthCallback(
   userId: string
   email: string
   reviewerActivationCompleted: boolean
-  errorResponse?: APIGatewayProxyResult
 }> {
   const tokenResponse = await oauthService.exchangeCodeForTokens(
     code,
@@ -236,7 +226,7 @@ async function processOAuthCallback(
   let reviewerActivationCompleted = false
 
   if (activationToken) {
-    const activationResult = await processReviewerActivation(
+    await processReviewerActivation(
       activationToken,
       userId,
       email,
@@ -244,16 +234,6 @@ async function processOAuthCallback(
       invitationRepository,
       invitationService
     )
-
-    if (!activationResult.success) {
-      return {
-        userId,
-        email,
-        reviewerActivationCompleted: false,
-        errorResponse: activationResult.errorResponse,
-      }
-    }
-
     reviewerActivationCompleted = true
   }
 
@@ -270,7 +250,7 @@ async function buildSessionForUser(
   reviewerActivationCompleted: boolean,
   activationToken: string | undefined,
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const { actor, user, reviewer, organization } =
     await resolveActorFromTokens(
       userId,
@@ -291,9 +271,10 @@ async function buildSessionForUser(
     reviewer,
     organization,
     email,
-    activationToken,
     sessionService,
-    context
+    {
+      activationToken,
+    }
   )
 
   logLoginSuccess(actor, context)
@@ -303,23 +284,19 @@ async function buildSessionForUser(
 
 const handleLogin = (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGIN_STARTED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGIN_STARTED',
+    ...context,
+  })
 
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
 
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -333,47 +310,99 @@ const handleLogin = (
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  appendSetCookie(response, verifierCookie)
-  appendSetCookie(response, stateCookie)
+  response.cookies = [verifierCookie, stateCookie]
 
   return Promise.resolve(response)
 }
 
-const handleCallback = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  const context = extractSafeContext(event)
-  const validation = validateCallbackParams(event)
-
-  if (!validation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'LOGIN_FAILURE',
-        ...context,
-        metadata: { reason: 'Invalid callback parameters' },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-    return validation.errorResponse!
+function handleCallbackValidationError(
+  error: unknown,
+  event: APIGatewayProxyEvent,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): APIGatewayProxyStructuredResultV2 | null {
+  if (!(error instanceof ValidationError)) {
+    return null
   }
 
-  const { code, state, codeVerifier, expectedState, activationToken } = validation
+  if (error.message.startsWith('OAuth error:')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: {
+        reason: 'OAuth error in callback',
+        error: error.message,
+      },
+    })
+    const queryParams = event.queryStringParameters || {}
+    const errorDescription = queryParams.error_description
+    return buildOAuthErrorResponse(queryParams.error || 'oauth_error', errorDescription)
+  }
+
+  if (error.message.includes('Missing required OAuth parameters')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Invalid callback parameters' },
+    })
+    return buildMissingParamsResponse()
+  }
+
+  if (error.message.includes('Missing OAuth state in cookies')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Missing OAuth state in cookies' },
+    })
+    return buildMissingStateResponse()
+  }
+
+  if (error.message.includes('Invalid activation token')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Invalid activation token in cookies' },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
+  }
+
+  return null
+}
+
+const handleCallback = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyStructuredResultV2> => {
+  const context = extractSafeContext(event)
+
+  let callbackParams: Awaited<ReturnType<typeof validateCallbackParams>>
+  try {
+    callbackParams = await validateCallbackParams(event)
+  } catch (error) {
+    const oauthErrorResponse = handleCallbackValidationError(error, event, context)
+    if (oauthErrorResponse) {
+      return oauthErrorResponse
+    }
+
+    logAuthError('LOGIN_FAILURE', context, error)
+    return buildErrorResponse(error)
+  }
+
+  const { code, state, codeVerifier, expectedState, activationToken } = callbackParams
 
   try {
     const oauthResult = await processOAuthCallback(
-      code!,
-      codeVerifier!,
-      state!,
-      expectedState!,
+      code,
+      codeVerifier,
+      state,
+      expectedState,
       activationToken,
       context
     )
-
-    if (oauthResult.errorResponse) {
-      return oauthResult.errorResponse
-    }
 
     return await buildSessionForUser(
       oauthResult.userId,
@@ -387,7 +416,7 @@ const handleCallback = async (
 
     const errorResponse = buildErrorResponse(error)
 
-    if (validation.activationToken) {
+    if (activationToken) {
       clearActivationCookie(errorResponse)
     }
 
@@ -398,20 +427,18 @@ const handleCallback = async (
 
 const handleLogout = (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGOUT',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGOUT',
+    ...context,
+  })
 
-  const response: APIGatewayProxyResult = {
+  const cookies: string[] = [sessionService.buildClearSessionCookie()]
+
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -420,14 +447,17 @@ const handleLogout = (
       success: true,
       message: 'Logged out successfully',
     }),
+    cookies,
   }
 
-  sessionService.clearSessionCookie(response)
   clearOAuthCookies(response)
 
   const sameSite = getSameSiteValue()
   const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-  appendSetCookie(response, clearActivationCookieValue)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+  response.cookies.push(clearActivationCookieValue)
 
   return Promise.resolve(response)
 }
@@ -437,22 +467,18 @@ function logSessionCheckFailure(
   reason: string,
   metadata?: Record<string, unknown>
 ): void {
-  try {
-    logger.warn({
-      source: 'auth',
-      event: 'SESSION_CHECK_FAILED',
-      ...context,
-      metadata: {
-        reason,
-        ...metadata,
-      },
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.warn({
+    source: 'auth',
+    event: 'SESSION_CHECK_FAILED',
+    ...context,
+    metadata: {
+      reason,
+      ...metadata,
+    },
+  })
 }
 
-function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
+function createUnauthorizedResponse(message: string): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 401,
     headers: {
@@ -467,7 +493,7 @@ function createUnauthorizedResponse(message: string): APIGatewayProxyResult {
   }
 }
 
-function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult {
+function createSessionResponse(session: CanonicalSession): APIGatewayProxyStructuredResultV2 {
   return {
     statusCode: 200,
     headers: {
@@ -488,7 +514,7 @@ function createSessionResponse(session: CanonicalSession): APIGatewayProxyResult
 
 const handleMe = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const cookies = event.headers.cookie || event.headers.Cookie || ''
   const sessionToken = sessionService.getSessionFromCookie(cookies)
   const context = extractSafeContext(event)
@@ -549,8 +575,8 @@ function buildInternalSessionAfterOnboarding(
 function buildInternalOnboardingResponse(
   result: Awaited<ReturnType<OnboardingService['completeInternalOnboarding']>>,
   sessionToken: string
-): APIGatewayProxyResult {
-  const response: APIGatewayProxyResult = {
+): APIGatewayProxyStructuredResultV2 {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -566,14 +592,14 @@ function buildInternalOnboardingResponse(
         name: result.organization.name,
       },
     }),
+    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  sessionService.setSessionCookie(response, sessionToken)
   return response
 }
 
 const handleCompleteSignupInternal = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const queryParams: Record<string, string> = {}
   if (event.queryStringParameters) {
     for (const [key, value] of Object.entries(event.queryStringParameters)) {
@@ -613,34 +639,21 @@ const handleCompleteSignupInternal = async (
     organizationName: validated.body.organizationName,
   })
 
-  const updatedUser = await userRepository.findById(
-    actor.userId,
-    actor.organizationId
-  )
-
-  if (!updatedUser) {
-    throw new InternalError('User not found after onboarding completion')
-  }
-
   const newSessionPayload = buildInternalSessionAfterOnboarding(
     event.authContext.cognitoSub,
     event.authContext.email,
-    updatedUser
+    result.user
   )
 
   const newSessionToken = await sessionService.signSession(newSessionPayload)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'COMPLETE_SIGNUP_INTERNAL',
-      actorType: 'INTERNAL',
-      actorId: actor.userId,
-      organizationId: actor.organizationId,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'COMPLETE_SIGNUP_INTERNAL',
+    actorType: 'INTERNAL',
+    actorId: actor.userId,
+    organizationId: actor.organizationId,
+  })
 
   return buildInternalOnboardingResponse(result, newSessionToken)
 }
@@ -668,11 +681,11 @@ function buildReviewerSessionAfterOnboarding(
 function buildReviewerOnboardingResponse(
   updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
   sessionToken: string
-): APIGatewayProxyResult {
+): APIGatewayProxyStructuredResultV2 {
   if (!updatedReviewer) {
     throw new InternalError('Reviewer not found when building response')
   }
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -684,14 +697,14 @@ function buildReviewerOnboardingResponse(
         email: updatedReviewer.email,
       },
     }),
+    cookies: [sessionService.buildSessionCookie(sessionToken)],
   }
-  sessionService.setSessionCookie(response, sessionToken)
   return response
 }
 
 const handleCompleteSignupReviewer = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const queryParams: Record<string, string> = {}
   if (event.queryStringParameters) {
     for (const [key, value] of Object.entries(event.queryStringParameters)) {
@@ -724,16 +737,10 @@ const handleCompleteSignupReviewer = async (
     new OrganizationRepository()
   )
 
-  await onboardingService.completeReviewerOnboarding({
+  const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
     name: validated.body.name,
   })
-
-  const updatedReviewer = await reviewerRepository.findById(actor.reviewerId)
-
-  if (!updatedReviewer) {
-    throw new InternalError('Reviewer not found after onboarding completion')
-  }
 
   const reviewerActor = actor as {
     type: typeof ActorType.Reviewer
@@ -750,31 +757,27 @@ const handleCompleteSignupReviewer = async (
 
   const newSessionToken = await sessionService.signSession(newSessionPayload)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'COMPLETE_SIGNUP_REVIEWER',
-      actorType: 'REVIEWER',
-      actorId: actor.reviewerId,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'COMPLETE_SIGNUP_REVIEWER',
+    actorType: 'REVIEWER',
+    actorId: actor.reviewerId,
+  })
 
   return buildReviewerOnboardingResponse(updatedReviewer, newSessionToken)
 }
 
-function buildOAuthRedirectResponse(
+async function buildOAuthRedirectResponse(
   authorizationUrl: string,
   codeVerifier: string,
   state: string,
   activationToken: string
-): APIGatewayProxyResult {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const sameSite = getSameSiteValue()
   const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
   const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=600`
 
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
       Location: authorizationUrl,
@@ -782,68 +785,68 @@ function buildOAuthRedirectResponse(
     body: '',
   }
 
-  appendSetCookie(response, verifierCookie)
-  appendSetCookie(response, stateCookie)
-  setActivationCookie(response, activationToken)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+  response.cookies.push(verifierCookie, stateCookie)
+  await setActivationCookie(response, activationToken)
 
   return response
 }
 
 const handleReviewerActivate = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'INVITATION_ACTIVATION_ATTEMPT',
-      actorType: 'REVIEWER',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'INVITATION_ACTIVATION_ATTEMPT',
+    actorType: 'REVIEWER',
+    ...context,
+  })
 
   const queryParams = event.queryStringParameters || {}
   const token = queryParams.token
 
-  const tokenValidation = validateActivationToken(token)
-  if (!tokenValidation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACTIVATION_FAILURE',
-        actorType: 'REVIEWER',
-        ...context,
-        metadata: { reason: 'Invalid activation token format' },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-    return tokenValidation.errorResponse!
+  let normalizedToken: string
+  try {
+    normalizedToken = validateActivationToken(token)
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACTIVATION_FAILURE',
+      actorType: 'REVIEWER',
+      ...context,
+      metadata: {
+        reason: 'Invalid activation token format',
+        error: error instanceof Error ? error.message : String(error),
+      },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
   }
-
-  const normalizedToken = tokenValidation.normalizedToken!
 
   const invitation = await invitationRepository.findByToken(normalizedToken)
-  const invitationValidation = validateReviewerInvitation(invitation)
-  if (!invitationValidation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACTIVATION_FAILURE',
-        actorType: 'REVIEWER',
-        ...context,
-        metadata: { reason: 'Invitation validation failed' },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-    return invitationValidation.errorResponse!
+  try {
+    validateReviewerInvitation(invitation)
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACTIVATION_FAILURE',
+      actorType: 'REVIEWER',
+      ...context,
+      metadata: {
+        reason: 'Invitation validation failed',
+        error: error instanceof Error ? error.message : String(error),
+      },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
   }
 
-  // Check if Cognito user exists, create if not
   const email = invitation!.email.toLowerCase().trim()
   const userExists = await cognitoService.userExistsByEmail(email)
 
@@ -854,7 +857,7 @@ const handleReviewerActivate = async (
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
 
-  return buildOAuthRedirectResponse(
+  return await buildOAuthRedirectResponse(
     authorizationUrl,
     codeVerifier,
     state,
@@ -864,7 +867,7 @@ const handleReviewerActivate = async (
 
 const handleSignUp = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -887,16 +890,12 @@ const handleSignUp = async (
 
     await cognitoService.signUp(validated.email, validated.password)
 
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'SIGNUP_STARTED',
-        ...context,
-        metadata: { email: validated.email },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.info({
+      source: 'auth',
+      event: 'SIGNUP_STARTED',
+      ...context,
+      metadata: { email: validated.email },
+    })
 
     return {
       statusCode: 200,
@@ -908,19 +907,15 @@ const handleSignUp = async (
       }),
     }
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'SIGNUP_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          errorCode: error instanceof ValidationError ? error.code : undefined,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.error({
+      source: 'auth',
+      event: 'SIGNUP_FAILURE',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        errorCode: error instanceof ValidationError ? error.code : undefined,
+      },
+    })
 
     return buildErrorResponse(error)
   }
@@ -931,16 +926,12 @@ function logEmailVerificationEvent(
   context: { ip?: string; userAgent?: string; requestId?: string },
   metadata: Record<string, unknown>
 ): void {
-  try {
-    logger.info({
-      source: 'auth',
-      event,
-      ...context,
-      metadata,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event,
+    ...context,
+    metadata,
+  })
 }
 
 async function processEmailVerification(
@@ -951,7 +942,7 @@ async function processEmailVerification(
     inviteToken?: string
   },
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const tokens = await cognitoService.confirmSignUp(
     validated.email,
     validated.code,
@@ -981,15 +972,14 @@ async function processEmailVerification(
     returnJson: true,
   })
 
-  const hasCookie = sessionResponse.multiValueHeaders?.['Set-Cookie']?.some(
-    (cookie) => typeof cookie === 'string' && cookie.startsWith('worklient_session=')
-  )
+  const hasCookie = sessionResponse.cookies?.some((cookie) =>
+    cookie.includes('worklient_session=')
+  ) ?? false
 
   logEmailVerificationEvent('SESSION_CREATED', context, {
     email,
     userId,
-    hasCookie: !!hasCookie,
-    cookieCount: sessionResponse.multiValueHeaders?.['Set-Cookie']?.length || 0,
+    hasCookie,
   })
 
   if (validated.inviteToken) {
@@ -1008,7 +998,7 @@ async function processEmailVerification(
 
 const handleVerifyEmail = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1022,7 +1012,7 @@ const handleVerifyEmail = async (
 
 const handleResendVerification = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1048,18 +1038,14 @@ const handleResendVerification = async (
     } catch (error) {
       // Validation error - return success to prevent enumeration
       // But log it for debugging
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
-          ...context,
-          metadata: {
-            error: error instanceof Error ? error.message : String(error),
-          },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
       return {
         statusCode: 200,
         headers: {
@@ -1097,10 +1083,10 @@ const handleResendVerification = async (
   }
 }
 
-async function processEmbeddedLogin(
+async function processLogin(
   validated: { email: string; password: string; inviteToken?: string },
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const tokens = await cognitoService.login(validated.email, validated.password)
 
   const authContext = await tokenVerifier.verify(tokens.idToken)
@@ -1132,24 +1118,20 @@ async function processEmbeddedLogin(
   return sessionResponse
 }
 
-const handleEmbeddedLogin = async (
+const handleEmailPasswordLogin = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGIN_STARTED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGIN_STARTED',
+    ...context,
+  })
 
   try {
     const validated = parseAndValidateBody(event, LoginSchema)
-    return await processEmbeddedLogin(validated, context)
+    return await processLogin(validated, context)
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
     return buildErrorResponse(error)
@@ -1158,7 +1140,7 @@ const handleEmbeddedLogin = async (
 
 const handleForgotPassword = async (
   _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
     const body = _event.body ? JSON.parse(_event.body) : {}
     const validated = ForgotPasswordSchema.parse(body)
@@ -1191,7 +1173,7 @@ const handleForgotPassword = async (
 
 const handleResetPassword = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1218,16 +1200,12 @@ const handleResetPassword = async (
       validated.newPassword
     )
 
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'PASSWORD_RESET_SUCCESS',
-        ...context,
-        metadata: { email: validated.email },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.info({
+      source: 'auth',
+      event: 'PASSWORD_RESET_SUCCESS',
+      ...context,
+      metadata: { email: validated.email },
+    })
 
     return {
       statusCode: 200,
@@ -1239,19 +1217,15 @@ const handleResetPassword = async (
       }),
     }
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'PASSWORD_RESET_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          errorCode: error instanceof ValidationError ? error.code : undefined,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.error({
+      source: 'auth',
+      event: 'PASSWORD_RESET_FAILURE',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        errorCode: error instanceof ValidationError ? error.code : undefined,
+      },
+    })
 
     return buildErrorResponse(error)
   }
@@ -1271,7 +1245,7 @@ async function acceptInvitationAfterSession(
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): Promise<void> {
   try {
-    await acceptInvitationForEmbeddedAuth(
+    await acceptInvitationForAuth(
       inviteToken,
       userId,
       email,
@@ -1281,19 +1255,18 @@ async function acceptInvitationAfterSession(
     )
   } catch (error) {
     // Log error but don't fail the request - session is already created
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          email,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    // This is a non-critical failure that should not break the auth flow
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        email,
+      },
+    })
+    // Note: Error is intentionally not rethrown here because session is already created
+    // This is a non-critical failure that should not break the auth flow
   }
 }
 
@@ -1330,7 +1303,7 @@ async function processPasswordChange(
   email: string,
   refreshToken: string | undefined,
   context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   await changeUserPassword(
     email,
     validated.oldPassword,
@@ -1338,15 +1311,11 @@ async function processPasswordChange(
     refreshToken
   )
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'PASSWORD_CHANGED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'PASSWORD_CHANGED',
+    ...context,
+  })
 
   return {
     statusCode: 200,
@@ -1361,7 +1330,7 @@ async function processPasswordChange(
 
 const handleChangePassword = async (
   event: AuthenticatedEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
   try {
@@ -1389,7 +1358,7 @@ export const completeSignupReviewerHandler = createHandler(handleCompleteSignupR
 export const signUpHandler = createPublicHandler(handleSignUp)
 export const verifyEmailHandler = createPublicHandler(handleVerifyEmail)
 export const resendVerificationHandler = createPublicHandler(handleResendVerification)
-export const embeddedLoginHandler = createPublicHandler(handleEmbeddedLogin)
+export const emailPasswordLoginHandler = createPublicHandler(handleEmailPasswordLogin)
 export const forgotPasswordHandler = createPublicHandler(handleForgotPassword)
 export const resetPasswordHandler = createPublicHandler(handleResetPassword)
 export const changePasswordHandler = createHandler(handleChangePassword)
@@ -1418,13 +1387,13 @@ function getMethod(event: APIGatewayProxyEvent): string {
 
 const handleAuthRoute = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const path = getPath(event)
   const method = getMethod(event)
 
   const routeMap: Record<
     string,
-    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
   > = {
     'GET:/auth/callback': callbackHandler,
     'POST:/auth/logout': logoutHandler,
@@ -1435,7 +1404,7 @@ const handleAuthRoute = async (
     'POST:/auth/signup': signUpHandler,
     'POST:/auth/verify-email': verifyEmailHandler,
     'POST:/auth/resend-verification': resendVerificationHandler,
-    'POST:/auth/login': embeddedLoginHandler,
+    'POST:/auth/login': emailPasswordLoginHandler,
     'POST:/auth/forgot-password': forgotPasswordHandler,
     'POST:/auth/reset-password': resetPasswordHandler,
     'POST:/auth/change-password': changePasswordHandler,
@@ -1448,7 +1417,7 @@ const handleAuthRoute = async (
     return await handler(event)
   }
 
-  const notFoundResponse: APIGatewayProxyResult = {
+  const notFoundResponse: APIGatewayProxyStructuredResultV2 = {
     statusCode: 404,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',

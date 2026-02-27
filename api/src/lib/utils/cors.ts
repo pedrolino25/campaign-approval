@@ -1,4 +1,7 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyStructuredResultV2,
+} from 'aws-lambda'
 
 const allowedOrigins = [
   'https://worklient.com',
@@ -23,8 +26,8 @@ function isAllowedOrigin(origin: string | undefined): boolean {
 
 export function addCorsHeaders(
   event: APIGatewayProxyEvent,
-  response: APIGatewayProxyResult
-): APIGatewayProxyResult {
+  response: APIGatewayProxyStructuredResultV2
+): APIGatewayProxyStructuredResultV2 {
   const origin = event.headers.origin || event.headers.Origin
 
   if (!isAllowedOrigin(origin)) {
@@ -46,12 +49,13 @@ export function addCorsHeaders(
       ...existingHeaders,
       ...corsHeaders,
     },
+    cookies: response.cookies,
   }
 }
 
 export function handlePreflightRequest(
   event: APIGatewayProxyEvent
-): APIGatewayProxyResult | null {
+): APIGatewayProxyStructuredResultV2 | null {
   if (event.httpMethod !== 'OPTIONS') {
     return null
   }
@@ -65,6 +69,7 @@ export function handlePreflightRequest(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: 'Forbidden' }),
+      cookies: undefined,
     }
   }
 
@@ -75,6 +80,7 @@ export function handlePreflightRequest(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: 'Forbidden' }),
+      cookies: undefined,
     }
   }
 
@@ -87,5 +93,6 @@ export function handlePreflightRequest(
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
     },
     body: '',
+    cookies: undefined,
   }
 }

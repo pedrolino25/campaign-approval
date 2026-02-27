@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyEvent, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -69,7 +69,7 @@ const API_DOCS_HTML = `<!DOCTYPE html>
 
 const handleApiDocs = async (
   _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
       statusCode: 404,
@@ -91,7 +91,7 @@ const handleApiDocs = async (
 
 const handleOpenApiSpec = async (
   _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
       statusCode: 404,
@@ -170,13 +170,13 @@ function getMethod(event: APIGatewayProxyEvent): string {
 
 const handleDocumentationRoute = async (
   event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   const path = getPath(event)
   const method = getMethod(event)
 
   const routeMap: Record<
     string,
-    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
   > = {
     'GET:/api-docs': handleApiDocs,
     'GET:/openapi/worklient.v1.json': handleOpenApiSpec,

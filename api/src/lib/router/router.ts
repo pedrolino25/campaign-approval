@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import {
   type AuthContext,
@@ -11,7 +11,6 @@ import {
 import { ErrorService } from '../errors/error.service'
 import { PathMatcherFactory } from './utils/path-matcher'
 import { PathNormalizer } from './utils/path-normalizer'
-import { RequestParser } from './utils/request-parser'
 
 interface CompiledRoute {
   method: string
@@ -22,7 +21,6 @@ interface CompiledRoute {
 export class Router {
   private readonly compiledRoutes: CompiledRoute[] = []
   private readonly pathNormalizer: PathNormalizer
-  private readonly requestParser: RequestParser
   private readonly pathMatcherFactory: PathMatcherFactory
   private readonly errorService: ErrorService
 
@@ -31,7 +29,6 @@ export class Router {
     errorService: ErrorService = new ErrorService()
   ) {
     this.pathNormalizer = new PathNormalizer()
-    this.requestParser = new RequestParser()
     this.pathMatcherFactory = new PathMatcherFactory()
     this.errorService = errorService
 
@@ -48,7 +45,7 @@ export class Router {
 
   handle = async (
     event: AuthenticatedEvent
-  ): Promise<APIGatewayProxyResult> => {
+  ): Promise<APIGatewayProxyStructuredResultV2> => {
     const requestId =
       event.requestContext.requestId || event.headers['x-request-id']
 
@@ -74,12 +71,28 @@ export class Router {
         params
       )
 
+      const queryParams: Record<string, string> = {}
+      if (event.queryStringParameters) {
+        for (const [key, value] of Object.entries(event.queryStringParameters)) {
+          if (value !== null && value !== undefined) {
+            queryParams[key] = value
+          }
+        }
+      }
+
+      let body: unknown = undefined
+      if (event.body) {
+        try {
+          body = JSON.parse(event.body)
+        } catch {
+          throw new Error('Invalid JSON in request body')
+        }
+      }
+
       const httpRequest: HttpRequest<AuthContext> = {
         auth: event.authContext,
-        body: this.requestParser.parseBody(event.body),
-        query: this.requestParser.parseQueryParameters(
-          event.queryStringParameters
-        ),
+        body,
+        query: queryParams,
         params: mergedParams,
         rawEvent: event,
       }
@@ -147,7 +160,7 @@ export class Router {
 
   private buildApiGatewayResponse(
     response: HttpResponse
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     const headers = response.headers || {}
     const contentType =
       headers['Content-Type'] ||
@@ -162,7 +175,7 @@ export class Router {
           : JSON.stringify(response.body)
 
     return {
-      statusCode: response.statusCode,
+      statusCode: response.statusCode ?? 200,
       headers: {
         ...headers,
         'Content-Type': contentType,

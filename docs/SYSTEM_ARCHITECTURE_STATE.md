@@ -304,7 +304,7 @@ async enqueueEmailJob(payload: EmailJobPayload): Promise<void>
 3. **Auto-login:** `CognitoService.login()` → immediately authenticates after confirmation
 4. **Session Creation:** `createSessionFromTokens()` → creates session
 5. **Invitation Handling:** If `inviteToken` provided, accepts invitation after session creation
-6. **Response:** JSON response with session data (for embedded flows) or redirect
+6. **Response:** JSON response with session data (for auth flows) or redirect
 
 **Files:**
 - `api/src/handlers/auth.ts` - `processEmailVerification()` function

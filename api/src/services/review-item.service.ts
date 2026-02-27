@@ -101,6 +101,7 @@ export class ReviewItemService implements IReviewItemService {
     }
 
     await prisma.$transaction(async (tx) => {
+      // Load and validate inside transaction to prevent race conditions
       const reviewItem = await tx.reviewItem.findFirst({
         where: {
           id: reviewItemId,
@@ -113,6 +114,7 @@ export class ReviewItemService implements IReviewItemService {
         throw new NotFoundError('Review item not found')
       }
 
+      // Validate reviewer access inside transaction
       if (actor.type === ActorType.Reviewer) {
         if (reviewItem.clientId !== actor.clientId) {
           throw new NotFoundError('Review item not found')

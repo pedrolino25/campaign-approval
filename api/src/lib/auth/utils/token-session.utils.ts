@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import { logger } from '../../../lib/utils/logger'
 import { ActorType } from '../../../models'
@@ -12,10 +12,7 @@ import type { RBACService } from '../rbac.service'
 import type { SessionService } from '../session.service'
 import { resolveActorFromTokens } from './actor.utils'
 import type { JwtVerifier } from './jwt-verifier'
-import {
-  buildSessionJsonResponse,
-  buildSessionResponse,
-} from './session.utils'
+import { buildSessionResponse } from './session.utils'
 
 export interface CreateSessionFromTokensParams {
   idToken: string
@@ -34,7 +31,7 @@ export interface CreateSessionFromTokensParams {
 
 export async function createSessionFromTokens(
   params: CreateSessionFromTokensParams
-): Promise<APIGatewayProxyResult> {
+): Promise<APIGatewayProxyStructuredResultV2> {
   const {
     idToken,
     inviteToken,
@@ -81,19 +78,6 @@ export async function createSessionFromTokens(
     }
   }
 
-  if (returnJson) {
-    return await buildSessionJsonResponse(
-      userId,
-      actor,
-      user,
-      reviewer,
-      organization,
-      email,
-      sessionService,
-      context
-    )
-  }
-
   return await buildSessionResponse(
     userId,
     actor,
@@ -101,8 +85,10 @@ export async function createSessionFromTokens(
     reviewer,
     organization,
     email,
-    inviteToken,
     sessionService,
-    context
+    {
+      returnJson,
+      activationToken: inviteToken,
+    }
   )
 }

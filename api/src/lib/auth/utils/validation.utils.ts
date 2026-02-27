@@ -1,115 +1,110 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyEvent } from 'aws-lambda'
 
+import { ConflictError, NotFoundError, ValidationError } from '../../../models/errors'
 import {
-  clearActivationCookie,
   extractAndVerifyActivationToken,
 } from './activation-token.utils'
 import { parseCookies } from './cookie.utils'
-import {
-  buildInvalidRequestResponse,
-  buildMissingParamsResponse,
-  buildMissingStateResponse,
-  buildOAuthErrorResponse,
-} from './response-builders'
 
 export interface CallbackParams {
-  valid: boolean
-  errorResponse?: APIGatewayProxyResult
-  code?: string
-  state?: string
-  codeVerifier?: string
-  expectedState?: string
+  code: string
+  state: string
+  codeVerifier: string
+  expectedState: string
   activationToken?: string
 }
 
-export function validateCallbackParams(
-  event: APIGatewayProxyEvent
-): CallbackParams {
-  const queryParams = event.queryStringParameters || {}
-  const code = queryParams.code
-  const state = queryParams.state
+function validateOAuthQueryParams(
+  queryParams: Record<string, string | undefined>
+): {
+  code: string
+  state: string
+} {
   const error = queryParams.error
   const errorDescription = queryParams.error_description
 
   if (error) {
-    return {
-      valid: false,
-      errorResponse: buildOAuthErrorResponse(error, errorDescription),
-    }
+    throw new ValidationError(
+      `OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`
+    )
   }
+
+  const code = queryParams.code
+  const state = queryParams.state
 
   if (!code || !state) {
-    return {
-      valid: false,
-      errorResponse: buildMissingParamsResponse(),
-    }
+    throw new ValidationError('Missing required OAuth parameters: code and state are required')
   }
 
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  const cookieMap = parseCookies(cookies)
+  return {
+    code,
+    state,
+  }
+}
+
+function validateOAuthCookies(cookieMap: Record<string, string>): {
+  codeVerifier: string
+  expectedState: string
+} {
   const codeVerifier = cookieMap['oauth_code_verifier']
   const expectedState = cookieMap['oauth_state']
 
   if (!codeVerifier || !expectedState) {
-    return {
-      valid: false,
-      errorResponse: buildMissingStateResponse(),
-    }
-  }
-
-  // Extract and verify activation cookie if present
-  const activationTokenResult = extractAndVerifyActivationToken(cookieMap)
-
-  if (activationTokenResult === false) {
-    // Invalid signature or format - clear cookie and return error
-    const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return {
-      valid: false,
-      errorResponse,
-    }
+    throw new ValidationError('Missing OAuth state in cookies. Please try logging in again.')
   }
 
   return {
-    valid: true,
+    codeVerifier,
+    expectedState,
+  }
+}
+
+async function validateActivationTokenFromCookies(
+  cookieMap: Record<string, string>
+): Promise<string | undefined> {
+  const activationTokenResult = await extractAndVerifyActivationToken(cookieMap)
+
+  if (activationTokenResult === false) {
+    throw new ValidationError('Invalid activation token in cookies')
+  }
+
+  return activationTokenResult
+}
+
+export async function validateCallbackParams(
+  event: APIGatewayProxyEvent
+): Promise<CallbackParams> {
+  const queryParams = event.queryStringParameters || {}
+  const { code, state } = validateOAuthQueryParams(queryParams)
+
+  const cookies = event.headers.cookie || event.headers.Cookie || ''
+  const cookieMap = parseCookies(cookies)
+  const { codeVerifier, expectedState } = validateOAuthCookies(cookieMap)
+
+  const activationToken = await validateActivationTokenFromCookies(cookieMap)
+
+  return {
     code,
     state,
     codeVerifier,
     expectedState,
-    activationToken: activationTokenResult,
+    activationToken,
   }
 }
 
 export function validateActivationToken(
   token: string | undefined
-): {
-  valid: boolean
-  normalizedToken?: string
-  errorResponse?: APIGatewayProxyResult
-} {
+): string {
   if (!token) {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new ValidationError('ACTIVATION_TOKEN_MISSING')
   }
 
-  // Case-insensitive hex validation
   const tokenPattern = /^[a-fA-F0-9]{64}$/
   if (!tokenPattern.test(token)) {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new ValidationError('ACTIVATION_TOKEN_INVALID_FORMAT')
   }
 
-  // Normalize to lowercase for DB lookup
-  const normalizedToken = token.toLowerCase()
-
-  return {
-    valid: true,
-    normalizedToken,
-  }
+  return token.toLowerCase()
 }
 
 export function validateReviewerInvitation(
@@ -118,35 +113,21 @@ export function validateReviewerInvitation(
     acceptedAt: Date | null
     expiresAt: Date
   } | null
-): { valid: boolean; errorResponse?: APIGatewayProxyResult } {
+): void {
   if (!invitation) {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new NotFoundError('Invitation not found')
   }
 
   if (invitation.type !== 'REVIEWER') {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new ValidationError('Invalid invitation type')
   }
 
   if (invitation.acceptedAt !== null) {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new ConflictError('Invitation has already been accepted')
   }
 
   const now = new Date()
   if (invitation.expiresAt <= now) {
-    return {
-      valid: false,
-      errorResponse: buildInvalidRequestResponse(),
-    }
+    throw new ValidationError('Invitation has expired')
   }
-
-  return { valid: true }
 }

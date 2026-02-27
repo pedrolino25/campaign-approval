@@ -1,6 +1,6 @@
 import type {
   APIGatewayProxyEvent,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 
 import type { ErrorService } from '../errors/error.service'
@@ -10,13 +10,13 @@ export class PublicHandlerFactory {
   constructor(private readonly errorService: ErrorService) {}
 
   create(
-    handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>
+    handler: (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
   ): (
     event: APIGatewayProxyEvent
-  ) => Promise<APIGatewayProxyResult> {
+  ) => Promise<APIGatewayProxyStructuredResultV2> {
     return async (
       event: APIGatewayProxyEvent
-    ): Promise<APIGatewayProxyResult> => {
+    ): Promise<APIGatewayProxyStructuredResultV2> => {
       const preflightResponse = handlePreflightRequest(event)
       if (preflightResponse) {
         return preflightResponse
@@ -32,6 +32,7 @@ export class PublicHandlerFactory {
         const errorResponse = this.errorService.handle(error, {
           requestId,
         })
+
         return addCorsHeaders(event, errorResponse)
       }
     }

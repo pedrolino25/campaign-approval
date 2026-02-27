@@ -76,16 +76,23 @@ export class ClientService implements IClientService {
       throw new ForbiddenError('Only internal users can create clients')
     }
 
-    const existingClient = await this.clientRepository.findByNameCaseInsensitive(
-      name,
-      actor.organizationId
-    )
-
-    if (existingClient) {
-      throw new ValidationError('Client name must be unique within organization')
-    }
-
     return await prisma.$transaction(async (tx) => {
+      // Check uniqueness inside transaction to prevent race conditions
+      const existingClient = await tx.client.findFirst({
+        where: {
+          organizationId: actor.organizationId,
+          name: {
+            equals: name.trim(),
+            mode: 'insensitive',
+          },
+          archivedAt: null,
+        },
+      })
+
+      if (existingClient) {
+        throw new ValidationError('Client name must be unique within organization')
+      }
+
       const client = await tx.client.create({
         data: {
           organizationId: actor.organizationId,
@@ -142,13 +149,22 @@ export class ClientService implements IClientService {
         return client
       }
 
-      const existingClient =
-        await this.clientRepository.findByNameCaseInsensitive(
-          trimmedName,
-          actor.organizationId
-        )
+      // Check uniqueness inside transaction to prevent race conditions
+      const existingClient = await tx.client.findFirst({
+        where: {
+          organizationId: actor.organizationId,
+          name: {
+            equals: trimmedName,
+            mode: 'insensitive',
+          },
+          archivedAt: null,
+          id: {
+            not: clientId,
+          },
+        },
+      })
 
-      if (existingClient && existingClient.id !== clientId) {
+      if (existingClient) {
         throw new ValidationError('Client name must be unique within organization')
       }
 
@@ -309,21 +325,17 @@ export class ClientService implements IClientService {
         },
       })
 
-      try {
-        logger.info({
-          source: 'auth',
-          event: 'MEMBERSHIP_REMOVED',
-          actorType: 'REVIEWER',
-          actorId: reviewerId,
-          clientId,
-          organizationId: client.organizationId,
-          metadata: {
-            removedBy: actor.userId,
-          },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.info({
+        source: 'auth',
+        event: 'MEMBERSHIP_REMOVED',
+        actorType: 'REVIEWER',
+        actorId: reviewerId,
+        clientId,
+        organizationId: client.organizationId,
+        metadata: {
+          removedBy: actor.userId,
+        },
+      })
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
         invitedUserEmail: '',

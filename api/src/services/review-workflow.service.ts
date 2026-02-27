@@ -57,6 +57,7 @@ export type ApplyWorkflowActionInput = {
   action: WorkflowAction
   actor: ActorContext
   expectedVersion: number
+  preloadedReviewItem?: ReviewItem
 }
 
 export interface IReviewWorkflowService {
@@ -80,13 +81,12 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
   }
 
   async applyWorkflowAction(input: ApplyWorkflowActionInput): Promise<ReviewItem> {
-    const { reviewItemId, action, actor, expectedVersion } = input
+    const { reviewItemId, action, actor, expectedVersion, preloadedReviewItem } = input
 
     let actorOrganizationId: string
     if (actor.type === ActorType.Internal) {
       actorOrganizationId = actor.organizationId
     } else {
-      // For reviewers, derive organizationId from their clientId
       const clientRepository = new ClientRepository()
       const client = await clientRepository.findByIdForReviewer(
         actor.clientId,
@@ -98,9 +98,13 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
       actorOrganizationId = client.organizationId
     }
 
-    const reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
+    let reviewItem: ReviewItem
+    if (preloadedReviewItem) {
+      reviewItem = preloadedReviewItem
+    } else {
+      reviewItem = await this.loadReviewItem(reviewItemId, actorOrganizationId)
+    }
 
-    this.validateHardConstraints(reviewItem, actor)
     this.validateActorPermissions(actor, action)
 
     const previousStatus = reviewItem.status
@@ -113,7 +117,8 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
         action,
         previousStatus,
         newStatus,
-        expectedVersion
+        expectedVersion,
+        actorOrganizationId
       )
     } catch (error) {
       return this.handleTransactionError(error)
@@ -136,87 +141,147 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     return reviewItem
   }
 
-  private validateHardConstraints(
-    reviewItem: ReviewItem,
-    actor: ActorContext,
-  ): void {
-    if (reviewItem.archivedAt !== null) {
-      throw new InvalidStateTransitionError(
-        'Cannot perform transitions on archived review item'
-      )
-    }
-
-    if (actor.type === ActorType.Reviewer) {
-      if (reviewItem.clientId !== actor.clientId) {
-        throw new NotFoundError('Review item not found')
-      }
-    }
-  }
-
-
   private async executeTransition(
     reviewItem: ReviewItem,
     actor: ActorContext,
     action: WorkflowAction,
     previousStatus: ReviewStatus,
     newStatus: ReviewStatus,
-    expectedVersion: number
+    expectedVersion: number,
+    actorOrganizationId: string
   ): Promise<ReviewItem> {
     const shouldUpdateStatus = newStatus !== previousStatus
     const shouldIncrementVersion = 
       action === WorkflowAction.UPLOAD_NEW_VERSION || shouldUpdateStatus
 
     const { updated, dispatchResult } = await prisma.$transaction(async (tx) => {
-      // Validate attachment existence inside transaction to prevent TOCTOU race condition
-      if (action === WorkflowAction.SEND_FOR_REVIEW) {
-        const attachmentCount = await tx.attachment.count({
-          where: {
-            reviewItemId: reviewItem.id,
-          },
-        })
-
-        if (attachmentCount === 0) {
-          throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
-        }
-      }
+      const currentReviewItem = await this.validateAndLoadReviewItem(
+        tx,
+        reviewItem.id,
+        actorOrganizationId,
+        actor,
+        action,
+        expectedVersion
+      )
 
       const updatedItem = await this.updateReviewItem(
         tx,
-        reviewItem,
+        currentReviewItem,
         newStatus,
         shouldIncrementVersion,
         shouldUpdateStatus,
         expectedVersion
       )
 
+      const actualPreviousStatus = currentReviewItem.status
       await this.createActivityLog(
         tx,
         updatedItem,
         actor,
         action,
-        previousStatus,
+        actualPreviousStatus,
         newStatus
       )
 
-      let dispatchResult: DispatchResult | null = null
-      const eventType = mapWorkflowActionToWorkflowEventType(action)
-      if (eventType && shouldUpdateStatus) {
-        dispatchResult = await this.workflowEventDispatcher.dispatch({
-          type: eventType,
-          payload: {
-            reviewItemId: updatedItem.id,
-            organizationId: updatedItem.organizationId,
-          },
-          actor,
-          tx,
-        })
-      }
+      const dispatchResult = await this.dispatchWorkflowEventIfNeeded(
+        tx,
+        action,
+        shouldUpdateStatus,
+        updatedItem,
+        actor
+      )
 
-      return { updated: updatedItem,
-dispatchResult }
+      return {
+        updated: updatedItem,
+        dispatchResult,
+      }
     })
 
-    // Enqueue emails AFTER transaction commits
+    await this.enqueueNotifications(dispatchResult)
+
+    return updated
+  }
+
+  private async validateAndLoadReviewItem(
+    tx: Prisma.TransactionClient,
+    reviewItemId: string,
+    actorOrganizationId: string,
+    actor: ActorContext,
+    action: WorkflowAction,
+    expectedVersion: number
+  ): Promise<Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>> {
+    // Reload only minimal fields needed for locking validation
+    const currentReviewItem = await tx.reviewItem.findFirst({
+      where: {
+        id: reviewItemId,
+        organizationId: actorOrganizationId,
+        archivedAt: null,
+      },
+      select: {
+        id: true,
+        status: true,
+        version: true,
+        clientId: true,
+        organizationId: true,
+        archivedAt: true,
+      },
+    })
+
+    if (!currentReviewItem) {
+      throw new NotFoundError('Review item not found')
+    }
+
+    // Validate version for optimistic locking
+    if (currentReviewItem.version !== expectedVersion) {
+      throw new ConflictError(
+        'Review item version mismatch. Please refresh and try again.'
+      )
+    }
+
+    if (actor.type === ActorType.Reviewer) {
+      if (currentReviewItem.clientId !== actor.clientId) {
+        throw new NotFoundError('Review item not found')
+      }
+    }
+
+    if (action === WorkflowAction.SEND_FOR_REVIEW) {
+      const attachmentCount = await tx.attachment.count({
+        where: {
+          reviewItemId: currentReviewItem.id,
+        },
+      })
+
+      if (attachmentCount === 0) {
+        throw new BusinessRuleViolationError('REVIEW_ITEM_REQUIRES_ATTACHMENT')
+      }
+    }
+
+    return currentReviewItem
+  }
+
+  private async dispatchWorkflowEventIfNeeded(
+    tx: Prisma.TransactionClient,
+    action: WorkflowAction,
+    shouldUpdateStatus: boolean,
+    updatedItem: ReviewItem,
+    actor: ActorContext
+  ): Promise<DispatchResult | null> {
+    const eventType = mapWorkflowActionToWorkflowEventType(action)
+    if (eventType && shouldUpdateStatus) {
+      return await this.workflowEventDispatcher.dispatch({
+        type: eventType,
+        payload: {
+          reviewItemId: updatedItem.id,
+          organizationId: updatedItem.organizationId,
+        },
+        actor,
+        tx,
+      })
+    }
+    return null
+  }
+
+  private async enqueueNotifications(dispatchResult: DispatchResult | null): Promise<void> {
     if (dispatchResult?.reviewItem) {
       for (const notification of dispatchResult.notifications) {
         await this.notificationService.enqueueEmailJobForNotification(
@@ -225,20 +290,28 @@ dispatchResult }
         )
       }
     }
-
-    return updated
   }
 
   private async updateReviewItem(
     tx: Prisma.TransactionClient,
-    reviewItem: ReviewItem,
+    reviewItem: Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>,
     newStatus: ReviewStatus,
     shouldIncrementVersion: boolean,
     shouldUpdateStatus: boolean,
     expectedVersion: number
   ): Promise<ReviewItem> {
     if (!shouldIncrementVersion && !shouldUpdateStatus) {
-      return reviewItem
+      // If no update needed, reload full entity to return
+      const fullItem = await tx.reviewItem.findFirst({
+        where: {
+          id: reviewItem.id,
+          organizationId: reviewItem.organizationId,
+        },
+      })
+      if (!fullItem) {
+        throw new NotFoundError('Review item not found')
+      }
+      return fullItem
     }
 
     const where = {
@@ -261,30 +334,25 @@ dispatchResult }
       data.version = { increment: 1 }
     }
 
-    const result = await tx.reviewItem.updateMany({
-      where,
-      data,
-    })
-
-    if (result.count === 0) {
-      throw new ConflictError(
-        'Review item version mismatch or item has been archived. Please refresh and try again.'
-      )
+    // Use update() instead of updateMany() to get updated entity directly
+    // This eliminates the need for a separate findFirst() query
+    try {
+      const updated = await tx.reviewItem.update({
+        where,
+        data,
+      })
+      return updated
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new ConflictError(
+          'Review item version mismatch or item has been archived. Please refresh and try again.'
+        )
+      }
+      throw error
     }
-
-    // Fetch updated review item using scoped method
-    const updated = await tx.reviewItem.findFirst({
-      where: {
-        id: reviewItem.id,
-        organizationId: reviewItem.organizationId,
-      },
-    })
-
-    if (!updated) {
-      throw new NotFoundError('Review item not found after update')
-    }
-
-    return updated
   }
 
   private async createActivityLog(

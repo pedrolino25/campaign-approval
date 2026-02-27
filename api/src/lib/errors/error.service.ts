@@ -1,7 +1,8 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import {
   DomainError,
+  ErrorCode,
   ValidationError as BaseValidationError,
 } from '../../models/errors'
 import { logger } from '../utils/logger'
@@ -19,7 +20,7 @@ export class ValidationError extends BaseValidationError {
     message: string = 'Invalid request payload',
     details: ValidationErrorDetail[] = []
   ) {
-    super(message)
+    super(message, details)
     this.details = details
     Object.setPrototypeOf(this, new.target.prototype)
   }
@@ -46,6 +47,7 @@ interface ErrorResponse {
   error: {
     code: string
     message: string
+    requestId?: string
     details?: Array<{
       field: string
       message: string
@@ -60,19 +62,33 @@ interface ErrorContext {
 }
 
 export class ErrorService {
+  private readonly ERROR_CODE_TO_STATUS: Record<ErrorCode, number> = {
+    [ErrorCode.VALIDATION_ERROR]: 400,
+    [ErrorCode.NOT_FOUND]: 404,
+    [ErrorCode.UNAUTHORIZED]: 401,
+    [ErrorCode.FORBIDDEN]: 403,
+    [ErrorCode.CONFLICT]: 409,
+    [ErrorCode.INVALID_STATE_TRANSITION]: 409,
+    [ErrorCode.BUSINESS_RULE_VIOLATION]: 422,
+    [ErrorCode.INVARIANT_VIOLATION]: 400,
+    [ErrorCode.INTERNAL_ERROR]: 500,
+  }
+
   private createErrorResponse(
     code: string,
     message: string,
     statusCode: number,
+    requestId?: string,
     details?: Array<{
       field: string
       message: string
     }>
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     const response: ErrorResponse = {
       error: {
         code,
         message,
+        ...(requestId ? { requestId } : {}),
         ...(details && details.length > 0 ? { details } : {}),
       },
     }
@@ -89,27 +105,30 @@ export class ErrorService {
   private handleDomainError(
     error: DomainError,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
+    const statusCode = this.ERROR_CODE_TO_STATUS[error.code] ?? 500
+
     const logData: Record<string, unknown> = {
       errorCode: error.code,
       errorMessage: error.message,
-      statusCode: error.statusCode,
+      statusCode,
       requestId: context?.requestId,
       userId: context?.userId,
       organizationId: context?.organizationId,
     }
 
-    if (error instanceof ValidationError && error.details.length > 0) {
+    if (error instanceof ValidationError && error.details && Array.isArray(error.details) && error.details.length > 0) {
       logData.validationDetails = error.details
     }
 
     logger.error(logData, 'Domain error occurred')
 
-    const details = error instanceof ValidationError ? error.details : undefined
+    const details = error instanceof ValidationError && Array.isArray(error.details) ? error.details : undefined
     return this.createErrorResponse(
       error.code,
       error.message,
-      error.statusCode,
+      statusCode,
+      context?.requestId,
       details
     )
   }
@@ -117,7 +136,7 @@ export class ErrorService {
   private handleGenericError(
     error: Error,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     logger.error(
       {
         errorName: error.name,
@@ -132,14 +151,15 @@ export class ErrorService {
     return this.createErrorResponse(
       'INTERNAL_ERROR',
       'An unexpected error occurred',
-      500
+      500,
+      context?.requestId
     )
   }
 
   private handleUnknownError(
     error: unknown,
     context?: ErrorContext
-  ): APIGatewayProxyResult {
+  ): APIGatewayProxyStructuredResultV2 {
     logger.error(
       {
         error: String(error),
@@ -153,11 +173,12 @@ export class ErrorService {
     return this.createErrorResponse(
       'INTERNAL_ERROR',
       'An unexpected error occurred',
-      500
+      500,
+      context?.requestId
     )
   }
 
-  handle(error: unknown, context?: ErrorContext): APIGatewayProxyResult {
+  handle(error: unknown, context?: ErrorContext): APIGatewayProxyStructuredResultV2 {
     if (error instanceof DomainError) {
       return this.handleDomainError(error, context)
     }

@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 
 import { ActorType, InternalError } from '../../../models'
 import type {
@@ -12,23 +12,19 @@ import type { CanonicalSession, SessionService } from '../session.service'
 import { clearActivationCookie } from './activation-token.utils'
 import { clearOAuthCookies } from './cookie.utils'
 
-export function calculateOnboardingStatus(
+function calculateOnboardingStatus(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
   user: { name?: string | null } | null,
   reviewer: { name?: string | null } | null,
   organization: { name?: string | null } | null
 ): boolean {
   if (actor.type === ActorType.Internal) {
-    const userName = user?.name
-    const organizationName = organization?.name
-    return Boolean(userName?.trim() && organizationName?.trim())
+    return Boolean(user?.name?.trim() && organization?.name?.trim())
   }
-
-  const reviewerName = reviewer?.name
-  return Boolean(reviewerName?.trim())
+  return Boolean(reviewer?.name?.trim())
 }
 
-export function buildCanonicalSession(
+function buildCanonicalSession(
   userId: string,
   actor: Awaited<ReturnType<RBACService['resolve']>>,
   email: string,
@@ -42,7 +38,7 @@ export function buildCanonicalSession(
     actorType: actor.type,
     email: normalizedEmail,
     onboardingCompleted,
-    sessionVersion: 0, // Will be set below
+    sessionVersion: 0,
   }
 
   if (actor.type === ActorType.Internal) {
@@ -78,59 +74,54 @@ export function buildCanonicalSession(
   return session
 }
 
-export function getRedirectPath(
-  onboardingCompleted: boolean,
-  actorType: ActorType
-): string {
-  if (onboardingCompleted) {
-    return '/dashboard'
+function buildJsonResponse(
+  session: CanonicalSession,
+  signedSession: string,
+  sessionService: SessionService
+): APIGatewayProxyStructuredResultV2 {
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      session: {
+        actorType: session.actorType,
+        userId: session.userId,
+        reviewerId: session.reviewerId,
+        organizationId: session.organizationId,
+        clientId: session.clientId,
+        role: session.role,
+        onboardingCompleted: session.onboardingCompleted,
+        email: session.email,
+      },
+    }),
+    cookies: [sessionService.buildSessionCookie(signedSession)],
   }
-
-  return actorType === ActorType.Internal
-    ? '/complete-signup/internal'
-    : '/complete-signup/reviewer'
 }
 
-export async function buildSessionResponse(
-  userId: string,
-  actor: Awaited<ReturnType<RBACService['resolve']>>,
-  user: Awaited<ReturnType<UserRepository['findByCognitoId']>> | null,
-  reviewer: Awaited<ReturnType<ReviewerRepository['findByCognitoId']>> | null,
-  organization: Awaited<ReturnType<OrganizationRepository['findById']>> | null,
-  email: string,
-  activationToken: string | undefined,
+function buildRedirectResponse(
+  session: CanonicalSession,
+  signedSession: string,
+  onboardingCompleted: boolean,
   sessionService: SessionService,
-  _context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
-  const onboardingCompleted = calculateOnboardingStatus(
-    actor,
-    user,
-    reviewer,
-    organization
-  )
+  activationToken?: string
+): APIGatewayProxyStructuredResultV2 {
+  const redirectPath = onboardingCompleted
+    ? '/dashboard'
+    : session.actorType === ActorType.Internal
+      ? '/complete-signup/internal'
+      : '/complete-signup/reviewer'
 
-  const normalizedEmail = email.toLowerCase().trim()
-  const canonicalSession = buildCanonicalSession(
-    userId,
-    actor,
-    normalizedEmail,
-    onboardingCompleted,
-    user,
-    reviewer
-  )
-
-  const signedSession = await sessionService.signSession(canonicalSession)
-  const redirectPath = getRedirectPath(onboardingCompleted, actor.type)
-
-  const response: APIGatewayProxyResult = {
+  const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
       Location: `${config.FRONTEND_URL}${redirectPath}`,
     },
     body: '',
+    cookies: [sessionService.buildSessionCookie(signedSession)],
   }
 
-  sessionService.setSessionCookie(response, signedSession)
   clearOAuthCookies(response)
 
   if (activationToken) {
@@ -140,11 +131,7 @@ export async function buildSessionResponse(
   return response
 }
 
-/**
- * Builds a JSON response with session data for embedded auth flows.
- * Returns session information in JSON format instead of redirect.
- */
-export async function buildSessionJsonResponse(
+export async function buildSessionResponse(
   userId: string,
   actor: Awaited<ReturnType<RBACService['resolve']>>,
   user: Awaited<ReturnType<UserRepository['findByCognitoId']>> | null,
@@ -152,8 +139,11 @@ export async function buildSessionJsonResponse(
   organization: Awaited<ReturnType<OrganizationRepository['findById']>> | null,
   email: string,
   sessionService: SessionService,
-  _context: { ip?: string; userAgent?: string; requestId?: string }
-): Promise<APIGatewayProxyResult> {
+  options?: {
+    returnJson?: boolean
+    activationToken?: string
+  }
+): Promise<APIGatewayProxyStructuredResultV2> {
   const onboardingCompleted = calculateOnboardingStatus(
     actor,
     user,
@@ -161,38 +151,26 @@ export async function buildSessionJsonResponse(
     organization
   )
 
-  const normalizedEmail = email.toLowerCase().trim()
-  const canonicalSession = buildCanonicalSession(
+  const session = buildCanonicalSession(
     userId,
     actor,
-    normalizedEmail,
+    email,
     onboardingCompleted,
     user,
     reviewer
   )
 
-  const signedSession = await sessionService.signSession(canonicalSession)
+  const signedSession = await sessionService.signSession(session)
 
-  const response: APIGatewayProxyResult = {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      session: {
-        actorType: canonicalSession.actorType,
-        userId: canonicalSession.userId,
-        reviewerId: canonicalSession.reviewerId,
-        organizationId: canonicalSession.organizationId,
-        clientId: canonicalSession.clientId,
-        role: canonicalSession.role,
-        onboardingCompleted: canonicalSession.onboardingCompleted,
-        email: canonicalSession.email,
-      },
-    }),
+  if (options?.returnJson) {
+    return buildJsonResponse(session, signedSession, sessionService)
   }
 
-  sessionService.setSessionCookie(response, signedSession)
-
-  return response
+  return buildRedirectResponse(
+    session,
+    signedSession,
+    onboardingCompleted,
+    sessionService,
+    options?.activationToken
+  )
 }

@@ -1,44 +1,32 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
+import { parse } from 'cookie'
 
 import { config } from '../../../lib/utils/config'
 
-export function parseCookies(cookieString: string): Record<string, string> {
-  const cookies: Record<string, string> = {}
-
-  for (const cookie of cookieString.split(';')) {
-    const [name, ...valueParts] = cookie.trim().split('=')
-    if (name && valueParts.length > 0) {
-      cookies[name] = valueParts.join('=')
+export function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {}
+  const parsed = parse(cookieHeader)
+  const result: Record<string, string> = {}
+  for (const [key, value] of Object.entries(parsed)) {
+    if (value) {
+      result[key] = value
     }
   }
-
-  return cookies
-}
-
-export function appendSetCookie(
-  response: APIGatewayProxyResult,
-  cookie: string
-): void {
-  if (!response.multiValueHeaders) {
-    response.multiValueHeaders = {}
-  }
-
-  if (!response.multiValueHeaders['Set-Cookie']) {
-    response.multiValueHeaders['Set-Cookie'] = []
-  }
-
-  response.multiValueHeaders['Set-Cookie'].push(cookie)
+  return result
 }
 
 export function getSameSiteValue(): string {
   return config.ENVIRONMENT === 'prod' ? 'Lax' : 'None'
 }
 
-export function clearOAuthCookies(response: APIGatewayProxyResult): void {
+export function clearOAuthCookies(response: APIGatewayProxyStructuredResultV2): void {
   const sameSite = getSameSiteValue()
   const clearVerifierCookie = `oauth_code_verifier=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
   const clearStateCookie = `oauth_state=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
 
-  appendSetCookie(response, clearVerifierCookie)
-  appendSetCookie(response, clearStateCookie)
+  if (!response.cookies) {
+    response.cookies = []
+  }
+
+  response.cookies.push(clearVerifierCookie, clearStateCookie)
 }

@@ -1,6 +1,6 @@
 import type {
   APIGatewayProxyEvent,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 
 import {
@@ -16,17 +16,17 @@ export class ApiHandlerFactory {
   constructor(
     private readonly authService: AuthService,
     private readonly errorService: ErrorService,
-    private readonly reviewerRepository: ReviewerRepository
+    private readonly _reviewerRepository: ReviewerRepository
   ) {}
 
   create(
-    handler: (event: AuthenticatedEvent) => Promise<APIGatewayProxyResult>
+    handler: (event: AuthenticatedEvent) => Promise<APIGatewayProxyStructuredResultV2>
   ): (
     event: APIGatewayProxyEvent
-  ) => Promise<APIGatewayProxyResult> {
+  ) => Promise<APIGatewayProxyStructuredResultV2> {
     return async (
       event: APIGatewayProxyEvent
-    ): Promise<APIGatewayProxyResult> => {
+    ): Promise<APIGatewayProxyStructuredResultV2> => {
       const preflightResponse = handlePreflightRequest(event)
       if (preflightResponse) {
         return preflightResponse

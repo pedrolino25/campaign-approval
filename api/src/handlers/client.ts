@@ -20,6 +20,7 @@ import {
 import {
   Action,
   ActorType,
+  ForbiddenError,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
@@ -67,6 +68,10 @@ const handlePostClients = async (
 
   if (!organizationId) {
     throw new NotFoundError('Organization not found')
+  }
+
+  if (actor.type !== ActorType.Internal) {
+    throw new ForbiddenError('Only internal users can create clients')
   }
 
   authorizeOrThrow(actor, Action.CREATE_CLIENT, {

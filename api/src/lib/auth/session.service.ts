@@ -1,8 +1,8 @@
-import type { APIGatewayProxyResult } from 'aws-lambda'
 import { jwtVerify,SignJWT } from 'jose'
 
 import type { ActorType } from '../../models'
 import { config } from '../utils/config'
+import { parseCookies } from './utils/cookie.utils'
 
 export interface CanonicalSession {
   cognitoSub: string
@@ -115,21 +115,14 @@ export class SessionService {
     return typeof p.reviewerId === 'string' && !!p.reviewerId
   }
 
-  setSessionCookie(
-    response: APIGatewayProxyResult,
-    sessionToken: string
-  ): void {
-    const cookie = this.buildCookie(sessionToken)
+  buildSessionCookie(jwt: string): string {
+    const sameSite = this.isProduction ? 'Lax' : 'None'
+    return `${SESSION_COOKIE_NAME}=${jwt}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=${this.maxAge}`
+  }
 
-    if (!response.multiValueHeaders) {
-      response.multiValueHeaders = {}
-    }
-
-    if (!response.multiValueHeaders['Set-Cookie']) {
-      response.multiValueHeaders['Set-Cookie'] = []
-    }
-
-    response.multiValueHeaders['Set-Cookie'].push(cookie)
+  buildClearSessionCookie(): string {
+    const sameSite = this.isProduction ? 'Lax' : 'None'
+    return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
   }
 
   getSessionFromCookie(
@@ -140,40 +133,7 @@ export class SessionService {
     }
 
     const cookieString = Array.isArray(cookies) ? cookies.join('; ') : cookies
-    const cookieMap = this.parseCookies(cookieString)
+    const cookieMap = parseCookies(cookieString)
     return cookieMap[SESSION_COOKIE_NAME] || null
-  }
-
-  clearSessionCookie(response: APIGatewayProxyResult): void {
-    const sameSite = this.isProduction ? 'Lax' : 'None'
-    const cookie = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`
-
-    if (!response.multiValueHeaders) {
-      response.multiValueHeaders = {}
-    }
-
-    if (!response.multiValueHeaders['Set-Cookie']) {
-      response.multiValueHeaders['Set-Cookie'] = []
-    }
-
-    response.multiValueHeaders['Set-Cookie'].push(cookie)
-  }
-
-  private buildCookie(value: string): string {
-    const sameSite = this.isProduction ? 'Lax' : 'None'
-    return `${SESSION_COOKIE_NAME}=${value}; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=${this.maxAge}`
-  }
-
-  private parseCookies(cookieString: string): Record<string, string> {
-    const cookies: Record<string, string> = {}
-
-    for (const cookie of cookieString.split(';')) {
-      const [name, ...valueParts] = cookie.trim().split('=')
-      if (name && valueParts.length > 0) {
-        cookies[name] = valueParts.join('=')
-      }
-    }
-
-    return cookies
   }
 }
