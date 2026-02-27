@@ -615,19 +615,10 @@ const handleCompleteSignupInternal = async (
     organizationName: validated.body.organizationName,
   })
 
-  const updatedUser = await userRepository.findById(
-    actor.userId,
-    actor.organizationId
-  )
-
-  if (!updatedUser) {
-    throw new InternalError('User not found after onboarding completion')
-  }
-
   const newSessionPayload = buildInternalSessionAfterOnboarding(
     event.authContext.cognitoSub,
     event.authContext.email,
-    updatedUser
+    result.user
   )
 
   const newSessionToken = await sessionService.signSession(newSessionPayload)
@@ -726,16 +717,10 @@ const handleCompleteSignupReviewer = async (
     new OrganizationRepository()
   )
 
-  await onboardingService.completeReviewerOnboarding({
+  const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
     name: validated.body.name,
   })
-
-  const updatedReviewer = await reviewerRepository.findById(actor.reviewerId)
-
-  if (!updatedReviewer) {
-    throw new InternalError('Reviewer not found after onboarding completion')
-  }
 
   const reviewerActor = actor as {
     type: typeof ActorType.Reviewer

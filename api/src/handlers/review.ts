@@ -1,10 +1,8 @@
-import { ReviewStatus } from '@prisma/client'
 
 import {
   createHandler,
   type HttpRequest,
   type HttpResponse,
-  prisma,
   RouteBuilder,
   Router,
   validateBody,
@@ -23,15 +21,11 @@ import {
 } from '../lib/schemas'
 import {
   Action,
+  ActivityLogActionType,
   ActorType,
-  ConflictError,
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import {
-  ActivityLogActionType,
-  type ActivityLogMetadataMap,
-} from '../models/activity-log'
 import type { ActorContext } from '../models/rbac'
 import {
   ActivityLogRepository,
@@ -39,7 +33,7 @@ import {
   ClientRepository,
   ReviewItemRepository,
 } from '../repositories'
-import { ActivityLogService } from '../services/activity-log.service'
+import { ReviewItemService } from '../services/review-item.service'
 import { ReviewWorkflowService } from '../services/review-workflow.service'
 
 async function resolveOrganizationId(actor: ActorContext): Promise<string> {
@@ -198,45 +192,12 @@ const handlePostReviewItems = async (
     organizationId: organizationId,
   })
 
-  const activityLogService = new ActivityLogService()
-  const reviewItem = await prisma.$transaction(async (tx) => {
-    const client = await tx.client.findFirst({
-      where: {
-        id: validated.body.clientId,
-        organizationId,
-        archivedAt: null,
-      },
-    })
-    if (!client) {
-      throw new NotFoundError('Client not found')
-    }
-
-    const reviewItem = await tx.reviewItem.create({
-      data: {
-        organizationId,
-        clientId: validated.body.clientId,
-        title: validated.body.title,
-        description: validated.body.description,
-        status: ReviewStatus.DRAFT,
-        createdByUserId: actor.userId,
-        version: 1,
-      },
-    })
-
-    const metadata: ActivityLogMetadataMap[ActivityLogActionType.REVIEW_CREATED] = {
-      reviewItemId: reviewItem.id,
-    }
-
-    await activityLogService.log({
-      action: ActivityLogActionType.REVIEW_CREATED,
-      organizationId,
-      actor,
-      metadata,
-      reviewItemId: reviewItem.id,
-      tx,
-    })
-
-    return reviewItem
+  const reviewItemService = new ReviewItemService()
+  const reviewItem = await reviewItemService.createReviewItem({
+    actor,
+    clientId: validated.body.clientId,
+    title: validated.body.title,
+    description: validated.body.description,
   })
   
   return {
@@ -401,53 +362,10 @@ const handleArchiveReviewItem = async (
     organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
   })
 
-  const activityLogService = new ActivityLogService()
-  const organizationId = await resolveOrganizationId(actor)
-  
-  await prisma.$transaction(async (tx) => {
-    const reviewItem = await tx.reviewItem.findFirst({
-      where: {
-        id: reviewItemId,
-        organizationId,
-        archivedAt: null,
-      },
-    })
-
-    if (!reviewItem) {
-      throw new NotFoundError('Review item not found')
-    }
-
-    if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
-      throw new NotFoundError('Review item not found')
-    }
-
-    const result = await tx.reviewItem.updateMany({
-      where: {
-        id: reviewItemId,
-        organizationId,
-        archivedAt: null,
-      },
-      data: {
-        archivedAt: new Date(),
-      },
-    })
-
-    if (result.count === 0) {
-      throw new ConflictError('Review item has already been archived')
-    }
-
-    const metadata: ActivityLogMetadataMap[ActivityLogActionType.REVIEW_ARCHIVED] = {
-      reviewItemId: reviewItem.id,
-    }
-
-    await activityLogService.log({
-      action: ActivityLogActionType.REVIEW_ARCHIVED,
-      organizationId,
-      actor,
-      metadata,
-      reviewItemId: reviewItem.id,
-      tx,
-    })
+  const reviewItemService = new ReviewItemService()
+  await reviewItemService.archiveReviewItem({
+    actor,
+    reviewItemId,
   })
 
   return {
