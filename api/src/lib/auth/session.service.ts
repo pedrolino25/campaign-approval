@@ -113,9 +113,28 @@ export class SessionService {
     return typeof p.reviewerId === 'string' && !!p.reviewerId
   }
 
+  private getCookieDomain(): string | undefined {
+    const frontendUrl = config.FRONTEND_URL
+    if (!frontendUrl) return undefined
+
+    const hostname = new URL(frontendUrl).hostname
+
+    if (hostname === 'localhost') return undefined
+
+    const parts = hostname.split('.')
+
+    if (parts.length < 3) return undefined
+
+    const parent = parts.slice(1).join('.')
+
+    return `.${parent}`
+  }
+
   buildSessionCookie(jwt: string): string {
     const encodedJwt = encodeURIComponent(jwt)
-    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
+    const domain = this.getCookieDomain()
+    const domainPart = domain ? `Domain=${domain}; ` : ''
+    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {
