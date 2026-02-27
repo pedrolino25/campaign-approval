@@ -114,20 +114,17 @@ export class SessionService {
   }
 
   private getCookieDomain(): string | undefined {
-    const frontendUrl = config.FRONTEND_URL
-    if (!frontendUrl) return undefined
+    const hostname = new URL(config.FRONTEND_URL).hostname
 
-    const hostname = new URL(frontendUrl).hostname
+    if (hostname.endsWith('.local.worklient.test')) {
+      return '.local.worklient.test'
+    }
 
-    if (hostname === 'localhost') return undefined
+    if (hostname.endsWith('.worklient.com') || hostname === 'worklient.com') {
+      return '.worklient.com'
+    }
 
-    const parts = hostname.split('.')
-
-    if (parts.length < 3) return undefined
-
-    const parent = parts.slice(1).join('.')
-
-    return `.${parent}`
+    return undefined
   }
 
   buildSessionCookie(jwt: string): string {
