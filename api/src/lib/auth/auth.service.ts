@@ -104,10 +104,13 @@ export class AuthService {
     if (user.archivedAt !== null) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'INTERNAL',
         actorId: session.userId,
+        targetId: session.userId,
         organizationId: session.organizationId,
         ...context,
         metadata: { reason: 'User archived' },
@@ -118,10 +121,13 @@ export class AuthService {
     if (user.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'INTERNAL',
         actorId: session.userId,
+        targetId: session.userId,
         organizationId: session.organizationId,
         ...context,
         metadata: { reason: 'Session version mismatch' },
@@ -164,10 +170,14 @@ export class AuthService {
     if (reviewer.archivedAt !== null) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: client.organizationId,
         clientId: session.clientId,
         ...context,
         metadata: { reason: 'Reviewer archived' },
@@ -178,10 +188,14 @@ export class AuthService {
     if (reviewer.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: client.organizationId,
         clientId: session.clientId,
         ...context,
         metadata: { reason: 'Session version mismatch' },

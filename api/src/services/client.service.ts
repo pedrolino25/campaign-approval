@@ -285,6 +285,12 @@ export class ClientService implements IClientService {
       throw new ForbiddenError('Only internal users can remove reviewers')
     }
 
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+    }
+
     return await prisma.$transaction(async (tx) => {
       const client = await this.clientRepository.findById(
         clientId,
@@ -316,33 +322,86 @@ export class ClientService implements IClientService {
         },
       })
 
-      // Check if reviewer has any remaining active client links in this organization
-      const remainingLinks = await tx.clientReviewer.count({
-        where: {
-          reviewerId,
-          archivedAt: null,
-          client: {
-            organizationId: client.organizationId,
-            archivedAt: null,
-          },
-        },
-      })
+      const remainingLinks = await this.countRemainingClientLinks(
+        tx,
+        reviewerId,
+        client.organizationId
+      )
 
-      // Only invalidate session if reviewer lost their LAST active client link in this org
-      if (remainingLinks === 0) {
-        await tx.reviewer.update({
-          where: { id: reviewerId },
-          data: {
-            sessionVersion: {
-              increment: 1,
-            },
-          },
-        })
-      }
+      await this.logReviewerRemovalSecurityEvents(
+        tx,
+        reviewerId,
+        client.organizationId,
+        internalActor,
+        remainingLinks
+      )
 
       this.logReviewerRemoval(reviewerId, clientId, client.organizationId, actor)
 
       await this.logReviewerRemovalActivity(tx, client.organizationId, clientId, actor)
+    })
+  }
+
+  private async countRemainingClientLinks(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewerId: string,
+    organizationId: string
+  ): Promise<number> {
+    return await tx.clientReviewer.count({
+      where: {
+        reviewerId,
+        archivedAt: null,
+        client: {
+          organizationId,
+          archivedAt: null,
+        },
+      },
+    })
+  }
+
+  private async logReviewerRemovalSecurityEvents(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewerId: string,
+    organizationId: string,
+    internalActor: {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+    },
+    remainingLinks: number
+  ): Promise<void> {
+    const lastLinkRemoved = remainingLinks === 0
+
+    if (lastLinkRemoved) {
+      await tx.reviewer.update({
+        where: { id: reviewerId },
+        data: {
+          sessionVersion: {
+            increment: 1,
+          },
+        },
+      })
+
+      logger.warn({
+        service: 'ClientService',
+        operation: 'removeReviewer',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        targetId: reviewerId,
+        organizationId,
+        metadata: { reason: 'Last client link removed' },
+      })
+    }
+
+    logger.warn({
+      service: 'ClientService',
+      operation: 'removeReviewer',
+      event: 'CLIENT_REVIEWER_REMOVED',
+      isSecurityEvent: true,
+      actorId: internalActor.userId,
+      targetId: reviewerId,
+      organizationId,
+      metadata: { lastLinkRemoved },
     })
   }
 

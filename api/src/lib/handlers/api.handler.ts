@@ -2,14 +2,20 @@ import type {
   APIGatewayProxyEvent,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
+import { randomUUID } from 'crypto'
 
 import {
+  ActorType,
   type AuthenticatedEvent,
 } from '../../models'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { AuthService } from '../auth'
 import { onboardingGuard } from '../auth/utils/onboarding-guard'
 import type { ErrorService } from '../errors/error.service'
+import {
+  runWithRequestContext,
+  updateRequestContext,
+} from '../request-context'
 import { addCorsHeaders, handlePreflightRequest } from '../utils/cors'
 
 export class ApiHandlerFactory {
@@ -27,25 +33,49 @@ export class ApiHandlerFactory {
     return async (
       event: APIGatewayProxyEvent
     ): Promise<APIGatewayProxyStructuredResultV2> => {
-      const preflightResponse = handlePreflightRequest(event)
-      if (preflightResponse) {
-        return preflightResponse
-      }
+      const requestId =
+        event.requestContext?.requestId ||
+        event.headers?.['x-request-id'] ||
+        randomUUID()
 
-      try {
-        const authenticatedEvent = await this.authService.authenticate(event)
-        const guardedEvent = onboardingGuard(authenticatedEvent)
-        const response = await handler(guardedEvent)
-        return addCorsHeaders(event, response)
-      } catch (error) {
-        const requestId =
-          event.requestContext.requestId || event.headers['x-request-id']
+      return runWithRequestContext(
+        Object.freeze({ requestId }),
+        async () => {
+          try {
+            const preflightResponse = handlePreflightRequest(event)
+            if (preflightResponse) {
+              return addCorsHeaders(event, preflightResponse)
+            }
 
-        const errorResponse = this.errorService.handle(error, {
-          requestId,
-        })
-        return addCorsHeaders(event, errorResponse)
-      }
+            const authenticatedEvent = await this.authService.authenticate(event)
+            const guardedEvent = onboardingGuard(authenticatedEvent)
+
+            const actorId =
+              guardedEvent.authContext.actor.type === ActorType.Internal
+                ? guardedEvent.authContext.actor.userId
+                : guardedEvent.authContext.actor.reviewerId
+
+            const actorType =
+              guardedEvent.authContext.actor.type === ActorType.Internal
+                ? 'USER'
+                : 'REVIEWER'
+
+            updateRequestContext({
+              organizationId: guardedEvent.authContext.organizationId,
+              actorId,
+              actorType,
+            })
+
+            const response = await handler(guardedEvent)
+            return addCorsHeaders(event, response)
+          } catch (error) {
+            const errorResponse = this.errorService.handle(error, {
+              requestId,
+            })
+            return addCorsHeaders(event, errorResponse)
+          }
+        }
+      )
     }
   }
 

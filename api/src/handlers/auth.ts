@@ -151,6 +151,23 @@ function logAuthError(
           : undefined,
     },
   })
+
+  if (event === 'LOGIN_FAILURE') {
+    logger.warn({
+      service: 'auth',
+      operation: 'logAuthError',
+      event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
+      metadata: {
+        errorCode:
+          error instanceof ValidationError ||
+          error instanceof UnauthorizedError ||
+          error instanceof ForbiddenError
+            ? error.code
+            : undefined,
+      },
+    })
+  }
 }
 
 function logLoginSuccess(
@@ -183,6 +200,15 @@ function logLoginSuccess(
       actorId: internalActor.userId,
       organizationId: internalActor.organizationId,
     })
+
+    logger.warn({
+      service: 'auth',
+      operation: 'logLoginSuccess',
+      event: 'LOGIN_SUCCESS',
+      isSecurityEvent: true,
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
   } else {
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
@@ -201,6 +227,14 @@ function logLoginSuccess(
       event: 'SESSION_CREATED',
       actorId: reviewerActor.reviewerId,
       clientId: reviewerActor.clientId,
+    })
+
+    logger.warn({
+      service: 'auth',
+      operation: 'logLoginSuccess',
+      event: 'LOGIN_SUCCESS',
+      isSecurityEvent: true,
+      actorId: reviewerActor.reviewerId,
     })
   }
 }
@@ -330,8 +364,10 @@ function handleCallbackValidationError(
 
   if (error.message.startsWith('OAuth error:')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: {
         reason: 'OAuth error in callback',
@@ -345,8 +381,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Missing required OAuth parameters')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Invalid callback parameters' },
     })
@@ -355,8 +393,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Missing OAuth state in cookies')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Missing OAuth state in cookies' },
     })
@@ -365,8 +405,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Invalid activation token')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Invalid activation token in cookies' },
     })

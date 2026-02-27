@@ -1,8 +1,9 @@
 import pino from 'pino'
 
+import { getRequestContext } from '../request-context'
+
 export interface LogContext {
   level: 'info' | 'warn' | 'error' | 'debug'
-  timestamp: string
   environment: string
   requestId?: string
   organizationId?: string
@@ -122,17 +123,41 @@ function assignStringField(
   }
 }
 
+function getEffectiveLevel(
+  level: LogContext['level'],
+  isSecurityEvent: boolean
+): LogContext['level'] {
+  if (isSecurityEvent && level === 'info') {
+    return 'warn'
+  }
+  return level
+}
+
+function enrichSecurityMetadata(
+  metadata: Record<string, unknown> | undefined,
+  isSecurityEvent: boolean
+): Record<string, unknown> | undefined {
+  if (!isSecurityEvent) {
+    return metadata
+  }
+
+  return {
+    ...(metadata || {}),
+    security: true,
+    category: 'SECURITY',
+  }
+}
+
 function buildLogContextFromObject(
   level: LogContext['level'],
   ctx: Record<string, unknown>
 ): LogContext {
-  const timestamp = pino.stdTimeFunctions.isoTime()
   const environment = process.env.NODE_ENV || 'development'
   const error = ctx.error ? normalizeError(ctx.error) : undefined
+  const isSecurityEvent = ctx.isSecurityEvent === true
   
   const context: LogContext = {
-    level,
-    timestamp,
+    level: getEffectiveLevel(level, isSecurityEvent),
     environment,
   }
 
@@ -146,9 +171,12 @@ function buildLogContextFromObject(
   if (ctx.actorType === 'USER' || ctx.actorType === 'REVIEWER') {
     context.actorType = ctx.actorType as 'USER' | 'REVIEWER'
   }
-  if (ctx.metadata && typeof ctx.metadata === 'object') {
-    context.metadata = ctx.metadata as Record<string, unknown>
-  }
+  
+  const baseMetadata = ctx.metadata && typeof ctx.metadata === 'object'
+    ? ctx.metadata as Record<string, unknown>
+    : undefined
+  context.metadata = enrichSecurityMetadata(baseMetadata, isSecurityEvent)
+  
   if (error) {
     context.error = error
   }
@@ -156,11 +184,30 @@ function buildLogContextFromObject(
   return context
 }
 
+function mergeRequestContext(context: LogContext): void {
+  const requestContext = getRequestContext()
+  if (!requestContext) {
+    return
+  }
+
+  if (!context.requestId && requestContext.requestId) {
+    context.requestId = requestContext.requestId
+  }
+  if (!context.organizationId && requestContext.organizationId) {
+    context.organizationId = requestContext.organizationId
+  }
+  if (!context.actorId && requestContext.actorId) {
+    context.actorId = requestContext.actorId
+  }
+  if (!context.actorType && requestContext.actorType) {
+    context.actorType = requestContext.actorType
+  }
+}
+
 function buildLogContext(
   level: LogContext['level'],
   input: unknown
 ): LogContext {
-  const timestamp = new Date().toISOString()
   const environment = process.env.NODE_ENV || 'development'
   
   let context: LogContext
@@ -170,25 +217,24 @@ function buildLogContext(
   } else if (typeof input === 'string') {
     context = {
       level,
-      timestamp,
       environment,
       metadata: { message: input },
     }
   } else if (input instanceof Error) {
     context = {
       level,
-      timestamp,
       environment,
       error: normalizeError(input),
     }
   } else {
     context = {
       level,
-      timestamp,
       environment,
       metadata: { data: input },
     }
   }
+
+  mergeRequestContext(context)
 
   const filteredContext = filterPII(context) as LogContext
   return filteredContext
@@ -196,6 +242,7 @@ function buildLogContext(
 
 const pinoLogger = pino({
   level: process.env.LOG_LEVEL || 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
     level: (label: string) => {
       return { level: label }
@@ -212,7 +259,7 @@ function safeLog(
 ): void {
   try {
     const logContext = buildLogContext(level, context)
-    pinoLogger[level](logContext)
+    pinoLogger[logContext.level](logContext)
   } catch {
     try {
       process.stderr.write('[LOGGER_FAILURE]\n')

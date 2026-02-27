@@ -224,6 +224,21 @@ export class OrganizationService implements IOrganizationService {
 
       await this.archiveUser(tx, targetUserId, organizationId)
 
+      const internalActor = actor as {
+        type: typeof ActorType.Internal
+        userId: string
+        organizationId: string
+      }
+      logger.warn({
+        service: 'OrganizationService',
+        operation: 'removeUser',
+        event: 'USER_ARCHIVED',
+        isSecurityEvent: true,
+        actorId: internalActor.userId,
+        targetId: targetUserId,
+        organizationId,
+      })
+
       this.logUserRemoval(targetUserId, organizationId, targetUser.role, actor)
 
       await this.logUserRemovalActivity(tx, organizationId, targetUserId, actor)
@@ -291,6 +306,28 @@ export class OrganizationService implements IOrganizationService {
     })
   }
 
+  private logRoleChange(
+    actorUserId: string,
+    targetUserId: string,
+    organizationId: string,
+    oldRole: UserRole,
+    newRole: UserRole
+  ): void {
+    logger.warn({
+      service: 'OrganizationService',
+      operation: 'updateUserRole',
+      event: 'ROLE_CHANGED',
+      isSecurityEvent: true,
+      actorId: actorUserId,
+      targetId: targetUserId,
+      organizationId,
+      metadata: {
+        oldRole,
+        newRole,
+      },
+    })
+  }
+
   private logUserRemoval(
     targetUserId: string,
     organizationId: string,
@@ -309,21 +346,17 @@ export class OrganizationService implements IOrganizationService {
       onboardingCompleted: boolean
     }
 
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'MEMBERSHIP_REMOVED',
-        actorType: 'INTERNAL',
-        actorId: targetUserId,
-        organizationId,
-        metadata: {
-          removedBy: internalActor.userId,
-          role,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+   logger.info({
+      source: 'auth',
+      event: 'MEMBERSHIP_REMOVED',
+      actorType: 'INTERNAL',
+      actorId: targetUserId,
+      organizationId,
+      metadata: {
+        removedBy: internalActor.userId,
+        role,
+      },
+    })
   }
 
   private async logUserRemovalActivity(
@@ -393,22 +426,7 @@ export class OrganizationService implements IOrganizationService {
         newRole
       )
 
-      try {
-        logger.info({
-          source: 'auth',
-          event: 'ROLE_CHANGED',
-          actorType: 'INTERNAL',
-          actorId: targetUserId,
-          organizationId,
-          metadata: {
-            oldRole,
-            newRole,
-            changedBy: actor.userId,
-          },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      this.logRoleChange(actor.userId, targetUserId, organizationId, oldRole, newRole)
 
       await this.logUserRoleUpdate(
         tx,
