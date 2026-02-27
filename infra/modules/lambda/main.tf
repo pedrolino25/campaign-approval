@@ -83,7 +83,6 @@ resource "aws_lambda_function" "api" {
       SQS_QUEUE_URL            = var.sqs_queue_url
       COGNITO_USER_POOL_ID     = var.cognito_user_pool_id
       COGNITO_APP_CLIENT_ID    = var.cognito_app_client_id
-      COGNITO_DOMAIN           = var.cognito_domain
       FRONTEND_URL             = var.frontend_url
       WORKLIENT_API_URL        = var.worklient_api_url
       DATABASE_URL             = var.database_url
@@ -131,7 +130,6 @@ resource "aws_lambda_function" "auth" {
       SQS_QUEUE_URL            = var.sqs_queue_url
       COGNITO_USER_POOL_ID     = var.cognito_user_pool_id
       COGNITO_APP_CLIENT_ID    = var.cognito_app_client_id
-      COGNITO_DOMAIN           = var.cognito_domain
       FRONTEND_URL             = var.frontend_url
       WORKLIENT_API_URL        = var.worklient_api_url
       DATABASE_URL             = var.database_url
@@ -183,7 +181,6 @@ resource "aws_lambda_function" "email_worker" {
       SENDGRID_TEMPLATE_REVIEW_REMINDER          = var.sendgrid_template_ids.REVIEW_REMINDER
       SENDGRID_TEMPLATE_INVITATION               = var.sendgrid_template_ids.INVITATION
       APP_BASE_URL                               = var.app_base_url
-      COGNITO_DOMAIN                             = var.cognito_domain
       FRONTEND_URL                               = var.frontend_url
       WORKLIENT_API_URL                          = var.worklient_api_url
     }
@@ -231,7 +228,6 @@ resource "aws_lambda_function" "review_reminder" {
       DATABASE_URL      = var.database_url
       SQS_QUEUE_URL     = var.sqs_queue_url
       NODE_ENV          = var.environment
-      COGNITO_DOMAIN    = var.cognito_domain
       FRONTEND_URL      = var.frontend_url
       WORKLIENT_API_URL = var.worklient_api_url
     }

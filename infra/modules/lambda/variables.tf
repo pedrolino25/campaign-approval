@@ -127,11 +127,6 @@ variable "worklient_api_url" {
   type        = string
 }
 
-variable "cognito_domain" {
-  description = "Cognito domain (hosted UI domain)"
-  type        = string
-}
-
 variable "aws_region" {
   description = "AWS region"
   type        = string
