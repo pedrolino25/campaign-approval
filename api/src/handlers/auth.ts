@@ -1218,6 +1218,18 @@ async function processLogin(
     returnJson: true,
   })
 
+  logger.info({
+    source: 'auth',
+    event: 'PROCESS_LOGIN_RESPONSE_AUDIT',
+    ...context,
+    metadata: {
+      hasCookies: !!sessionResponse.cookies,
+      cookiesLength: sessionResponse.cookies?.length ?? 0,
+      cookiesContent: sessionResponse.cookies,
+      statusCode: sessionResponse.statusCode,
+    },
+  })
+
   if (validated.inviteToken) {
     await acceptInvitationAfterSession(
       validated.inviteToken,
