@@ -113,9 +113,25 @@ export class SessionService {
     return typeof p.reviewerId === 'string' && !!p.reviewerId
   }
 
+  private getCookieDomain(): string | undefined {
+    const hostname = new URL(config.FRONTEND_URL).hostname
+
+    if (hostname.endsWith('.local.worklient.test')) {
+      return '.local.worklient.test'
+    }
+
+    if (hostname.endsWith('.worklient.com') || hostname === 'worklient.com') {
+      return '.worklient.com'
+    }
+
+    return undefined
+  }
+
   buildSessionCookie(jwt: string): string {
     const encodedJwt = encodeURIComponent(jwt)
-    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
+    const domain = this.getCookieDomain()
+    const domainPart = domain ? `Domain=${domain}; ` : ''
+    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {

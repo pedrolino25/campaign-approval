@@ -5,6 +5,7 @@ import type {
 
 const allowedOrigins = [
   'https://worklient.com',
+  'https://dev.worklient.com',
   'https://app.local.worklient.test:3000',
 ]
 
