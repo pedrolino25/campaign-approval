@@ -105,7 +105,7 @@ To run the project locally, follow the detailed guides:
 See:
 
 ```
-api/README.md
+- **[Backend setup](./api/README.md)**
 ```
 
 This covers:
