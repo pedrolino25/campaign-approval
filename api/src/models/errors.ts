@@ -12,67 +12,69 @@ export enum ErrorCode {
 
 export abstract class DomainError extends Error {
   public readonly code: ErrorCode
-  public readonly statusCode: number
+  public readonly details?: unknown
+  public readonly cause?: Error
 
-  constructor(code: ErrorCode, message: string, statusCode: number) {
+  constructor(code: ErrorCode, message: string, details?: unknown, cause?: Error) {
     super(message)
     this.name = this.constructor.name
     this.code = code
-    this.statusCode = statusCode
+    this.details = details
+    this.cause = cause
     Object.setPrototypeOf(this, new.target.prototype)
   }
 }
 
 export class InvalidStateTransitionError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.INVALID_STATE_TRANSITION, message, 409)
+  constructor(message: string, details?: unknown) {
+    super(ErrorCode.INVALID_STATE_TRANSITION, message, details)
   }
 }
 
 export class ForbiddenError extends DomainError {
-  constructor(message: string = 'Access denied') {
-    super(ErrorCode.FORBIDDEN, message, 403)
+  constructor(message: string = 'Access denied', details?: unknown) {
+    super(ErrorCode.FORBIDDEN, message, details)
   }
 }
 
 export class NotFoundError extends DomainError {
-  constructor(message: string = 'Resource not found') {
-    super(ErrorCode.NOT_FOUND, message, 404)
+  constructor(message: string = 'Resource not found', details?: unknown) {
+    super(ErrorCode.NOT_FOUND, message, details)
   }
 }
 
 export class UnauthorizedError extends DomainError {
-  constructor(message: string = 'Unauthorized') {
-    super(ErrorCode.UNAUTHORIZED, message, 401)
+  constructor(message: string = 'Unauthorized', details?: unknown) {
+    super(ErrorCode.UNAUTHORIZED, message, details)
   }
 }
 
 export class ValidationError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.VALIDATION_ERROR, message, 400)
+  constructor(message: string, details?: unknown) {
+    super(ErrorCode.VALIDATION_ERROR, message, details)
   }
 }
 
 export class ConflictError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.CONFLICT, message, 409)
+  constructor(message: string, details?: unknown) {
+    super(ErrorCode.CONFLICT, message, details)
   }
 }
 
 export class BusinessRuleViolationError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.BUSINESS_RULE_VIOLATION, message, 400)
+  constructor(message: string, details?: unknown) {
+    super(ErrorCode.BUSINESS_RULE_VIOLATION, message, details)
   }
 }
 
 export class InvariantViolationError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.INVARIANT_VIOLATION, message, 400)
+  constructor(message: string, details?: unknown) {
+    super(ErrorCode.INVARIANT_VIOLATION, message, details)
   }
 }
 
 export class InternalError extends DomainError {
-  constructor(message: string) {
-    super(ErrorCode.INTERNAL_ERROR, message, 500)
+  constructor(message: string, details?: unknown, cause?: Error) {
+    super(ErrorCode.INTERNAL_ERROR, message, details, cause)
   }
 }

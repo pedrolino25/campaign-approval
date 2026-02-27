@@ -26,7 +26,13 @@ import {
 } from '../lib/auth/utils/cookie.utils'
 import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
-import { buildErrorResponse } from '../lib/auth/utils/response-builders'
+import {
+  buildErrorResponse,
+  buildInvalidRequestResponse,
+  buildMissingParamsResponse,
+  buildMissingStateResponse,
+  buildOAuthErrorResponse,
+} from '../lib/auth/utils/response-builders'
 import { buildSessionResponse } from '../lib/auth/utils/session.utils'
 import { createSessionFromTokens } from '../lib/auth/utils/token-session.utils'
 import {
@@ -88,20 +94,16 @@ function extractSafeContext(
   userAgent?: string
   requestId?: string
 } {
-  try {
-    const requestContext = event.requestContext
-    const headers = event.headers || {}
+  const requestContext = event.requestContext
+  const headers = event.headers || {}
 
-    return {
-      ip:
-        (requestContext as { identity?: { sourceIp?: string } })?.identity
-          ?.sourceIp || undefined,
-      userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
-      requestId:
-        (requestContext as { requestId?: string })?.requestId || undefined,
-    }
-  } catch {
-    return {}
+  return {
+    ip:
+      (requestContext as { identity?: { sourceIp?: string } })?.identity
+        ?.sourceIp || undefined,
+    userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+    requestId:
+      (requestContext as { requestId?: string })?.requestId || undefined,
   }
 }
 
@@ -131,79 +133,71 @@ function logAuthError(
   context: { ip?: string; userAgent?: string; requestId?: string },
   error: unknown
 ): void {
-  try {
-    logger.error({
-      source: 'auth',
-      event,
-      ...context,
-      metadata: {
-        error: error instanceof Error ? error.message : String(error),
-        errorCode:
-          error instanceof ValidationError ||
-          error instanceof UnauthorizedError ||
-          error instanceof ForbiddenError
-            ? error.code
-            : undefined,
-      },
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.error({
+    source: 'auth',
+    event,
+    ...context,
+    metadata: {
+      error: error instanceof Error ? error.message : String(error),
+      errorCode:
+        error instanceof ValidationError ||
+        error instanceof UnauthorizedError ||
+        error instanceof ForbiddenError
+          ? error.code
+          : undefined,
+    },
+  })
 }
 
 function logLoginSuccess(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
   context: { ip?: string; userAgent?: string; requestId?: string }
 ): void {
-  try {
-    const baseLogData = {
-      source: 'auth' as const,
-      actorType: actor.type,
-      ...context,
+  const baseLogData = {
+    source: 'auth' as const,
+    actorType: actor.type,
+    ...context,
+  }
+
+  if (actor.type === ActorType.Internal) {
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+      role: 'OWNER' | 'ADMIN' | 'MEMBER'
     }
+    logger.info({
+      ...baseLogData,
+      event: 'LOGIN_SUCCESS',
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
 
-    if (actor.type === ActorType.Internal) {
-      const internalActor = actor as {
-        type: typeof ActorType.Internal
-        userId: string
-        organizationId: string
-        role: 'OWNER' | 'ADMIN' | 'MEMBER'
-      }
-      logger.info({
-        ...baseLogData,
-        event: 'LOGIN_SUCCESS',
-        actorId: internalActor.userId,
-        organizationId: internalActor.organizationId,
-      })
-
-      logger.info({
-        ...baseLogData,
-        event: 'SESSION_CREATED',
-        actorId: internalActor.userId,
-        organizationId: internalActor.organizationId,
-      })
-    } else {
-      const reviewerActor = actor as {
-        type: typeof ActorType.Reviewer
-        reviewerId: string
-        clientId: string | null
-      }
-      logger.info({
-        ...baseLogData,
-        event: 'LOGIN_SUCCESS',
-        actorId: reviewerActor.reviewerId,
-        clientId: reviewerActor.clientId,
-      })
-
-      logger.info({
-        ...baseLogData,
-        event: 'SESSION_CREATED',
-        actorId: reviewerActor.reviewerId,
-        clientId: reviewerActor.clientId,
-      })
+    logger.info({
+      ...baseLogData,
+      event: 'SESSION_CREATED',
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
+  } else {
+    const reviewerActor = actor as {
+      type: typeof ActorType.Reviewer
+      reviewerId: string
+      clientId: string | null
     }
-  } catch {
-    // Never throw if logging fails
+    logger.info({
+      ...baseLogData,
+      event: 'LOGIN_SUCCESS',
+      actorId: reviewerActor.reviewerId,
+      clientId: reviewerActor.clientId,
+    })
+
+    logger.info({
+      ...baseLogData,
+      event: 'SESSION_CREATED',
+      actorId: reviewerActor.reviewerId,
+      clientId: reviewerActor.clientId,
+    })
   }
 }
 
@@ -218,7 +212,6 @@ async function processOAuthCallback(
   userId: string
   email: string
   reviewerActivationCompleted: boolean
-  errorResponse?: APIGatewayProxyStructuredResultV2
 }> {
   const tokenResponse = await oauthService.exchangeCodeForTokens(
     code,
@@ -233,7 +226,7 @@ async function processOAuthCallback(
   let reviewerActivationCompleted = false
 
   if (activationToken) {
-    const activationResult = await processReviewerActivation(
+    await processReviewerActivation(
       activationToken,
       userId,
       email,
@@ -241,16 +234,6 @@ async function processOAuthCallback(
       invitationRepository,
       invitationService
     )
-
-    if (!activationResult.success) {
-      return {
-        userId,
-        email,
-        reviewerActivationCompleted: false,
-        errorResponse: activationResult.errorResponse,
-      }
-    }
-
     reviewerActivationCompleted = true
   }
 
@@ -304,15 +287,11 @@ const handleLogin = (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGIN_STARTED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGIN_STARTED',
+    ...context,
+  })
 
   const { authorizationUrl, codeVerifier, state } =
     oauthService.generateAuthorizationUrl(event)
@@ -336,41 +315,94 @@ const handleLogin = (
   return Promise.resolve(response)
 }
 
+function handleCallbackValidationError(
+  error: unknown,
+  event: APIGatewayProxyEvent,
+  context: { ip?: string; userAgent?: string; requestId?: string }
+): APIGatewayProxyStructuredResultV2 | null {
+  if (!(error instanceof ValidationError)) {
+    return null
+  }
+
+  if (error.message.startsWith('OAuth error:')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: {
+        reason: 'OAuth error in callback',
+        error: error.message,
+      },
+    })
+    const queryParams = event.queryStringParameters || {}
+    const errorDescription = queryParams.error_description
+    return buildOAuthErrorResponse(queryParams.error || 'oauth_error', errorDescription)
+  }
+
+  if (error.message.includes('Missing required OAuth parameters')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Invalid callback parameters' },
+    })
+    return buildMissingParamsResponse()
+  }
+
+  if (error.message.includes('Missing OAuth state in cookies')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Missing OAuth state in cookies' },
+    })
+    return buildMissingStateResponse()
+  }
+
+  if (error.message.includes('Invalid activation token')) {
+    logger.warn({
+      source: 'auth',
+      event: 'LOGIN_FAILURE',
+      ...context,
+      metadata: { reason: 'Invalid activation token in cookies' },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
+  }
+
+  return null
+}
+
 const handleCallback = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
-  const validation = await validateCallbackParams(event)
 
-  if (!validation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'LOGIN_FAILURE',
-        ...context,
-        metadata: { reason: 'Invalid callback parameters' },
-      })
-    } catch {
-      // Never throw if logging fails
+  let callbackParams: Awaited<ReturnType<typeof validateCallbackParams>>
+  try {
+    callbackParams = await validateCallbackParams(event)
+  } catch (error) {
+    const oauthErrorResponse = handleCallbackValidationError(error, event, context)
+    if (oauthErrorResponse) {
+      return oauthErrorResponse
     }
-    return validation.errorResponse!
+
+    logAuthError('LOGIN_FAILURE', context, error)
+    return buildErrorResponse(error)
   }
 
-  const { code, state, codeVerifier, expectedState, activationToken } = validation
+  const { code, state, codeVerifier, expectedState, activationToken } = callbackParams
 
   try {
     const oauthResult = await processOAuthCallback(
-      code!,
-      codeVerifier!,
-      state!,
-      expectedState!,
+      code,
+      codeVerifier,
+      state,
+      expectedState,
       activationToken,
       context
     )
-
-    if (oauthResult.errorResponse) {
-      return oauthResult.errorResponse
-    }
 
     return await buildSessionForUser(
       oauthResult.userId,
@@ -384,7 +416,7 @@ const handleCallback = async (
 
     const errorResponse = buildErrorResponse(error)
 
-    if (validation.activationToken) {
+    if (activationToken) {
       clearActivationCookie(errorResponse)
     }
 
@@ -398,15 +430,11 @@ const handleLogout = (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGOUT',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGOUT',
+    ...context,
+  })
 
   const cookies: string[] = [sessionService.buildClearSessionCookie()]
 
@@ -439,19 +467,15 @@ function logSessionCheckFailure(
   reason: string,
   metadata?: Record<string, unknown>
 ): void {
-  try {
-    logger.warn({
-      source: 'auth',
-      event: 'SESSION_CHECK_FAILED',
-      ...context,
-      metadata: {
-        reason,
-        ...metadata,
-      },
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.warn({
+    source: 'auth',
+    event: 'SESSION_CHECK_FAILED',
+    ...context,
+    metadata: {
+      reason,
+      ...metadata,
+    },
+  })
 }
 
 function createUnauthorizedResponse(message: string): APIGatewayProxyStructuredResultV2 {
@@ -623,17 +647,13 @@ const handleCompleteSignupInternal = async (
 
   const newSessionToken = await sessionService.signSession(newSessionPayload)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'COMPLETE_SIGNUP_INTERNAL',
-      actorType: 'INTERNAL',
-      actorId: actor.userId,
-      organizationId: actor.organizationId,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'COMPLETE_SIGNUP_INTERNAL',
+    actorType: 'INTERNAL',
+    actorId: actor.userId,
+    organizationId: actor.organizationId,
+  })
 
   return buildInternalOnboardingResponse(result, newSessionToken)
 }
@@ -737,16 +757,12 @@ const handleCompleteSignupReviewer = async (
 
   const newSessionToken = await sessionService.signSession(newSessionPayload)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'COMPLETE_SIGNUP_REVIEWER',
-      actorType: 'REVIEWER',
-      actorId: actor.reviewerId,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'COMPLETE_SIGNUP_REVIEWER',
+    actorType: 'REVIEWER',
+    actorId: actor.reviewerId,
+  })
 
   return buildReviewerOnboardingResponse(updatedReviewer, newSessionToken)
 }
@@ -783,56 +799,54 @@ const handleReviewerActivate = async (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'INVITATION_ACTIVATION_ATTEMPT',
-      actorType: 'REVIEWER',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'INVITATION_ACTIVATION_ATTEMPT',
+    actorType: 'REVIEWER',
+    ...context,
+  })
 
   const queryParams = event.queryStringParameters || {}
   const token = queryParams.token
 
-  const tokenValidation = validateActivationToken(token)
-  if (!tokenValidation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACTIVATION_FAILURE',
-        actorType: 'REVIEWER',
-        ...context,
-        metadata: { reason: 'Invalid activation token format' },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-    return tokenValidation.errorResponse!
+  let normalizedToken: string
+  try {
+    normalizedToken = validateActivationToken(token)
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACTIVATION_FAILURE',
+      actorType: 'REVIEWER',
+      ...context,
+      metadata: {
+        reason: 'Invalid activation token format',
+        error: error instanceof Error ? error.message : String(error),
+      },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
   }
-
-  const normalizedToken = tokenValidation.normalizedToken!
 
   const invitation = await invitationRepository.findByToken(normalizedToken)
-  const invitationValidation = validateReviewerInvitation(invitation)
-  if (!invitationValidation.valid) {
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACTIVATION_FAILURE',
-        actorType: 'REVIEWER',
-        ...context,
-        metadata: { reason: 'Invitation validation failed' },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
-    return invitationValidation.errorResponse!
+  try {
+    validateReviewerInvitation(invitation)
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACTIVATION_FAILURE',
+      actorType: 'REVIEWER',
+      ...context,
+      metadata: {
+        reason: 'Invitation validation failed',
+        error: error instanceof Error ? error.message : String(error),
+      },
+    })
+    const errorResponse = buildInvalidRequestResponse()
+    clearActivationCookie(errorResponse)
+    return errorResponse
   }
 
-  // Check if Cognito user exists, create if not
   const email = invitation!.email.toLowerCase().trim()
   const userExists = await cognitoService.userExistsByEmail(email)
 
@@ -876,16 +890,12 @@ const handleSignUp = async (
 
     await cognitoService.signUp(validated.email, validated.password)
 
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'SIGNUP_STARTED',
-        ...context,
-        metadata: { email: validated.email },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.info({
+      source: 'auth',
+      event: 'SIGNUP_STARTED',
+      ...context,
+      metadata: { email: validated.email },
+    })
 
     return {
       statusCode: 200,
@@ -897,19 +907,15 @@ const handleSignUp = async (
       }),
     }
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'SIGNUP_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          errorCode: error instanceof ValidationError ? error.code : undefined,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.error({
+      source: 'auth',
+      event: 'SIGNUP_FAILURE',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        errorCode: error instanceof ValidationError ? error.code : undefined,
+      },
+    })
 
     return buildErrorResponse(error)
   }
@@ -920,16 +926,12 @@ function logEmailVerificationEvent(
   context: { ip?: string; userAgent?: string; requestId?: string },
   metadata: Record<string, unknown>
 ): void {
-  try {
-    logger.info({
-      source: 'auth',
-      event,
-      ...context,
-      metadata,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event,
+    ...context,
+    metadata,
+  })
 }
 
 async function processEmailVerification(
@@ -1036,18 +1038,14 @@ const handleResendVerification = async (
     } catch (error) {
       // Validation error - return success to prevent enumeration
       // But log it for debugging
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
-          ...context,
-          metadata: {
-            error: error instanceof Error ? error.message : String(error),
-          },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
+        ...context,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
       return {
         statusCode: 200,
         headers: {
@@ -1125,22 +1123,16 @@ const handleEmailPasswordLogin = async (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const context = extractSafeContext(event)
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'LOGIN_STARTED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'LOGIN_STARTED',
+    ...context,
+  })
 
   try {
     const validated = parseAndValidateBody(event, LoginSchema)
     return await processLogin(validated, context)
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error)
     logAuthError('LOGIN_FAILURE', context, error)
     return buildErrorResponse(error)
   }
@@ -1208,16 +1200,12 @@ const handleResetPassword = async (
       validated.newPassword
     )
 
-    try {
-      logger.info({
-        source: 'auth',
-        event: 'PASSWORD_RESET_SUCCESS',
-        ...context,
-        metadata: { email: validated.email },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.info({
+      source: 'auth',
+      event: 'PASSWORD_RESET_SUCCESS',
+      ...context,
+      metadata: { email: validated.email },
+    })
 
     return {
       statusCode: 200,
@@ -1229,19 +1217,15 @@ const handleResetPassword = async (
       }),
     }
   } catch (error) {
-    try {
-      logger.error({
-        source: 'auth',
-        event: 'PASSWORD_RESET_FAILURE',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          errorCode: error instanceof ValidationError ? error.code : undefined,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    logger.error({
+      source: 'auth',
+      event: 'PASSWORD_RESET_FAILURE',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        errorCode: error instanceof ValidationError ? error.code : undefined,
+      },
+    })
 
     return buildErrorResponse(error)
   }
@@ -1271,19 +1255,18 @@ async function acceptInvitationAfterSession(
     )
   } catch (error) {
     // Log error but don't fail the request - session is already created
-    try {
-      logger.warn({
-        source: 'auth',
-        event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
-        ...context,
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          email,
-        },
-      })
-    } catch {
-      // Never throw if logging fails
-    }
+    // This is a non-critical failure that should not break the auth flow
+    logger.warn({
+      source: 'auth',
+      event: 'INVITATION_ACCEPTANCE_FAILED_AFTER_SESSION',
+      ...context,
+      metadata: {
+        error: error instanceof Error ? error.message : String(error),
+        email,
+      },
+    })
+    // Note: Error is intentionally not rethrown here because session is already created
+    // This is a non-critical failure that should not break the auth flow
   }
 }
 
@@ -1328,15 +1311,11 @@ async function processPasswordChange(
     refreshToken
   )
 
-  try {
-    logger.info({
-      source: 'auth',
-      event: 'PASSWORD_CHANGED',
-      ...context,
-    })
-  } catch {
-    // Never throw if logging fails
-  }
+  logger.info({
+    source: 'auth',
+    event: 'PASSWORD_CHANGED',
+    ...context,
+  })
 
   return {
     statusCode: 200,

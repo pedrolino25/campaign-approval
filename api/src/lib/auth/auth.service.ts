@@ -70,20 +70,16 @@ export class AuthService {
     userAgent?: string
     requestId?: string
   } {
-    try {
-      const requestContext = event.requestContext
-      const headers = event.headers || {}
+    const requestContext = event.requestContext
+    const headers = event.headers || {}
 
-      return {
-        ip:
-          (requestContext as { identity?: { sourceIp?: string } })?.identity
-            ?.sourceIp || undefined,
-        userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
-        requestId:
-          (requestContext as { requestId?: string })?.requestId || undefined,
-      }
-    } catch {
-      return {}
+    return {
+      ip:
+        (requestContext as { identity?: { sourceIp?: string } })?.identity
+          ?.sourceIp || undefined,
+      userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+      requestId:
+        (requestContext as { requestId?: string })?.requestId || undefined,
     }
   }
 
@@ -106,37 +102,29 @@ export class AuthService {
 
     if (user.archivedAt !== null) {
       const context = this.extractSafeContext(event)
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'SESSION_INVALIDATED',
-          actorType: 'INTERNAL',
-          actorId: session.userId,
-          organizationId: session.organizationId,
-          ...context,
-          metadata: { reason: 'User archived' },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'SESSION_INVALIDATED',
+        actorType: 'INTERNAL',
+        actorId: session.userId,
+        organizationId: session.organizationId,
+        ...context,
+        metadata: { reason: 'User archived' },
+      })
       throw new UnauthorizedError('Session invalidated: user archived')
     }
 
     if (user.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'SESSION_INVALIDATED',
-          actorType: 'INTERNAL',
-          actorId: session.userId,
-          organizationId: session.organizationId,
-          ...context,
-          metadata: { reason: 'Session version mismatch' },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'SESSION_INVALIDATED',
+        actorType: 'INTERNAL',
+        actorId: session.userId,
+        organizationId: session.organizationId,
+        ...context,
+        metadata: { reason: 'Session version mismatch' },
+      })
       throw new UnauthorizedError('Session invalidated')
     }
   }
@@ -157,37 +145,29 @@ export class AuthService {
 
     if (reviewer.archivedAt !== null) {
       const context = this.extractSafeContext(event)
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'SESSION_INVALIDATED',
-          actorType: 'REVIEWER',
-          actorId: session.reviewerId,
-          clientId: session.clientId,
-          ...context,
-          metadata: { reason: 'Reviewer archived' },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'SESSION_INVALIDATED',
+        actorType: 'REVIEWER',
+        actorId: session.reviewerId,
+        clientId: session.clientId,
+        ...context,
+        metadata: { reason: 'Reviewer archived' },
+      })
       throw new UnauthorizedError('Session invalidated: reviewer archived')
     }
 
     if (reviewer.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
-      try {
-        logger.warn({
-          source: 'auth',
-          event: 'SESSION_INVALIDATED',
-          actorType: 'REVIEWER',
-          actorId: session.reviewerId,
-          clientId: session.clientId,
-          ...context,
-          metadata: { reason: 'Session version mismatch' },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.warn({
+        source: 'auth',
+        event: 'SESSION_INVALIDATED',
+        actorType: 'REVIEWER',
+        actorId: session.reviewerId,
+        clientId: session.clientId,
+        ...context,
+        metadata: { reason: 'Session version mismatch' },
+      })
       throw new UnauthorizedError('Session invalidated')
     }
   }

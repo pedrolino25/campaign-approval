@@ -325,21 +325,17 @@ export class ClientService implements IClientService {
         },
       })
 
-      try {
-        logger.info({
-          source: 'auth',
-          event: 'MEMBERSHIP_REMOVED',
-          actorType: 'REVIEWER',
-          actorId: reviewerId,
-          clientId,
-          organizationId: client.organizationId,
-          metadata: {
-            removedBy: actor.userId,
-          },
-        })
-      } catch {
-        // Never throw if logging fails
-      }
+      logger.info({
+        source: 'auth',
+        event: 'MEMBERSHIP_REMOVED',
+        actorType: 'REVIEWER',
+        actorId: reviewerId,
+        clientId,
+        organizationId: client.organizationId,
+        metadata: {
+          removedBy: actor.userId,
+        },
+      })
 
       const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
         invitedUserEmail: '',
