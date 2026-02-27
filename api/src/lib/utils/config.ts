@@ -3,7 +3,7 @@ import { z } from 'zod'
 const configSchema = z.object({
   COGNITO_USER_POOL_ID: z.string().min(1),
   COGNITO_APP_CLIENT_ID: z.string().min(1),
-  COGNITO_DOMAIN: z.string().min(1),
+  COGNITO_DOMAIN: z.string().optional(),
   AWS_REGION: z.string().min(1),
   ENVIRONMENT: z.enum(['dev', 'prod']),
   LOG_LEVEL: z.string().optional().default('info'),

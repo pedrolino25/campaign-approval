@@ -8,6 +8,9 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "dev:offline": "dotenv -e .env.local -- serverless offline --config serverless.local.yml",
+    "dev:https": "node server.cjs",
+    "dev": "concurrently -k -n OFFLINE,HTTPS -c blue,green \"npm run dev:offline\" \"npm run dev:https\"",
     "build": "npm run build:lambda",
     "build:lambda": "node build.js",
     "generate:openapi": "tsx scripts/generate-openapi.ts",
@@ -34,6 +37,7 @@
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "archiver": "^7.0.1",
+    "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
     "esbuild": "^0.19.11",
     "eslint": "^8.56.0",
@@ -43,6 +47,8 @@
     "eslint-plugin-unused-imports": "^3.0.0",
     "prettier": "^3.1.1",
     "prisma": "^5.7.1",
+    "serverless": "^4.33.0",
+    "serverless-offline": "^14.5.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
