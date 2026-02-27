@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useRef } from 'react'
 
 import { apiFetch } from '@/lib/api/client'
 
@@ -23,6 +23,8 @@ const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
+  const channelRef = useRef<BroadcastChannel | null>(null)
+  const isProcessingBroadcastRef = useRef(false)
 
   const { data: session, isLoading, error } = useQuery<Session>({
     queryKey: ['session'],
@@ -31,14 +33,51 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return sessionData
     },
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
-    placeholderData: (previousData) => previousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   })
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) {
+      return
+    }
+
+    const channel = new BroadcastChannel('worklient_session_channel')
+    channelRef.current = channel
+
+    const handleBroadcastMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'SESSION_INVALIDATED') {
+        if (isProcessingBroadcastRef.current) {
+          return
+        }
+
+        isProcessingBroadcastRef.current = true
+        queryClient.clear()
+        setTimeout(() => {
+          isProcessingBroadcastRef.current = false
+        }, 100)
+      }
+    }
+
+    channel.addEventListener('message', handleBroadcastMessage)
+
+    return () => {
+      channel.removeEventListener('message', handleBroadcastMessage)
+      channel.close()
+      channelRef.current = null
+    }
+  }, [queryClient])
 
   useEffect(() => {
     const handleSessionInvalidated = async () => {
       await queryClient.invalidateQueries({ queryKey: ['session'] })
+
+      if (channelRef.current && !isProcessingBroadcastRef.current) {
+        channelRef.current.postMessage({ type: 'SESSION_INVALIDATED' })
+      }
     }
 
     window.addEventListener('session-invalidated', handleSessionInvalidated)
