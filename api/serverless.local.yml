@@ -1,0 +1,205 @@
+service: worklient-local-api
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: local
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL}
+    SESSION_SECRET: ${env:SESSION_SECRET}
+    ACTIVATION_COOKIE_SECRET: ${env:ACTIVATION_COOKIE_SECRET}
+    CLOUDFRONT_REQUEST_ID_SECRET: ${env:CLOUDFRONT_REQUEST_ID_SECRET}
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
+    COGNITO_APP_CLIENT_ID: ${env:COGNITO_APP_CLIENT_ID}
+    ENVIRONMENT: ${env:ENVIRONMENT}
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+    FRONTEND_URL: ${env:FRONTEND_URL}
+    WORKLIENT_API_URL: ${env:WORKLIENT_API_URL}
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL}
+    SENDGRID_API_KEY: ${env:SENDGRID_API_KEY}
+    SENDGRID_FROM_EMAIL: ${env:SENDGRID_FROM_EMAIL}
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+    host: 0.0.0.0
+    useChildProcesses: true
+    noPrependStageInUrl: true
+
+functions:
+
+  documentation:
+    handler: dist/api/documentation.handler
+    events:
+      - http:
+          method: GET
+          path: api-docs
+      - http:
+          method: GET
+          path: openapi/worklient.v1.json
+
+  auth:
+    handler: dist/api/auth.handler
+    events:
+      - http:
+          method: GET
+          path: auth/callback
+      - http:
+          method: POST
+          path: auth/logout
+      - http:
+          method: GET
+          path: auth/me
+      - http:
+          method: GET
+          path: auth/reviewer/activate
+      - http:
+          method: POST
+          path: auth/complete-signup/internal
+      - http:
+          method: POST
+          path: auth/complete-signup/reviewer
+      - http:
+          method: POST
+          path: auth/signup
+      - http:
+          method: POST
+          path: auth/verify-email
+      - http:
+          method: POST
+          path: auth/resend-verification
+      - http:
+          method: POST
+          path: auth/login
+      - http:
+          method: POST
+          path: auth/forgot-password
+      - http:
+          method: POST
+          path: auth/reset-password
+      - http:
+          method: POST
+          path: auth/change-password
+
+  organization:
+    handler: dist/api/organization.handler
+    events:
+      - http:
+          method: GET
+          path: organization
+      - http:
+          method: PATCH
+          path: organization
+      - http:
+          method: GET
+          path: organization/users
+      - http:
+          method: POST
+          path: organization/users/invite
+      - http:
+          method: GET
+          path: organization/invitations
+      - http:
+          method: POST
+          path: organization/invitations/{token}/accept
+      - http:
+          method: DELETE
+          path: organization/users/{id}
+      - http:
+          method: PATCH
+          path: organization/users/{id}/role
+
+  client:
+    handler: dist/api/client.handler
+    events:
+      - http:
+          method: GET
+          path: clients
+      - http:
+          method: POST
+          path: clients
+      - http:
+          method: PATCH
+          path: clients/{id}
+      - http:
+          method: POST
+          path: clients/{id}/archive
+      - http:
+          method: GET
+          path: clients/{id}/reviewers
+      - http:
+          method: POST
+          path: clients/{id}/reviewers
+      - http:
+          method: DELETE
+          path: clients/{id}/reviewers/{reviewerId}
+
+  review:
+    handler: dist/api/review.handler
+    events:
+      - http:
+          method: GET
+          path: review-items
+      - http:
+          method: POST
+          path: review-items
+      - http:
+          method: GET
+          path: review-items/{id}
+      - http:
+          method: POST
+          path: review-items/{id}/send
+      - http:
+          method: POST
+          path: review-items/{id}/approve
+      - http:
+          method: POST
+          path: review-items/{id}/request-changes
+      - http:
+          method: POST
+          path: review-items/{id}/archive
+      - http:
+          method: GET
+          path: review-items/{id}/activity
+
+  attachment:
+    handler: dist/api/attachment.handler
+    events:
+      - http:
+          method: POST
+          path: attachments/presign
+      - http:
+          method: POST
+          path: review-items/{id}/attachments
+      - http:
+          method: GET
+          path: review-items/{id}/attachments
+      - http:
+          method: DELETE
+          path: review-items/{id}/attachments/{attachmentId}
+
+  comment:
+    handler: dist/api/comment.handler
+    events:
+      - http:
+          method: GET
+          path: review-items/{id}/comments
+      - http:
+          method: POST
+          path: review-items/{id}/comments
+      - http:
+          method: DELETE
+          path: review-items/{id}/comments/{commentId}
+
+  notification:
+    handler: dist/api/notification.handler
+    events:
+      - http:
+          method: GET
+          path: notifications
+      - http:
+          method: PATCH
+          path: notifications/{id}/read

@@ -10,8 +10,7 @@ export async function apiFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  const isInternal = path.startsWith('/api/')
-  const baseUrl = isInternal ? '' : API_URL
+  const baseUrl = API_URL
   const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`
 
   let response: Response
@@ -24,7 +23,7 @@ export async function apiFetch<T>(
         'Content-Type': 'application/json',
         ...options?.headers,
       },
-      mode: isInternal ? 'same-origin' : 'cors',
+      mode: 'cors',
     })
   } catch (error) {
     const parsedError = await handleError(error)

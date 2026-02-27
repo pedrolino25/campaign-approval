@@ -28,9 +28,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['session'],
     queryFn: async () => {
       const sessionData = await apiFetch<Session>('/auth/me')
-      await apiFetch('/api/auth/session', {
-        method: 'POST',
-      }).catch(() => { })
       return sessionData
     },
     retry: false,
