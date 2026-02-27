@@ -259,3 +259,8 @@ Must include:
 - [ ] Side effects after transaction commit
 - [ ] Composite indexes for pagination
 - [ ] Error propagation not swallowed
+- [ ] No comments
+- [ ] No functions with complexity over 10
+- [ ] No functions with more than 80 lines
+
+

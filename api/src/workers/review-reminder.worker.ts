@@ -44,9 +44,13 @@ async function processReviewItemReminder(
 
   if (!updated) {
     logger.info({
-      message: 'Review item already processed by another worker',
-      reviewItemId: reviewItem.id,
-      organizationId,
+      event: 'REVIEW_ITEM_ALREADY_PROCESSED',
+      service: 'review-reminder-worker',
+      operation: 'processReviewItemReminder',
+      metadata: {
+        reviewItemId: reviewItem.id,
+        organizationId,
+      },
     })
     return false
   }
@@ -75,6 +79,57 @@ async function processReviewItemReminder(
   return true
 }
 
+async function processReviewItem(
+  reviewItem: ReviewItem,
+  organizationId: string,
+  cutoffDate: Date,
+  systemActor: ActorContext,
+  reviewItemRepository: ReviewItemRepository,
+  activityLogService: ActivityLogService,
+  workflowEventDispatcher: WorkflowEventDispatcher
+): Promise<boolean> {
+  try {
+    const wasUpdated = await prisma.$transaction(async (tx) => {
+      return await processReviewItemReminder(
+        { id: reviewItem.id },
+        organizationId,
+        cutoffDate,
+        systemActor,
+        reviewItemRepository,
+        activityLogService,
+        workflowEventDispatcher,
+        tx
+      )
+    })
+
+    if (wasUpdated) {
+      logger.info({
+        event: 'REVIEW_REMINDER_PROCESSED',
+        service: 'review-reminder-worker',
+        operation: 'processOrganizationReminders',
+        metadata: {
+          reviewItemId: reviewItem.id,
+          organizationId,
+        },
+      })
+    }
+
+    return wasUpdated
+  } catch (error) {
+    logger.error({
+      event: 'REVIEW_REMINDER_PROCESS_FAILED',
+      service: 'review-reminder-worker',
+      operation: 'processOrganizationReminders',
+      error,
+      metadata: {
+        reviewItemId: reviewItem.id,
+        organizationId,
+      },
+    })
+    return false
+  }
+}
+
 async function processOrganizationReminders(
   organizationId: string,
   reminderIntervalDays: number
@@ -91,18 +146,26 @@ async function processOrganizationReminders(
 
   if (eligibleItems.length === 0) {
     logger.info({
-      message: 'No eligible review items for reminders',
-      organizationId,
-      reminderIntervalDays,
+      event: 'NO_ELIGIBLE_REVIEW_ITEMS',
+      service: 'review-reminder-worker',
+      operation: 'processOrganizationReminders',
+      metadata: {
+        organizationId,
+        reminderIntervalDays,
+      },
     })
     return 0
   }
 
   logger.info({
-    message: 'Found eligible review items for reminders',
-    organizationId,
-    count: eligibleItems.length,
-    reminderIntervalDays,
+    event: 'ELIGIBLE_REVIEW_ITEMS_FOUND',
+    service: 'review-reminder-worker',
+    operation: 'processOrganizationReminders',
+    metadata: {
+      organizationId,
+      count: eligibleItems.length,
+      reminderIntervalDays,
+    },
   })
 
   const activityLogService = new ActivityLogService()
@@ -112,50 +175,91 @@ async function processOrganizationReminders(
   const systemActor = createSystemActor(organizationId)
 
   let processedCount = 0
-
   for (const reviewItem of eligibleItems) {
-    try {
-      const wasUpdated = await prisma.$transaction(async (tx) => {
-        return await processReviewItemReminder(
-          { id: reviewItem.id },
-          organizationId,
-          cutoffDate,
-          systemActor,
-          reviewItemRepository,
-          activityLogService,
-          workflowEventDispatcher,
-          tx
-        )
-      })
-
-      if (wasUpdated) {
-        processedCount++
-        logger.info({
-          message: 'Reminder processed successfully',
-          reviewItemId: reviewItem.id,
-          organizationId,
-        })
-      }
-    } catch (error) {
-      logger.error({
-        message: 'Failed to process reminder for review item',
-        reviewItemId: reviewItem.id,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      })
+    const wasUpdated = await processReviewItem(
+      reviewItem,
+      organizationId,
+      cutoffDate,
+      systemActor,
+      reviewItemRepository,
+      activityLogService,
+      workflowEventDispatcher
+    )
+    if (wasUpdated) {
+      processedCount++
     }
   }
 
   return processedCount
 }
 
+function processOrganization(
+  organization: { id: string; reminderIntervalDays: unknown }
+): Promise<{ organizationId: string; processed: number }> {
+  const organizationId = organization.id
+  const reminderIntervalDays =
+    (typeof organization.reminderIntervalDays === 'number'
+      ? organization.reminderIntervalDays
+      : 3)
+  return processOrganizationReminders(organizationId, reminderIntervalDays).then(
+    (processed) => ({
+      organizationId,
+      processed,
+    })
+  )
+}
+
+function calculateTotalProcessed(
+  results: Array<PromiseSettledResult<{ organizationId: string; processed: number }>>
+): number {
+  let totalProcessed = 0
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      totalProcessed += result.value.processed
+    }
+  }
+  return totalProcessed
+}
+
+function logBatchFailure(
+  failures: Array<PromiseRejectedResult>,
+  totalOrganizations: number
+): void {
+  const batchError = new Error(
+    `Failed to process ${failures.length} out of ${totalOrganizations} organizations`
+  )
+  batchError.name = 'BatchProcessingError'
+  logger.error({
+    event: 'REVIEW_REMINDER_BATCH_FAILED',
+    service: 'review-reminder-worker',
+    operation: 'handler',
+    error: batchError,
+    metadata: {
+      totalOrganizations,
+      failedCount: failures.length,
+      failures: failures.map((f) =>
+        f.reason instanceof Error
+          ? {
+              name: f.reason.name,
+              message: f.reason.message,
+            }
+          : String(f.reason)
+      ),
+    },
+  })
+}
+
 export async function handler(
   event: EventBridgeEvent<'Scheduled Event', unknown>
 ): Promise<void> {
   logger.info({
-    message: 'Review reminder worker started',
-    eventId: event.id,
-    time: event.time,
+    event: 'REVIEW_REMINDER_WORKER_STARTED',
+    service: 'review-reminder-worker',
+    operation: 'handler',
+    metadata: {
+      eventId: event.id,
+      time: event.time,
+    },
   })
 
   const organizationRepository = new OrganizationRepository()
@@ -163,59 +267,44 @@ export async function handler(
 
   if (organizations.length === 0) {
     logger.info({
-      message: 'No organizations with reminders enabled',
+      event: 'REVIEW_REMINDER_NO_ORGANIZATIONS',
+      service: 'review-reminder-worker',
+      operation: 'handler',
     })
     return
   }
 
   logger.info({
-    message: 'Processing reminders for organizations',
-    organizationCount: organizations.length,
+    event: 'REVIEW_REMINDER_PROCESSING_STARTED',
+    service: 'review-reminder-worker',
+    operation: 'handler',
+    metadata: {
+      organizationCount: organizations.length,
+    },
   })
 
-  let totalProcessed = 0
   const results = await Promise.allSettled(
-    organizations.map(async (organization) => {
-      const organizationId: string = organization.id
-      const reminderIntervalDays: number =
-        (organization.reminderIntervalDays as unknown as number) || 3
-      const processed = await processOrganizationReminders(
-        organizationId,
-        reminderIntervalDays
-      )
-      return {
-        organizationId,
-        processed,
-      }
-    })
+    organizations.map(processOrganization)
   )
 
   const failures = results.filter(
-    (result): result is PromiseRejectedResult =>
-      result.status === 'rejected'
+    (result): result is PromiseRejectedResult => result.status === 'rejected'
   )
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      totalProcessed += result.value.processed
-    }
-  }
+  const totalProcessed = calculateTotalProcessed(results)
 
   if (failures.length > 0) {
-    logger.error({
-      message: 'Some organizations failed to process',
-      totalOrganizations: organizations.length,
-      failedCount: failures.length,
-      failures: failures.map((f) => ({
-        reason: f.reason instanceof Error ? f.reason.message : String(f.reason),
-      })),
-    })
+    logBatchFailure(failures, organizations.length)
   }
 
   logger.info({
-    message: 'Review reminder worker completed',
-    totalOrganizations: organizations.length,
-    totalProcessed,
-    failedCount: failures.length,
+    event: 'REVIEW_REMINDER_WORKER_COMPLETED',
+    service: 'review-reminder-worker',
+    operation: 'handler',
+    metadata: {
+      totalOrganizations: organizations.length,
+      totalProcessed,
+      failedCount: failures.length,
+    },
   })
 }

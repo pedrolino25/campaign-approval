@@ -24,9 +24,13 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
     payload = EmailJobPayloadSchema.parse(body)
   } catch (error) {
     logger.error({
-      message: 'Failed to parse email job payload',
-      recordId: record.messageId,
-      error: error instanceof Error ? error.message : String(error),
+      event: 'EMAIL_JOB_PARSE_FAILED',
+      service: 'email-worker',
+      operation: 'processEmailJob',
+      error,
+      metadata: {
+        recordId: record.messageId,
+      },
     })
     throw error
   }
@@ -43,8 +47,12 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
 
   if (!notification) {
     logger.warn({
-      message: 'Notification not found',
-      notificationId,
+      event: 'NOTIFICATION_NOT_FOUND',
+      service: 'email-worker',
+      operation: 'processEmailJob',
+      metadata: {
+        notificationId,
+      },
     })
     return
   }
@@ -52,9 +60,13 @@ export async function processEmailJob(record: SQSRecord): Promise<void> {
   const sentAt = (notification as unknown as Notification).sentAt
   if (sentAt !== null) {
     logger.info({
-      message: 'Email already sent, skipping (idempotency)',
-      notificationId,
-      sentAt,
+      event: 'EMAIL_ALREADY_SENT',
+      service: 'email-worker',
+      operation: 'processEmailJob',
+      metadata: {
+        notificationId,
+        sentAt: sentAt.toISOString(),
+      },
     })
     return
   }
@@ -95,20 +107,28 @@ async function sendEmailForNotification(
 
     await notificationRepository.markAsSent(notificationId, organizationId)
 
-    logger.info({
-      message: 'Email sent successfully',
+  logger.info({
+    event: 'EMAIL_SENT',
+    service: 'email-worker',
+    operation: 'sendEmailForNotification',
+    metadata: {
       notificationId,
       to,
       templateId,
       notificationType: notification.type,
-    })
+    },
+  })
   } catch (error) {
     logger.error({
-      message: 'Failed to send email',
-      notificationId,
-      to,
-      templateId,
-      error: error instanceof Error ? error.message : String(error),
+      event: 'EMAIL_SEND_FAILED',
+      service: 'email-worker',
+      operation: 'sendEmailForNotification',
+      error,
+      metadata: {
+        notificationId,
+        to,
+        templateId,
+      },
     })
     throw error
   }
@@ -192,10 +212,23 @@ export async function handler(event: SQSEvent): Promise<void> {
 
   if (failures.length > 0) {
     logger.error({
-      message: 'Some email jobs failed',
-      totalRecords: event.Records.length,
-      failedCount: failures.length,
-      failures: failures.map((f) => f.reason),
+      event: 'EMAIL_JOBS_BATCH_FAILED',
+      service: 'email-worker',
+      operation: 'handler',
+      error: {
+        name: 'BatchProcessingError',
+        message: `Failed to process ${failures.length} out of ${event.Records.length} email jobs`,
+      },
+      metadata: {
+        totalRecords: event.Records.length,
+        failedCount: failures.length,
+        failures: failures.map((f) => 
+          f.reason instanceof Error 
+            ? { name: f.reason.name,
+message: f.reason.message }
+            : String(f.reason)
+        ),
+      },
     })
 
     throw new Error(
@@ -204,7 +237,11 @@ export async function handler(event: SQSEvent): Promise<void> {
   }
 
   logger.info({
-    message: 'All email jobs processed successfully',
-    totalRecords: event.Records.length,
+    event: 'EMAIL_JOBS_BATCH_SUCCESS',
+    service: 'email-worker',
+    operation: 'handler',
+    metadata: {
+      totalRecords: event.Records.length,
+    },
   })
 }

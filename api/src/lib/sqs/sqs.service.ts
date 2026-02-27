@@ -35,15 +35,23 @@ export class SQSService {
       await this.client.send(command)
 
       logger.info({
-        message: 'Email job enqueued',
-        notificationId: payload.notificationId,
-        to: payload.to,
+        event: 'SQS_ENQUEUE_SUCCESS',
+        service: 'sqs',
+        operation: 'enqueueEmailJob',
+        metadata: {
+          notificationId: payload.notificationId,
+          to: payload.to,
+        },
       })
     } catch (error) {
       logger.error({
-        message: 'Failed to enqueue email job',
-        notificationId: payload.notificationId,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'SQS_ENQUEUE_FAILED',
+        service: 'sqs',
+        operation: 'enqueueEmailJob',
+        error,
+        metadata: {
+          notificationId: payload.notificationId,
+        },
       })
       throw error
     }

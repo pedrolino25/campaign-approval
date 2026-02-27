@@ -136,11 +136,13 @@ function logAuthError(
   error: unknown
 ): void {
   logger.error({
-    source: 'auth',
     event,
-    ...context,
+    service: 'auth',
+    requestId: context.requestId,
+    error,
     metadata: {
-      error: error instanceof Error ? error.message : String(error),
+      ip: context.ip,
+      userAgent: context.userAgent,
       errorCode:
         error instanceof ValidationError ||
         error instanceof UnauthorizedError ||
@@ -921,11 +923,13 @@ const handleSignUp = async (
     }
   } catch (error) {
     logger.error({
-      source: 'auth',
       event: 'SIGNUP_FAILURE',
-      ...context,
+      service: 'auth',
+      requestId: context.requestId,
+      error,
       metadata: {
-        error: error instanceof Error ? error.message : String(error),
+        ip: context.ip,
+        userAgent: context.userAgent,
         errorCode: error instanceof ValidationError ? error.code : undefined,
       },
     })
@@ -1231,11 +1235,13 @@ const handleResetPassword = async (
     }
   } catch (error) {
     logger.error({
-      source: 'auth',
       event: 'PASSWORD_RESET_FAILURE',
-      ...context,
+      service: 'auth',
+      requestId: context.requestId,
+      error,
       metadata: {
-        error: error instanceof Error ? error.message : String(error),
+        ip: context.ip,
+        userAgent: context.userAgent,
         errorCode: error instanceof ValidationError ? error.code : undefined,
       },
     })
