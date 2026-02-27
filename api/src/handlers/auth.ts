@@ -60,9 +60,11 @@ import {
   ForbiddenError,
   type HttpRequest,
   InternalError,
+  NotFoundError,
   UnauthorizedError,
 } from '../models'
 import {
+  ClientRepository,
   ClientReviewerRepository,
   InvitationRepository,
   OrganizationRepository,
@@ -134,11 +136,13 @@ function logAuthError(
   error: unknown
 ): void {
   logger.error({
-    source: 'auth',
     event,
-    ...context,
+    service: 'auth',
+    requestId: context.requestId,
+    error,
     metadata: {
-      error: error instanceof Error ? error.message : String(error),
+      ip: context.ip,
+      userAgent: context.userAgent,
       errorCode:
         error instanceof ValidationError ||
         error instanceof UnauthorizedError ||
@@ -147,6 +151,23 @@ function logAuthError(
           : undefined,
     },
   })
+
+  if (event === 'LOGIN_FAILURE') {
+    logger.warn({
+      service: 'auth',
+      operation: 'logAuthError',
+      event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
+      metadata: {
+        errorCode:
+          error instanceof ValidationError ||
+          error instanceof UnauthorizedError ||
+          error instanceof ForbiddenError
+            ? error.code
+            : undefined,
+      },
+    })
+  }
 }
 
 function logLoginSuccess(
@@ -179,6 +200,15 @@ function logLoginSuccess(
       actorId: internalActor.userId,
       organizationId: internalActor.organizationId,
     })
+
+    logger.warn({
+      service: 'auth',
+      operation: 'logLoginSuccess',
+      event: 'LOGIN_SUCCESS',
+      isSecurityEvent: true,
+      actorId: internalActor.userId,
+      organizationId: internalActor.organizationId,
+    })
   } else {
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
@@ -197,6 +227,14 @@ function logLoginSuccess(
       event: 'SESSION_CREATED',
       actorId: reviewerActor.reviewerId,
       clientId: reviewerActor.clientId,
+    })
+
+    logger.warn({
+      service: 'auth',
+      operation: 'logLoginSuccess',
+      event: 'LOGIN_SUCCESS',
+      isSecurityEvent: true,
+      actorId: reviewerActor.reviewerId,
     })
   }
 }
@@ -326,8 +364,10 @@ function handleCallbackValidationError(
 
   if (error.message.startsWith('OAuth error:')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: {
         reason: 'OAuth error in callback',
@@ -341,8 +381,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Missing required OAuth parameters')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Invalid callback parameters' },
     })
@@ -351,8 +393,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Missing OAuth state in cookies')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Missing OAuth state in cookies' },
     })
@@ -361,8 +405,10 @@ function handleCallbackValidationError(
 
   if (error.message.includes('Invalid activation token')) {
     logger.warn({
-      source: 'auth',
+      service: 'auth',
+      operation: 'handleCallbackValidationError',
       event: 'LOGIN_FAILURE',
+      isSecurityEvent: true,
       ...context,
       metadata: { reason: 'Invalid activation token in cookies' },
     })
@@ -662,7 +708,7 @@ function buildReviewerSessionAfterOnboarding(
   cognitoSub: string,
   email: string,
   clientId: string,
-  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>
 ): CanonicalSession {
   if (!updatedReviewer) {
     throw new InternalError('Reviewer not found when building session')
@@ -679,7 +725,7 @@ function buildReviewerSessionAfterOnboarding(
 }
 
 function buildReviewerOnboardingResponse(
-  updatedReviewer: Awaited<ReturnType<ReviewerRepository['findById']>>,
+  updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>,
   sessionToken: string
 ): APIGatewayProxyStructuredResultV2 {
   if (!updatedReviewer) {
@@ -731,6 +777,22 @@ const handleCompleteSignupReviewer = async (
   }
 
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
+  
+  // Derive organizationId from clientId for tenant scoping
+  const clientRepository = new ClientRepository()
+  const reviewerActor = actor as {
+    type: typeof ActorType.Reviewer
+    reviewerId: string
+    clientId: string
+  }
+  const client = await clientRepository.findByIdForReviewer(
+    reviewerActor.clientId,
+    reviewerActor.reviewerId
+  )
+  if (!client) {
+    throw new NotFoundError('Client not found')
+  }
+
   const onboardingService = new OnboardingService(
     new UserRepository(),
     new ReviewerRepository(),
@@ -739,14 +801,9 @@ const handleCompleteSignupReviewer = async (
 
   const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
+    organizationId: client.organizationId,
     name: validated.body.name,
   })
-
-  const reviewerActor = actor as {
-    type: typeof ActorType.Reviewer
-    reviewerId: string
-    clientId: string
-  }
 
   const newSessionPayload = buildReviewerSessionAfterOnboarding(
     event.authContext.cognitoSub,
@@ -908,11 +965,13 @@ const handleSignUp = async (
     }
   } catch (error) {
     logger.error({
-      source: 'auth',
       event: 'SIGNUP_FAILURE',
-      ...context,
+      service: 'auth',
+      requestId: context.requestId,
+      error,
       metadata: {
-        error: error instanceof Error ? error.message : String(error),
+        ip: context.ip,
+        userAgent: context.userAgent,
         errorCode: error instanceof ValidationError ? error.code : undefined,
       },
     })
@@ -1218,11 +1277,13 @@ const handleResetPassword = async (
     }
   } catch (error) {
     logger.error({
-      source: 'auth',
       event: 'PASSWORD_RESET_FAILURE',
-      ...context,
+      service: 'auth',
+      requestId: context.requestId,
+      error,
       metadata: {
-        error: error instanceof Error ? error.message : String(error),
+        ip: context.ip,
+        userAgent: context.userAgent,
         errorCode: error instanceof ValidationError ? error.code : undefined,
       },
     })

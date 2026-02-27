@@ -103,9 +103,13 @@ export class InvitationService {
       await this.dispatchInvitationNotification(invitation)
     } catch (error) {
       logger.error({
-        message: 'Failed to dispatch invitation notification',
-        invitationId: invitation.id,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'INVITATION_NOTIFICATION_DISPATCH_FAILED',
+        service: 'invitation',
+        operation: 'create',
+        error,
+        metadata: {
+          invitationId: invitation.id,
+        },
       })
     }
 
@@ -301,9 +305,13 @@ export class InvitationService {
       })
     } catch (error) {
       logger.error({
-        message: 'Failed to enqueue invitation notification',
-        invitationId: invitation.id,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'INVITATION_NOTIFICATION_ENQUEUE_FAILED',
+        service: 'invitation',
+        operation: 'dispatchInvitationNotification',
+        error,
+        metadata: {
+          invitationId: invitation.id,
+        },
       })
       // Don't throw - invitation is already created
     }
@@ -699,9 +707,13 @@ export class InvitationService {
       })
     } catch (error) {
       logger.error({
-        message: 'Failed to dispatch invitation notification',
-        invitationId: invitation.id,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'INVITATION_NOTIFICATION_DISPATCH_FAILED',
+        service: 'invitation',
+        operation: 'dispatchInvitationNotification',
+        error,
+        metadata: {
+          invitationId: invitation.id,
+        },
       })
       throw error
     }

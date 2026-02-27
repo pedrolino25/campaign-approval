@@ -487,8 +487,11 @@ export class NotificationService {
     return user?.email || null
   }
 
-  private async getEmailForReviewerId(reviewerId: string): Promise<string | null> {
-    const reviewer = await this.reviewerRepository.findById(reviewerId)
+  private async getEmailForReviewerId(
+    reviewerId: string,
+    organizationId: string
+  ): Promise<string | null> {
+    const reviewer = await this.reviewerRepository.findByIdScoped(reviewerId, organizationId)
     return reviewer?.email || null
   }
 
@@ -561,9 +564,13 @@ export class NotificationService {
       })
     } catch (error) {
       logger.error({
-        message: 'Failed to enqueue email job',
-        notificationId: notification.id,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'NOTIFICATION_ENQUEUE_FAILED',
+        service: 'notification',
+        operation: 'dispatchNotification',
+        error,
+        metadata: {
+          notificationId: notification.id,
+        },
       })
       // Do NOT throw - DB state is already committed
     }
@@ -579,7 +586,7 @@ export class NotificationService {
     }
 
     if (notification.reviewerId) {
-      return await this.getEmailForReviewerId(notification.reviewerId)
+      return await this.getEmailForReviewerId(notification.reviewerId, notification.organizationId)
     }
 
     return null
@@ -609,9 +616,13 @@ export class NotificationService {
       await this.sqsService.enqueueEmailJob(payload)
     } catch (error) {
       logger.error({
-        message: 'Failed to enqueue email job',
-        notificationId: payload.notificationId,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'NOTIFICATION_ENQUEUE_FAILED',
+        service: 'notification',
+        operation: 'enqueueEmailJob',
+        error,
+        metadata: {
+          notificationId: payload.notificationId,
+        },
       })
       throw error
     }

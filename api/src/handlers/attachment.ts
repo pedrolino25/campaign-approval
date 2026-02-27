@@ -129,7 +129,7 @@ const handleGetAttachments = async (
   })
 
   const attachmentRepository = new AttachmentRepository()
-  const result = await attachmentRepository.listByReviewItem(reviewItemId, {
+  const result = await attachmentRepository.listByReviewItemScoped(reviewItemId, reviewItem.organizationId, {
     cursor: validatedQuery.query.cursor,
     limit: validatedQuery.query.limit as number | undefined,
   })

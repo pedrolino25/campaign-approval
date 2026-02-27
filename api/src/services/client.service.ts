@@ -285,6 +285,12 @@ export class ClientService implements IClientService {
       throw new ForbiddenError('Only internal users can remove reviewers')
     }
 
+    const internalActor = actor as {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+    }
+
     return await prisma.$transaction(async (tx) => {
       const client = await this.clientRepository.findById(
         clientId,
@@ -316,6 +322,57 @@ export class ClientService implements IClientService {
         },
       })
 
+      const remainingLinks = await this.countRemainingClientLinks(
+        tx,
+        reviewerId,
+        client.organizationId
+      )
+
+      await this.logReviewerRemovalSecurityEvents(
+        tx,
+        reviewerId,
+        client.organizationId,
+        internalActor,
+        remainingLinks
+      )
+
+      this.logReviewerRemoval(reviewerId, clientId, client.organizationId, actor)
+
+      await this.logReviewerRemovalActivity(tx, client.organizationId, clientId, actor)
+    })
+  }
+
+  private async countRemainingClientLinks(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewerId: string,
+    organizationId: string
+  ): Promise<number> {
+    return await tx.clientReviewer.count({
+      where: {
+        reviewerId,
+        archivedAt: null,
+        client: {
+          organizationId,
+          archivedAt: null,
+        },
+      },
+    })
+  }
+
+  private async logReviewerRemovalSecurityEvents(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    reviewerId: string,
+    organizationId: string,
+    internalActor: {
+      type: typeof ActorType.Internal
+      userId: string
+      organizationId: string
+    },
+    remainingLinks: number
+  ): Promise<void> {
+    const lastLinkRemoved = remainingLinks === 0
+
+    if (lastLinkRemoved) {
       await tx.reviewer.update({
         where: { id: reviewerId },
         data: {
@@ -325,30 +382,69 @@ export class ClientService implements IClientService {
         },
       })
 
-      logger.info({
-        source: 'auth',
-        event: 'MEMBERSHIP_REMOVED',
-        actorType: 'REVIEWER',
-        actorId: reviewerId,
-        clientId,
-        organizationId: client.organizationId,
-        metadata: {
-          removedBy: actor.userId,
-        },
+      logger.warn({
+        service: 'ClientService',
+        operation: 'removeReviewer',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        targetId: reviewerId,
+        organizationId,
+        metadata: { reason: 'Last client link removed' },
       })
+    }
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
-        invitedUserEmail: '',
-        clientId,
-      }
+    logger.warn({
+      service: 'ClientService',
+      operation: 'removeReviewer',
+      event: 'CLIENT_REVIEWER_REMOVED',
+      isSecurityEvent: true,
+      actorId: internalActor.userId,
+      targetId: reviewerId,
+      organizationId,
+      metadata: { lastLinkRemoved },
+    })
+  }
 
-      await this.activityLogService.log({
-        action: ActivityLogActionType.USER_INVITED,
-        organizationId: client.organizationId,
-        actor,
-        metadata,
-        tx,
-      })
+  private logReviewerRemoval(
+    reviewerId: string,
+    clientId: string,
+    organizationId: string,
+    actor: ActorContext
+  ): void {
+    if (actor.type !== ActorType.Internal) {
+      return
+    }
+
+    logger.info({
+      source: 'auth',
+      event: 'MEMBERSHIP_REMOVED',
+      actorType: 'REVIEWER',
+      actorId: reviewerId,
+      clientId,
+      organizationId,
+      metadata: {
+        removedBy: actor.userId,
+      },
+    })
+  }
+
+  private async logReviewerRemovalActivity(
+    tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+    organizationId: string,
+    clientId: string,
+    actor: ActorContext
+  ): Promise<void> {
+    const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
+      invitedUserEmail: '',
+      clientId,
+    }
+
+    await this.activityLogService.log({
+      action: ActivityLogActionType.USER_INVITED,
+      organizationId,
+      actor,
+      metadata,
+      tx,
     })
   }
 }

@@ -6,6 +6,7 @@ import {
   type AuthenticatedEvent,
   UnauthorizedError,
 } from '../../models'
+import { ClientRepository } from '../../repositories'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { UserRepository } from '../../repositories/user.repository'
 import { logger } from '../utils/logger'
@@ -103,10 +104,13 @@ export class AuthService {
     if (user.archivedAt !== null) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'INTERNAL',
         actorId: session.userId,
+        targetId: session.userId,
         organizationId: session.organizationId,
         ...context,
         metadata: { reason: 'User archived' },
@@ -117,10 +121,13 @@ export class AuthService {
     if (user.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'INTERNAL',
         actorId: session.userId,
+        targetId: session.userId,
         organizationId: session.organizationId,
         ...context,
         metadata: { reason: 'Session version mismatch' },
@@ -137,7 +144,24 @@ export class AuthService {
       throw new UnauthorizedError('Invalid session: missing reviewerId')
     }
 
-    const reviewer = await this.reviewerRepository.findById(session.reviewerId)
+    if (!session.clientId) {
+      throw new UnauthorizedError('Invalid session: missing clientId')
+    }
+
+    const clientRepository = new ClientRepository()
+    const client = await clientRepository.findByIdForReviewer(
+      session.clientId,
+      session.reviewerId
+    )
+
+    if (!client) {
+      throw new UnauthorizedError('Client not found')
+    }
+
+    const reviewer = await this.reviewerRepository.findByIdScoped(
+      session.reviewerId,
+      client.organizationId
+    )
 
     if (!reviewer) {
       throw new UnauthorizedError('Reviewer not found')
@@ -146,10 +170,14 @@ export class AuthService {
     if (reviewer.archivedAt !== null) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: client.organizationId,
         clientId: session.clientId,
         ...context,
         metadata: { reason: 'Reviewer archived' },
@@ -160,10 +188,14 @@ export class AuthService {
     if (reviewer.sessionVersion !== session.sessionVersion) {
       const context = this.extractSafeContext(event)
       logger.warn({
-        source: 'auth',
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
         event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: client.organizationId,
         clientId: session.clientId,
         ...context,
         metadata: { reason: 'Session version mismatch' },

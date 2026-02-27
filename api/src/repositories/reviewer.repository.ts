@@ -1,6 +1,7 @@
 import type { Reviewer } from '@prisma/client'
 
 import { prisma } from '../lib'
+import { NotFoundError } from '../models'
 
 export type CreateReviewerInput = {
   cognitoUserId: string
@@ -15,12 +16,12 @@ export type UpdateReviewerInput = {
 
 export interface IReviewerRepository {
   create(data: CreateReviewerInput): Promise<Reviewer>
-  findById(id: string): Promise<Reviewer | null>
+  findByIdScoped(id: string, organizationId: string): Promise<Reviewer | null>
   findByIds(ids: string[]): Promise<Reviewer[]>
   findByCognitoId(cognitoUserId: string): Promise<Reviewer | null>
   findByEmail(email: string): Promise<Reviewer | null>
-  update(id: string, data: UpdateReviewerInput): Promise<Reviewer>
-  archive(id: string): Promise<void>
+  updateScoped(id: string, organizationId: string, data: UpdateReviewerInput): Promise<Reviewer>
+  archiveScoped(id: string, organizationId: string): Promise<void>
   hasAccessToOrganization(
     reviewerId: string,
     organizationId: string
@@ -38,11 +39,20 @@ export class ReviewerRepository implements IReviewerRepository {
     })
   }
 
-  async findById(id: string): Promise<Reviewer | null> {
+  async findByIdScoped(id: string, organizationId: string): Promise<Reviewer | null> {
     return await prisma.reviewer.findFirst({
       where: {
         id,
         archivedAt: null,
+        clientLinks: {
+          some: {
+            archivedAt: null,
+            client: {
+              organizationId,
+              archivedAt: null,
+            },
+          },
+        },
       },
     })
   }
@@ -77,14 +87,26 @@ export class ReviewerRepository implements IReviewerRepository {
     })
   }
 
-  async update(id: string, data: UpdateReviewerInput): Promise<Reviewer> {
+  async updateScoped(id: string, organizationId: string, data: UpdateReviewerInput): Promise<Reviewer> {
+    // First verify reviewer is linked to organization
+    const reviewer = await this.findByIdScoped(id, organizationId)
+    if (!reviewer) {
+      throw new NotFoundError('Reviewer not found or not linked to organization')
+    }
+
     return await prisma.reviewer.update({
       where: { id },
       data,
     })
   }
 
-  async archive(id: string): Promise<void> {
+  async archiveScoped(id: string, organizationId: string): Promise<void> {
+    // First verify reviewer is linked to organization
+    const reviewer = await this.findByIdScoped(id, organizationId)
+    if (!reviewer) {
+      throw new NotFoundError('Reviewer not found or not linked to organization')
+    }
+
     await prisma.reviewer.update({
       where: { id },
       data: {

@@ -108,20 +108,24 @@ export class ErrorService {
   ): APIGatewayProxyStructuredResultV2 {
     const statusCode = this.ERROR_CODE_TO_STATUS[error.code] ?? 500
 
-    const logData: Record<string, unknown> = {
-      errorCode: error.code,
-      errorMessage: error.message,
-      statusCode,
+    logger.error({
+      event: 'DOMAIN_ERROR',
       requestId: context?.requestId,
-      userId: context?.userId,
       organizationId: context?.organizationId,
-    }
-
-    if (error instanceof ValidationError && error.details && Array.isArray(error.details) && error.details.length > 0) {
-      logData.validationDetails = error.details
-    }
-
-    logger.error(logData, 'Domain error occurred')
+      actorId: context?.userId,
+      error: {
+        name: error.name || 'DomainError',
+        message: error.message,
+        stack: error.stack,
+      },
+      metadata: {
+        errorCode: error.code,
+        statusCode,
+        ...(error instanceof ValidationError && error.details && Array.isArray(error.details) && error.details.length > 0
+          ? { validationDetails: error.details }
+          : {}),
+      },
+    })
 
     const details = error instanceof ValidationError && Array.isArray(error.details) ? error.details : undefined
     return this.createErrorResponse(
@@ -137,16 +141,17 @@ export class ErrorService {
     error: Error,
     context?: ErrorContext
   ): APIGatewayProxyStructuredResultV2 {
-    logger.error(
-      {
-        errorName: error.name,
-        errorMessage: error.message,
-        requestId: context?.requestId,
-        userId: context?.userId,
-        organizationId: context?.organizationId,
+    logger.error({
+      event: 'UNEXPECTED_ERROR',
+      requestId: context?.requestId,
+      organizationId: context?.organizationId,
+      actorId: context?.userId,
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
       },
-      'Unexpected error occurred'
-    )
+    })
 
     return this.createErrorResponse(
       'INTERNAL_ERROR',
@@ -160,15 +165,16 @@ export class ErrorService {
     error: unknown,
     context?: ErrorContext
   ): APIGatewayProxyStructuredResultV2 {
-    logger.error(
-      {
-        error: String(error),
-        requestId: context?.requestId,
-        userId: context?.userId,
-        organizationId: context?.organizationId,
+    logger.error({
+      event: 'UNEXPECTED_ERROR',
+      requestId: context?.requestId,
+      organizationId: context?.organizationId,
+      actorId: context?.userId,
+      error: {
+        name: 'UnknownError',
+        message: String(error),
       },
-      'Unknown error occurred'
-    )
+    })
 
     return this.createErrorResponse(
       'INTERNAL_ERROR',

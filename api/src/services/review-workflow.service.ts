@@ -4,7 +4,7 @@ import {
   type ReviewStatus,
 } from '@prisma/client'
 
-import { prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
+import { logger, prisma, transition, WorkflowAction, WorkflowEventDispatcher } from '../lib'
 import type { DispatchResult } from '../lib/workflow-events/workflow-event.dispatcher'
 import {
   BusinessRuleViolationError,
@@ -108,7 +108,29 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     this.validateActorPermissions(actor, action)
 
     const previousStatus = reviewItem.status
-    const newStatus = transition(previousStatus, action)
+    let newStatus: ReviewStatus
+    try {
+      newStatus = transition(previousStatus, action)
+    } catch (error) {
+      if (error instanceof InvalidStateTransitionError) {
+        const actorId = actor.type === ActorType.Internal ? actor.userId : actor.reviewerId
+        logger.warn({
+          service: 'ReviewWorkflowService',
+          operation: 'applyWorkflowAction',
+          event: 'INVALID_STATE_TRANSITION',
+          isSecurityEvent: true,
+          actorId,
+          targetId: reviewItem.id,
+          organizationId: reviewItem.organizationId,
+          metadata: {
+            currentStatus: previousStatus,
+            attemptedAction: action,
+            error: error.message,
+          },
+        })
+      }
+      throw error
+    }
 
     try {
       return await this.executeTransition(

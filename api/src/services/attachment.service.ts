@@ -366,17 +366,18 @@ export class AttachmentService implements IAttachmentService {
       return attachmentRecord
     })
 
-    // Delete S3 object AFTER transaction commits
     try {
       await this.s3Service.deleteObject(attachment.s3Key)
     } catch (error) {
-      // Log error but do NOT rollback DB delete
-      // DB is source of truth, S3 delete is best-effort
       logger.error({
-        message: 'Failed to delete S3 object after attachment deletion',
-        attachmentId: attachment.id,
-        s3Key: attachment.s3Key,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'S3_DELETE_FAILED',
+        service: 'attachment',
+        operation: 'delete',
+        error,
+        metadata: {
+          attachmentId: attachment.id,
+          s3Key: attachment.s3Key,
+        },
       })
     }
   }

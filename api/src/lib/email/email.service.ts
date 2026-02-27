@@ -32,16 +32,24 @@ export class EmailService {
       })
 
       logger.info({
-        message: 'Email sent successfully',
-        to,
-        templateId,
+        event: 'EMAIL_SENT',
+        service: 'email',
+        operation: 'send',
+        metadata: {
+          to,
+          templateId,
+        },
       })
     } catch (error) {
       logger.error({
-        message: 'Failed to send email',
-        to,
-        templateId,
-        error: error instanceof Error ? error.message : String(error),
+        event: 'EMAIL_SEND_FAILED',
+        service: 'email',
+        operation: 'send',
+        error,
+        metadata: {
+          to,
+          templateId,
+        },
       })
       throw error
     }
