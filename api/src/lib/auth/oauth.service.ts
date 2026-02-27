@@ -29,10 +29,14 @@ export class OAuthService {
   private readonly region: string
 
   constructor() {
-    this.cognitoDomain = config.COGNITO_DOMAIN
+    const userPoolId = config.COGNITO_USER_POOL_ID
+    const region = config.AWS_REGION
+    const domainPrefix = userPoolId.replace(/_/g, '-')
+
+    this.cognitoDomain = `${domainPrefix}.auth.${region}.amazoncognito.com`
     this.clientId = config.COGNITO_APP_CLIENT_ID
     this.redirectUri = `${config.WORKLIENT_API_URL}/auth/callback`
-    this.region = config.AWS_REGION
+    this.region = region
   }
 
   generateAuthorizationUrl(_event: APIGatewayProxyEvent): AuthorizationResponse {

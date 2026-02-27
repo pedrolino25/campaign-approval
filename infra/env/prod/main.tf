@@ -103,7 +103,6 @@ module "lambdas" {
   sqs_queue_url         = module.sqs.queue_url
   cognito_user_pool_id  = module.cognito.user_pool_id
   cognito_app_client_id = module.cognito.app_client_id
-  cognito_domain        = module.cognito.domain
   aws_region            = var.aws_region
   frontend_url          = var.frontend_url
   worklient_api_url     = "https://${var.prod_api_subdomain}"
