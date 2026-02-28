@@ -2,7 +2,7 @@ environment = "prod"
 aws_region  = "us-east-1"
 
 root_domain_name   = "worklient.com"
-dev_api_subdomain  = "dev-api.worklient.com"
+dev_api_subdomain  = "dev.api.worklient.com"
 prod_api_subdomain = "api.worklient.com"
 
 s3_bucket_name       = "prod-worklient-storage"
