@@ -126,7 +126,7 @@ export class SessionService {
     if (config.ENVIRONMENT === 'prod' || config.ENVIRONMENT === 'dev') {
       return '.worklient.com'
     }
-    return '.local.worklient.test'
+    return '.worklient.test'
   }
 
   private buildCookie(name: string, value: string, maxAge: number): string {
