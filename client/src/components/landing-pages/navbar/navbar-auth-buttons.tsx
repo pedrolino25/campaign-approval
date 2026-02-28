@@ -1,14 +1,13 @@
-'use client'
-
 import { ArrowRight } from 'lucide-react'
 
 import { ButtonLink } from '@/components/ui/button-link'
-import { useSession } from '@/lib/auth/session-context'
 
-export function NavbarAuthButtons() {
-  const { session } = useSession()
-
-  if (session) {
+export function NavbarAuthButtons({
+  hasSession,
+}: {
+  hasSession: boolean
+}) {
+  if (hasSession) {
     return (
       <ButtonLink
         href="/dashboard"

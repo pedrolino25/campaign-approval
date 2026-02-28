@@ -51,6 +51,7 @@ export class SessionService {
       const secret = getSecret()
       const { payload } = await jwtVerify(token, secret, {
         algorithms: ['HS256'],
+        clockTolerance: 30,
       })
 
       if (!this.isValidSessionPayload(payload)) {
