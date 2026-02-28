@@ -1,4 +1,5 @@
 import type {
+  APIGatewayProxyEvent,
   APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
@@ -110,15 +111,45 @@ export function handlePreflightRequest(
   }
 }
 
-export function getPath(event: APIGatewayProxyEventV2): string {
-  return event.requestContext.http.path
+function isV2Event(
+  event: APIGatewayProxyEventV2 | APIGatewayProxyEvent
+): event is APIGatewayProxyEventV2 {
+  return 'version' in event && event.version === '2.0'
 }
 
-export function getMethod(event: APIGatewayProxyEventV2): string {
-  return event.requestContext.http.method
+export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
+  if (isV2Event(event)) {
+    return event.requestContext.http.path
+  }
+
+  return event.path ?? ''
 }
 
-export function getCookies(event: APIGatewayProxyEventV2): string[] {
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  return cookies.split(';')
+export function getMethod(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
+  if (isV2Event(event)) {
+    return event.requestContext.http.method
+  }
+
+  return event.httpMethod ?? ''
+}
+
+export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string[] {
+
+  if (isV2Event(event) && Array.isArray(event.cookies)) {
+    return event.cookies
+  }
+
+  const cookieHeader =
+    event.headers?.cookie ||
+    event.headers?.Cookie ||
+    ''
+
+  if (!cookieHeader) {
+    return []
+  }
+
+  return cookieHeader
+    .split(';')
+    .map((c) => c.trim())
+    .filter(Boolean)
 }
