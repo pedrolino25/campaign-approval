@@ -7,7 +7,7 @@ import type {
 const allowedOrigins = [
   'https://worklient.com',
   'https://dev.worklient.com',
-  'https://app.local.worklient.test:3000',
+  'https://app.worklient.test:3000',
 ]
 
 function isAllowedOrigin(origin: string | undefined): boolean {
@@ -15,7 +15,7 @@ function isAllowedOrigin(origin: string | undefined): boolean {
 
   if (allowedOrigins.includes(origin)) return true
 
-  if (origin.startsWith('https://app.local.worklient.test:')) return true
+  if (origin.startsWith('https://app.worklient.test:')) return true
 
   if (origin.endsWith('.vercel.app')) return true
 

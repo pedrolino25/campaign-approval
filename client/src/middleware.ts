@@ -38,7 +38,7 @@ export function middleware(request: NextRequest) {
 
   const isOffline = process.env.NODE_ENV === 'development'
   const sessionCookie = request.cookies.get('worklient_session')
-
+  console.log('sessionCookie', sessionCookie)
   let hasValidSession = false
 
   if (sessionCookie) {
@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (isOffline ||isPublicRoute(pathname)) {
+  if (isOffline || isPublicRoute(pathname)) {
     const response = NextResponse.next()
 
     if (hasValidSession) {

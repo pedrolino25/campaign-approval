@@ -6,8 +6,8 @@ const targetPort = 4000
 const securePort = 4001
 
 const options = {
-  key: fs.readFileSync("./api.local.worklient.test-key.pem"),
-  cert: fs.readFileSync("./api.local.worklient.test.pem"),
+  key: fs.readFileSync("./api.worklient.test-key.pem"),
+  cert: fs.readFileSync("./api.worklient.test.pem"),
 }
 
 https
@@ -45,6 +45,6 @@ https
   })
   .listen(securePort, () => {
     console.log(
-      `🔐 HTTPS proxy running at https://api.local.worklient.test:${securePort}`
+      `🔐 HTTPS proxy running at https://api.worklient.test:${securePort}`
     )
   })
