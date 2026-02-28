@@ -8,6 +8,7 @@ import type { ErrorService } from '../errors/error.service'
 import { runWithRequestContext } from '../request-context'
 import {
   addCorsHeaders,
+  getHeader,
   handlePreflightRequest,
 } from '../utils/cors'
 
@@ -24,7 +25,7 @@ export class PublicHandlerFactory {
     ): Promise<APIGatewayProxyStructuredResultV2> => {
       const requestId =
         event.requestContext?.requestId ||
-        event.headers?.['x-request-id'] ||
+        getHeader(event, 'x-request-id') ||
         randomUUID()
 
       return runWithRequestContext(

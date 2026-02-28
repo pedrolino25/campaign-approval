@@ -60,7 +60,7 @@ export function addCorsHeaders(
   event: APIGatewayProxyEventV2,
   response: APIGatewayProxyStructuredResultV2
 ): APIGatewayProxyStructuredResultV2 {
-  const origin = event.headers.origin || event.headers.Origin
+  const origin = getHeader(event, 'origin')
 
   if (!origin || !isAllowedOrigin(origin)) {
     return response
@@ -86,7 +86,7 @@ export function handlePreflightRequest(
     return null
   }
 
-  const origin = event.headers.origin || event.headers.Origin
+  const origin = getHeader(event, 'origin')
 
   if (!origin || !isAllowedOrigin(origin)) {
     return {
@@ -139,10 +139,7 @@ export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent)
     return event.cookies
   }
 
-  const cookieHeader =
-    event.headers?.cookie ||
-    event.headers?.Cookie ||
-    ''
+  const cookieHeader = getHeader(event, 'cookie')
 
   if (!cookieHeader) {
     return []
@@ -152,4 +149,14 @@ export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent)
     .split(';')
     .map((c) => c.trim())
     .filter(Boolean)
+}
+
+export function getHeader(event: APIGatewayProxyEvent | APIGatewayProxyEventV2, name: string): string | undefined {
+  const headers = event.headers ?? {}
+
+  const lowerName = name.toLowerCase()
+
+  return Object.entries(headers).find(
+    ([key]) => key.toLowerCase() === lowerName
+  )?.[1]
 }

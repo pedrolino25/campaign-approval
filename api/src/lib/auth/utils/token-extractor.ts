@@ -4,10 +4,11 @@ import {
   type AuthTokenExtractor,
   UnauthorizedError,
 } from '../../../models'
+import { getHeader } from '../../utils/cors'
 
 export class BearerTokenExtractor implements AuthTokenExtractor {
   extract(event: APIGatewayProxyEventV2): string {
-    const authHeader = event.headers.authorization || event.headers.Authorization
+    const authHeader = getHeader(event, 'authorization')
 
     if (!authHeader) {
       throw new UnauthorizedError('Missing Authorization header')

@@ -18,6 +18,7 @@ import {
 } from '../request-context'
 import {
   addCorsHeaders,
+  getHeader,
   handlePreflightRequest,
 } from '../utils/cors'
 
@@ -38,7 +39,7 @@ export class ApiHandlerFactory {
     ): Promise<APIGatewayProxyStructuredResultV2> => {
       const requestId =
         event.requestContext?.requestId ||
-        event.headers?.['x-request-id'] ||
+        getHeader(event, 'x-request-id') ||
         randomUUID()
 
       return runWithRequestContext(
