@@ -2,7 +2,7 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { jwtVerify, SignJWT } from 'jose'
 
 import { config } from '../../../lib/utils/config'
-import { attachCookies } from '../../../lib/utils/cors'
+import type { SessionService } from '../session.service'
 
 function getActivationSecret(): Uint8Array {
   const secret = config.ACTIVATION_COOKIE_SECRET
@@ -50,7 +50,8 @@ export async function extractAndVerifyActivationToken(
 
 export async function setActivationCookie(
   response: APIGatewayProxyStructuredResultV2,
-  token: string
+  token: string,
+  sessionService: SessionService
 ): Promise<APIGatewayProxyStructuredResultV2> {
   const normalizedToken = token.toLowerCase()
   const secret = getActivationSecret()
@@ -62,13 +63,5 @@ export async function setActivationCookie(
     .setExpirationTime('10m')
     .sign(secret)
 
-  const activationCookie = `reviewer_activation_token=${jwt}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-
-  return attachCookies(response, [activationCookie])
-}
-
-export function clearActivationCookie(response: APIGatewayProxyStructuredResultV2): APIGatewayProxyStructuredResultV2 {
-  const clearCookie = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-
-  return attachCookies(response, [clearCookie])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildActivationCookie(jwt)])
 }

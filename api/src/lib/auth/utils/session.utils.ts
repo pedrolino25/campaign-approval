@@ -7,11 +7,8 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { config } from '../../utils/config'
-import { attachCookies } from '../../utils/cors'
 import type { RBACService } from '../rbac.service'
 import type { CanonicalSession, SessionService } from '../session.service'
-import { clearActivationCookie } from './activation-token.utils'
-import { clearOAuthCookies } from './cookie.utils'
 
 function calculateOnboardingStatus(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
@@ -98,7 +95,7 @@ function buildJsonResponse(
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(signedSession)])
 }
 
 function buildRedirectResponse(
@@ -122,11 +119,11 @@ function buildRedirectResponse(
     body: '',
   }
 
-  response = attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
-  response = clearOAuthCookies(response)
+  response = sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(signedSession)])
+  response = sessionService.clearOAuthCookies(response)
 
   if (activationToken) {
-    response = clearActivationCookie(response)
+    response = sessionService.clearActivationCookie(response)
   }
 
   return response

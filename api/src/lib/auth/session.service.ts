@@ -1,7 +1,9 @@
-import { jwtVerify,SignJWT } from 'jose'
+import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
+import { jwtVerify, SignJWT } from 'jose'
 
 import type { ActorType } from '../../models'
 import { config } from '../utils/config'
+import { attachCookies } from '../utils/cors'
 import { parseCookies } from './utils/cookie.utils'
 
 export interface CanonicalSession {
@@ -18,7 +20,12 @@ export interface CanonicalSession {
 }
 
 const SESSION_COOKIE_NAME = 'worklient_session'
+const ACTIVATION_COOKIE_NAME = 'reviewer_activation_token'
+const OAUTH_VERIFIER_NAME = 'oauth_code_verifier'
+const OAUTH_STATE_NAME = 'oauth_state'
 const DEFAULT_SESSION_MAX_AGE = 28800
+const OAUTH_COOKIE_MAX_AGE = 600
+const ACTIVATION_COOKIE_MAX_AGE = 600
 
 function getSecret(): Uint8Array {
   const secret = config.SESSION_SECRET
@@ -116,31 +123,67 @@ export class SessionService {
   }
 
   private getCookieDomain(): string | undefined {
-    const hostname = new URL(config.FRONTEND_URL).hostname
-    const vercelRegex = /^worklient-git-[a-z0-9-]+-lynulabs-projects\.vercel\.app$/
-
-    if (hostname.endsWith('.local.worklient.test')) {
-      return '.local.worklient.test'
-    }
-
-    if (vercelRegex.test(hostname) || hostname === 'worklient.com' || hostname.endsWith('.worklient.com')) {
+    if (config.ENVIRONMENT === 'prod' || config.ENVIRONMENT === 'dev') {
       return '.worklient.com'
     }
+    return '.local.worklient.test'
+  }
 
-    return undefined
+  private buildCookie(name: string, value: string, maxAge: number): string {
+    const domain = this.getCookieDomain()
+    const domainPart = domain ? `Domain=${domain}; ` : ''
+    return `${name}=${value}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`
+  }
+
+  private buildClearCookie(name: string): string {
+    const domain = this.getCookieDomain()
+    const domainPart = domain ? `Domain=${domain}; ` : ''
+    return `${name}=; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=0`
   }
 
   buildSessionCookie(jwt: string): string {
-    const encodedJwt = encodeURIComponent(jwt)
-    const domain = this.getCookieDomain()
-    const domainPart = domain ? `Domain=${domain}; ` : ''
-    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
+    return this.buildCookie(SESSION_COOKIE_NAME, encodeURIComponent(jwt), this.maxAge)
   }
 
   buildClearSessionCookie(): string {
-    const domain = this.getCookieDomain()
-    const domainPart = domain ? `Domain=${domain}; ` : ''
-    return `${SESSION_COOKIE_NAME}=; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+    return this.buildClearCookie(SESSION_COOKIE_NAME)
+  }
+
+  buildActivationCookie(jwt: string): string {
+    return this.buildCookie(ACTIVATION_COOKIE_NAME, jwt, ACTIVATION_COOKIE_MAX_AGE)
+  }
+
+  buildClearActivationCookie(): string {
+    return this.buildClearCookie(ACTIVATION_COOKIE_NAME)
+  }
+
+  buildOAuthCookies(codeVerifier: string, state: string): string[] {
+    return [
+      this.buildCookie(OAUTH_VERIFIER_NAME, codeVerifier, OAUTH_COOKIE_MAX_AGE),
+      this.buildCookie(OAUTH_STATE_NAME, state, OAUTH_COOKIE_MAX_AGE),
+    ]
+  }
+
+  buildClearOAuthCookies(): string[] {
+    return [
+      this.buildClearCookie(OAUTH_VERIFIER_NAME),
+      this.buildClearCookie(OAUTH_STATE_NAME),
+    ]
+  }
+
+  buildResponseWithCookies(
+    response: APIGatewayProxyStructuredResultV2,
+    cookies: string[]
+  ): APIGatewayProxyStructuredResultV2 {
+    return attachCookies(response, cookies)
+  }
+
+  clearActivationCookie(response: APIGatewayProxyStructuredResultV2): APIGatewayProxyStructuredResultV2 {
+    return this.buildResponseWithCookies(response, [this.buildClearActivationCookie()])
+  }
+
+  clearOAuthCookies(response: APIGatewayProxyStructuredResultV2): APIGatewayProxyStructuredResultV2 {
+    return this.buildResponseWithCookies(response, this.buildClearOAuthCookies())
   }
 
   getSessionFromCookie(

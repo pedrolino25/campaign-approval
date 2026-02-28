@@ -14,15 +14,9 @@ import {
 import { CognitoService } from '../lib/auth/cognito.service'
 import type { CanonicalSession } from '../lib/auth/session.service'
 import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
-import {
-  clearActivationCookie,
-  setActivationCookie,
-} from '../lib/auth/utils/activation-token.utils'
+import { setActivationCookie } from '../lib/auth/utils/activation-token.utils'
 import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
-import {
-  clearOAuthCookies,
-  parseCookies,
-} from '../lib/auth/utils/cookie.utils'
+import { parseCookies } from '../lib/auth/utils/cookie.utils'
 import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import {
@@ -51,7 +45,7 @@ import {
   SignUpSchema,
   VerifyEmailSchema,
 } from '../lib/schemas'
-import { addCorsHeaders, attachCookies, getCookies, getMethod, getPath } from '../lib/utils/cors'
+import { addCorsHeaders, getCookies, getMethod, getPath } from '../lib/utils/cors'
 import { logger } from '../lib/utils/logger'
 import {
   ActorType,
@@ -343,10 +337,8 @@ const handleLogin = (
     }),
   }
 
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-
-  return Promise.resolve(attachCookies(response, [verifierCookie, stateCookie]))
+  const oauthCookies = sessionService.buildOAuthCookies(codeVerifier, state)
+  return Promise.resolve(sessionService.buildResponseWithCookies(response, oauthCookies))
 }
 
 function handleCallbackValidationError(
@@ -409,8 +401,7 @@ function handleCallbackValidationError(
       metadata: { reason: 'Invalid activation token in cookies' },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   return null
@@ -459,10 +450,10 @@ const handleCallback = async (
     let errorResponse = buildErrorResponse(error)
 
     if (activationToken) {
-      errorResponse = clearActivationCookie(errorResponse)
+      errorResponse = sessionService.clearActivationCookie(errorResponse)
     }
 
-    errorResponse = clearOAuthCookies(errorResponse)
+    errorResponse = sessionService.clearOAuthCookies(errorResponse)
     return errorResponse
   }
 }
@@ -478,13 +469,12 @@ function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
     }),
   }
 
-  let result = attachCookies(response, [sessionService.buildClearSessionCookie()])
-  result = clearOAuthCookies(result)
-
-  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-  result = attachCookies(result, [clearActivationCookieValue])
-
-  return result
+  const clearCookies = [
+    sessionService.buildClearSessionCookie(),
+    ...sessionService.buildClearOAuthCookies(),
+    sessionService.buildClearActivationCookie(),
+  ]
+  return sessionService.buildResponseWithCookies(response, clearCookies)
 }
 
 const handleLogout = async (
@@ -686,7 +676,7 @@ function buildInternalOnboardingResponse(
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupInternal = async (
@@ -790,7 +780,7 @@ function buildReviewerOnboardingResponse(
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupReviewer = async (
@@ -875,9 +865,6 @@ async function buildOAuthRedirectResponse(
   state: string,
   activationToken: string
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
@@ -886,8 +873,9 @@ async function buildOAuthRedirectResponse(
     body: '',
   }
 
-  let result = attachCookies(response, [verifierCookie, stateCookie])
-  result = await setActivationCookie(result, activationToken)
+  const oauthCookies = sessionService.buildOAuthCookies(codeVerifier, state)
+  let result = sessionService.buildResponseWithCookies(response, oauthCookies)
+  result = await setActivationCookie(result, activationToken, sessionService)
 
   return result
 }
@@ -922,8 +910,7 @@ const handleReviewerActivate = async (
       },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   const invitation = await invitationRepository.findByToken(normalizedToken)
@@ -941,8 +928,7 @@ const handleReviewerActivate = async (
       },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   const email = invitation!.email.toLowerCase().trim()
