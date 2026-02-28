@@ -90,8 +90,6 @@ export function buildErrorResponse(error: unknown): APIGatewayProxyStructuredRes
     }
   }
 
-  const message = error instanceof Error ? error.message : 'Unknown error'
-
   return {
     statusCode: 500,
     headers: {
@@ -100,7 +98,7 @@ export function buildErrorResponse(error: unknown): APIGatewayProxyStructuredRes
     body: JSON.stringify({
       error: {
         code: 'INTERNAL_ERROR',
-        message,
+        message: 'An unexpected error occurred',
       },
     }),
   }

@@ -18,7 +18,7 @@ export interface CanonicalSession {
 }
 
 const SESSION_COOKIE_NAME = 'worklient_session'
-const SESSION_MAX_AGE = 28800
+const DEFAULT_SESSION_MAX_AGE = 28800
 
 function getSecret(): Uint8Array {
   const secret = config.SESSION_SECRET
@@ -29,7 +29,8 @@ export class SessionService {
   private readonly maxAge: number
 
   constructor() {
-    this.maxAge = SESSION_MAX_AGE
+    const envMaxAge = config.SESSION_MAX_AGE
+    this.maxAge = typeof envMaxAge === 'number' && envMaxAge > 0 ? envMaxAge : DEFAULT_SESSION_MAX_AGE
   }
 
   async signSession(session: CanonicalSession): Promise<string> {
@@ -136,7 +137,9 @@ export class SessionService {
   }
 
   buildClearSessionCookie(): string {
-    return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+    const domain = this.getCookieDomain()
+    const domainPart = domain ? `Domain=${domain}; ` : ''
+    return `${SESSION_COOKIE_NAME}=; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=0`
   }
 
   getSessionFromCookie(

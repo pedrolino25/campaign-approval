@@ -2660,7 +2660,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     },
     servers: [
       {
-        url: 'https://dev.api.worklient.com',
+        url: 'https://api.dev.worklient.com',
         description: 'Development server',
       },
     ],
