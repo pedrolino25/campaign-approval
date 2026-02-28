@@ -213,6 +213,7 @@ module "cloudfront" {
 # 13. Route53 Record for CloudFront
 # --------------------------------------------
 
+
 resource "aws_route53_record" "api_cloudfront" {
   name    = var.dev_api_subdomain
   type    = "A"
