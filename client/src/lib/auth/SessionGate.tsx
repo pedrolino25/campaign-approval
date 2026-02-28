@@ -51,9 +51,9 @@ export function SessionGate({
   ) {
     const targetPath =
       session.actorType === 'INTERNAL'
-        ? '/auth/complete-signup/internal'
+        ? '/complete-signup/internal'
         : session.actorType === 'REVIEWER'
-          ? '/auth/complete-signup/reviewer'
+          ? '/complete-signup/reviewer'
           : null
 
     if (targetPath && pathname !== targetPath) {

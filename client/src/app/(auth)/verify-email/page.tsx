@@ -102,7 +102,7 @@ export default function VerifyEmailPage() {
     // If session already exists, redirect based on onboarding status
     if (session) {
       if (!session.onboardingCompleted) {
-        router.push('/auth/complete-signup/internal')
+        router.push('/complete-signup/internal')
       } else {
         router.push('/dashboard')
       }
