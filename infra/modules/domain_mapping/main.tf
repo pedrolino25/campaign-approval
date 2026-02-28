@@ -14,16 +14,10 @@ resource "aws_apigatewayv2_domain_name" "main" {
   tags = var.tags
 }
 
-resource "aws_apigatewayv2_stage" "default" {
-  api_id      = aws_apigatewayv2_api.this.id
-  name        = "$default"
-  auto_deploy = true
-}
-
 resource "aws_apigatewayv2_api_mapping" "main" {
   api_id      = var.api_id
   domain_name = aws_apigatewayv2_domain_name.main.id
-  stage       = aws_apigatewayv2_stage.default.id
+  stage       = "$default"
 }
 
 # Route53 record is now created separately in environment main.tf to point to CloudFront
