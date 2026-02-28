@@ -114,12 +114,17 @@ export function handlePreflightRequest(
 function isV2Event(
   event: APIGatewayProxyEventV2 | APIGatewayProxyEvent
 ): event is APIGatewayProxyEventV2 {
-  return 'version' in event && event.version === '2.0'
+  return (
+    'requestContext' in event &&
+    event.requestContext !== null &&
+    typeof event.requestContext === 'object' &&
+    'http' in event.requestContext
+  )
 }
 
 export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
   if (isV2Event(event)) {
-    return event.requestContext.http.path
+    return event.rawPath ?? event.requestContext.http.path
   }
 
   return event.path ?? ''
