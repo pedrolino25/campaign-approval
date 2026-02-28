@@ -14,11 +14,11 @@ resource "aws_apigatewayv2_domain_name" "main" {
   tags = var.tags
 }
 
-resource "aws_apigatewayv2_api_mapping" "main" {
-  api_id      = var.api_id
-  domain_name = aws_apigatewayv2_domain_name.main.id
-  stage       = "$default"
-}
+#resource "aws_apigatewayv2_api_mapping" "main" {
+#  api_id      = var.api_id
+#  domain_name = aws_apigatewayv2_domain_name.main.id
+#  stage       = "$default"
+#}
 
 # Route53 record is now created separately in environment main.tf to point to CloudFront
 # This allows seamless migration: API Gateway domain remains, DNS points to CloudFront
