@@ -1,8 +1,10 @@
+"use client"
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -33,7 +35,6 @@ import {
   useResendVerificationMutation,
   useVerifyEmailMutation,
 } from '@/services/auth.service'
-export const dynamic = "force-dynamic";
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, 'Code must be 6 characters'),
@@ -57,7 +58,7 @@ function getRedirectPath(
   return defaultPath
 }
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const searchParams = useSearchParams()
@@ -262,5 +263,13 @@ export default function VerifyEmailPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

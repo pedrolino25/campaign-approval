@@ -1,6 +1,9 @@
+"use client"
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -25,7 +28,6 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSignupMutation } from '@/services/auth.service'
-export const dynamic = "force-dynamic";
 
 const signupSchema = z
   .object({
@@ -40,7 +42,7 @@ const signupSchema = z
 
 type SignupFormValues = z.infer<typeof signupSchema>
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -168,5 +170,13 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupContent />
+    </Suspense>
   )
 }

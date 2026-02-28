@@ -1,7 +1,9 @@
+"use client"
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -26,7 +28,6 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
 import { useResetPasswordMutation } from '@/services/auth.service'
-export const dynamic = "force-dynamic";
 
 const resetPasswordSchema = z
   .object({
@@ -42,7 +43,7 @@ const resetPasswordSchema = z
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const resetPasswordMutation = useResetPasswordMutation({
@@ -187,5 +188,13 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
