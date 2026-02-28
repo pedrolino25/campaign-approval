@@ -116,6 +116,9 @@ export class SessionService {
   private getCookieDomain(): string | undefined {
     const hostname = new URL(config.FRONTEND_URL).hostname
 
+    // eslint-disable-next-line no-console
+    console.log('hostname', hostname)
+
     if (hostname.endsWith('.local.worklient.test')) {
       return '.local.worklient.test'
     }
