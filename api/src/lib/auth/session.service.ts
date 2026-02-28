@@ -131,7 +131,7 @@ export class SessionService {
     const encodedJwt = encodeURIComponent(jwt)
     const domain = this.getCookieDomain()
     const domainPart = domain ? `Domain=${domain}; ` : ''
-    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
+    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}; HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {
