@@ -123,7 +123,12 @@ export class SessionService {
       return '.local.worklient.test'
     }
 
-    if (hostname.endsWith('.worklient.com') || hostname === 'worklient.com') {
+    if (
+      hostname === 'worklient-git-develop-lynulabs-projects.vercel.app' || 
+      hostname === 'worklient-git-main-lynulabs-projects.vercel.app' || 
+      hostname === 'worklient.com' || 
+      hostname.endsWith('.worklient.com')
+    ) {
       return '.worklient.com'
     }
 
