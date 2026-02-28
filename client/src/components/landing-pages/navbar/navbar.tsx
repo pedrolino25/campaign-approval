@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { headers } from "next/headers";
+import Image from "next/image";
 
 import Logo from "@/assets/logo.svg";
 import { ButtonLink } from "@/components/ui/button-link";
