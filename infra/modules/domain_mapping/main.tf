@@ -14,10 +14,10 @@ resource "aws_apigatewayv2_domain_name" "main" {
   tags = var.tags
 }
 
-# Reverted to var.stage_name so mapping stays on v1; AWS blocks stage deletion while mappings reference it.
-# To migrate to $default later: use two-step apply (remove mapping from config, apply, then set stage $default, apply, then restore mapping).
-resource "aws_apigatewayv2_api_mapping" "main" {
-  api_id      = var.api_id
-  domain_name = aws_apigatewayv2_domain_name.main.id
-  stage       = var.stage_name
-}
+# Step 2a: Commented out so Terraform stops managing the mapping; apply will remove it from AWS so stage v1 can be deleted.
+# Restore this block in step 2b after switching to stage $default (uncomment and apply again).
+# resource "aws_apigatewayv2_api_mapping" "main" {
+#   api_id      = var.api_id
+#   domain_name = aws_apigatewayv2_domain_name.main.id
+#   stage       = var.stage_name
+# }
