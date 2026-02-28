@@ -72,3 +72,17 @@ resource "aws_route53_record" "email_cname" {
 
   records = [each.value.value]
 }
+
+resource "aws_route53_record" "caa_apex" {
+  zone_id         = local.hosted_zone_id
+  name            = var.domain_name
+  type            = "CAA"
+  ttl             = 3600
+  allow_overwrite = true
+
+  records = coalesce(var.caa_records, [
+    "0 issue \"amazon.com\"",
+    "0 issue \"amazontrust.com\"",
+    "0 issue \"awstrust.com\"",
+  ])
+}

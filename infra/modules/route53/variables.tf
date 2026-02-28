@@ -36,6 +36,12 @@ variable "email_cname_records" {
   default = []
 }
 
+variable "caa_records" {
+  description = "CAA records for the apex domain (which CAs may issue certs). Defaults allow AWS ACM. Set to add e.g. Lets Encrypt."
+  type        = list(string)
+  default     = null
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)
