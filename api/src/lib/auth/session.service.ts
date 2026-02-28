@@ -115,20 +115,13 @@ export class SessionService {
 
   private getCookieDomain(): string | undefined {
     const hostname = new URL(config.FRONTEND_URL).hostname
-
-    // eslint-disable-next-line no-console
-    console.log('hostname', hostname)
+    const vercelRegex = /^worklient-git-[a-z0-9-]+-lynulabs-projects\.vercel\.app$/
 
     if (hostname.endsWith('.local.worklient.test')) {
       return '.local.worklient.test'
     }
 
-    if (
-      hostname === 'worklient-git-develop-lynulabs-projects.vercel.app' || 
-      hostname === 'worklient-git-main-lynulabs-projects.vercel.app' || 
-      hostname === 'worklient.com' || 
-      hostname.endsWith('.worklient.com')
-    ) {
+    if (vercelRegex.test(hostname) || hostname === 'worklient.com' || hostname.endsWith('.worklient.com')) {
       return '.worklient.com'
     }
 
@@ -139,12 +132,7 @@ export class SessionService {
     const encodedJwt = encodeURIComponent(jwt)
     const domain = this.getCookieDomain()
     const domainPart = domain ? `Domain=${domain}; ` : ''
-    // eslint-disable-next-line no-console
-    console.log('domainPart', domainPart)
-    const cookieString = `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
-    // eslint-disable-next-line no-console
-    console.log('cookieString', cookieString)
-    return cookieString
+    return `${SESSION_COOKIE_NAME}=${encodedJwt}; Path=/; ${domainPart}HttpOnly; Secure; SameSite=Lax; Max-Age=${this.maxAge}`
   }
 
   buildClearSessionCookie(): string {
