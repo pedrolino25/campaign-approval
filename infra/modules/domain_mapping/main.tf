@@ -14,22 +14,10 @@ resource "aws_apigatewayv2_domain_name" "main" {
   tags = var.tags
 }
 
-#resource "aws_apigatewayv2_api_mapping" "main" {
-#  api_id      = var.api_id
-#  domain_name = aws_apigatewayv2_domain_name.main.id
-#  stage       = "$default"
-#}
-
-# Route53 record is now created separately in environment main.tf to point to CloudFront
-# This allows seamless migration: API Gateway domain remains, DNS points to CloudFront
-# resource "aws_route53_record" "api" {
-#   name    = var.domain_name
-#   type    = "A"
-#   zone_id = var.hosted_zone_id
-#
-#   alias {
-#     name                   = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
-#     zone_id                = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].hosted_zone_id
-#     evaluate_target_health = false
-#   }
-# }
+# Reverted to var.stage_name so mapping stays on v1; AWS blocks stage deletion while mappings reference it.
+# To migrate to $default later: use two-step apply (remove mapping from config, apply, then set stage $default, apply, then restore mapping).
+resource "aws_apigatewayv2_api_mapping" "main" {
+  api_id      = var.api_id
+  domain_name = aws_apigatewayv2_domain_name.main.id
+  stage       = var.stage_name
+}

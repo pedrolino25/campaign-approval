@@ -27,7 +27,9 @@ cognito_access_token_validity_minutes = 60
 cognito_refresh_token_validity_days   = 30
 cognito_password_minimum_length       = 12
 
-api_stage_name = "$default"
+# Reverted to v1 to avoid "Deleting stage v1 failed. Please remove all base path mappings..." (revert to $default later with two-step migration)
+api_stage_name = "v1"
+# api_stage_name = "$default"
 
 enable_api_cors = true
 
