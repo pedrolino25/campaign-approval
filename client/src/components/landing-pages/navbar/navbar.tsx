@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import Image from "next/image";
 
 import Logo from "@/assets/logo.svg";
@@ -37,6 +38,7 @@ const MobileMenuButton = () => {
 }
 
 export function Navbar() {
+  const hasSession = headers().get("x-session-present") === "1"
   return (
     <div className="relative group">
       <input
@@ -72,12 +74,12 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <NavbarAuthButtons />
+            <NavbarAuthButtons hasSession={hasSession} />
             <MobileMenuButton />
           </div>
         </div>
       </nav>
-      <NavbarMobileMenu />
+      <NavbarMobileMenu hasSession={hasSession} />
     </div>
   );
 }

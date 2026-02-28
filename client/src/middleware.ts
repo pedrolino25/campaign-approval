@@ -27,58 +27,47 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  try {
-    const pathname = request.nextUrl.pathname
+  const isOffline = process.env.NODE_ENV === 'development'
+  const pathname = request.nextUrl.pathname
+  const sessionCookie = request.cookies.get('worklient_session')
 
-    if (process.env.NODE_ENV === 'development' || isPublicRoute(pathname)) {
-      return NextResponse.next()
-    }
+  let hasValidSession = false
 
-    const sessionCookie = request.cookies.get('worklient_session')
-
-    if (!sessionCookie) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
-    }
-
+  if (sessionCookie) {
     try {
       const payload = decodeJwt(sessionCookie.value)
-
       const exp = payload.exp
 
-      if (typeof exp !== 'number') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+      if (typeof exp === 'number') {
+        const now = Math.floor(Date.now() / 1000)
+        if (exp >= now) {
+          hasValidSession = true
+        }
       }
-
-      const now = Math.floor(Date.now() / 1000)
-
-      if (exp < now) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
-      }
-
     } catch {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
+      hasValidSession = false
+    }
+  }
+
+  if (isOffline ||isPublicRoute(pathname)) {
+    const response = NextResponse.next()
+
+    if (hasValidSession) {
+      response.headers.set('x-session-present', '1')
     }
 
-    return NextResponse.next()
-  } catch {
-    const pathname = request.nextUrl.pathname
+    return response
+  }
 
-    if (isPublicRoute(pathname)) {
-      return NextResponse.next()
-    }
-
+  if (!hasValidSession) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
+
+  const response = NextResponse.next()
+  response.headers.set('x-session-present', '1')
+  return response
 }
 
 export const config = {

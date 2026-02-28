@@ -1,5 +1,3 @@
-'use client'
-
 import { ChevronDownIcon } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 
@@ -8,7 +6,6 @@ import IconClipboard from '@/assets/icons/icon-clipboard'
 import IconSearch from '@/assets/icons/icon-search'
 import IconSparkles from '@/assets/icons/icon-sparkles'
 import IconVersion from '@/assets/icons/icon-version'
-import { useSession } from '@/lib/auth/session-context'
 
 interface MobileMenuLinkItemProps {
   title: string
@@ -46,9 +43,11 @@ const MobileMenuLinkItem = ({
   )
 }
 
-export function NavbarMobileMenu() {
-  const { session } = useSession()
-
+export function NavbarMobileMenu({
+  hasSession,
+}: {
+  hasSession: boolean
+}) {
   return (
     <div
       className="
@@ -131,7 +130,7 @@ export function NavbarMobileMenu() {
         <a href="/pricing" className="font-medium text-2xl text-[#000000cc]">
           Pricing
         </a>
-        {session ? (
+        {hasSession ? (
           <a href="/dashboard" className="font-medium text-2xl text-[#000000cc]">
             Go to Dashboard
           </a>

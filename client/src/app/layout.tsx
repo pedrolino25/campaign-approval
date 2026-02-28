@@ -6,8 +6,6 @@ import { Inter } from 'next/font/google'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { ToastProvider } from '@/components/ui/toast-provider'
-import { SessionProvider } from '@/lib/auth/session-context'
-import { QueryProvider } from '@/lib/query/query-provider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -66,20 +64,14 @@ export default function RootLayout({
             }),
           }}
         />
-        <QueryProvider>
-          <SessionProvider>
-            <ToastProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                {children}
-              </ThemeProvider>
-            </ToastProvider>
-          </SessionProvider>
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
