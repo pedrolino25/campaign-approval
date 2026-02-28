@@ -84,5 +84,6 @@ resource "aws_route53_record" "caa_apex" {
     "0 issue \"amazon.com\"",
     "0 issue \"amazontrust.com\"",
     "0 issue \"awstrust.com\"",
+    "0 issue \"amazonaws.com\"",
   ])
 }
