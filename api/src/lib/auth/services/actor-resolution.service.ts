@@ -6,8 +6,8 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { logger } from '../../index'
-import type { RBACService } from '../rbac.service'
 import { handleInternalUserSignup } from './internal-user-signup.service'
+import type { RBACService } from './rbac.service'
 
 type AuthContext = { ip?: string; userAgent?: string; requestId?: string }
 type ResolveResult = {

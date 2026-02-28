@@ -1,12 +1,12 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 import { randomBytes } from 'crypto'
 
-import { InternalError, UnauthorizedError, ValidationError } from '../../models'
-import { config } from '../utils/config'
+import { InternalError, UnauthorizedError, ValidationError } from '../../../models'
+import { config } from '../../utils/config'
 import {
   generateCodeChallenge,
   generateCodeVerifier,
-} from './utils/pkce'
+} from '../utils/pkce'
 
 export interface AuthorizationResponse {
   authorizationUrl: string

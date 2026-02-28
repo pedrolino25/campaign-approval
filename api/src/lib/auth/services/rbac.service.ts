@@ -4,10 +4,10 @@ import {
   type ActorContext,
   ActorType,
   UnauthorizedError,
-} from '../../models'
+} from '../../../models'
 import {
   type ClientReviewerRepository,
-} from '../../repositories'
+} from '../../../repositories'
 
 export class RBACService {
   constructor(

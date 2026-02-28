@@ -7,8 +7,8 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { config } from '../../utils/config'
-import type { RBACService } from '../rbac.service'
-import type { CanonicalSession, SessionService } from '../session.service'
+import type { RBACService } from '../services/rbac.service'
+import type { CanonicalSession, SessionService } from '../services/session.service'
 
 function calculateOnboardingStatus(
   actor: Awaited<ReturnType<RBACService['resolve']>>,

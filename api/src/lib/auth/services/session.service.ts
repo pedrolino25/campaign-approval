@@ -1,10 +1,10 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { jwtVerify, SignJWT } from 'jose'
 
-import type { ActorType } from '../../models'
-import { config } from '../utils/config'
-import { attachCookies } from '../utils/cors'
-import { parseCookies } from './utils/cookie.utils'
+import type { ActorType } from '../../../models'
+import { config } from '../../utils/config'
+import { attachCookies } from '../../utils/cors'
+import { parseCookies } from '../utils/cookie.utils'
 
 export interface CanonicalSession {
   cognitoSub: string

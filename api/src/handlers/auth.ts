@@ -11,11 +11,13 @@ import {
   RBACService,
   SessionService,
 } from '../lib/auth'
-import { CognitoService } from '../lib/auth/cognito.service'
-import { processReviewerActivation } from '../lib/auth/services/activation.service'
 import { resolveActorFromTokens } from '../lib/auth/services/actor-resolution.service'
-import { acceptInvitationForAuth } from '../lib/auth/services/invitation-acceptance.service'
-import type { CanonicalSession } from '../lib/auth/session.service'
+import { CognitoService } from '../lib/auth/services/cognito.service'
+import {
+  acceptInvitationForAuth,
+  activateReviewerInvitation,
+} from '../lib/auth/services/invitations.service'
+import type { CanonicalSession } from '../lib/auth/services/session.service'
 import { setActivationCookie } from '../lib/auth/utils/activation-token.utils'
 import { parseCookies } from '../lib/auth/utils/cookie.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
@@ -256,7 +258,7 @@ async function processOAuthCallback(
   let reviewerActivationCompleted = false
 
   if (activationToken) {
-    await processReviewerActivation(
+    await activateReviewerInvitation(
       activationToken,
       userId,
       email,
@@ -1087,6 +1089,18 @@ const handleVerifyEmail = async (
   }
 }
 
+function resendVerificationSuccessResponse(): APIGatewayProxyStructuredResultV2 {
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      success: true,
+    }),
+  }
+}
+
 const handleResendVerification = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
@@ -1103,23 +1117,13 @@ const handleResendVerification = async (
         ...context,
         metadata: { reason: 'anti-enumeration' },
       })
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          success: true,
-        }),
-      }
+      return resendVerificationSuccessResponse()
     }
 
     let validated: { email: string }
     try {
       validated = ResendVerificationSchema.parse(body)
     } catch (error) {
-      // Validation error - return success to prevent enumeration
-      // But log it for debugging
       logger.warn({
         source: 'auth',
         event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
@@ -1128,29 +1132,11 @@ const handleResendVerification = async (
           error: error instanceof Error ? error.message : String(error),
         },
       })
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          success: true,
-        }),
-      }
+      return resendVerificationSuccessResponse()
     }
 
     await cognitoService.resendConfirmation(validated.email)
-
-    // Always return success to prevent enumeration
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-      }),
-    }
+    return resendVerificationSuccessResponse()
   } catch (error) {
     logger.warn({
       source: 'auth',
@@ -1158,15 +1144,7 @@ const handleResendVerification = async (
       ...context,
       metadata: { reason: 'anti-enumeration' },
     })
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-      }),
-    }
+    return resendVerificationSuccessResponse()
   }
 }
 

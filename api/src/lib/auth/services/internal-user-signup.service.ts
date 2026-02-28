@@ -6,8 +6,8 @@ import type {
   OrganizationRepository,
   UserRepository,
 } from '../../../repositories'
-import { InvitationService } from '../../../services/invitation.service'
-import { createOrganizationAndUser } from './organization-creation.service'
+import { createOrganizationAndUser } from '../../../services/onboarding.service'
+import { acceptInvitationAndCreateUser } from './invitations.service'
 
 type AuthContext = { ip?: string; userAgent?: string; requestId?: string }
 type SignupResult = {
@@ -15,45 +15,6 @@ type SignupResult = {
   organization: Awaited<ReturnType<OrganizationRepository['findById']>>
   invitationAccepted: boolean
   organizationCreated: boolean
-}
-
-async function acceptInvitationAndCreateUser(
-  invitation: Awaited<ReturnType<InvitationRepository['findPendingByEmailAndType']>>,
-  cognitoSub: string,
-  email: string,
-  organizationRepository: OrganizationRepository,
-  _context: AuthContext
-): Promise<{
-  user: Awaited<ReturnType<UserRepository['findByCognitoId']>>
-  organization: Awaited<ReturnType<OrganizationRepository['findById']>>
-}> {
-  if (!invitation) {
-    throw new InternalError('Invitation is required')
-  }
-
-  const invitationService = new InvitationService()
-  const result = await invitationService.acceptInvitation({
-    token: invitation.token,
-    cognitoUserId: cognitoSub,
-    email,
-  })
-
-  if (!result.user) {
-    throw new InternalError('User was not created from invitation')
-  }
-
-  const organization = await organizationRepository.findById(
-    result.user.organizationId
-  )
-
-  if (!organization) {
-    throw new InternalError('Organization not found after invitation acceptance')
-  }
-
-  return {
-    user: result.user,
-    organization,
-  }
 }
 
 export async function handleInternalUserSignup(

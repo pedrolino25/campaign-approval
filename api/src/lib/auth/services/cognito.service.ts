@@ -28,9 +28,9 @@ import {
   InternalError,
   UnauthorizedError,
   ValidationError,
-} from '../../models'
-import { config } from '../utils/config'
-import { logger } from '../utils/logger'
+} from '../../../models'
+import { config } from '../../utils/config'
+import { logger } from '../../utils/logger'
 
 export class CognitoService {
   private readonly client: CognitoIdentityProviderClient
@@ -96,18 +96,11 @@ export class CognitoService {
   private generateStrongPassword(): string {
     const bytes = randomBytes(32)
     const base64 = bytes.toString('base64')
-    // Cognito requires passwords to have:
-    // - At least 8 characters
-    // - At least one uppercase letter
-    // - At least one lowercase letter
-    // - At least one number
-    // - At least one special character
     const specialChars = '!@#$%^&*'
     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]
     const randomUpper = String.fromCharCode(65 + Math.floor(Math.random() * 26))
     const randomLower = String.fromCharCode(97 + Math.floor(Math.random() * 26))
     const randomDigit = Math.floor(Math.random() * 10).toString()
-    // Combine: base64 (has alphanumeric) + special + ensure all requirements
     return `${base64}${randomSpecial}${randomUpper}${randomLower}${randomDigit}`
   }
 
@@ -180,12 +173,10 @@ export class CognitoService {
       throw new InternalError('COGNITO_CONFIRM_FAILED')
     }
 
-    // Immediately authenticate after confirmation
     try {
       const authResult = await this.login(email, password)
       return authResult
     } catch (loginError) {
-      // If login fails after confirmation, it might be a password issue
       if (loginError instanceof UnauthorizedError) {
         throw new UnauthorizedError('INVALID_CREDENTIALS_AFTER_VERIFICATION')
       }

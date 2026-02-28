@@ -2,7 +2,7 @@ import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { jwtVerify, SignJWT } from 'jose'
 
 import { config } from '../../../lib/utils/config'
-import type { SessionService } from '../session.service'
+import type { SessionService } from '../services/session.service'
 
 function getActivationSecret(): Uint8Array {
   const secret = config.ACTIVATION_COOKIE_SECRET

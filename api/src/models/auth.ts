@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
-import type { CanonicalSession } from '../lib/auth/session.service'
+import type { CanonicalSession } from '../lib/auth/services/session.service'
 import type { ActorContext } from './rbac'
 
 export interface AuthContext {

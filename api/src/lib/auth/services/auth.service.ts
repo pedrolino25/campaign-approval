@@ -5,13 +5,13 @@ import {
   ActorType,
   type AuthenticatedEvent,
   UnauthorizedError,
-} from '../../models'
-import { ClientRepository } from '../../repositories'
-import type { ReviewerRepository } from '../../repositories/reviewer.repository'
-import type { UserRepository } from '../../repositories/user.repository'
-import { getCookies } from '../utils/cors'
-import { logger } from '../utils/logger'
-import { type CanonicalSession, SessionService } from './session.service'
+} from '../../../models'
+import { ClientRepository } from '../../../repositories'
+import type { ReviewerRepository } from '../../../repositories/reviewer.repository'
+import type { UserRepository } from '../../../repositories/user.repository'
+import { getCookies } from '../../utils/cors'
+import { logger } from '../../utils/logger'
+import { type CanonicalSession, SessionService } from '../services/session.service'
 
 export class AuthService {
   private readonly sessionService: SessionService

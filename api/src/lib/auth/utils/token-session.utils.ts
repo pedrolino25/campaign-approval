@@ -8,9 +8,9 @@ import type {
   ReviewerRepository,
   UserRepository,
 } from '../../../repositories'
-import type { RBACService } from '../rbac.service'
-import type { SessionService } from '../session.service'
 import { resolveActorFromTokens } from '../services/actor-resolution.service'
+import type { RBACService } from '../services/rbac.service'
+import type { SessionService } from '../services/session.service'
 import type { JwtVerifier } from './jwt-verifier'
 import { buildSessionResponse } from './session.utils'
 
