@@ -7,7 +7,7 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { InvitationService } from '../../../services/invitation.service'
-import { createOrganizationAndUser } from './organization-creation.utils'
+import { createOrganizationAndUser } from './organization-creation.service'
 
 type AuthContext = { ip?: string; userAgent?: string; requestId?: string }
 type SignupResult = {

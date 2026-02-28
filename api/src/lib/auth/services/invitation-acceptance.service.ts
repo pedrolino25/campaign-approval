@@ -1,15 +1,13 @@
-import { ConflictError, NotFoundError, ValidationError } from '../../../models/errors'
 import type { InvitationRepository } from '../../../repositories'
 import type { InvitationService } from '../../../services/invitation.service'
 import { logger } from '../../utils/logger'
+import { validateReviewerInvitation } from '../utils/validation.utils'
 
 type InvitationContext = {
   ip?: string
   userAgent?: string
   requestId?: string
 }
-
-type Invitation = Awaited<ReturnType<InvitationRepository['findByToken']>>
 
 function logInvitationFailure(
   context: InvitationContext,
@@ -41,32 +39,6 @@ function logInvitationSuccess(
   })
 }
 
-function validateInvitationForAuth(
-  invitation: Invitation,
-  email: string,
-  context: InvitationContext
-): void {
-  if (!invitation) {
-    logInvitationFailure(context, 'Invitation not found')
-    throw new NotFoundError('Invitation not found')
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    logInvitationFailure(context, 'Invitation expired')
-    throw new ValidationError('Invitation has expired')
-  }
-
-  if (invitation.acceptedAt) {
-    logInvitationFailure(context, 'Invitation already accepted')
-    throw new ConflictError('Invitation has already been accepted')
-  }
-
-  if (email.toLowerCase().trim() !== invitation.email.toLowerCase().trim()) {
-    logInvitationFailure(context, 'Email mismatch')
-    throw new ValidationError('Email does not match invitation')
-  }
-}
-
 export async function acceptInvitationForAuth(
   inviteToken: string,
   cognitoUserId: string,
@@ -77,7 +49,18 @@ export async function acceptInvitationForAuth(
 ): Promise<{ isReviewer: boolean }> {
   const invitation = await invitationRepository.findByToken(inviteToken)
 
-  validateInvitationForAuth(invitation, email, context)
+  try {
+    validateReviewerInvitation(invitation, email, {
+      requireReviewerType: false,
+      requireEmailMatch: true,
+    })
+  } catch (error) {
+    logInvitationFailure(
+      context,
+      error instanceof Error ? error.message : 'Invitation validation failed'
+    )
+    throw error
+  }
 
   await invitationService.acceptInvitation({
     token: inviteToken,

@@ -12,15 +12,14 @@ import {
   SessionService,
 } from '../lib/auth'
 import { CognitoService } from '../lib/auth/cognito.service'
+import { processReviewerActivation } from '../lib/auth/services/activation.service'
+import { resolveActorFromTokens } from '../lib/auth/services/actor-resolution.service'
+import { acceptInvitationForAuth } from '../lib/auth/services/invitation-acceptance.service'
 import type { CanonicalSession } from '../lib/auth/session.service'
-import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
 import { setActivationCookie } from '../lib/auth/utils/activation-token.utils'
-import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
 import { parseCookies } from '../lib/auth/utils/cookie.utils'
-import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import {
-  buildErrorResponse,
   buildInvalidRequestResponse,
   buildMissingParamsResponse,
   buildMissingStateResponse,
@@ -422,7 +421,7 @@ const handleCallback = async (
     }
 
     logAuthError('LOGIN_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 
   const { code, state, codeVerifier, expectedState, activationToken } = callbackParams
@@ -446,15 +445,7 @@ const handleCallback = async (
     )
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
-
-    let errorResponse = buildErrorResponse(error)
-
-    if (activationToken) {
-      errorResponse = sessionService.clearActivationCookie(errorResponse)
-    }
-
-    errorResponse = sessionService.clearOAuthCookies(errorResponse)
-    return errorResponse
+    throw error
   }
 }
 
@@ -1003,7 +994,7 @@ const handleSignUp = async (
       },
     })
 
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1092,7 +1083,7 @@ const handleVerifyEmail = async (
     return await processEmailVerification(validated, context)
   } catch (error) {
     logAuthError('EMAIL_VERIFICATION_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1105,8 +1096,13 @@ const handleResendVerification = async (
     let body: unknown
     try {
       body = event.body ? JSON.parse(event.body) : {}
-    } catch {
-      // Invalid JSON - return success to prevent enumeration
+    } catch (error) {
+      logger.warn({
+        source: 'auth',
+        event: 'RESEND_VERIFICATION_INVALID_JSON',
+        ...context,
+        metadata: { reason: 'anti-enumeration' },
+      })
       return {
         statusCode: 200,
         headers: {
@@ -1155,8 +1151,13 @@ const handleResendVerification = async (
         success: true,
       }),
     }
-  } catch {
-    // Always return success to prevent enumeration
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'RESEND_VERIFICATION_SUPPRESSED',
+      ...context,
+      metadata: { reason: 'anti-enumeration' },
+    })
     return {
       statusCode: 200,
       headers: {
@@ -1232,7 +1233,7 @@ const handleEmailPasswordLogin = async (
     return await processLogin(validated, context)
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1255,8 +1256,12 @@ const handleForgotPassword = async (
         success: true,
       }),
     }
-  } catch {
-    // Always return success to prevent enumeration
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'FORGOT_PASSWORD_SUPPRESSED',
+      metadata: { reason: 'anti-enumeration' },
+    })
     return {
       statusCode: 200,
       headers: {
@@ -1327,7 +1332,7 @@ const handleResetPassword = async (
       },
     })
 
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1384,8 +1389,12 @@ async function changeUserPassword(
     try {
       const refreshResult = await cognitoService.refreshAccessToken(refreshToken)
       accessToken = refreshResult.accessToken
-    } catch {
-      // If refresh token fails, fall back to old password
+    } catch (error) {
+      logger.warn({
+        source: 'auth',
+        event: 'REFRESH_TOKEN_FALLBACK',
+        metadata: { reason: 'refresh failed, using password' },
+      })
       const loginResult = await cognitoService.login(email, oldPassword)
       accessToken = loginResult.accessToken
     }
@@ -1444,7 +1453,7 @@ const handleChangePassword = async (
     return await processPasswordChange(validated, email, refreshToken, context)
   } catch (error) {
     logAuthError('PASSWORD_CHANGE_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 }
 

@@ -30,6 +30,7 @@ import {
   ValidationError,
 } from '../../models'
 import { config } from '../utils/config'
+import { logger } from '../utils/logger'
 
 export class CognitoService {
   private readonly client: CognitoIdentityProviderClient
@@ -261,8 +262,11 @@ export class CognitoService {
         })
       )
     } catch (error) {
-      // Always return success to prevent account enumeration
-      // Swallow UserNotFoundException and other errors
+      logger.warn({
+        source: 'cognito',
+        event: 'RESEND_CONFIRMATION_SUPPRESSED',
+        metadata: { reason: 'anti-enumeration' },
+      })
     }
   }
 
@@ -275,8 +279,11 @@ export class CognitoService {
         })
       )
     } catch (error) {
-      // Always return success to prevent account enumeration
-      // Swallow UserNotFoundException and other errors
+      logger.warn({
+        source: 'cognito',
+        event: 'FORGOT_PASSWORD_SUPPRESSED',
+        metadata: { reason: 'anti-enumeration' },
+      })
     }
   }
 

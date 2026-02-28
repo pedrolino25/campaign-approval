@@ -10,7 +10,7 @@ import type {
 } from '../../../repositories'
 import type { RBACService } from '../rbac.service'
 import type { SessionService } from '../session.service'
-import { resolveActorFromTokens } from './actor.utils'
+import { resolveActorFromTokens } from '../services/actor-resolution.service'
 import type { JwtVerifier } from './jwt-verifier'
 import { buildSessionResponse } from './session.utils'
 
