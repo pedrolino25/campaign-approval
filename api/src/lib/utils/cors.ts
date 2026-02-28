@@ -114,14 +114,12 @@ export function handlePreflightRequest(
 function isV2Event(
   event: APIGatewayProxyEventV2 | APIGatewayProxyEvent
 ): event is APIGatewayProxyEventV2 {
-  // eslint-disable-next-line no-console
-  console.log('event', event)
-  return 'requestContext' in event
+  return (event as APIGatewayProxyEventV2).version === '2.0'
 }
 
 export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
   if (isV2Event(event)) {
-    return event.requestContext.http.method
+    return event.rawPath ?? event.requestContext.http.path ?? ''
   }
 
   return event.path ?? ''
@@ -129,23 +127,20 @@ export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): s
 
 export function getMethod(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
   if (isV2Event(event)) {
-    return event.requestContext.http.method
+    return event.requestContext.http.method ?? ''
   }
 
   return event.httpMethod ?? ''
 }
 
 export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string[] {
-
-  if (isV2Event(event) && Array.isArray(event.cookies)) {
-    return event.cookies
+  if (isV2Event(event)) {
+    return Array.isArray(event.cookies) ? event.cookies : []
   }
 
   const cookieHeader = getHeader(event, 'cookie')
 
-  if (!cookieHeader) {
-    return []
-  }
+  if (!cookieHeader) return []
 
   return cookieHeader
     .split(';')
@@ -155,10 +150,13 @@ export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent)
 
 export function getHeader(event: APIGatewayProxyEvent | APIGatewayProxyEventV2, name: string): string | undefined {
   const headers = event.headers ?? {}
-
   const lowerName = name.toLowerCase()
 
-  return Object.entries(headers).find(
-    ([key]) => key.toLowerCase() === lowerName
-  )?.[1]
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === lowerName) {
+      return value
+    }
+  }
+
+  return undefined
 }
