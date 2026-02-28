@@ -27,13 +27,10 @@ cognito_access_token_validity_minutes = 60
 cognito_refresh_token_validity_days   = 30
 cognito_password_minimum_length       = 12
 
-api_stage_name = "v1"
+api_stage_name = "$default"
 
 enable_api_cors = true
 
-# CORS allowed origins
-# Note: Lambda code also handles localhost on any port and .vercel.app domains
-# API Gateway requires explicit origins (no wildcards), so we list common localhost ports
 api_cors_allowed_origins = [
   "https://worklient.com",
   "https://dev.worklient.com",
