@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSignupMutation } from '@/services/auth.service'
+export const dynamic = "force-dynamic";
 
 const signupSchema = z
   .object({

@@ -35,6 +35,7 @@ import {
   useResendVerificationMutation,
   useVerifyEmailMutation,
 } from '@/services/auth.service'
+export const dynamic = "force-dynamic";
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, 'Code must be 6 characters'),
