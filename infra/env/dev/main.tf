@@ -210,24 +210,9 @@ module "cloudfront" {
 }
 
 # --------------------------------------------
-
-resource "aws_route53_record" "caa_dev" {
-  zone_id         = module.route53.hosted_zone_id
-  name            = "dev.${var.root_domain_name}"
-  type            = "CAA"
-  ttl             = 3600
-  allow_overwrite = true
-
-  records = [
-    "0 issue \"amazon.com\"",
-    "0 issue \"amazontrust.com\"",
-    "0 issue \"awstrust.com\"",
-  ]
-}
-
+# 13. Route53 Record for CloudFront
 # --------------------------------------------
-# 14. Route53 Record for CloudFront
-# --------------------------------------------
+
 
 resource "aws_route53_record" "api_cloudfront" {
   name    = var.dev_api_subdomain
