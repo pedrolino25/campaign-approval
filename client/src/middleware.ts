@@ -27,8 +27,16 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const isOffline = process.env.NODE_ENV === 'development'
   const pathname = request.nextUrl.pathname
+
+  if (process.env.IN_MAINTENANCE === 'true') {
+    if (pathname !== '/maintenance') {
+      return NextResponse.redirect(new URL('/maintenance', request.url))
+    }
+    return NextResponse.next()
+  }
+
+  const isOffline = process.env.NODE_ENV === 'development'
   const sessionCookie = request.cookies.get('worklient_session')
 
   let hasValidSession = false
