@@ -1,6 +1,6 @@
 import pino from 'pino'
 
-import { getRequestContext } from '../request-context'
+import { getRequestContext } from './request-context'
 
 export interface LogContext {
   level: 'info' | 'warn' | 'error' | 'debug'
