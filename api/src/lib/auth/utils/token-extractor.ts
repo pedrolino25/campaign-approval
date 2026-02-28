@@ -1,13 +1,14 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
 import {
   type AuthTokenExtractor,
   UnauthorizedError,
 } from '../../../models'
+import { getHeader } from '../../utils/cors'
 
 export class BearerTokenExtractor implements AuthTokenExtractor {
-  extract(event: APIGatewayProxyEvent): string {
-    const authHeader = event.headers.authorization || event.headers.Authorization
+  extract(event: APIGatewayProxyEventV2): string {
+    const authHeader = getHeader(event, 'authorization')
 
     if (!authHeader) {
       throw new UnauthorizedError('Missing Authorization header')

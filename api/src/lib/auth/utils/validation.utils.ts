@@ -1,6 +1,7 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
 import { ConflictError, NotFoundError, ValidationError } from '../../../models/errors'
+import { getCookies } from '../../utils/cors'
 import {
   extractAndVerifyActivationToken,
 } from './activation-token.utils'
@@ -72,13 +73,13 @@ async function validateActivationTokenFromCookies(
 }
 
 export async function validateCallbackParams(
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<CallbackParams> {
   const queryParams = event.queryStringParameters || {}
   const { code, state } = validateOAuthQueryParams(queryParams)
 
-  const cookies = event.headers.cookie || event.headers.Cookie || ''
-  const cookieMap = parseCookies(cookies)
+  const cookies = getCookies(event)
+  const cookieMap = parseCookies(cookies.join('; '))
   const { codeVerifier, expectedState } = validateOAuthCookies(cookieMap)
 
   const activationToken = await validateActivationTokenFromCookies(cookieMap)

@@ -6,7 +6,7 @@ variable "environment" {
 variable "stage_name" {
   description = "API Gateway stage name"
   type        = string
-  default     = "v1"
+  default     = "$default"
 }
 
 variable "cognito_user_pool_arn" {

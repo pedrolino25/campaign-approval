@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
 
 import {
   type ActorContext,
@@ -9,6 +9,7 @@ import {
 import { ClientRepository } from '../../repositories'
 import type { ReviewerRepository } from '../../repositories/reviewer.repository'
 import type { UserRepository } from '../../repositories/user.repository'
+import { getCookies } from '../utils/cors'
 import { logger } from '../utils/logger'
 import { type CanonicalSession, SessionService } from './session.service'
 
@@ -23,9 +24,9 @@ export class AuthService {
   }
 
   async authenticate(
-    event: APIGatewayProxyEvent
+    event: APIGatewayProxyEventV2
   ): Promise<AuthenticatedEvent> {
-    const cookies = event.headers.cookie || event.headers.Cookie
+    const cookies = getCookies(event)
     const sessionToken = this.sessionService.getSessionFromCookie(cookies)
 
     if (!sessionToken) {
@@ -57,7 +58,7 @@ export class AuthService {
 
   async verifySessionVersion(
     session: CanonicalSession,
-    event: APIGatewayProxyEvent
+    event: APIGatewayProxyEventV2
   ): Promise<void> {
     if (session.actorType === ActorType.Internal) {
       await this.verifyInternalUserSession(session, event)
@@ -66,7 +67,7 @@ export class AuthService {
     }
   }
 
-  private extractSafeContext(event: APIGatewayProxyEvent): {
+  private extractSafeContext(event: APIGatewayProxyEventV2): {
     ip?: string
     userAgent?: string
     requestId?: string
@@ -86,7 +87,7 @@ export class AuthService {
 
   private async verifyInternalUserSession(
     session: CanonicalSession,
-    event: APIGatewayProxyEvent
+    event: APIGatewayProxyEventV2
   ): Promise<void> {
     if (!session.userId) {
       throw new UnauthorizedError('Invalid session: missing userId')
@@ -138,7 +139,7 @@ export class AuthService {
 
   private async verifyReviewerSession(
     session: CanonicalSession,
-    event: APIGatewayProxyEvent
+    event: APIGatewayProxyEventV2
   ): Promise<void> {
     if (!session.reviewerId) {
       throw new UnauthorizedError('Invalid session: missing reviewerId')

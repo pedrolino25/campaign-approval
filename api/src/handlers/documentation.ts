@@ -1,9 +1,10 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
 import { createPublicHandler } from '../lib/handlers'
 import { config } from '../lib/utils/config'
+import { getMethod, getPath } from '../lib/utils/cors'
 
 const API_DOCS_HTML = `<!DOCTYPE html>
 <html>
@@ -68,7 +69,7 @@ const API_DOCS_HTML = `<!DOCTYPE html>
 </html>`
 
 const handleApiDocs = async (
-  _event: APIGatewayProxyEvent
+  _event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
@@ -90,7 +91,7 @@ const handleApiDocs = async (
 }
 
 const handleOpenApiSpec = async (
-  _event: APIGatewayProxyEvent
+  _event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   if (config.ENVIRONMENT === 'prod') {
     return Promise.resolve({
@@ -146,37 +147,15 @@ const handleOpenApiSpec = async (
   })
 }
 
-function getPath(event: APIGatewayProxyEvent): string {
-  if (event.path) {
-    return event.path
-  }
-  const requestContext = event.requestContext as {
-    http?: { path?: string }
-    path?: string
-  }
-  return requestContext.http?.path || requestContext.path || ''
-}
-
-function getMethod(event: APIGatewayProxyEvent): string {
-  if (event.httpMethod) {
-    return event.httpMethod
-  }
-  const requestContext = event.requestContext as {
-    http?: { method?: string }
-    httpMethod?: string
-  }
-  return requestContext.http?.method || requestContext.httpMethod || ''
-}
-
 const handleDocumentationRoute = async (
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const path = getPath(event)
   const method = getMethod(event)
 
   const routeMap: Record<
     string,
-    (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyStructuredResultV2>
+    (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
   > = {
     'GET:/api-docs': handleApiDocs,
     'GET:/openapi/worklient.v1.json': handleOpenApiSpec,

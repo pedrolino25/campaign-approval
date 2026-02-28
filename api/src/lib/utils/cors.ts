@@ -1,5 +1,6 @@
 import type {
   APIGatewayProxyEvent,
+  APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
 
@@ -56,10 +57,10 @@ export function attachCookies(
 }
 
 export function addCorsHeaders(
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2,
   response: APIGatewayProxyStructuredResultV2
 ): APIGatewayProxyStructuredResultV2 {
-  const origin = event.headers.origin || event.headers.Origin
+  const origin = getHeader(event, 'origin')
 
   if (!origin || !isAllowedOrigin(origin)) {
     return response
@@ -79,13 +80,13 @@ export function addCorsHeaders(
 }
 
 export function handlePreflightRequest(
-  event: APIGatewayProxyEvent
+  event: APIGatewayProxyEventV2
 ): APIGatewayProxyStructuredResultV2 | null {
-  if (event.httpMethod !== 'OPTIONS') {
+  if (getMethod(event) !== 'OPTIONS') {
     return null
   }
 
-  const origin = event.headers.origin || event.headers.Origin
+  const origin = getHeader(event, 'origin')
 
   if (!origin || !isAllowedOrigin(origin)) {
     return {
@@ -108,4 +109,54 @@ export function handlePreflightRequest(
     },
     body: '',
   }
+}
+
+function isV2Event(
+  event: APIGatewayProxyEventV2 | APIGatewayProxyEvent
+): event is APIGatewayProxyEventV2 {
+  return (event as APIGatewayProxyEventV2).version === '2.0'
+}
+
+export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
+  if (isV2Event(event)) {
+    return event.rawPath ?? event.requestContext.http.path ?? ''
+  }
+
+  return event.path ?? ''
+}
+
+export function getMethod(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
+  if (isV2Event(event)) {
+    return event.requestContext.http.method ?? ''
+  }
+
+  return event.httpMethod ?? ''
+}
+
+export function getCookies(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string[] {
+  if (isV2Event(event)) {
+    return Array.isArray(event.cookies) ? event.cookies : []
+  }
+
+  const cookieHeader = getHeader(event, 'cookie')
+
+  if (!cookieHeader) return []
+
+  return cookieHeader
+    .split(';')
+    .map((c) => c.trim())
+    .filter(Boolean)
+}
+
+export function getHeader(event: APIGatewayProxyEvent | APIGatewayProxyEventV2, name: string): string | undefined {
+  const headers = event.headers ?? {}
+  const lowerName = name.toLowerCase()
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === lowerName) {
+      return value
+    }
+  }
+
+  return undefined
 }

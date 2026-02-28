@@ -1,4 +1,5 @@
 import { type AuthenticatedEvent,ForbiddenError } from '../../../models'
+import { getMethod, getPath } from '../../utils/cors';
 
 const ALLOWED_ROUTES = new Set([
   'POST /auth/complete-signup/internal',
@@ -16,29 +17,15 @@ const ALLOWED_PATTERNS: ReadonlyArray<{ method: string; pathPattern: RegExp }> =
   ] as const
 
 function extractRoute(event: AuthenticatedEvent): { method: string; path: string } {
-  if (event.httpMethod) {
-    const method = event.httpMethod
-    const path = event.path || '/'
-    return {
-      method,
-      path,
-    }
-  }
-
-  const requestContext = event.requestContext as {
-    http?: { method?: string; path?: string }
-    httpMethod?: string
-    path?: string
-  }
-
-  const method = requestContext.http?.method || requestContext.httpMethod || 'GET'
-  const path = requestContext.http?.path || requestContext.path || event.path || '/'
+  const method = getMethod(event)
+  const path = getPath(event) || '/'
 
   return {
     method,
     path,
   }
 }
+
 
 function isRouteAllowed(method: string, path: string): boolean {
   const routeKey = `${method} ${path}`

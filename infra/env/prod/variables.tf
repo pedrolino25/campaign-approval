@@ -123,7 +123,7 @@ variable "cognito_password_minimum_length" {
 variable "api_stage_name" {
   description = "API stage name"
   type        = string
-  default     = "v1"
+  default     = "$default"
 }
 
 variable "enable_api_cors" {
