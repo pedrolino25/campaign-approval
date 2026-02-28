@@ -114,12 +114,14 @@ export function handlePreflightRequest(
 function isV2Event(
   event: APIGatewayProxyEventV2 | APIGatewayProxyEvent
 ): event is APIGatewayProxyEventV2 {
+  // eslint-disable-next-line no-console
+  console.log('event', event)
   return 'requestContext' in event
 }
 
 export function getPath(event: APIGatewayProxyEventV2 | APIGatewayProxyEvent): string {
   if (isV2Event(event)) {
-    return event.requestContext.http.path
+    return event.requestContext.http.method
   }
 
   return event.path ?? ''
