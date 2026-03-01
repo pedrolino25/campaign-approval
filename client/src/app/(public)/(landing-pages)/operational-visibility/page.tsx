@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
@@ -6,26 +7,51 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/operational-visibility";
+const CANONICAL_URL = "https://worklient.com/operational-visibility";
+const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+
 export const metadata: Metadata = {
   title: "Campaign Approval Status Tracking",
   description:
     "Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
   keywords: [
     "approval status tracking",
     "campaign approval dashboard",
     "creative workflow visibility",
     "marketing approval tracking",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Operational Visibility for Campaign Approvals",
+    title: "Campaign Approval Status Tracking | Worklient",
     description:
       "Monitor approval progress across campaigns and eliminate manual follow-ups.",
-    url: "https://worklient.com/operational-visibility",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "website",
+    images: [
+      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
+    ],
+    locale: "en_US",
   },
-  alternates: {
-    canonical: "/operational-visibility",
+  twitter: {
+    card: "summary_large_image",
+    title: "Campaign Approval Status Tracking",
+    description:
+      "Monitor approval progress across campaigns and eliminate manual follow-ups.",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -66,6 +92,32 @@ export default function OperationalVisibility() {
         />
       </Container>
       <FooterSection />
+      <Script
+        id="webpage-jsonld"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Campaign Approval Status Tracking | Worklient",
+            description:
+              "Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams.",
+            url: CANONICAL_URL,
+            inLanguage: "en",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "Worklient",
+              url: "https://worklient.com",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+            },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

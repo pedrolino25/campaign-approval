@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
@@ -6,26 +7,51 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/client-experience";
+const CANONICAL_URL = "https://worklient.com/client-experience";
+const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+
 export const metadata: Metadata = {
   title: "Client Approval Portal for Agencies",
   description:
     "Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
   keywords: [
     "client approval portal",
     "creative review platform",
     "agency client review tool",
     "campaign approval software",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Professional Client Approval Experience",
+    title: "Client Approval Portal for Agencies | Worklient",
     description:
       "Provide clients with a frictionless, structured campaign review environment.",
-    url: "https://worklient.com/client-experience",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "website",
+    images: [
+      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
+    ],
+    locale: "en_US",
   },
-  alternates: {
-    canonical: "/client-experience",
+  twitter: {
+    card: "summary_large_image",
+    title: "Client Approval Portal for Agencies",
+    description:
+      "Provide clients with a frictionless, structured campaign review environment.",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -66,6 +92,32 @@ export default async function ClientExperience() {
         />
       </Container>
       <FooterSection />
+      <Script
+        id="webpage-jsonld"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Client Approval Portal for Agencies | Worklient",
+            description:
+              "Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control.",
+            url: CANONICAL_URL,
+            inLanguage: "en",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "Worklient",
+              url: "https://worklient.com",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+            },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

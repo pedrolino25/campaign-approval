@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
@@ -6,32 +7,51 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/approval-workflows";
+const CANONICAL_URL = "https://worklient.com/approval-workflows";
+const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+
 export const metadata: Metadata = {
   title: "Campaign Approval Workflows for Agencies",
   description:
     "Structure campaign approvals with defined status transitions, role-based permissions, and automated workflow alignment built for modern marketing agencies.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
   keywords: [
     "campaign approval workflow",
     "creative approval process",
     "agency approval software",
     "marketing approval workflow",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Structured Campaign Approval Workflows",
+    title: "Campaign Approval Workflows for Agencies | Worklient",
     description:
       "Replace approval chaos with controlled campaign workflows designed for agency scale and operational clarity.",
-    url: "https://yourdomain.com/approval-workflows",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "website",
+    images: [
+      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
+    ],
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Campaign Approval Workflows",
+    title: "Campaign Approval Workflows for Agencies",
     description:
       "Controlled, structured approval workflows built for modern agencies.",
-  },
-  alternates: {
-    canonical: "/approval-workflows",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -72,6 +92,32 @@ export default function ApprovalWorkflows() {
         />
       </Container>
       <FooterSection />
+      <Script
+        id="webpage-jsonld"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Campaign Approval Workflows for Agencies | Worklient",
+            description:
+              "Structure campaign approvals with defined status transitions, role-based permissions, and automated workflow alignment built for modern marketing agencies.",
+            url: CANONICAL_URL,
+            inLanguage: "en",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "Worklient",
+              url: "https://worklient.com",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+            },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }
