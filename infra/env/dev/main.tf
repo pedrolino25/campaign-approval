@@ -109,7 +109,7 @@ module "lambdas" {
 
   iam_roles = {
     organization    = module.iam.organization_role_arn
-    client          = module.iam.client_role_arn
+    project         = module.iam.project_role_arn
     review          = module.iam.review_role_arn
     attachment      = module.iam.attachment_role_arn
     comment         = module.iam.comment_role_arn

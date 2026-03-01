@@ -44,8 +44,8 @@ resource "aws_iam_role_policy" "organization" {
   })
 }
 
-resource "aws_iam_role" "client" {
-  name = "${local.environment_prefix}client-api-role"
+resource "aws_iam_role" "project" {
+  name = "${local.environment_prefix}project-api-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -63,9 +63,9 @@ resource "aws_iam_role" "client" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy" "client" {
-  name = "${local.environment_prefix}client-api-policy"
-  role = aws_iam_role.client.id
+resource "aws_iam_role_policy" "project" {
+  name = "${local.environment_prefix}project-api-policy"
+  role = aws_iam_role.project.id
 
   policy = jsonencode({
     Version = "2012-10-17"

@@ -2683,8 +2683,8 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         description: 'User onboarding endpoints',
       },
       {
-        name: 'Clients',
-        description: 'Client management endpoints',
+        name: 'Projects',
+        description: 'Project management endpoints',
       },
       {
         name: 'Review Items',

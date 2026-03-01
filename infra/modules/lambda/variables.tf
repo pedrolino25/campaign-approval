@@ -70,7 +70,7 @@ variable "iam_roles" {
   description = "Map of Lambda function names to IAM role ARNs"
   type = object({
     organization    = string
-    client          = string
+    project         = string
     review          = string
     attachment      = string
     comment         = string
