@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/client-approval-delays-agencies.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,20 +7,52 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/client-approval-delays-agencies";
+const CANONICAL_URL = "https://worklient.com/blog/client-approval-delays-agencies";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Client Approval Delays in Agencies",
   description:
     "Explore why client approval delays happen in agencies and how structured workflows reduce turnaround time.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Client Approval Delays in Agencies",
     description:
-      "Operational causes behind slow approvals and how to fix them.",
-    url: "https://worklient.com/blog/client-approval-delays-agencies",
+      "Operational causes behind slow approvals and how to fix them with structured workflows.",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Client Approval Delays in Agencies",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/client-approval-delays-agencies",
+  twitter: {
+    card: "summary_large_image",
+    title: "Client Approval Delays in Agencies",
+    description:
+      "Operational causes behind slow approvals and how to fix them.",
+    images: [image.src],
   },
 };
 
@@ -29,10 +62,11 @@ export default function ClientApprovalDelaysAgencies() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Client Approval Delays in Agencies</Blog.Title>
-          <Blog.Image src={image} alt="Client Approval Delays in Agencies" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Client Approval Delays in Agencies</Blog.Title>
+            <Blog.Image src={image} alt="Client Approval Delays in Agencies" />
+            <div>
 
             <Blog.Subtitle>
               Why client sign-offs slow down and how agencies can design faster approval processes.
@@ -151,10 +185,38 @@ export default function ClientApprovalDelaysAgencies() {
             <Blog.Text>
               In competitive markets where timing matters, a well-designed client approval process becomes a strategic advantage.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Client Approval Delays in Agencies",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Client Approvals",
+            keywords: ["client approval delays", "agency workflow", "approval process", "sign-off"],
+            description:
+              "Explore why client approval delays happen in agencies and how structured workflows reduce turnaround time.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

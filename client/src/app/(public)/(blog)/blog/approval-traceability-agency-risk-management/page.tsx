@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/approval-traceability-agency-risk-management.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,20 +7,52 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/approval-traceability-agency-risk-management";
+const CANONICAL_URL = "https://worklient.com/blog/approval-traceability-agency-risk-management";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Approval Traceability and Agency Risk Management",
   description:
     "Understand why approval traceability protects agencies from operational and compliance risk.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Approval Traceability for Agencies",
+    title: "Approval Traceability and Agency Risk Management",
     description:
       "How audit trails reduce risk and increase accountability in campaign approvals.",
-    url: "https://worklient.com/blog/approval-traceability-agency-risk-management",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Approval Traceability and Agency Risk Management",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/approval-traceability-agency-risk-management",
+  twitter: {
+    card: "summary_large_image",
+    title: "Approval Traceability and Agency Risk Management",
+    description:
+      "How audit trails reduce risk and increase accountability in campaign approvals.",
+    images: [image.src],
   },
 };
 
@@ -29,10 +62,11 @@ export default function ApprovalTraceabilityAgencyRiskManagement() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Approval Traceability and Agency Risk Management</Blog.Title>
-          <Blog.Image src={image} alt="Approval Traceability and Agency Risk Management" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Approval Traceability and Agency Risk Management</Blog.Title>
+            <Blog.Image src={image} alt="Approval Traceability and Agency Risk Management" />
+            <div>
             <Blog.Subtitle>
               Why structured audit trails protect agencies from operational and legal exposure.
             </Blog.Subtitle>
@@ -154,10 +188,38 @@ export default function ApprovalTraceabilityAgencyRiskManagement() {
             <Blog.Text>
               In competitive markets where accountability matters, structured approval traceability becomes a foundation for long-term growth.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Approval Traceability and Agency Risk Management",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Agency Risk Management",
+            keywords: ["approval traceability", "agency risk", "audit trail", "compliance"],
+            description:
+              "Understand why approval traceability protects agencies from operational and compliance risk.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

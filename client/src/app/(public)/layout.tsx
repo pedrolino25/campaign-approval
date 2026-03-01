@@ -1,7 +1,7 @@
 import { headers } from "next/headers"
 
 import { Navbar } from "@/components/layout/navbar"
-
+export const dynamic = "force-static";
 
 export default function PublicLayout({
   children,

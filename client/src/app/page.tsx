@@ -1,11 +1,11 @@
 import { headers } from 'next/headers'
 
-import { Navbar } from '@/components/layout/navbar'
 import FAQsSection from '@/components/landing-pages/sections/faqs'
 import FeaturesSection from '@/components/landing-pages/sections/features'
 import FooterSection from '@/components/landing-pages/sections/footer'
 import HeroSection from '@/components/landing-pages/sections/hero'
 import TestimonialsSection from '@/components/landing-pages/sections/testimonials'
+import { Navbar } from '@/components/layout/navbar'
 import { Container } from '@/components/ui/container'
 
 export default function HomePage() {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/client-approval-portals-vs-project-management-tools.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,20 +7,52 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/client-approval-portals-vs-project-management-tools";
+const CANONICAL_URL = "https://worklient.com/blog/client-approval-portals-vs-project-management-tools";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Client Approval Portals vs Project Management Tools",
   description:
     "Compare client approval portals and project management tools for managing marketing campaign reviews.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Client Approval Portals vs Project Management Tools",
     description:
       "Why agencies separate campaign approvals from project management systems.",
-    url: "https://worklient.com/blog/client-approval-portals-vs-project-management-tools",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Client Approval Portals vs Project Management Tools",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/client-approval-portals-vs-project-management-tools",
+  twitter: {
+    card: "summary_large_image",
+    title: "Client Approval Portals vs Project Management Tools",
+    description:
+      "Why agencies separate campaign approvals from project management systems.",
+    images: [image.src],
   },
 };
 
@@ -29,10 +62,11 @@ export default function ClientApprovalPortalsVsProjectManagementTools() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Client Approval Portals vs Project Management Tools</Blog.Title>
-          <Blog.Image src={image} alt="Client Approval Portals vs Project Management Tools" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Client Approval Portals vs Project Management Tools</Blog.Title>
+            <Blog.Image src={image} alt="Client Approval Portals vs Project Management Tools" />
+            <div>
             <Blog.Subtitle>
               Why agencies need dedicated approval environments instead of task-based systems.
             </Blog.Subtitle>
@@ -144,10 +178,38 @@ export default function ClientApprovalPortalsVsProjectManagementTools() {
             <Blog.Text>
               Choosing the right tool for each function reduces friction, improves client experience, and accelerates campaign delivery.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Client Approval Portals vs Project Management Tools",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Agency Tools",
+            keywords: ["client approval portals", "project management", "campaign review", "approval tools"],
+            description:
+              "Compare client approval portals and project management tools for managing marketing campaign reviews.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

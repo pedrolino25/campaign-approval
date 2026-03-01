@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/campaign-review-bottlenecks-marketing-teams.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,20 +7,52 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/campaign-review-bottlenecks-marketing-teams";
+const CANONICAL_URL = "https://worklient.com/blog/campaign-review-bottlenecks-marketing-teams";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Campaign Review Bottlenecks in Marketing Teams",
   description:
     "Identify campaign review bottlenecks in marketing teams and improve approval process efficiency.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Campaign Review Bottlenecks",
+    title: "Campaign Review Bottlenecks in Marketing Teams",
     description:
       "Why review bottlenecks slow down agencies and how structured visibility resolves them.",
-    url: "https://worklient.com/blog/campaign-review-bottlenecks-marketing-teams",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Campaign Review Bottlenecks in Marketing Teams",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/campaign-review-bottlenecks-marketing-teams",
+  twitter: {
+    card: "summary_large_image",
+    title: "Campaign Review Bottlenecks in Marketing Teams",
+    description:
+      "Why review bottlenecks slow down agencies and how structured visibility resolves them.",
+    images: [image.src],
   },
 };
 
@@ -29,10 +62,11 @@ export default function CampaignReviewBottlenecksMarketingTeams() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Campaign Review Bottlenecks in Marketing Teams</Blog.Title>
-          <Blog.Image src={image} alt="Campaign Review Bottlenecks in Marketing Teams" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Campaign Review Bottlenecks in Marketing Teams</Blog.Title>
+            <Blog.Image src={image} alt="Campaign Review Bottlenecks in Marketing Teams" />
+            <div>
             <Blog.Subtitle>
               How unclear approval processes slow delivery and create hidden operational friction.
             </Blog.Subtitle>
@@ -150,10 +184,38 @@ export default function CampaignReviewBottlenecksMarketingTeams() {
             <Blog.Text>
               Marketing teams that adopt structured approval systems reduce friction, accelerate launches, and create scalable operational foundations.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Campaign Review Bottlenecks in Marketing Teams",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Marketing Operations",
+            keywords: ["campaign review", "bottlenecks", "marketing teams", "approval process"],
+            description:
+              "Identify campaign review bottlenecks in marketing teams and improve approval process efficiency.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

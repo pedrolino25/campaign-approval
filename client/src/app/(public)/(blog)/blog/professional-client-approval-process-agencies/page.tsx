@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/professional-client-approval-process-agencies.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,33 +7,66 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/professional-client-approval-process-agencies";
+const CANONICAL_URL = "https://worklient.com/blog/professional-client-approval-process-agencies";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Professional Client Approval Process for Agencies",
   description:
     "How agencies structure a professional client approval process to improve collaboration and clarity.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Professional Client Approval Process",
+    title: "Professional Client Approval Process for Agencies",
     description:
-      "Best practices for building a structured client approval workflow.",
-    url: "https://worklient.com/blog/professional-client-approval-process-agencies",
+      "Best practices for building a structured client approval workflow and improving client experience.",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Professional Client Approval Process for Agencies",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/professional-client-approval-process-agencies",
+  twitter: {
+    card: "summary_large_image",
+    title: "Professional Client Approval Process for Agencies",
+    description:
+      "Best practices for building a structured client approval workflow.",
+    images: [image.src],
   },
 };
 
-export default function ApprovalTraceabilityAgencyRiskManagement() {
+export default function ProfessionalClientApprovalProcessAgencies() {
   return (
     <>
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Professional Client Approval Process for Agencies</Blog.Title>
-          <Blog.Image src={image} alt="Professional Client Approval Process for Agencies" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Professional Client Approval Process for Agencies</Blog.Title>
+            <Blog.Image src={image} alt="Professional Client Approval Process for Agencies" />
+            <div>
             <Blog.Subtitle>
               How structured review workflows improve client experience, clarity, and campaign delivery.
             </Blog.Subtitle>
@@ -158,10 +192,38 @@ export default function ApprovalTraceabilityAgencyRiskManagement() {
             <Blog.Text>
               A well-designed client approval system does more than streamline reviews. It strengthens client relationships, protects margins, and creates a scalable foundation for long-term agency success.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Professional Client Approval Process for Agencies",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Agency Operations",
+            keywords: ["client approval", "approval process", "agency workflow", "client review"],
+            description:
+              "How agencies structure a professional client approval process to improve collaboration and clarity.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }

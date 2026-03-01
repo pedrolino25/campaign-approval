@@ -2,7 +2,7 @@
 
 import { MainShell } from '@/components/layout/main-shell'
 import { SessionProvider } from '@/lib/auth/session-context'
-import { SessionGate } from '@/lib/auth/SessionGate'
+import { SessionGate } from '@/lib/auth/session-gate'
 import { QueryProvider } from '@/lib/query/query-provider'
 
 export default function ProtectedLayout({

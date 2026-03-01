@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import image from "@/assets/blog/creative-approval-workflows-vs-ad-hoc-feedback.png";
 import Blog from "@/components/landing-pages/sections/blog";
@@ -6,20 +7,52 @@ import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
+const CANONICAL_PATH = "/blog/creative-approval-workflows-vs-ad-hoc-feedback";
+const CANONICAL_URL = "https://worklient.com/blog/creative-approval-workflows-vs-ad-hoc-feedback";
+const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+
 export const metadata: Metadata = {
   title: "Creative Approval Workflows vs Ad Hoc Feedback",
   description:
     "Understand the difference between structured creative approval workflows and informal feedback processes.",
+  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Creative Approval Workflows vs Ad Hoc Feedback",
     description:
       "How structured approval workflows scale better than ad hoc review processes.",
-    url: "https://worklient.com/blog/creative-approval-workflows-vs-ad-hoc-feedback",
+    url: CANONICAL_PATH,
     siteName: "Worklient",
     type: "article",
+    images: [
+      {
+        url: image.src,
+        width: image.width,
+        height: image.height,
+        alt: "Creative Approval Workflows vs Ad Hoc Feedback",
+      },
+    ],
+    publishedTime: "2026-01-10T00:00:00.000Z",
+    modifiedTime: "2026-01-10T00:00:00.000Z",
+    authors: ["Worklient"],
   },
-  alternates: {
-    canonical: "/blog/creative-approval-workflows-vs-ad-hoc-feedback",
+  twitter: {
+    card: "summary_large_image",
+    title: "Creative Approval Workflows vs Ad Hoc Feedback",
+    description:
+      "How structured approval workflows scale better than ad hoc review processes.",
+    images: [image.src],
   },
 };
 
@@ -29,10 +62,11 @@ export default function CreativeApprovalWorkflowsVsAdHocFeedback() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
-          <Blog.Title>Creative Approval Workflows vs Ad Hoc Feedback</Blog.Title>
-          <Blog.Image src={image} alt="Creative Approval Workflows vs Ad Hoc Feedback" />
-          <div>
+          <article>
+            <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
+            <Blog.Title>Creative Approval Workflows vs Ad Hoc Feedback</Blog.Title>
+            <Blog.Image src={image} alt="Creative Approval Workflows vs Ad Hoc Feedback" />
+            <div>
             <Blog.Subtitle>
               Why structured review processes scale while informal feedback creates friction.
             </Blog.Subtitle>
@@ -140,10 +174,38 @@ export default function CreativeApprovalWorkflowsVsAdHocFeedback() {
             <Blog.Text>
               In competitive markets where speed and precision matter, structured creative approval workflows provide the operational foundation required for sustainable growth.
             </Blog.Text>
-          </div>
+            </div>
+          </article>
         </Blog.Container>
       </Container>
       <FooterSection />
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: "Creative Approval Workflows vs Ad Hoc Feedback",
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            articleSection: "Creative Workflows",
+            keywords: ["creative approval", "approval workflows", "ad hoc feedback", "structured review"],
+            description:
+              "Understand the difference between structured creative approval workflows and informal feedback processes.",
+            image: ABSOLUTE_IMAGE_URL,
+            author: { "@type": "Organization", name: "Worklient" },
+            publisher: {
+              "@type": "Organization",
+              name: "Worklient",
+              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
+            },
+            datePublished: "2026-01-10",
+            dateModified: "2026-01-10",
+            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
+          }),
+        }}
+      />
     </>
-  )
+  );
 }
