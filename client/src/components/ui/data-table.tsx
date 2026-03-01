@@ -142,7 +142,7 @@ export function DataTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
-      <div className="min-w-0 overflow-x-auto rounded-md border">
+      <div className="min-w-0 overflow-x-auto rounded-xs border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -156,7 +156,7 @@ export function DataTable<TData, TValue>({
                     <div
                       className={cn(
                         header.column.getCanSort() &&
-                          'flex items-center gap-1 cursor-pointer select-none',
+                        'flex items-center gap-1 cursor-pointer select-none',
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                     >
