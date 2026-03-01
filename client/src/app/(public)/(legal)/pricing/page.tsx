@@ -4,31 +4,21 @@ import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
 import { PriceCard } from "@/components/landing-pages/cards/pricing-card";
 import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
-  title: "Pricing",
-  description:
-    "Pricing for the Worklient platform.",
-  keywords: [
-    "pricing",
-    "subscription",
-    "subscription pricing",
-  ],
-  openGraph: {
-    title: "Pricing",
-    description:
-      "Pricing for the Worklient platform.",
-    url: "https://worklient.com/pricing",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/pricing",
-  },
-};
+const CANONICAL_PATH = "/pricing";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/pricing`;
 
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
+  title: "Pricing",
+  description: "Pricing for the Worklient platform. Plans that fit your needs and company stage.",
+  canonicalPath: CANONICAL_PATH,
+  keywords: ["pricing", "subscription", "subscription pricing"],
+});
 
 export default function Pricing() {
   return (
@@ -100,6 +90,12 @@ export default function Pricing() {
         </div>
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Pricing | Worklient"
+        description="Pricing for the Worklient platform. Plans that fit your needs and company stage."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

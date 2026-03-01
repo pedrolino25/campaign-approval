@@ -1,59 +1,32 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
 const CANONICAL_PATH = "/client-experience";
-const CANONICAL_URL = "https://worklient.com/client-experience";
-const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/client-experience`;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Client Approval Portal for Agencies",
   description:
     "Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control.",
-  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "client approval portal",
     "creative review platform",
     "agency client review tool",
     "campaign approval software",
   ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  alternates: { canonical: CANONICAL_PATH },
-  openGraph: {
-    title: "Client Approval Portal for Agencies | Worklient",
-    description:
-      "Provide clients with a frictionless, structured campaign review environment.",
-    url: CANONICAL_PATH,
-    siteName: "Worklient",
-    type: "website",
-    images: [
-      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
-    ],
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Client Approval Portal for Agencies",
-    description:
-      "Provide clients with a frictionless, structured campaign review environment.",
-    images: [DEFAULT_OG_IMAGE],
-  },
-};
+  openGraphTitle: "Client Approval Portal for Agencies | Worklient",
+  openGraphDescription:
+    "Provide clients with a frictionless, structured campaign review environment.",
+});
 
 export default async function ClientExperience() {
   return (
@@ -92,31 +65,11 @@ export default async function ClientExperience() {
         />
       </Container>
       <FooterSection />
-      <Script
-        id="webpage-jsonld"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "Client Approval Portal for Agencies | Worklient",
-            description:
-              "Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control.",
-            url: CANONICAL_URL,
-            inLanguage: "en",
-            isPartOf: {
-              "@type": "WebSite",
-              name: "Worklient",
-              url: "https://worklient.com",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Worklient",
-              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
-            },
-          }),
-        }}
+      <JsonLdSEO
+        type="WebPage"
+        name="Client Approval Portal for Agencies | Worklient"
+        description="Deliver structured, secure campaign reviews through a professional client-facing approval experience built for clarity and control."
+        url={CANONICAL_URL}
       />
     </>
   );

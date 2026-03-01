@@ -1,74 +1,36 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import image from "@/assets/blog/approval-bottlenecks-performance-marketing.png";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
-const CANONICAL_PATH =
-  "/blog/approval-bottlenecks-performance-marketing";
+const CANONICAL_PATH = "/blog/approval-bottlenecks-performance-marketing";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/blog/approval-bottlenecks-performance-marketing`;
+const ABSOLUTE_IMAGE_URL = new URL(image.src, SEO_DEFAULTS.siteUrl).toString();
 
-const CANONICAL_URL =
-  "https://worklient.com/blog/approval-bottlenecks-performance-marketing";
-
-const ABSOLUTE_IMAGE_URL = new URL(
-  image.src,
-  "https://worklient.com"
-).toString();
-
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadataSEO({
+  type: "article",
   title: "Approval Bottlenecks in Performance Marketing",
   description:
     "Learn how approval bottlenecks affect performance marketing teams and how to streamline campaign workflows.",
-  authors: [
-    {
-      name: "Worklient",
-      url: "https://worklient.com",
-    },
-  ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
+  canonicalPath: CANONICAL_PATH,
+  openGraphDescription:
+    "How structured approval visibility accelerates performance campaigns.",
+  twitterDescription:
+    "How structured approval visibility accelerates performance campaigns.",
+  image: {
+    url: image.src,
+    width: image.width,
+    height: image.height,
+    alt: "Approval Bottlenecks in Performance Marketing",
   },
-  alternates: {
-    canonical: CANONICAL_PATH,
-  },
-  openGraph: {
-    title: "Approval Bottlenecks in Performance Marketing",
-    description:
-      "How structured approval visibility accelerates performance campaigns.",
-    url: CANONICAL_PATH,
-    siteName: "Worklient",
-    type: "article",
-    images: [
-      {
-        url: image.src,
-        width: image.width,
-        height: image.height,
-        alt: "Approval Bottlenecks in Performance Marketing",
-      },
-    ],
-    publishedTime: "2026-01-10T00:00:00.000Z",
-    modifiedTime: "2026-01-10T00:00:00.000Z",
-    authors: ["Worklient"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Approval Bottlenecks in Performance Marketing",
-    description:
-      "How structured approval visibility accelerates performance campaigns.",
-    images: [image.src],
-  },
-};
+  publishedTime: "2026-01-10T00:00:00.000Z",
+  modifiedTime: "2026-01-10T00:00:00.000Z",
+});
 
 export default function ApprovalBottlenecksPerformanceMarketing() {
   return (
@@ -221,42 +183,16 @@ export default function ApprovalBottlenecksPerformanceMarketing() {
       </Container>
 
       <FooterSection />
-
-      <Script
-        id="article-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            headline: "Approval Bottlenecks in Performance Marketing",
-            inLanguage: "en",
-            isAccessibleForFree: true,
-            articleSection: "Performance Marketing",
-            keywords: ["performance marketing", "approval workflows"],
-            description:
-              "Learn how approval bottlenecks affect performance marketing teams and how to streamline campaign workflows.",
-            image: ABSOLUTE_IMAGE_URL,
-            author: {
-              "@type": "Organization",
-              name: "Worklient",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Worklient",
-              logo: {
-                "@type": "ImageObject",
-                url: "https://worklient.com/icon.png",
-              },
-            },
-            datePublished: "2026-01-10",
-            dateModified: "2026-01-10",
-            mainEntityOfPage: {
-              "@type": "WebPage",
-              "@id": CANONICAL_URL,
-            },
-          }),
-        }}
+      <JsonLdSEO
+        type="Article"
+        headline="Approval Bottlenecks in Performance Marketing"
+        description="Learn how approval bottlenecks affect performance marketing teams and how to streamline campaign workflows."
+        image={ABSOLUTE_IMAGE_URL}
+        url={CANONICAL_URL}
+        datePublished="2026-01-10"
+        dateModified="2026-01-10"
+        articleSection="Performance Marketing"
+        keywords={["performance marketing", "approval workflows"]}
       />
     </>
   );

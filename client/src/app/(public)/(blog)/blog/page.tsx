@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import Script from "next/script";
 
 import image1 from "@/assets/blog/approval-bottlenecks-performance-marketing.png";
 import image2 from "@/assets/blog/approval-traceability-agency-risk-management.png";
@@ -17,18 +16,20 @@ import image11 from "@/assets/blog/manual-approval-follow-ups-creative-teams.png
 import image12 from "@/assets/blog/professional-client-approval-process-agencies.png";
 import BlogCard from "@/components/landing-pages/cards/blog-card";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
 
 const CANONICAL_PATH = "/blog";
-const CANONICAL_URL = "https://worklient.com/blog";
-const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/blog`;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Blog | Agency Operations Insights",
   description:
     "Articles on approval workflows, client collaboration, and operational updates for modern agencies. Insights on campaign approvals, creative version control, and audit traceability.",
-  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "agency blog",
     "approval workflows",
@@ -36,38 +37,8 @@ export const metadata: Metadata = {
     "campaign approvals",
     "agency operations",
   ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  alternates: { canonical: CANONICAL_PATH },
-  openGraph: {
-    title: "Blog | Agency Operations Insights | Worklient",
-    description:
-      "Articles on approval workflows, client collaboration, and operational updates for modern agencies.",
-    url: CANONICAL_PATH,
-    siteName: "Worklient",
-    type: "website",
-    images: [
-      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
-    ],
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Blog | Agency Operations Insights | Worklient",
-    description:
-      "Articles on approval workflows, client collaboration, and operational updates for modern agencies.",
-    images: [DEFAULT_OG_IMAGE],
-  },
-};
+  openGraphTitle: "Blog | Agency Operations Insights | Worklient",
+});
 
 const BLOG_POSTS = [
   {
@@ -172,31 +143,11 @@ export default function Blog() {
         </div>
       </Container>
       <FooterSection />
-      <Script
-        id="webpage-jsonld"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "Blog | Agency Operations Insights | Worklient",
-            description:
-              "Articles on approval workflows, client collaboration, and operational updates for modern agencies.",
-            url: CANONICAL_URL,
-            inLanguage: "en",
-            isPartOf: {
-              "@type": "WebSite",
-              name: "Worklient",
-              url: "https://worklient.com",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Worklient",
-              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
-            },
-          }),
-        }}
+      <JsonLdSEO
+        type="WebPage"
+        name="Blog | Agency Operations Insights | Worklient"
+        description="Articles on approval workflows, client collaboration, and operational updates for modern agencies."
+        url={CANONICAL_URL}
       />
     </>
   );

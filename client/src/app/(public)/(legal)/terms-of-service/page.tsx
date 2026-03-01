@@ -1,30 +1,26 @@
 import type { Metadata } from "next";
 
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
+const CANONICAL_PATH = "/terms-of-service";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/terms-of-service`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Terms of Service",
   description:
     "These Terms of Service outline the agreement between you and Worklient regarding your use of our website and services.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "terms of service",
     "website terms",
     "service agreement",
     "legal agreement",
   ],
-  openGraph: {
-    title: "Terms of Service",
-    description:
-      "These Terms of Service outline the agreement between you and Worklient regarding your use of our website and services.",
-    url: "https://worklient.com/terms-of-service",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/terms-of-service",
-  },
-};
+});
 
 export default function TermsOfService() {
   return (
@@ -92,6 +88,12 @@ export default function TermsOfService() {
         <p className="text-body lg:text-body-lg">For questions regarding these Terms, please contact info@worklient.com.</p>
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Terms of Service | Worklient"
+        description="These Terms of Service outline the agreement between you and Worklient regarding your use of our website and services."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

@@ -1,60 +1,36 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import image from "@/assets/blog/email-based-client-approvals-workflow-inefficiencies.png";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { ButtonBack } from "@/components/ui/button-back";
 import { Container } from "@/components/ui/container";
 
 const CANONICAL_PATH = "/blog/email-based-client-approvals-workflow-inefficiencies";
-const CANONICAL_URL = "https://worklient.com/blog/email-based-client-approvals-workflow-inefficiencies";
-const ABSOLUTE_IMAGE_URL = new URL(image.src, "https://worklient.com").toString();
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/blog/email-based-client-approvals-workflow-inefficiencies`;
+const ABSOLUTE_IMAGE_URL = new URL(image.src, SEO_DEFAULTS.siteUrl).toString();
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadataSEO({
+  type: "article",
   title: "Email-Based Client Approvals and Workflow Inefficiencies",
   description:
     "Learn how email-based client approvals create workflow inefficiencies and delay campaign launches in growing agencies.",
-  authors: [{ name: "Worklient", url: "https://worklient.com" }],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
+  canonicalPath: CANONICAL_PATH,
+  openGraphDescription:
+    "Why email-driven approvals slow down marketing teams and what scalable agencies do instead.",
+  twitterDescription:
+    "Why email-driven approvals slow down marketing teams and what scalable agencies do instead.",
+  image: {
+    url: image.src,
+    width: image.width,
+    height: image.height,
+    alt: "Email-Based Client Approvals and Workflow Inefficiencies",
   },
-  alternates: { canonical: CANONICAL_PATH },
-  openGraph: {
-    title: "Email-Based Client Approvals and Workflow Inefficiencies",
-    description:
-      "Why email-driven approvals slow down marketing teams and what scalable agencies do instead.",
-    url: CANONICAL_PATH,
-    siteName: "Worklient",
-    type: "article",
-    images: [
-      {
-        url: image.src,
-        width: image.width,
-        height: image.height,
-        alt: "Email-Based Client Approvals and Workflow Inefficiencies",
-      },
-    ],
-    publishedTime: "2026-01-10T00:00:00.000Z",
-    modifiedTime: "2026-01-10T00:00:00.000Z",
-    authors: ["Worklient"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Email-Based Client Approvals and Workflow Inefficiencies",
-    description:
-      "Why email-driven approvals slow down marketing teams and what scalable agencies do instead.",
-    images: [image.src],
-  },
-};
+  publishedTime: "2026-01-10T00:00:00.000Z",
+  modifiedTime: "2026-01-10T00:00:00.000Z",
+});
 
 export default function EmailBasedClientApprovalsWorkflowInefficiencies() {
   return (
@@ -179,32 +155,16 @@ export default function EmailBasedClientApprovalsWorkflowInefficiencies() {
         </Blog.Container>
       </Container>
       <FooterSection />
-      <Script
-        id="article-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            headline: "Email-Based Client Approvals and Workflow Inefficiencies",
-            inLanguage: "en",
-            isAccessibleForFree: true,
-            articleSection: "Client Approvals",
-            keywords: ["email approvals", "client approvals", "workflow inefficiencies", "campaign approvals"],
-            description:
-              "Learn how email-based client approvals create workflow inefficiencies and delay campaign launches in growing agencies.",
-            image: ABSOLUTE_IMAGE_URL,
-            author: { "@type": "Organization", name: "Worklient" },
-            publisher: {
-              "@type": "Organization",
-              name: "Worklient",
-              logo: { "@type": "ImageObject", url: "https://worklient.com/icon.png" },
-            },
-            datePublished: "2026-01-10",
-            dateModified: "2026-01-10",
-            mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
-          }),
-        }}
+      <JsonLdSEO
+        type="Article"
+        headline="Email-Based Client Approvals and Workflow Inefficiencies"
+        description="Learn how email-based client approvals create workflow inefficiencies and delay campaign launches in growing agencies."
+        image={ABSOLUTE_IMAGE_URL}
+        url={CANONICAL_URL}
+        datePublished="2026-01-10"
+        dateModified="2026-01-10"
+        articleSection="Client Approvals"
+        keywords={["email approvals", "client approvals", "workflow inefficiencies", "campaign approvals"]}
       />
     </>
   );

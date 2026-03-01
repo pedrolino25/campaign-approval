@@ -1,30 +1,26 @@
 import type { Metadata } from "next";
 
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
+const CANONICAL_PATH = "/privacy-policy";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/privacy-policy`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Privacy Policy",
   description:
     "This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website and services.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "privacy policy",
     "data protection",
     "personal information",
     "website privacy",
   ],
-  openGraph: {
-    title: "Privacy Policy",
-    description:
-      "This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website and services.",
-    url: "https://worklient.com/privacy-policy",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/privacy-policy",
-  },
-};
+});
 
 export default function PrivacyPolicy() {
   return (
@@ -76,6 +72,12 @@ export default function PrivacyPolicy() {
         <p className="text-body lg:text-body-lg">For questions about this Privacy Policy or data protection practices, please contact privacy@worklient.com.</p>
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Privacy Policy | Worklient"
+        description="This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our website and services."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

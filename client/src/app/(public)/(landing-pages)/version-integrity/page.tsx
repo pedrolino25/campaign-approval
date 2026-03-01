@@ -1,59 +1,32 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
 const CANONICAL_PATH = "/version-integrity";
-const CANONICAL_URL = "https://worklient.com/version-integrity";
-const DEFAULT_OG_IMAGE = "https://worklient.com/icon.png";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/version-integrity`;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Creative Version Control for Campaign Approvals",
   description:
     "Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals.",
-  authors: [{ name: "Worklient", url: "https://worklient.com" }],
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "creative version control",
     "approval version tracking",
     "asset review software",
     "campaign version management",
   ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  alternates: { canonical: CANONICAL_PATH },
-  openGraph: {
-    title: "Creative Version Control for Campaign Approvals | Worklient",
-    description:
-      "Maintain clean version history and preserve feedback across every creative iteration.",
-    url: CANONICAL_PATH,
-    siteName: "Worklient",
-    type: "website",
-    images: [
-      { url: DEFAULT_OG_IMAGE, width: 512, height: 512, alt: "Worklient" },
-    ],
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Creative Version Control for Campaign Approvals",
-    description:
-      "Maintain clean version history and preserve feedback across every creative iteration.",
-    images: [DEFAULT_OG_IMAGE],
-  },
-};
+  openGraphTitle: "Creative Version Control for Campaign Approvals | Worklient",
+  openGraphDescription:
+    "Maintain clean version history and preserve feedback across every creative iteration.",
+});
 
 export default function VersionIntegrity() {
   return (
@@ -92,31 +65,11 @@ export default function VersionIntegrity() {
         />
       </Container>
       <FooterSection />
-      <Script
-        id="webpage-jsonld"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "Creative Version Control for Campaign Approvals | Worklient",
-            description:
-              "Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals.",
-            url: CANONICAL_URL,
-            inLanguage: "en",
-            isPartOf: {
-              "@type": "WebSite",
-              name: "Worklient",
-              url: "https://worklient.com",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Worklient",
-              logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
-            },
-          }),
-        }}
+      <JsonLdSEO
+        type="WebPage"
+        name="Creative Version Control for Campaign Approvals | Worklient"
+        description="Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals."
+        url={CANONICAL_URL}
       />
     </>
   );
