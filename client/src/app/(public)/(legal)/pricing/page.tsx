@@ -1,24 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
 
-import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
-import { PriceCard } from "@/components/landing-pages/cards/pricing-card";
-import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
-import FooterSection from "@/components/landing-pages/sections/footer";
-import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
-import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
-import { AnimatedTitle } from "@/components/ui/animated-text";
-import { Container } from "@/components/ui/container";
+import BenchmarkCard from '@/components/landing-pages/cards/benchmark-card'
+import { PriceCard } from '@/components/landing-pages/cards/pricing-card'
+import TestimonialCard from '@/components/landing-pages/cards/testimonial-card'
+import FooterSection from '@/components/landing-pages/sections/footer'
+import { JsonLdSEO } from '@/components/layout/seo/jsonld-seo'
+import { buildMetadataSEO, SEO_DEFAULTS } from '@/components/layout/seo/metadata-seo'
+import { AnimatedTitle } from '@/components/ui/animated-text'
+import { Container } from '@/components/ui/container'
 
-const CANONICAL_PATH = "/pricing";
-const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/pricing`;
+const CANONICAL_PATH = '/pricing'
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/pricing`
 
 export const metadata: Metadata = buildMetadataSEO({
-  type: "website",
-  title: "Pricing",
-  description: "Pricing for the Worklient platform. Plans that fit your needs and company stage.",
+  type: 'website',
+  title: 'Pricing',
+  description: 'Pricing for the Worklient platform. Plans that fit your needs and company stage.',
   canonicalPath: CANONICAL_PATH,
-  keywords: ["pricing", "subscription", "subscription pricing"],
-});
+  keywords: ['pricing', 'subscription', 'subscription pricing'],
+})
 
 export default function Pricing() {
   return (
@@ -26,14 +26,19 @@ export default function Pricing() {
       <Container className="!pt-[120px] !lg:pt-[150px] flex flex-col gap-10 lg:gap-20">
         <div className="flex flex-col gap-4">
           <p className="text-body lg:text-body-lg text-black/50">Pricing</p>
-          <AnimatedTitle
-            className={"!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80"}
-          >Plans that fit your needs</AnimatedTitle>
+          <AnimatedTitle className={'!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80'}>
+            Plans that fit your needs
+          </AnimatedTitle>
           <AnimatedTitle
             delay={0.5}
-            className={"!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80 -mt-5"}
-          >and company stage.</AnimatedTitle>
-          <p className="text-body lg:text-body-lg text-black/50">Get started with a free option to experience Worklient, then upgrade your plan and unlock everything.</p>
+            className={'!text-h3 md:!text-h2 lg:!text-hero-lg text-black/80 -mt-5'}
+          >
+            and company stage.
+          </AnimatedTitle>
+          <p className="text-body lg:text-body-lg text-black/50">
+            Get started with a free option to experience Worklient, then upgrade your plan and
+            unlock everything.
+          </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <PriceCard
@@ -41,7 +46,12 @@ export default function Pricing() {
             title="Free"
             description="For small agencies managing simple client approvals."
             price="0€/mo"
-            features={["Up to 1 Client", "Up to 1 User", "Up to 5 Reviews", "Only URL based reviews"]}
+            features={[
+              'Up to 1 Client',
+              'Up to 1 User',
+              'Up to 5 Reviews',
+              'Only URL based reviews',
+            ]}
           />
           <PriceCard
             theme="green"
@@ -49,7 +59,12 @@ export default function Pricing() {
             description="For growing teams structuring campaign approvals at scale."
             oldPrice="99€"
             price="79€/mo"
-            features={["Up to 5 Clients", "Up to 3 Users", "Unlimited Reviews", "URLs, files and images reviews"]}
+            features={[
+              'Up to 5 Clients',
+              'Up to 3 Users',
+              'Unlimited Reviews',
+              'URLs, files and images reviews',
+            ]}
           />
           <PriceCard
             theme="blue"
@@ -57,7 +72,12 @@ export default function Pricing() {
             description="For agencies operating with full approval governance."
             oldPrice="249€"
             price="199€/mo"
-            features={["Unlimited Clients", "Unlimited Users", "Unlimited Reviews", "URLs, files, images and videos reviews"]}
+            features={[
+              'Unlimited Clients',
+              'Unlimited Users',
+              'Unlimited Reviews',
+              'URLs, files, images and videos reviews',
+            ]}
           />
         </div>
       </Container>
@@ -68,8 +88,14 @@ export default function Pricing() {
         </div>
         <div className="pt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="w-full grid grid-cols-2 gap-4">
-            <BenchmarkCard value="3x" description="Faster approval cycles" />
-            <BenchmarkCard value="90%" description="Less manual follow-ups" />
+            <BenchmarkCard
+              value="3x"
+              description="Faster approval cycles"
+            />
+            <BenchmarkCard
+              value="90%"
+              description="Less manual follow-ups"
+            />
           </div>
           <TestimonialCard
             name="Elena Kovac"
@@ -84,8 +110,14 @@ export default function Pricing() {
             variant="other"
           />
           <div className="w-full grid grid-cols-2 gap-4">
-            <BenchmarkCard value="42%" description="Faster campaign launches" />
-            <BenchmarkCard value="€18k" description="Savings from reduced delays" />
+            <BenchmarkCard
+              value="42%"
+              description="Faster campaign launches"
+            />
+            <BenchmarkCard
+              value="€18k"
+              description="Savings from reduced delays"
+            />
           </div>
         </div>
       </Container>
@@ -97,5 +129,5 @@ export default function Pricing() {
         url={CANONICAL_URL}
       />
     </>
-  );
+  )
 }

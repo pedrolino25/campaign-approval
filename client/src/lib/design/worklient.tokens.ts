@@ -1,6 +1,6 @@
 /**
  * Worklient Design System v1 - Design Tokens
- * 
+ *
  * This file contains all design tokens for the Worklient Design System.
  * All values are strongly typed and should be used throughout the application
  * to maintain consistency and enable future theming capabilities.

@@ -51,10 +51,7 @@ export interface ResendVerificationRequest {
 }
 
 export function useLoginMutation(
-  options?: Omit<
-    UseMutationOptions<SessionResponse, ParsedError, LoginRequest>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<SessionResponse, ParsedError, LoginRequest>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (request: LoginRequest) => {
@@ -71,7 +68,7 @@ export function useVerifyEmailMutation(
   options?: Omit<
     UseMutationOptions<SessionResponse, ParsedError, VerifyEmailRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: VerifyEmailRequest) => {
@@ -91,13 +88,9 @@ export function useVerifyEmailMutation(
 
 export function useSignupMutation(
   options?: Omit<
-    UseMutationOptions<
-      { requiresEmailVerification: boolean },
-      ParsedError,
-      SignupRequest
-    >,
+    UseMutationOptions<{ requiresEmailVerification: boolean }, ParsedError, SignupRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: SignupRequest) => {
@@ -111,10 +104,7 @@ export function useSignupMutation(
 }
 
 export function useForgotPasswordMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (email: string) => {
@@ -131,7 +121,7 @@ export function useResetPasswordMutation(
   options?: Omit<
     UseMutationOptions<{ success: boolean }, ParsedError, ResetPasswordRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: ResetPasswordRequest) => {
@@ -146,13 +136,9 @@ export function useResetPasswordMutation(
 
 export function useCompleteSignupInternalMutation(
   options?: Omit<
-    UseMutationOptions<
-      SessionResponse,
-      ParsedError,
-      CompleteSignupInternalRequest
-    >,
+    UseMutationOptions<SessionResponse, ParsedError, CompleteSignupInternalRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: CompleteSignupInternalRequest) => {
@@ -166,10 +152,7 @@ export function useCompleteSignupInternalMutation(
 }
 
 export function useCompleteSignupReviewerMutation(
-  options?: Omit<
-    UseMutationOptions<SessionResponse, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<SessionResponse, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (name: string) => {
@@ -183,10 +166,7 @@ export function useCompleteSignupReviewerMutation(
 }
 
 export function useLogoutMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, void>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, void>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async () => {
@@ -202,7 +182,7 @@ export function useChangePasswordMutation(
   options?: Omit<
     UseMutationOptions<{ success: boolean }, ParsedError, ChangePasswordRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: ChangePasswordRequest) => {
@@ -217,13 +197,9 @@ export function useChangePasswordMutation(
 
 export function useResendVerificationMutation(
   options?: Omit<
-    UseMutationOptions<
-      { success: boolean },
-      ParsedError,
-      ResendVerificationRequest
-    >,
+    UseMutationOptions<{ success: boolean }, ParsedError, ResendVerificationRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: ResendVerificationRequest) => {

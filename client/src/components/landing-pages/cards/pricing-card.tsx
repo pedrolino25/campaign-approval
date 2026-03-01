@@ -1,12 +1,11 @@
+import Image from 'next/image'
 
-import Image from "next/image";
-
-import posterBlue from "@/assets/backgrounds/bg-card-blue-poster.png";
-import posterGreen from "@/assets/backgrounds/bg-card-green-poster.png";
-import posterPurple from "@/assets/backgrounds/bg-card-purple-poster.png";
-import IconCheck from "@/assets/icons/icon-check";
-import { ButtonLink } from "@/components/ui/button-link";
-import { cn } from "@/lib/utils";
+import posterBlue from '@/assets/backgrounds/bg-card-blue-poster.png'
+import posterGreen from '@/assets/backgrounds/bg-card-green-poster.png'
+import posterPurple from '@/assets/backgrounds/bg-card-purple-poster.png'
+import IconCheck from '@/assets/icons/icon-check'
+import { ButtonLink } from '@/components/ui/button-link'
+import { cn } from '@/lib/utils'
 
 const themes = {
   green: {
@@ -26,14 +25,11 @@ const themes = {
   },
 }
 
-
 interface BackgroundProps {
   theme: keyof typeof themes
 }
 
-export const Background = ({
-  theme,
-}: BackgroundProps) => {
+export const Background = ({ theme }: BackgroundProps) => {
   const { backgroundVideoPoster, backgroundVideoSrc, backgroundImageSrc } = themes[theme]
   return (
     <div className="relative w-full h-full overflow-hidden rounded-sm">
@@ -48,7 +44,11 @@ export const Background = ({
           className="hidden sm:block hero-video pointer-events-none w-full h-full object-cover rounded-sm scale-125"
         >
           {backgroundVideoSrc.map((src, index) => (
-            <source key={index} src={src.src} type={src.type} />
+            <source
+              key={index}
+              src={src.src}
+              type={src.type}
+            />
           ))}
         </video>
         <Image
@@ -59,9 +59,8 @@ export const Background = ({
         />
       </div>
     </div>
-  );
-};
-
+  )
+}
 
 interface PriceCardProps {
   theme: keyof typeof themes
@@ -81,7 +80,14 @@ export const PriceCard = ({
   features,
 }: PriceCardProps) => {
   return (
-    <div className={cn("relative bg-black/5 rounded-sm border border-[#a0affa] h-[350px] lg:h-[450px]", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
+    <div
+      className={cn(
+        'relative bg-black/5 rounded-sm border border-[#a0affa] h-[350px] lg:h-[450px]',
+        theme === 'purple' && 'border-[#a0affa]',
+        theme === 'green' && 'border-[#4fad55]',
+        theme === 'blue' && 'border-[#a0affa]',
+      )}
+    >
       <Background theme={theme} />
       <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-4">
         <div className="flex flex-col gap-5">
@@ -91,23 +97,42 @@ export const PriceCard = ({
           </div>
           <p className="text-h3 text-black/80">
             {oldPrice && (
-              <span className="text-[22px] !font-medium text-black/50 line-through mr-1">{oldPrice}</span>
+              <span className="text-[22px] !font-medium text-black/50 line-through mr-1">
+                {oldPrice}
+              </span>
             )}
             {price}
           </p>
           <div className="flex flex-col gap-2">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-2">
+              <div
+                key={index}
+                className="flex items-start gap-2"
+              >
                 <IconCheck className="w-4 h-4 text-black/60 mt-1" />
                 <p className="text-body lg:text-body-lg text-black/60">{feature}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className={cn("w-full p-1 bg-white rounded-sm border", theme === "purple" && "border-[#a0affa]", theme === "green" && "border-[#4fad55]", theme === "blue" && "border-[#a0affa]")}>
-          <ButtonLink variant="secondary" size="sm" className="w-full" href="/signup">Get Started</ButtonLink>
+        <div
+          className={cn(
+            'w-full p-1 bg-white rounded-sm border',
+            theme === 'purple' && 'border-[#a0affa]',
+            theme === 'green' && 'border-[#4fad55]',
+            theme === 'blue' && 'border-[#a0affa]',
+          )}
+        >
+          <ButtonLink
+            variant="secondary"
+            size="sm"
+            className="w-full"
+            href="/signup"
+          >
+            Get Started
+          </ButtonLink>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

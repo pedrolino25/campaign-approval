@@ -43,11 +43,11 @@ try {
   }
 } catch (error) {
   const parsedError = await handleError(error)
-  
+
   if (isRetryableError(parsedError)) {
     // Implement retry logic
   }
-  
+
   const userMessage = getUserErrorMessage(parsedError)
   // Show to user
 }
@@ -62,7 +62,7 @@ Add your error to the `ERROR_REGISTRY` in `error-registry.ts`:
 ```typescript
 export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
   // ... existing errors
-  
+
   YOUR_NEW_ERROR_CODE: {
     code: 'YOUR_NEW_ERROR_CODE',
     category: ErrorCategory.BUSINESS_LOGIC,
@@ -143,7 +143,7 @@ The error handler logs errors based on severity. To integrate with error trackin
 ```typescript
 function logError(error: ParsedError): void {
   // ... existing logging
-  
+
   // Add your error tracking service
   if (error.severity === ErrorSeverity.CRITICAL || error.severity === ErrorSeverity.HIGH) {
     Sentry.captureException(error.originalError, {
@@ -151,7 +151,7 @@ function logError(error: ParsedError): void {
         code: error.code,
         category: error.category,
         // ... other metadata
-      }
+      },
     })
   }
 }
@@ -162,6 +162,7 @@ function logError(error: ParsedError): void {
 The old error handling system is still available for backward compatibility but is deprecated. To migrate:
 
 **Old:**
+
 ```typescript
 import { type ApiError, parseApiError } from '@/lib/api/error-handler'
 import { getAuthErrorMessage } from '@/lib/api/auth-error-messages'
@@ -171,6 +172,7 @@ const message = getAuthErrorMessage(error)
 ```
 
 **New:**
+
 ```typescript
 import { apiFetch, getErrorMessage } from '@/lib/api/client'
 

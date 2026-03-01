@@ -1,9 +1,11 @@
 import { ERROR_REGISTRY } from './error-registry'
 import {
   type ApiErrorResponse,
-   ErrorCategory, ErrorSeverity,
+  ErrorCategory,
+  ErrorSeverity,
   type ParsedError,
-  type ValidationErrorDetail} from './types'
+  type ValidationErrorDetail,
+} from './types'
 
 export interface RawApiError {
   status: number
@@ -13,9 +15,7 @@ export interface RawApiError {
   body?: unknown
 }
 
-export async function parseApiError(
-  response: Response
-): Promise<RawApiError> {
+export async function parseApiError(response: Response): Promise<RawApiError> {
   let message = 'An error occurred'
   let code: string | undefined
   let details: ValidationErrorDetail[] | undefined
@@ -54,8 +54,7 @@ export async function parseApiError(
 }
 
 export function parseNetworkError(error: unknown): ParsedError {
-  const errorMessage =
-    error instanceof Error ? error.message : String(error)
+  const errorMessage = error instanceof Error ? error.message : String(error)
 
   if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
     return createParsedError({
@@ -92,10 +91,7 @@ export function parseNetworkError(error: unknown): ParsedError {
   })
 }
 
-export function transformApiError(
-  rawError: RawApiError,
-  originalError?: unknown
-): ParsedError {
+export function transformApiError(rawError: RawApiError, originalError?: unknown): ParsedError {
   const { status, code, message, details } = rawError
 
   if (message && ERROR_REGISTRY[message]) {
@@ -205,10 +201,7 @@ function mapStatusCodeToSeverity(status: number): ErrorSeverity {
   return ErrorSeverity.MEDIUM
 }
 
-function generateUserMessageFromStatus(
-  status: number,
-  fallback: string
-): string {
+function generateUserMessageFromStatus(status: number, fallback: string): string {
   const statusMessages: Record<number, string> = {
     400: 'Invalid request. Please check your input.',
     401: 'Please sign in to continue.',
@@ -230,9 +223,7 @@ function isRetryableStatus(status: number): boolean {
   return status >= 500 || status === 429 || status === 408
 }
 
-export function formatValidationErrors(
-  details: ValidationErrorDetail[]
-): string {
+export function formatValidationErrors(details: ValidationErrorDetail[]): string {
   if (details.length === 0) return ''
 
   if (details.length === 1) {

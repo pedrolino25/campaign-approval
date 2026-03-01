@@ -1,49 +1,48 @@
-import Image from "next/image";
-import React from "react";
+import Image from 'next/image'
+import React from 'react'
 
-import Logo from "@/assets/icon.png";
-import { cn } from "@/lib/utils";
+import Logo from '@/assets/icon.png'
+import { cn } from '@/lib/utils'
 
-const Title = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn(
-      "text-body !font-medium",
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </p>
-))
+const Title = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, children, ...props }, ref) => (
+    <p
+      ref={ref}
+      className={cn('text-body !font-medium', className)}
+      {...props}
+    >
+      {children}
+    </p>
+  ),
+)
 
-Title.displayName = "Title"
+Title.displayName = 'Title'
 
-const Link = React.forwardRef<
-  HTMLAnchorElement,
-  React.AnchorHTMLAttributes<HTMLAnchorElement>
->(({ className, children, ...props }, ref) => (
-  <a
-    ref={ref}
-    className={cn(
-      "!text-body text-black/50 hover:text-black",
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </a>
-))
+const Link = React.forwardRef<HTMLAnchorElement, React.AnchorHTMLAttributes<HTMLAnchorElement>>(
+  ({ className, children, ...props }, ref) => (
+    <a
+      ref={ref}
+      className={cn('!text-body text-black/50 hover:text-black', className)}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+)
 
-Link.displayName = "Link"
+Link.displayName = 'Link'
 
 const FooterSection = () => {
   return (
     <footer className="container flex flex-col lg:flex-row gap-5 lg:gap-[250px] pb-20">
-      <div><Image src={Logo} alt="Worklient Logo" width={50} height={50} /></div>
+      <div>
+        <Image
+          src={Logo}
+          alt="Worklient Logo"
+          width={50}
+          height={50}
+        />
+      </div>
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex flex-col gap-2">
           <Title>Product</Title>
@@ -75,4 +74,4 @@ const FooterSection = () => {
   )
 }
 
-export default FooterSection;
+export default FooterSection

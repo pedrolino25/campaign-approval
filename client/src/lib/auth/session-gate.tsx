@@ -44,11 +44,7 @@ export function SessionGate({
     return <FullScreenLoader />
   }
 
-  if (
-    requireOnboarding &&
-    session &&
-    !session.onboardingCompleted
-  ) {
+  if (requireOnboarding && session && !session.onboardingCompleted) {
     const targetPath =
       session.actorType === 'INTERNAL'
         ? '/complete-signup/internal'

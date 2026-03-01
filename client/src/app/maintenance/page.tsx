@@ -1,12 +1,6 @@
 import { Wrench } from 'lucide-react'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function MaintenancePage() {
   return (
@@ -18,8 +12,8 @@ export default function MaintenancePage() {
           </div>
           <CardTitle className="text-2xl">Under maintenance</CardTitle>
           <CardDescription>
-            We&apos;re performing scheduled maintenance. We&apos;ll be back shortly.
-            Please check again in a few minutes.
+            We&apos;re performing scheduled maintenance. We&apos;ll be back shortly. Please check
+            again in a few minutes.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center text-sm text-muted-foreground">

@@ -9,9 +9,9 @@ locals {
       name = "${local.environment_prefix}organization-api-lambda"
       role = var.iam_roles.organization
     }
-    client = {
-      name = "${local.environment_prefix}client-api-lambda"
-      role = var.iam_roles.client
+    project = {
+      name = "${local.environment_prefix}project-api-lambda"
+      role = var.iam_roles.project
     }
     review = {
       name = "${local.environment_prefix}review-api-lambda"

@@ -21,9 +21,7 @@ const publicRoutes = [
 ]
 
 function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
+  return publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
 }
 
 export function middleware(request: NextRequest) {

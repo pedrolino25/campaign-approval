@@ -3,9 +3,9 @@ output "organization_role_arn" {
   value       = aws_iam_role.organization.arn
 }
 
-output "client_role_arn" {
-  description = "Client API Lambda IAM role ARN"
-  value       = aws_iam_role.client.arn
+output "project_role_arn" {
+  description = "Project API Lambda IAM role ARN"
+  value       = aws_iam_role.project.arn
 }
 
 output "review_role_arn" {

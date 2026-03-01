@@ -28,7 +28,7 @@ variable "lambda_invoke_arns" {
   description = "Map of Lambda function names to invoke ARNs"
   type = object({
     organization  = string
-    client        = string
+    project       = string
     review        = string
     attachment    = string
     comment       = string
@@ -42,7 +42,7 @@ variable "lambda_function_arns" {
   description = "Map of Lambda function names to function ARNs"
   type = object({
     organization  = string
-    client        = string
+    project       = string
     review        = string
     attachment    = string
     comment       = string

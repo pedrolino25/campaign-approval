@@ -26,11 +26,11 @@ resource "aws_apigatewayv2_integration" "organization" {
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_integration" "client" {
+resource "aws_apigatewayv2_integration" "project" {
   api_id                 = aws_apigatewayv2_api.main.id
   integration_type       = "AWS_PROXY"
   integration_method     = "POST"
-  integration_uri        = var.lambda_invoke_arns.client
+  integration_uri        = var.lambda_invoke_arns.project
   payload_format_version = "2.0"
 }
 
@@ -289,65 +289,65 @@ resource "aws_apigatewayv2_route" "organization_users_role_patch" {
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_get" {
+resource "aws_apigatewayv2_route" "projects_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /clients"
+  route_key = "GET /projects"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_post" {
+resource "aws_apigatewayv2_route" "projects_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /clients"
+  route_key = "POST /projects"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_patch" {
+resource "aws_apigatewayv2_route" "projects_patch" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PATCH /clients/{id}"
+  route_key = "PATCH /projects/{id}"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_archive" {
+resource "aws_apigatewayv2_route" "projects_archive" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /clients/{id}/archive"
+  route_key = "POST /projects/{id}/archive"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_reviewers_get" {
+resource "aws_apigatewayv2_route" "projects_reviewers_get" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /clients/{id}/reviewers"
+  route_key = "GET /projects/{id}/reviewers"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_reviewers_post" {
+resource "aws_apigatewayv2_route" "projects_reviewers_post" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /clients/{id}/reviewers"
+  route_key = "POST /projects/{id}/reviewers"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
 
-resource "aws_apigatewayv2_route" "clients_reviewers_delete" {
+resource "aws_apigatewayv2_route" "projects_reviewers_delete" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "DELETE /clients/{id}/reviewers/{reviewerId}"
+  route_key = "DELETE /projects/{id}/reviewers/{reviewerId}"
 
-  target = "integrations/${aws_apigatewayv2_integration.client.id}"
+  target = "integrations/${aws_apigatewayv2_integration.project.id}"
 
   authorization_type = "NONE"
 }
@@ -521,10 +521,10 @@ resource "aws_lambda_permission" "organization" {
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
 
-resource "aws_lambda_permission" "client" {
+resource "aws_lambda_permission" "project" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = var.lambda_function_arns.client
+  function_name = var.lambda_function_arns.project
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }

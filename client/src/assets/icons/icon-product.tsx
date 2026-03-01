@@ -14,5 +14,5 @@ export default function IconProduct(props: React.SVGProps<SVGSVGElement>) {
         fill="#A9A9A9"
       />
     </svg>
-  );
+  )
 }

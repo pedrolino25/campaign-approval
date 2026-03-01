@@ -28,8 +28,8 @@
       "description": "User onboarding endpoints"
     },
     {
-      "name": "Clients",
-      "description": "Client management endpoints"
+      "name": "Projects",
+      "description": "Project management endpoints"
     },
     {
       "name": "Review Items",
@@ -4565,13 +4565,13 @@
         }
       }
     },
-    "/clients": {
+    "/projects": {
       "get": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Get clients",
-        "description": "Retrieve all clients for the organization",
+        "summary": "Get projects",
+        "description": "Retrieve all projects for the organization",
         "security": [
           {
             "bearerAuth": []
@@ -4601,7 +4601,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of clients",
+            "description": "Paginated list of projects",
             "content": {
               "application/json": {
                 "schema": {
@@ -4924,10 +4924,10 @@
       },
       "post": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Create client",
-        "description": "Create a new client",
+        "summary": "Create project",
+        "description": "Create a new project",
         "security": [
           {
             "bearerAuth": []
@@ -4949,7 +4949,7 @@
                   "name"
                 ],
                 "additionalProperties": false,
-                "description": "Create client request",
+                "description": "Create project request",
                 "example": {
                   "name": "Acme Corporation"
                 }
@@ -4959,7 +4959,7 @@
         },
         "responses": {
           "200": {
-            "description": "Client created",
+            "description": "Project created",
             "content": {
               "application/json": {
                 "schema": {
@@ -5276,13 +5276,13 @@
         }
       }
     },
-    "/clients/{id}": {
+    "/projects/{id}": {
       "patch": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Update client",
-        "description": "Update an existing client",
+        "summary": "Update project",
+        "description": "Update an existing project",
         "security": [
           {
             "bearerAuth": []
@@ -5312,7 +5312,7 @@
                   }
                 },
                 "additionalProperties": false,
-                "description": "Update client request",
+                "description": "Update project request",
                 "example": {
                   "name": "Acme Corporation Updated"
                 }
@@ -5322,7 +5322,7 @@
         },
         "responses": {
           "200": {
-            "description": "Client updated",
+            "description": "Project updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -5331,7 +5331,7 @@
                     "message": {
                       "type": "string"
                     },
-                    "clientId": {
+                    "projectId": {
                       "type": "string"
                     },
                     "userId": {
@@ -5344,7 +5344,7 @@
                   },
                   "required": [
                     "message",
-                    "clientId",
+                    "projectId",
                     "userId",
                     "data"
                   ]
@@ -5547,7 +5547,7 @@
             }
           },
           "404": {
-            "description": "Client not found",
+            "description": "Project not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -5737,13 +5737,13 @@
         }
       }
     },
-    "/clients/{id}/archive": {
+    "/projects/{id}/archive": {
       "post": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Archive client",
-        "description": "Archive a client",
+        "summary": "Archive project",
+        "description": "Archive a project",
         "security": [
           {
             "bearerAuth": []
@@ -5762,7 +5762,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Client archived",
+            "description": "Project archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -5961,7 +5961,7 @@
             }
           },
           "404": {
-            "description": "Client not found",
+            "description": "Project not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -6151,13 +6151,13 @@
         }
       }
     },
-    "/clients/{id}/reviewers": {
+    "/projects/{id}/reviewers": {
       "get": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Get client reviewers",
-        "description": "Retrieve all reviewers for a client",
+        "summary": "Get project reviewers",
+        "description": "Retrieve all reviewers for a project",
         "security": [
           {
             "bearerAuth": []
@@ -6422,7 +6422,7 @@
             }
           },
           "404": {
-            "description": "Client not found",
+            "description": "Project not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -6613,10 +6613,10 @@
       },
       "post": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Invite client reviewer",
-        "description": "Invite a reviewer to a client",
+        "summary": "Invite project reviewer",
+        "description": "Invite a reviewer to a project",
         "security": [
           {
             "bearerAuth": []
@@ -6675,7 +6675,7 @@
                     "type": {
                       "type": "string"
                     },
-                    "clientId": {
+                    "projectId": {
                       "type": "string",
                       "format": "uuid"
                     },
@@ -6696,7 +6696,7 @@
                     "id",
                     "email",
                     "type",
-                    "clientId",
+                    "projectId",
                     "organizationId",
                     "expiresAt",
                     "createdAt"
@@ -6994,7 +6994,7 @@
             }
           },
           "404": {
-            "description": "Client not found",
+            "description": "Project not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -7184,13 +7184,13 @@
         }
       }
     },
-    "/clients/{id}/reviewers/{reviewerId}": {
+    "/projects/{id}/reviewers/{reviewerId}": {
       "delete": {
         "tags": [
-          "Clients"
+          "Projects"
         ],
-        "summary": "Remove client reviewer",
-        "description": "Remove a reviewer from a client",
+        "summary": "Remove project reviewer",
+        "description": "Remove a reviewer from a project",
         "security": [
           {
             "bearerAuth": []
@@ -7409,7 +7409,7 @@
             }
           },
           "404": {
-            "description": "Client or reviewer not found",
+            "description": "Project or reviewer not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -7973,7 +7973,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "clientId": {
+                  "projectId": {
                     "type": "string",
                     "format": "uuid"
                   },
@@ -7988,13 +7988,13 @@
                   }
                 },
                 "required": [
-                  "clientId",
+                  "projectId",
                   "title"
                 ],
                 "additionalProperties": false,
                 "description": "Create review item request",
                 "example": {
-                  "clientId": "123e4567-e89b-12d3-a456-426614174000",
+                  "projectId": "123e4567-e89b-12d3-a456-426614174000",
                   "title": "Website Homepage Design",
                   "description": "Review the new homepage design mockup"
                 }
@@ -16172,7 +16172,7 @@
                       "type": "string",
                       "format": "uuid"
                     },
-                    "clientId": {
+                    "projectId": {
                       "type": "string",
                       "format": "uuid"
                     },

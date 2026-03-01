@@ -46,10 +46,7 @@ export interface ReviewerListResponse {
 }
 
 export function useCreateProjectMutation(
-  options?: Omit<
-    UseMutationOptions<Project, ParsedError, CreateProjectRequest>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<Project, ParsedError, CreateProjectRequest>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (request: CreateProjectRequest) => {
@@ -66,7 +63,7 @@ export function useUpdateProjectMutation(
   options?: Omit<
     UseMutationOptions<Project, ParsedError, { id: string; request: UpdateProjectRequest }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ id, request }: { id: string; request: UpdateProjectRequest }) => {
@@ -80,10 +77,7 @@ export function useUpdateProjectMutation(
 }
 
 export function useArchiveProjectMutation(
-  options?: Omit<
-    UseMutationOptions<void, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<void, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (id: string) => {
@@ -97,12 +91,22 @@ export function useArchiveProjectMutation(
 
 export function useInviteReviewerMutation(
   options?: Omit<
-    UseMutationOptions<Reviewer, ParsedError, { projectId: string; request: InviteReviewerRequest }>,
+    UseMutationOptions<
+      Reviewer,
+      ParsedError,
+      { projectId: string; request: InviteReviewerRequest }
+    >,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
-    mutationFn: async ({ projectId, request }: { projectId: string; request: InviteReviewerRequest }) => {
+    mutationFn: async ({
+      projectId,
+      request,
+    }: {
+      projectId: string
+      request: InviteReviewerRequest
+    }) => {
       return apiFetch<Reviewer>(`/projects/${projectId}/reviewers`, {
         method: 'POST',
         body: JSON.stringify(request),
@@ -116,7 +120,7 @@ export function useDeleteReviewerMutation(
   options?: Omit<
     UseMutationOptions<void, ParsedError, { projectId: string; reviewerId: string }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ projectId, reviewerId }: { projectId: string; reviewerId: string }) => {

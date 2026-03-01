@@ -26,7 +26,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const channelRef = useRef<BroadcastChannel | null>(null)
   const isProcessingBroadcastRef = useRef(false)
 
-  const { data: session, isLoading, error } = useQuery<Session>({
+  const {
+    data: session,
+    isLoading,
+    error,
+  } = useQuery<Session>({
     queryKey: ['session'],
     queryFn: async () => {
       const sessionData = await apiFetch<Session>('/auth/me')

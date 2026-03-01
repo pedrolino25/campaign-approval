@@ -22,7 +22,7 @@ const DEFAULT_OPTIONS: Required<ErrorHandlerOptions> = {
 export async function handleError(
   error: unknown,
   response?: Response,
-  options: ErrorHandlerOptions = {}
+  options: ErrorHandlerOptions = {},
 ): Promise<ParsedError> {
   const config = { ...DEFAULT_OPTIONS, ...options }
 
@@ -47,20 +47,14 @@ export async function handleError(
 }
 
 export function getUserErrorMessage(error: ParsedError): string {
-  if (
-    error.category === ErrorCategory.VALIDATION &&
-    error.details &&
-    error.details.length > 0
-  ) {
+  if (error.category === ErrorCategory.VALIDATION && error.details && error.details.length > 0) {
     return formatValidationErrors(error.details)
   }
 
   return error.userMessage
 }
 
-function formatValidationErrors(
-  details: Array<{ field: string; message: string }>
-): string {
+function formatValidationErrors(details: Array<{ field: string; message: string }>): string {
   if (details.length === 0) return ''
 
   if (details.length === 1) {
@@ -110,7 +104,7 @@ function logError(error: ParsedError): void {
         break
     }
   }
-  
+
   // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
 }
 

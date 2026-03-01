@@ -117,8 +117,7 @@ export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
     code: 'NEW_PASSWORD_MUST_BE_DIFFERENT',
     category: ErrorCategory.VALIDATION,
     severity: ErrorSeverity.LOW,
-    userMessage:
-      'New password must be different from your current password.',
+    userMessage: 'New password must be different from your current password.',
     technicalMessage: 'New password must differ from current password',
   },
   OAUTH_TOKEN_EXCHANGE_FAILED: {
@@ -133,8 +132,7 @@ export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
     code: 'OAUTH_CODE_INVALID_OR_EXPIRED',
     category: ErrorCategory.AUTHENTICATION,
     severity: ErrorSeverity.MEDIUM,
-    userMessage:
-      'Authentication code is invalid or expired. Please try signing in again.',
+    userMessage: 'Authentication code is invalid or expired. Please try signing in again.',
     technicalMessage: 'OAuth authorization code is invalid or expired',
     retryable: true,
   },
@@ -221,8 +219,7 @@ export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
     code: 'INVALID_CREDENTIALS_AFTER_VERIFICATION',
     category: ErrorCategory.AUTHENTICATION,
     severity: ErrorSeverity.MEDIUM,
-    userMessage:
-      'Invalid credentials. Please check your password and try again.',
+    userMessage: 'Invalid credentials. Please check your password and try again.',
     technicalMessage: 'Authentication failed after email verification',
   },
 
@@ -246,8 +243,7 @@ export const ERROR_REGISTRY: Record<string, ErrorDefinition> = {
     code: 'RATE_LIMIT_EXCEEDED',
     category: ErrorCategory.RATE_LIMIT,
     severity: ErrorSeverity.MEDIUM,
-    userMessage:
-      'Too many requests. Please wait a moment and try again.',
+    userMessage: 'Too many requests. Please wait a moment and try again.',
     technicalMessage: 'Rate limit exceeded',
     retryable: true,
     retryAfter: 60, // seconds
@@ -268,10 +264,6 @@ export function registerErrors(definitions: ErrorDefinition[]): void {
   })
 }
 
-export function getErrorsByCategory(
-  category: string
-): ErrorDefinition[] {
-  return Object.values(ERROR_REGISTRY).filter(
-    (def) => def.category === category
-  )
+export function getErrorsByCategory(category: string): ErrorDefinition[] {
+  return Object.values(ERROR_REGISTRY).filter((def) => def.category === category)
 }

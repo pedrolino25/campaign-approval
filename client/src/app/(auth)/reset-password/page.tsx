@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
@@ -9,13 +9,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -91,18 +85,19 @@ function ResetPasswordContent() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Reset your password</CardTitle>
-          <CardDescription>
-            Enter your email, verification code, and new password
-          </CardDescription>
+          <CardDescription>Enter your email, verification code, and new password</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {emailSent && (
                 <Alert>
                   <AlertDescription>
-                    If the account exists, password reset instructions have been
-                    sent to your email. Please enter the code below.
+                    If the account exists, password reset instructions have been sent to your email.
+                    Please enter the code below.
                   </AlertDescription>
                 </Alert>
               )}
@@ -139,7 +134,10 @@ function ResetPasswordContent() {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,7 +151,10 @@ function ResetPasswordContent() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,7 +179,10 @@ function ResetPasswordContent() {
                 </Button>
 
                 <div className="text-center text-sm">
-                  <Link href="/login" className="text-primary hover:underline">
+                  <Link
+                    href="/login"
+                    className="text-primary hover:underline"
+                  >
                     Back to sign in
                   </Link>
                 </div>

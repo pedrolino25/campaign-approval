@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
@@ -10,13 +10,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -45,7 +39,7 @@ type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
 function getRedirectPath(
   session: SessionResponse['session'],
-  defaultPath: string = '/dashboard'
+  defaultPath: string = '/dashboard',
 ): string {
   if (session && !session.onboardingCompleted) {
     if (session.actorType === 'INTERNAL') {
@@ -159,13 +153,14 @@ function VerifyEmailContent() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Verify your email</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code and your password
-          </CardDescription>
+          <CardDescription>Enter the 6-digit code and your password</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -253,7 +248,10 @@ function VerifyEmailContent() {
                 </Button>
 
                 <div className="text-center text-sm">
-                  <Link href="/login" className="text-primary hover:underline">
+                  <Link
+                    href="/login"
+                    className="text-primary hover:underline"
+                  >
                     Back to sign in
                   </Link>
                 </div>

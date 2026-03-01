@@ -19,50 +19,59 @@
     /* Worklient Background Colors */
     --background: 0 0% 100%; /* neutral-0: #ffffff */
     --foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Card Colors */
     --card: 0 0% 100%; /* neutral-0: #ffffff */
     --card-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Popover Colors */
     --popover: 0 0% 100%; /* neutral-0: #ffffff */
     --popover-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Primary Color */
     /* #a0affa -> HSL: 234 88% 78% */
     --primary: 270 33% 44%;
     --primary-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Secondary Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --secondary: 0 0% 97%;
     --secondary-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Muted Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --muted: 0 0% 97%;
     /* neutral-500: #969696 -> HSL: 0 0% 59% */
     --muted-foreground: 0 0% 59%;
-    
+
     /* Worklient Accent Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --accent: 0 0% 97%;
     --accent-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Destructive Color */
     /* #ff2244 -> HSL: 352 100% 57% */
     --destructive: 352 100% 57%;
     --destructive-foreground: 0 0% 100%; /* white */
-    
+
     /* Worklient Border Colors */
     /* neutral-300: #ececec -> HSL: 0 0% 93% */
     --border: 0 0% 93%;
     --input: 0 0% 93%;
     --ring: 270 33% 44% / 0.4; /* primary color */
-    
+
     /* Worklient Border Radius */
     /* Using radius-md: 16px */
     --radius: 16px;
+    /* Light grey sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 91%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   /* Dark mode theme (prepared for future implementation) */
@@ -70,50 +79,58 @@
     /* Worklient Background Colors */
     --background: 0 0% 100%; /* neutral-0: #ffffff */
     --foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Card Colors */
     --card: 0 0% 100%; /* neutral-0: #ffffff */
     --card-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Popover Colors */
     --popover: 0 0% 100%; /* neutral-0: #ffffff */
     --popover-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Primary Color */
     /* #a0affa -> HSL: 234 88% 78% */
     --primary: 270 33% 44%;
     --primary-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Secondary Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --secondary: 0 0% 97%;
     --secondary-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Muted Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --muted: 0 0% 97%;
     /* neutral-500: #969696 -> HSL: 0 0% 59% */
     --muted-foreground: 0 0% 59%;
-    
+
     /* Worklient Accent Colors */
     /* neutral-100: #f7f7f7 -> HSL: 0 0% 97% */
     --accent: 0 0% 97%;
     --accent-foreground: 0 0% 0%; /* neutral-900: #000000 */
-    
+
     /* Worklient Destructive Color */
     /* #ff2244 -> HSL: 352 100% 57% */
     --destructive: 352 100% 57%;
     --destructive-foreground: 0 0% 100%; /* white */
-    
+
     /* Worklient Border Colors */
     /* neutral-300: #ececec -> HSL: 0 0% 93% */
     --border: 0 0% 93%;
     --input: 0 0% 93%;
     --ring: 270 33% 44% / 0.4; /* primary color */
-    
+
     /* Worklient Border Radius */
     /* Using radius-md: 16px */
     --radius: 16px;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -124,7 +141,7 @@
   html {
     /* Geist is applied via GeistSans.className, Inter is fallback */
     /* Multiple variable names to catch different Geist package versions */
-    font-family: 
+    font-family:
       var(--geist-sans, var(--font-geist-sans, var(--font-geist, var(--font-inter)))),
       var(--font-inter),
       Inter,
@@ -133,12 +150,14 @@
       'Segoe UI',
       Roboto,
       sans-serif;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
     font-family: inherit;
+    overflow-x: hidden;
+    min-width: 0;
   }
-
 }
 
 @layer utilities {
@@ -151,7 +170,7 @@
   .shadow-lg {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
   }
-  
+
   .rounded-xs {
     border-radius: 8px;
   }
@@ -168,93 +187,287 @@
     border-radius: 32px;
   }
 
+  .p-2 {
+    padding: 8px;
+  }
+  .p-4 {
+    padding: 16px;
+  }
+  .p-5 {
+    padding: 20px;
+  }
+  .p-6 {
+    padding: 24px;
+  }
+  .p-8 {
+    padding: 32px;
+  }
+  .p-10 {
+    padding: 40px;
+  }
+  .p-12 {
+    padding: 48px;
+  }
+  .p-16 {
+    padding: 64px;
+  }
+  .p-20 {
+    padding: 80px;
+  }
+  .p-24 {
+    padding: 96px;
+  }
+  .p-30 {
+    padding: 120px;
+  }
 
-  .p-2 { padding: 8px; }
-  .p-4 { padding: 16px; }
-  .p-5 { padding: 20px; }
-  .p-6 { padding: 24px; }
-  .p-8 { padding: 32px; }
-  .p-10 { padding: 40px; }
-  .p-12 { padding: 48px; }
-  .p-16 { padding: 64px; }
-  .p-20 { padding: 80px; }
-  .p-24 { padding: 96px; }
-  .p-30 { padding: 120px; }
+  .px-2 {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .px-4 {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .px-5 {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .px-6 {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .px-8 {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .px-10 {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .px-12 {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+  .px-16 {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+  .px-20 {
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+  .px-24 {
+    padding-left: 96px;
+    padding-right: 96px;
+  }
+  .px-30 {
+    padding-left: 120px;
+    padding-right: 120px;
+  }
 
-  .px-2 { padding-left: 8px; padding-right: 8px; }
-  .px-4 { padding-left: 16px; padding-right: 16px; }
-  .px-5 { padding-left: 20px; padding-right: 20px; }
-  .px-6 { padding-left: 24px; padding-right: 24px; }
-  .px-8 { padding-left: 32px; padding-right: 32px; }
-  .px-10 { padding-left: 40px; padding-right: 40px; }
-  .px-12 { padding-left: 48px; padding-right: 48px; }
-  .px-16 { padding-left: 64px; padding-right: 64px; }
-  .px-20 { padding-left: 80px; padding-right: 80px; }
-  .px-24 { padding-left: 96px; padding-right: 96px; }
-  .px-30 { padding-left: 120px; padding-right: 120px; }
+  .py-2 {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .py-4 {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  .py-5 {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  .py-6 {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+  .py-8 {
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+  .py-10 {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+  .py-12 {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+  .py-16 {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+  .py-20 {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+  .py-24 {
+    padding-top: 96px;
+    padding-bottom: 96px;
+  }
+  .py-30 {
+    padding-top: 120px;
+    padding-bottom: 120px;
+  }
 
-  .py-2 { padding-top: 8px; padding-bottom: 8px; }
-  .py-4 { padding-top: 16px; padding-bottom: 16px; }
-  .py-5 { padding-top: 20px; padding-bottom: 20px; }
-  .py-6 { padding-top: 24px; padding-bottom: 24px; }
-  .py-8 { padding-top: 32px; padding-bottom: 32px; }
-  .py-10 { padding-top: 40px; padding-bottom: 40px; }
-  .py-12 { padding-top: 48px; padding-bottom: 48px; }
-  .py-16 { padding-top: 64px; padding-bottom: 64px; }
-  .py-20 { padding-top: 80px; padding-bottom: 80px; }
-  .py-24 { padding-top: 96px; padding-bottom: 96px; }
-  .py-30 { padding-top: 120px; padding-bottom: 120px; }
+  .m-2 {
+    margin: 8px;
+  }
+  .m-4 {
+    margin: 16px;
+  }
+  .m-5 {
+    margin: 20px;
+  }
+  .m-6 {
+    margin: 24px;
+  }
+  .m-8 {
+    margin: 32px;
+  }
+  .m-10 {
+    margin: 40px;
+  }
+  .m-12 {
+    margin: 48px;
+  }
+  .m-16 {
+    margin: 64px;
+  }
+  .m-20 {
+    margin: 80px;
+  }
+  .m-24 {
+    margin: 96px;
+  }
+  .m-30 {
+    margin: 120px;
+  }
 
+  .mx-2 {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+  .mx-4 {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .mx-5 {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+  .mx-6 {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+  .mx-8 {
+    margin-left: 32px;
+    margin-right: 32px;
+  }
+  .mx-10 {
+    margin-left: 40px;
+    margin-right: 40px;
+  }
+  .mx-12 {
+    margin-left: 48px;
+    margin-right: 48px;
+  }
+  .mx-16 {
+    margin-left: 64px;
+    margin-right: 64px;
+  }
+  .mx-20 {
+    margin-left: 80px;
+    margin-right: 80px;
+  }
+  .mx-24 {
+    margin-left: 96px;
+    margin-right: 96px;
+  }
+  .mx-30 {
+    margin-left: 120px;
+    margin-right: 120px;
+  }
 
-  .m-2 { margin: 8px; }
-  .m-4 { margin: 16px; }
-  .m-5 { margin: 20px; }
-  .m-6 { margin: 24px; }
-  .m-8 { margin: 32px; }
-  .m-10 { margin: 40px; }
-  .m-12 { margin: 48px; }
-  .m-16 { margin: 64px; }
-  .m-20 { margin: 80px; }
-  .m-24 { margin: 96px; }
-  .m-30 { margin: 120px; }
+  .my-2 {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+  .my-4 {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  .my-5 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  .my-6 {
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+  .my-8 {
+    margin-top: 32px;
+    margin-bottom: 32px;
+  }
+  .my-10 {
+    margin-top: 40px;
+    margin-bottom: 40px;
+  }
+  .my-12 {
+    margin-top: 48px;
+    margin-bottom: 48px;
+  }
+  .my-16 {
+    margin-top: 64px;
+    margin-bottom: 64px;
+  }
+  .my-20 {
+    margin-top: 80px;
+    margin-bottom: 80px;
+  }
+  .my-24 {
+    margin-top: 96px;
+    margin-bottom: 96px;
+  }
+  .my-30 {
+    margin-top: 120px;
+    margin-bottom: 120px;
+  }
 
-  .mx-2 { margin-left: 8px; margin-right: 8px; }
-  .mx-4 { margin-left: 16px; margin-right: 16px; }
-  .mx-5 { margin-left: 20px; margin-right: 20px; }
-  .mx-6 { margin-left: 24px; margin-right: 24px; }
-  .mx-8 { margin-left: 32px; margin-right: 32px; }
-  .mx-10 { margin-left: 40px; margin-right: 40px; }
-  .mx-12 { margin-left: 48px; margin-right: 48px; }
-  .mx-16 { margin-left: 64px; margin-right: 64px; }
-  .mx-20 { margin-left: 80px; margin-right: 80px; }
-  .mx-24 { margin-left: 96px; margin-right: 96px; }
-  .mx-30 { margin-left: 120px; margin-right: 120px; }
-
-  .my-2 { margin-top: 8px; margin-bottom: 8px; }
-  .my-4 { margin-top: 16px; margin-bottom: 16px; }
-  .my-5 { margin-top: 20px; margin-bottom: 20px; }
-  .my-6 { margin-top: 24px; margin-bottom: 24px; }
-  .my-8 { margin-top: 32px; margin-bottom: 32px; }
-  .my-10 { margin-top: 40px; margin-bottom: 40px; }
-  .my-12 { margin-top: 48px; margin-bottom: 48px; }
-  .my-16 { margin-top: 64px; margin-bottom: 64px; }
-  .my-20 { margin-top: 80px; margin-bottom: 80px; }
-  .my-24 { margin-top: 96px; margin-bottom: 96px; }
-  .my-30 { margin-top: 120px; margin-bottom: 120px; }
-
-
-  .gap-2 { gap: 8px; }
-  .gap-4 { gap: 16px; }
-  .gap-5 { gap: 20px; }
-  .gap-6 { gap: 24px; }
-  .gap-8 { gap: 32px; }
-  .gap-10 { gap: 40px; }
-  .gap-12 { gap: 48px; }
-  .gap-16 { gap: 64px; }
-  .gap-20 { gap: 80px; }
-  .gap-24 { gap: 96px; }
-  .gap-30 { gap: 120px; }
-
+  .gap-2 {
+    gap: 8px;
+  }
+  .gap-4 {
+    gap: 16px;
+  }
+  .gap-5 {
+    gap: 20px;
+  }
+  .gap-6 {
+    gap: 24px;
+  }
+  .gap-8 {
+    gap: 32px;
+  }
+  .gap-10 {
+    gap: 40px;
+  }
+  .gap-12 {
+    gap: 48px;
+  }
+  .gap-16 {
+    gap: 64px;
+  }
+  .gap-20 {
+    gap: 80px;
+  }
+  .gap-24 {
+    gap: 96px;
+  }
+  .gap-30 {
+    gap: 120px;
+  }
 
   .text-hero-xl {
     font-size: 56px;

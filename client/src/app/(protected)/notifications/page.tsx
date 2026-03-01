@@ -1,70 +1,97 @@
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { dummyNotifications } from "@/lib/dummy/notifications"
+'use client'
+
+import { PageHeader } from '@/components/navigation/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { dummyData } from '@/lib/dummy/data'
 
 export default function NotificationsPage() {
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "success":
-        return "default"
-      case "warning":
-        return "secondary"
-      case "error":
-        return "destructive"
-      default:
-        return "outline"
-    }
-  }
+  const notifications = dummyData.getNotifications()
+  const allNotifications = notifications
+  const unreadNotifications = notifications.filter((n) => !n.read)
+  const unreadCount = unreadNotifications.length
 
-  const unreadCount = dummyNotifications.filter((n) => !n.read).length
+  function NotificationList({ list }: { list: typeof allNotifications }) {
+    return (
+      <ul className="space-y-2">
+        {list.length === 0 ? (
+          <li className="py-8 text-center text-sm text-muted-foreground">No notifications</li>
+        ) : (
+          list.map((n) => (
+            <li
+              key={n.id}
+              className={`flex items-start justify-between rounded-md border p-4 text-sm ${
+                !n.read ? 'bg-muted/40' : ''
+              }`}
+            >
+              <div>
+                <p className="font-medium">{n.title}</p>
+                <p className="text-muted-foreground mt-0.5">{n.message}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {new Date(n.createdAt).toLocaleString()}
+                </p>
+              </div>
+              {!n.read && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                >
+                  Mark as read
+                </Button>
+              )}
+            </li>
+          ))
+        )}
+      </ul>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground mt-2">
-            Stay updated with your review activities
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <Badge variant="default">{unreadCount} unread</Badge>
-        )}
-      </div>
+      <PageHeader
+        title="Notifications"
+        description="Your notification history"
+        action={unreadCount > 0 && <Badge variant="secondary">{unreadCount} unread</Badge>}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Notifications</CardTitle>
-          <CardDescription>Your notification history</CardDescription>
+      <Card className="rounded-md border bg-card shadow-sm">
+        <CardHeader className="p-4">
+          <CardTitle className="text-sm font-medium">Notifications</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {dummyNotifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`flex items-start justify-between p-4 rounded-lg border ${!notification.read ? "bg-accent/50" : ""
-                  }`}
-              >
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">{notification.title}</h3>
-                    <Badge variant={getTypeColor(notification.type)} className="text-xs">
-                      {notification.type}
-                    </Badge>
-                    {!notification.read && (
-                      <Badge variant="outline" className="text-xs">New</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <CardContent className="p-4 pt-0">
+          <Tabs
+            defaultValue="all"
+            className="space-y-4"
+          >
+            <TabsList className="rounded-md">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="unread">
+                Unread
+                {unreadCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-1.5 h-5 px-1.5"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="all"
+              className="mt-4"
+            >
+              <NotificationList list={allNotifications} />
+            </TabsContent>
+            <TabsContent
+              value="unread"
+              className="mt-4"
+            >
+              <NotificationList list={unreadNotifications} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
