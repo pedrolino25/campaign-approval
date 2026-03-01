@@ -3,11 +3,7 @@
  * No backend; all data is static. Use helpers for filtering.
  */
 
-export type ReviewItemStatus =
-  | 'Draft'
-  | 'Pending Review'
-  | 'Changes Requested'
-  | 'Approved'
+export type ReviewItemStatus = 'Draft' | 'Pending Review' | 'Changes Requested' | 'Approved'
 
 export type ProjectStatus = 'active' | 'archived'
 
@@ -467,9 +463,27 @@ export const dummyActivityLogs: DummyActivityLog[] = [
 ]
 
 export const dummyReviewers: DummyReviewer[] = [
-  { id: 'rev-1', projectId: 'proj-1', email: 'client@acme.com', name: 'Acme Client', invitedAt: '2024-01-20T00:00:00Z' },
-  { id: 'rev-2', projectId: 'proj-2', email: 'reviewer@techstart.io', name: 'TechStart Reviewer', invitedAt: '2024-02-25T00:00:00Z' },
-  { id: 'rev-3', projectId: 'proj-3', email: 'legal@globalsolutions.com', name: 'Legal Team', invitedAt: '2024-03-12T00:00:00Z' },
+  {
+    id: 'rev-1',
+    projectId: 'proj-1',
+    email: 'client@acme.com',
+    name: 'Acme Client',
+    invitedAt: '2024-01-20T00:00:00Z',
+  },
+  {
+    id: 'rev-2',
+    projectId: 'proj-2',
+    email: 'reviewer@techstart.io',
+    name: 'TechStart Reviewer',
+    invitedAt: '2024-02-25T00:00:00Z',
+  },
+  {
+    id: 'rev-3',
+    projectId: 'proj-3',
+    email: 'legal@globalsolutions.com',
+    name: 'Legal Team',
+    invitedAt: '2024-03-12T00:00:00Z',
+  },
 ]
 
 function getProjects(): DummyProject[] {

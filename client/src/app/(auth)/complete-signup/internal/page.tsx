@@ -8,13 +8,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -87,9 +81,7 @@ export default function InternalCompleteSignupPage() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Complete Your Setup</CardTitle>
-          <CardDescription>
-            Please provide your organization details to get started
-          </CardDescription>
+          <CardDescription>Please provide your organization details to get started</CardDescription>
         </CardHeader>
         <CardContent>
           {showError ? (
@@ -111,11 +103,18 @@ export default function InternalCompleteSignupPage() {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="userName"
-                  render={({ field }: { field: ControllerRenderProps<CompleteSignupFormValues, 'userName'> }) => (
+                  render={({
+                    field,
+                  }: {
+                    field: ControllerRenderProps<CompleteSignupFormValues, 'userName'>
+                  }) => (
                     <FormItem>
                       <FormLabel>Your Name</FormLabel>
                       <FormControl>
@@ -133,7 +132,11 @@ export default function InternalCompleteSignupPage() {
                 <FormField
                   control={form.control}
                   name="organizationName"
-                  render={({ field }: { field: ControllerRenderProps<CompleteSignupFormValues, 'organizationName'> }) => (
+                  render={({
+                    field,
+                  }: {
+                    field: ControllerRenderProps<CompleteSignupFormValues, 'organizationName'>
+                  }) => (
                     <FormItem>
                       <FormLabel>Organization Name</FormLabel>
                       <FormControl>
@@ -150,9 +153,7 @@ export default function InternalCompleteSignupPage() {
 
                 {form.formState.errors.root && (
                   <Alert variant="destructive">
-                    <AlertDescription>
-                      {form.formState.errors.root.message}
-                    </AlertDescription>
+                    <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
                   </Alert>
                 )}
 

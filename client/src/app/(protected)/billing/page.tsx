@@ -3,10 +3,10 @@
 import { useState } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'
-import { DataTable } from '@/components/ui/data-table'
 import { invoiceColumns, type InvoiceRow } from '@/components/tables/invoices-columns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DataTable } from '@/components/ui/data-table'
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,10 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Billing" description="Manage your subscription and payment" />
+      <PageHeader
+        title="Billing"
+        description="Manage your subscription and payment"
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="rounded-md border bg-card shadow-sm">
@@ -46,7 +49,13 @@ export default function BillingPage() {
           <CardContent className="p-4 pt-0">
             <p className="text-sm">•••• •••• •••• 4242</p>
             <p className="text-xs text-muted-foreground">Expires 12/25</p>
-            <Button size="sm" variant="secondary" className="mt-2">Update</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2"
+            >
+              Update
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -68,17 +77,28 @@ export default function BillingPage() {
 
       <Card className="rounded-md border border-destructive/50 bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
-          <CardTitle className="text-sm font-medium text-destructive">Cancel subscription</CardTitle>
+          <CardTitle className="text-sm font-medium text-destructive">
+            Cancel subscription
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <p className="text-sm text-muted-foreground mb-4">Cancel your subscription at the end of the billing period.</p>
-          <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)}>
+          <p className="text-sm text-muted-foreground mb-4">
+            Cancel your subscription at the end of the billing period.
+          </p>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setCancelOpen(true)}
+          >
             Cancel subscription
           </Button>
         </CardContent>
       </Card>
 
-      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+      <Dialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Cancel subscription</DialogTitle>
@@ -87,8 +107,20 @@ export default function BillingPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setCancelOpen(false)}>Keep subscription</Button>
-            <Button size="sm" variant="destructive" onClick={() => setCancelOpen(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setCancelOpen(false)}
+            >
+              Keep subscription
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setCancelOpen(false)}
+            >
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

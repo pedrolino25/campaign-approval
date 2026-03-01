@@ -4,9 +4,11 @@ import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'
+import { getTeamColumns } from '@/components/tables/team-columns'
 import { useInviteTeamMemberDialog } from '@/components/team/invite-team-member-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DataTable } from '@/components/ui/data-table'
 import {
   Dialog,
   DialogContent,
@@ -21,10 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/ui/data-table'
-import { getTeamColumns } from '@/components/tables/team-columns'
-import type { DummyTeamMember } from '@/lib/dummy/data'
-import { dummyData } from '@/lib/dummy/data'
+import { dummyData, type DummyTeamMember } from '@/lib/dummy/data'
 
 export default function TeamPage() {
   const { openInviteTeamMember } = useInviteTeamMemberDialog()
@@ -53,7 +52,7 @@ export default function TeamPage() {
   }, [])
   const columns = useMemo(
     () => getTeamColumns({ onRoleClick, onRemoveClick }),
-    [onRoleClick, onRemoveClick]
+    [onRoleClick, onRemoveClick],
   )
 
   return (
@@ -62,7 +61,10 @@ export default function TeamPage() {
         title="Team"
         description="Internal users in your organization"
         action={
-          <Button size="sm" onClick={openInviteTeamMember}>
+          <Button
+            size="sm"
+            onClick={openInviteTeamMember}
+          >
             Invite user
           </Button>
         }
@@ -83,7 +85,10 @@ export default function TeamPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
+      <Dialog
+        open={roleModalOpen}
+        onOpenChange={setRoleModalOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Change role</DialogTitle>
@@ -102,13 +107,27 @@ export default function TeamPage() {
             </Select>
           </div>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setRoleModalOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={() => setRoleModalOpen(false)}>Save</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setRoleModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setRoleModalOpen(false)}
+            >
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={removeModalOpen} onOpenChange={setRemoveModalOpen}>
+      <Dialog
+        open={removeModalOpen}
+        onOpenChange={setRemoveModalOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Remove user</DialogTitle>
@@ -117,8 +136,20 @@ export default function TeamPage() {
             </p>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setRemoveModalOpen(false)}>Cancel</Button>
-            <Button size="sm" variant="destructive" onClick={() => setRemoveModalOpen(false)}>Remove</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setRemoveModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setRemoveModalOpen(false)}
+            >
+              Remove
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

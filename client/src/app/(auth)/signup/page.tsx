@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
@@ -9,13 +9,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -83,13 +77,14 @@ function SignupContent() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Create an account</CardTitle>
-          <CardDescription>
-            Enter your information to create your account
-          </CardDescription>
+          <CardDescription>Enter your information to create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -121,7 +116,10 @@ function SignupContent() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,7 +133,10 @@ function SignupContent() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,7 +161,10 @@ function SignupContent() {
                 </Button>
 
                 <div className="text-center text-sm">
-                  <Link href="/login" className="text-primary hover:underline">
+                  <Link
+                    href="/login"
+                    className="text-primary hover:underline"
+                  >
                     Already have an account? Sign in
                   </Link>
                 </div>

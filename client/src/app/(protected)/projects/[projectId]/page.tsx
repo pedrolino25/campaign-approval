@@ -1,17 +1,13 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { RecentReviewItemsTable } from '@/app/(protected)/projects/[projectId]/recent-review-items-table'
 import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { RecentReviewItemsTable } from '@/app/(protected)/projects/[projectId]/recent-review-items-table'
 import { dummyActivityLogs, dummyData } from '@/lib/dummy/data'
 
-export default function ProjectOverviewPage({
-  params,
-}: {
-  params: { projectId: string }
-}) {
+export default function ProjectOverviewPage({ params }: { params: { projectId: string } }) {
   const { projectId } = params
   const project = dummyData.getProjectById(projectId)
   if (!project) notFound()
@@ -35,10 +31,17 @@ export default function ProjectOverviewPage({
         description={project.description}
         action={
           <div className="flex gap-2">
-            <Button size="sm" variant="secondary" asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+            >
               <Link href={`/projects/${projectId}/settings`}>Settings</Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button
+              size="sm"
+              asChild
+            >
               <Link href={`/projects/${projectId}/review-items/new`}>Add review item</Link>
             </Button>
           </div>
@@ -48,7 +51,9 @@ export default function ProjectOverviewPage({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Review Items</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Review Items
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
             <p className="text-2xl font-semibold">{reviewItems.length}</p>
@@ -64,7 +69,9 @@ export default function ProjectOverviewPage({
         </Card>
         <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Changes Requested</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Changes Requested
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
             <p className="text-2xl font-semibold">{changesRequested}</p>
@@ -83,12 +90,19 @@ export default function ProjectOverviewPage({
       <Card className="rounded-md border bg-card shadow-sm">
         <CardHeader className="p-4 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Recent Review Items</CardTitle>
-          <Button size="sm" variant="secondary" asChild>
+          <Button
+            size="sm"
+            variant="secondary"
+            asChild
+          >
             <Link href={`/projects/${projectId}/review-items`}>View all</Link>
           </Button>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <RecentReviewItemsTable projectId={projectId} items={recentItems} />
+          <RecentReviewItemsTable
+            projectId={projectId}
+            items={recentItems}
+          />
         </CardContent>
       </Card>
 
@@ -102,7 +116,10 @@ export default function ProjectOverviewPage({
               <li className="text-sm text-muted-foreground">No activity yet.</li>
             ) : (
               activity.map((a) => (
-                <li key={a.id} className="text-sm">
+                <li
+                  key={a.id}
+                  className="text-sm"
+                >
                   <p className="text-foreground">{a.description}</p>
                   <p className="text-xs text-muted-foreground">
                     {a.userName} · {new Date(a.timestamp).toLocaleString()}

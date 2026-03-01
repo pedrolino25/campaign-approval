@@ -8,10 +8,7 @@ if (!API_URL) {
   throw new Error('NEXT_PUBLIC_API_URL is not defined')
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options?: RequestInit
-): Promise<T> {
+export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const baseUrl = API_URL
   const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`
 

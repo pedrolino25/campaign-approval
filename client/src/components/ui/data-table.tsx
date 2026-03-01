@@ -11,7 +11,14 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Columns } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  Columns,
+} from 'lucide-react'
 import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -99,11 +106,19 @@ export function DataTable<TData, TValue>({
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Toggle columns">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              aria-label="Toggle columns"
+            >
               <Columns className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px] rounded-md">
+          <DropdownMenuContent
+            align="end"
+            className="w-[180px] rounded-md"
+          >
             <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {table
@@ -111,9 +126,7 @@ export function DataTable<TData, TValue>({
               .filter((col) => typeof col.accessorFn !== 'undefined' && col.getCanHide())
               .map((col) => {
                 const label =
-                  typeof col.columnDef.header === 'string'
-                    ? col.columnDef.header
-                    : col.id
+                  typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id
                 return (
                   <DropdownMenuCheckboxItem
                     key={col.id}
@@ -143,7 +156,7 @@ export function DataTable<TData, TValue>({
                     <div
                       className={cn(
                         header.column.getCanSort() &&
-                        'flex items-center gap-1 cursor-pointer select-none'
+                          'flex items-center gap-1 cursor-pointer select-none',
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                     >
@@ -168,9 +181,16 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-muted/40" data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  className="hover:bg-muted/40"
+                  data-state={row.getIsSelected() && 'selected'}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-4 align-middle">
+                    <TableCell
+                      key={cell.id}
+                      className="p-4 align-middle"
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -178,7 +198,10 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-sm text-muted-foreground"
+                >
                   No results.
                 </TableCell>
               </TableRow>

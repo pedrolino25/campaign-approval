@@ -16,7 +16,10 @@ export default function OrganizationPage() {
         description="Organization settings and reminders"
       />
 
-      <Tabs defaultValue="general" className="space-y-4">
+      <Tabs
+        defaultValue="general"
+        className="space-y-4"
+      >
         <TabsList className="rounded-md">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="reminders">Reminders</TabsTrigger>
@@ -24,7 +27,10 @@ export default function OrganizationPage() {
           <TabsTrigger value="audit">Audit</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-4">
+        <TabsContent
+          value="general"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm max-w-xl">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">General</CardTitle>
@@ -32,34 +38,53 @@ export default function OrganizationPage() {
             <CardContent className="space-y-4 p-4 pt-0">
               <div className="space-y-2">
                 <Label htmlFor="name">Organization name</Label>
-                <Input id="name" defaultValue={org.name} />
+                <Input
+                  id="name"
+                  defaultValue={org.name}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="domain">Domain</Label>
-                <Input id="domain" defaultValue={org.domain} readOnly />
+                <Input
+                  id="domain"
+                  defaultValue={org.domain}
+                  readOnly
+                />
               </div>
               <Button size="sm">Save</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="reminders" className="space-y-4">
+        <TabsContent
+          value="reminders"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm max-w-xl">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Reminder settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 pt-0">
-              <p className="text-sm text-muted-foreground">Configure when to send reminder emails for pending reviews.</p>
+              <p className="text-sm text-muted-foreground">
+                Configure when to send reminder emails for pending reviews.
+              </p>
               <div className="space-y-2">
                 <Label>Days before reminder</Label>
-                <Input type="number" defaultValue={3} className=" w-24" />
+                <Input
+                  type="number"
+                  defaultValue={3}
+                  className=" w-24"
+                />
               </div>
               <Button size="sm">Save</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-4">
+        <TabsContent
+          value="security"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">Security settings (placeholder).</p>
@@ -67,7 +92,10 @@ export default function OrganizationPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="audit" className="space-y-4">
+        <TabsContent
+          value="audit"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">Audit log (placeholder).</p>

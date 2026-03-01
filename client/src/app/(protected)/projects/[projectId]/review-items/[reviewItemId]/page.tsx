@@ -50,15 +50,34 @@ export default function ProjectReviewItemDetailPage() {
           <div className="flex gap-2">
             {item.status === 'Pending Review' && (
               <>
-                <Button size="sm" onClick={() => setApproveOpen(true)}>Approve</Button>
-                <Button size="sm" variant="secondary" onClick={() => setChangesOpen(true)}>Request changes</Button>
+                <Button
+                  size="sm"
+                  onClick={() => setApproveOpen(true)}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setChangesOpen(true)}
+                >
+                  Request changes
+                </Button>
               </>
             )}
-            <Button size="sm" variant="secondary" onClick={() => setUploadOpen(true)}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setUploadOpen(true)}
+            >
               <Upload className="mr-2 h-4 w-4" />
               Upload version
             </Button>
-            <Button size="sm" variant="secondary" asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+            >
               <Link href={listHref}>Back to list</Link>
             </Button>
           </div>
@@ -69,16 +88,24 @@ export default function ProjectReviewItemDetailPage() {
         <StatusBadge status={item.status} />
         <span className="text-muted-foreground">Version {item.version}</span>
         <span className="text-muted-foreground">·</span>
-        <span className="text-muted-foreground">Updated {new Date(item.updatedAt).toLocaleString()}</span>
+        <span className="text-muted-foreground">
+          Updated {new Date(item.updatedAt).toLocaleString()}
+        </span>
       </div>
 
-      <Tabs defaultValue="details" className="space-y-4">
+      <Tabs
+        defaultValue="details"
+        className="space-y-4"
+      >
         <TabsList className="rounded-md">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-4">
+        <TabsContent
+          value="details"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Description</CardTitle>
@@ -109,13 +136,20 @@ export default function ProjectReviewItemDetailPage() {
                 <p className="text-sm text-muted-foreground">No comments yet.</p>
               ) : (
                 comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
+                  <div
+                    key={c.id}
+                    className="flex gap-3"
+                  >
                     <Avatar className="h-8 w-8 rounded-md">
-                      <AvatarFallback className="rounded-md text-xs">{c.authorName.slice(0, 2)}</AvatarFallback>
+                      <AvatarFallback className="rounded-md text-xs">
+                        {c.authorName.slice(0, 2)}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="text-sm font-medium">{c.authorName}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleString()}
+                      </p>
                       <p className="text-sm mt-1">{c.body}</p>
                     </div>
                   </div>
@@ -123,14 +157,23 @@ export default function ProjectReviewItemDetailPage() {
               )}
               <Separator className="my-4" />
               <div className="flex gap-2">
-                <Textarea placeholder="Add a comment..." rows={2} className=" flex-1" />
-                <Button size="sm"><Send className="h-4 w-4" /></Button>
+                <Textarea
+                  placeholder="Add a comment..."
+                  rows={2}
+                  className=" flex-1"
+                />
+                <Button size="sm">
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-4">
+        <TabsContent
+          value="activity"
+          className="space-y-4"
+        >
           <Card className="rounded-md border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Activity</CardTitle>
@@ -141,9 +184,14 @@ export default function ProjectReviewItemDetailPage() {
                   <li className="text-sm text-muted-foreground">No activity yet.</li>
                 ) : (
                   activity.map((a) => (
-                    <li key={a.id} className="text-sm">
+                    <li
+                      key={a.id}
+                      className="text-sm"
+                    >
                       <p className="text-foreground">{a.description}</p>
-                      <p className="text-xs text-muted-foreground">{a.userName} · {new Date(a.timestamp).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {a.userName} · {new Date(a.timestamp).toLocaleString()}
+                      </p>
                     </li>
                   ))
                 )}
@@ -153,20 +201,39 @@ export default function ProjectReviewItemDetailPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
+      <Dialog
+        open={approveOpen}
+        onOpenChange={setApproveOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Approve review item</DialogTitle>
-            <DialogDescription>Are you sure you want to approve &quot;{item.title}&quot;?</DialogDescription>
+            <DialogDescription>
+              Are you sure you want to approve &quot;{item.title}&quot;?
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setApproveOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={() => setApproveOpen(false)}>Approve</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setApproveOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setApproveOpen(false)}
+            >
+              Approve
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={changesOpen} onOpenChange={setChangesOpen}>
+      <Dialog
+        open={changesOpen}
+        onOpenChange={setChangesOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Request changes</DialogTitle>
@@ -174,16 +241,34 @@ export default function ProjectReviewItemDetailPage() {
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="comment">Comment (required)</Label>
-            <Textarea id="comment" rows={3} placeholder="Describe the changes needed..." />
+            <Textarea
+              id="comment"
+              rows={3}
+              placeholder="Describe the changes needed..."
+            />
           </div>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setChangesOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={() => setChangesOpen(false)}>Request changes</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setChangesOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setChangesOpen(false)}
+            >
+              Request changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+      <Dialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Upload new version</DialogTitle>
@@ -194,8 +279,19 @@ export default function ProjectReviewItemDetailPage() {
             <Input type="file" />
           </div>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setUploadOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={() => setUploadOpen(false)}>Upload</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setUploadOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setUploadOpen(false)}
+            >
+              Upload
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,17 +1,11 @@
-"use client"
+'use client'
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -66,17 +60,17 @@ function ReviewerActivateContent() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Activation Failed</CardTitle>
-            <CardDescription>
-              We couldn&apos;t activate your invitation
-            </CardDescription>
+            <CardDescription>We couldn&apos;t activate your invitation</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant="destructive">
-              <AlertDescription>
-                Invitation expired or invalid.
-              </AlertDescription>
+              <AlertDescription>Invitation expired or invalid.</AlertDescription>
             </Alert>
-            <Button size="sm" onClick={() => (window.location.href = '/login')} className="w-full">
+            <Button
+              size="sm"
+              onClick={() => (window.location.href = '/login')}
+              className="w-full"
+            >
               Go to Login
             </Button>
           </CardContent>

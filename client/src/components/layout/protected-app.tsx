@@ -1,10 +1,10 @@
 'use client'
 
-import { CreateProjectDialogProvider } from '@/components/projects/create-project-dialog'
-import { InviteTeamMemberDialogProvider } from '@/components/team/invite-team-member-dialog'
 import { AgencyShell } from '@/components/layout/agency-shell'
 import { ReviewerDashboardRedirect } from '@/components/layout/reviewer-dashboard-redirect'
 import { ReviewerShell } from '@/components/layout/reviewer-shell'
+import { CreateProjectDialogProvider } from '@/components/projects/create-project-dialog'
+import { InviteTeamMemberDialogProvider } from '@/components/team/invite-team-member-dialog'
 import { RoleOverrideProvider, useRoleOverride } from '@/lib/auth/role-override-context'
 import { useSession } from '@/lib/auth/use-session'
 import { WorkspaceProvider } from '@/lib/workspace/workspace-context'
@@ -24,11 +24,7 @@ function ShellAndContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  return (
-    <AgencyShell onRoleSwitch={handleRoleSwitch}>
-      {children}
-    </AgencyShell>
-  )
+  return <AgencyShell onRoleSwitch={handleRoleSwitch}>{children}</AgencyShell>
 }
 
 export function ProtectedApp({ children }: { children: React.ReactNode }) {

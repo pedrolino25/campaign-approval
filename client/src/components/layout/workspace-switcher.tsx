@@ -54,10 +54,11 @@ export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitc
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-md">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Projects
-        </DropdownMenuLabel>
+      <DropdownMenuContent
+        align="start"
+        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-md"
+      >
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Projects</DropdownMenuLabel>
         {activeProjects.map((project) => (
           <DropdownMenuItem
             key={project.id}
@@ -68,13 +69,19 @@ export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitc
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer">
+        <DropdownMenuItem
+          onClick={handleDashboard}
+          className="cursor-pointer"
+        >
           Dashboard (all projects)
         </DropdownMenuItem>
         {!restrictToAssigned && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={openCreateProject} className="cursor-pointer">
+            <DropdownMenuItem
+              onClick={openCreateProject}
+              className="cursor-pointer"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create Project
             </DropdownMenuItem>

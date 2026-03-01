@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import Logo from '@/assets/logo.svg'
 import { OrgSidebar } from '@/components/layout/navigation/org-sidebar'
 import { ProjectSidebar } from '@/components/layout/navigation/project-sidebar'
 import { TopBar } from '@/components/layout/top-bar'
@@ -11,12 +12,10 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar'
-
-import Logo from '@/assets/logo.svg'
 
 interface AgencyShellProps {
   children: React.ReactNode
@@ -26,9 +25,7 @@ interface AgencyShellProps {
 export function AgencyShell({ children, onRoleSwitch }: AgencyShellProps) {
   const pathname = usePathname()
   const isProjectRoute =
-    pathname.startsWith('/projects/') &&
-    pathname.split('/')[2] &&
-    pathname.split('/')[2] !== 'new'
+    pathname.startsWith('/projects/') && pathname.split('/')[2] && pathname.split('/')[2] !== 'new'
 
   const sidebarContent = isProjectRoute ? (
     <ProjectSidebar restrictToAssigned={false} />

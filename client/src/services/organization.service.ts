@@ -63,7 +63,7 @@ export function useUpdateOrganizationMutation(
   options?: Omit<
     UseMutationOptions<Organization, ParsedError, UpdateOrganizationRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: UpdateOrganizationRequest) => {
@@ -80,7 +80,7 @@ export function useInviteUserMutation(
   options?: Omit<
     UseMutationOptions<{ success: boolean }, ParsedError, InviteUserRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: InviteUserRequest) => {
@@ -94,10 +94,7 @@ export function useInviteUserMutation(
 }
 
 export function useAcceptInvitationMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (token: string) => {
@@ -110,10 +107,7 @@ export function useAcceptInvitationMutation(
 }
 
 export function useDeleteUserMutation(
-  options?: Omit<
-    UseMutationOptions<void, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<void, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (userId: string) => {
@@ -129,7 +123,7 @@ export function useUpdateUserRoleMutation(
   options?: Omit<
     UseMutationOptions<User, ParsedError, { userId: string; request: UpdateUserRoleRequest }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ userId, request }: { userId: string; request: UpdateUserRoleRequest }) => {

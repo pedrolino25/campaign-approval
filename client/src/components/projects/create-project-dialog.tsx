@@ -21,11 +21,7 @@ interface CreateProjectDialogProps {
   onSuccess?: () => void
 }
 
-export function CreateProjectDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: CreateProjectDialogProps) {
+export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreateProjectDialogProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
@@ -47,13 +43,19 @@ export function CreateProjectDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={handleOpenChange}
+    >
       <DialogContent className="rounded-md sm:max-w-[28rem]">
         <DialogHeader>
           <DialogTitle>Create Project</DialogTitle>
           <p className="text-sm text-muted-foreground">Add a new project to your organization</p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="create-project-name">Name</Label>
             <Input
@@ -74,10 +76,18 @@ export function CreateProjectDialog({
             />
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" size="sm" variant="secondary" onClick={() => handleOpenChange(false)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => handleOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" size="sm">
+            <Button
+              type="submit"
+              size="sm"
+            >
               Create Project
             </Button>
           </DialogFooter>
@@ -103,7 +113,10 @@ export function CreateProjectDialogProvider({ children }: { children: React.Reac
   return (
     <CreateProjectDialogContext.Provider value={{ openCreateProject }}>
       {children}
-      <CreateProjectDialog open={open} onOpenChange={setOpen} />
+      <CreateProjectDialog
+        open={open}
+        onOpenChange={setOpen}
+      />
     </CreateProjectDialogContext.Provider>
   )
 }

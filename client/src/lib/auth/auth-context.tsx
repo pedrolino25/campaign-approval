@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { createContext, useContext } from "react"
+import { createContext, useContext } from 'react'
 
 export interface Session {
-  actorType: "INTERNAL" | "REVIEWER"
+  actorType: 'INTERNAL' | 'REVIEWER'
   userId?: string
   reviewerId?: string
   organizationId?: string
   projectId?: string
-  role?: "OWNER" | "ADMIN" | "MEMBER"
+  role?: 'OWNER' | 'ADMIN' | 'MEMBER'
   onboardingCompleted: boolean
   email: string
 }
@@ -25,18 +25,14 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ session, children }: AuthProviderProps) {
-  return (
-    <AuthContext.Provider value={{ session }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ session }}>{children}</AuthContext.Provider>
 }
 
 export function useSession(): Session {
   const context = useContext(AuthContext)
 
   if (!context) {
-    throw new Error("useSession must be used within an AuthProvider")
+    throw new Error('useSession must be used within an AuthProvider')
   }
 
   return context.session

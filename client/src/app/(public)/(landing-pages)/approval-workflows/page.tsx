@@ -1,42 +1,44 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
 
-import featuresImage1 from "@/assets/features/feature-1.png";
-import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
-import FooterSection from "@/components/landing-pages/sections/footer";
-import HeroSection from "@/components/landing-pages/sections/hero";
-import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
-import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
-import { Container } from "@/components/ui/container";
+import featuresImage1 from '@/assets/features/feature-1.png'
+import { FeatureCard } from '@/components/landing-pages/cards/feature-card'
+import FooterSection from '@/components/landing-pages/sections/footer'
+import HeroSection from '@/components/landing-pages/sections/hero'
+import { JsonLdSEO } from '@/components/layout/seo/jsonld-seo'
+import { buildMetadataSEO, SEO_DEFAULTS } from '@/components/layout/seo/metadata-seo'
+import { Container } from '@/components/ui/container'
 
-const CANONICAL_PATH = "/approval-workflows";
-const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/approval-workflows`;
+const CANONICAL_PATH = '/approval-workflows'
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/approval-workflows`
 
 export const metadata: Metadata = buildMetadataSEO({
-  type: "website",
-  title: "Campaign Approval Workflows for Agencies",
+  type: 'website',
+  title: 'Campaign Approval Workflows for Agencies',
   description:
-    "Structure campaign approvals with defined status transitions, role-based permissions, and automated workflow alignment built for modern marketing agencies.",
+    'Structure campaign approvals with defined status transitions, role-based permissions, and automated workflow alignment built for modern marketing agencies.',
   canonicalPath: CANONICAL_PATH,
   keywords: [
-    "campaign approval workflow",
-    "creative approval process",
-    "agency approval software",
-    "marketing approval workflow",
+    'campaign approval workflow',
+    'creative approval process',
+    'agency approval software',
+    'marketing approval workflow',
   ],
-  openGraphTitle: "Campaign Approval Workflows for Agencies | Worklient",
+  openGraphTitle: 'Campaign Approval Workflows for Agencies | Worklient',
   openGraphDescription:
-    "Replace approval chaos with controlled campaign workflows designed for agency scale and operational clarity.",
-  twitterDescription:
-    "Controlled, structured approval workflows built for modern agencies.",
-});
+    'Replace approval chaos with controlled campaign workflows designed for agency scale and operational clarity.',
+  twitterDescription: 'Controlled, structured approval workflows built for modern agencies.',
+})
 
 export default function ApprovalWorkflows() {
   return (
     <>
       <HeroSection
         theme="green"
-        title={["Structured Approval Workflows", "Built for Campaign Scale"]}
-        description={["Control status progression, enforce permissions, and eliminate approval ambiguity.", "Designed for agencies that operate with process, not chaos."]}
+        title={['Structured Approval Workflows', 'Built for Campaign Scale']}
+        description={[
+          'Control status progression, enforce permissions, and eliminate approval ambiguity.',
+          'Designed for agencies that operate with process, not chaos.',
+        ]}
       />
       <Container className="sm:px-5 md:px-10 py-10 flex flex-col gap-10">
         <FeatureCard
@@ -74,5 +76,5 @@ export default function ApprovalWorkflows() {
         url={CANONICAL_URL}
       />
     </>
-  );
+  )
 }

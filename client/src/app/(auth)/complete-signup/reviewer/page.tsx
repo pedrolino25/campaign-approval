@@ -5,13 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
@@ -50,9 +44,7 @@ export default function ReviewerCompleteSignupPage() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Complete Setup</CardTitle>
-          <CardDescription>
-            Complete your reviewer account setup to get started
-          </CardDescription>
+          <CardDescription>Complete your reviewer account setup to get started</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {showError ? (
@@ -76,9 +68,7 @@ export default function ReviewerCompleteSignupPage() {
             <>
               {mutation.isError && (
                 <Alert variant="destructive">
-                  <AlertDescription>
-                    {getErrorMessage(mutation.error)}
-                  </AlertDescription>
+                  <AlertDescription>{getErrorMessage(mutation.error)}</AlertDescription>
                 </Alert>
               )}
 

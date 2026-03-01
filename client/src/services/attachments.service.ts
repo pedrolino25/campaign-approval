@@ -36,10 +36,7 @@ export interface CreateAttachmentRequest {
 }
 
 export function usePresignMutation(
-  options?: Omit<
-    UseMutationOptions<PresignResponse, ParsedError, PresignRequest>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<PresignResponse, ParsedError, PresignRequest>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (request: PresignRequest) => {
@@ -54,12 +51,22 @@ export function usePresignMutation(
 
 export function useCreateAttachmentMutation(
   options?: Omit<
-    UseMutationOptions<Attachment, ParsedError, { reviewItemId: string; request: CreateAttachmentRequest }>,
+    UseMutationOptions<
+      Attachment,
+      ParsedError,
+      { reviewItemId: string; request: CreateAttachmentRequest }
+    >,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
-    mutationFn: async ({ reviewItemId, request }: { reviewItemId: string; request: CreateAttachmentRequest }) => {
+    mutationFn: async ({
+      reviewItemId,
+      request,
+    }: {
+      reviewItemId: string
+      request: CreateAttachmentRequest
+    }) => {
       return apiFetch<Attachment>(`/review-items/${reviewItemId}/attachments`, {
         method: 'POST',
         body: JSON.stringify(request),
@@ -73,10 +80,16 @@ export function useDeleteAttachmentMutation(
   options?: Omit<
     UseMutationOptions<void, ParsedError, { reviewItemId: string; attachmentId: string }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
-    mutationFn: async ({ reviewItemId, attachmentId }: { reviewItemId: string; attachmentId: string }) => {
+    mutationFn: async ({
+      reviewItemId,
+      attachmentId,
+    }: {
+      reviewItemId: string
+      attachmentId: string
+    }) => {
       return apiFetch<void>(`/review-items/${reviewItemId}/attachments/${attachmentId}`, {
         method: 'DELETE',
       })

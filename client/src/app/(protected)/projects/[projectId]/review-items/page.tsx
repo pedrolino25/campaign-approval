@@ -1,21 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo } from 'react'
 import { notFound } from 'next/navigation'
+import { useMemo } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'
-import { DataTable } from '@/components/ui/data-table'
+import { getReviewItemsColumns } from '@/components/tables/review-items-columns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getReviewItemsColumns } from '@/components/tables/review-items-columns'
+import { DataTable } from '@/components/ui/data-table'
 import { dummyData } from '@/lib/dummy/data'
 
-export default function ProjectReviewItemsPage({
-  params,
-}: {
-  params: { projectId: string }
-}) {
+export default function ProjectReviewItemsPage({ params }: { params: { projectId: string } }) {
   const { projectId } = params
   const project = dummyData.getProjectById(projectId)
   const items = project ? dummyData.getReviewItemsByProject(projectId) : []
@@ -29,10 +25,11 @@ export default function ProjectReviewItemsPage({
         title="Review Items"
         description={project.name}
         action={
-          <Button size="sm" asChild>
-            <Link href={`/projects/${projectId}/review-items/new`}>
-              Create Review Item
-            </Link>
+          <Button
+            size="sm"
+            asChild
+          >
+            <Link href={`/projects/${projectId}/review-items/new`}>Create Review Item</Link>
           </Button>
         }
       />

@@ -10,12 +10,7 @@ module.exports = {
     },
     project: path.resolve(__dirname, 'tsconfig.json'),
   },
-  plugins: [
-    '@typescript-eslint',
-    'import',
-    'simple-import-sort',
-    'unused-imports',
-  ],
+  plugins: ['@typescript-eslint', 'import', 'simple-import-sort', 'unused-imports'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',

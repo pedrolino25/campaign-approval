@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "fix:all": "eslint . --fix && prettier . --write",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,html,css}\""
   },
   "dependencies": {

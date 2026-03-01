@@ -23,7 +23,10 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="My Account" description="Profile and security" />
+      <PageHeader
+        title="My Account"
+        description="Profile and security"
+      />
 
       <Card className="rounded-md border bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
@@ -48,11 +51,17 @@ export default function AccountPage() {
         <CardContent className="space-y-4 p-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="current">Current password</Label>
-            <Input id="current" type="password" />
+            <Input
+              id="current"
+              type="password"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="new">New password</Label>
-            <Input id="new" type="password" />
+            <Input
+              id="new"
+              type="password"
+            />
           </div>
           <Button size="sm">Update password</Button>
         </CardContent>
@@ -64,13 +73,20 @@ export default function AccountPage() {
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <p className="text-sm text-muted-foreground mb-4">Log out from all other devices.</p>
-          <Button size="sm" variant="secondary" onClick={() => setLogoutAllOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setLogoutAllOpen(true)}
+          >
             Logout all sessions
           </Button>
         </CardContent>
       </Card>
 
-      <Dialog open={logoutAllOpen} onOpenChange={setLogoutAllOpen}>
+      <Dialog
+        open={logoutAllOpen}
+        onOpenChange={setLogoutAllOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Logout all sessions</DialogTitle>
@@ -79,8 +95,20 @@ export default function AccountPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setLogoutAllOpen(false)}>Cancel</Button>
-            <Button size="sm" variant="destructive" onClick={() => setLogoutAllOpen(false)}>Logout all</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setLogoutAllOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setLogoutAllOpen(false)}
+            >
+              Logout all
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

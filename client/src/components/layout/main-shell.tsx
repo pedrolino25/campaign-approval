@@ -52,12 +52,18 @@ export function MainShell({ children }: { children: React.ReactNode }) {
               <ButtonLogout />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2"
+                  >
                     <User className="h-4 w-4" />
                     <span className="text-sm">{session?.email || 'User'}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                >
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">{session?.email}</p>

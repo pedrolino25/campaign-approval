@@ -73,7 +73,7 @@ export function useCreateReviewItemMutation(
   options?: Omit<
     UseMutationOptions<ReviewItem, ParsedError, CreateReviewItemRequest>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async (request: CreateReviewItemRequest) => {
@@ -90,7 +90,7 @@ export function useSendForReviewMutation(
   options?: Omit<
     UseMutationOptions<ReviewItem, ParsedError, { id: string; request: SendForReviewRequest }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ id, request }: { id: string; request: SendForReviewRequest }) => {
@@ -107,7 +107,7 @@ export function useApproveReviewMutation(
   options?: Omit<
     UseMutationOptions<ReviewItem, ParsedError, { id: string; request?: ApproveReviewRequest }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ id, request }: { id: string; request?: ApproveReviewRequest }) => {
@@ -124,7 +124,7 @@ export function useRequestChangesMutation(
   options?: Omit<
     UseMutationOptions<ReviewItem, ParsedError, { id: string; request: RequestChangesRequest }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
     mutationFn: async ({ id, request }: { id: string; request: RequestChangesRequest }) => {
@@ -138,10 +138,7 @@ export function useRequestChangesMutation(
 }
 
 export function useArchiveReviewItemMutation(
-  options?: Omit<
-    UseMutationOptions<ReviewItem, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<ReviewItem, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (id: string) => {

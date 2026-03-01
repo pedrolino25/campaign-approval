@@ -9,11 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { dummyData } from '@/lib/dummy/data'
 
-export default function NewProjectReviewItemPage({
-  params,
-}: {
-  params: { projectId: string }
-}) {
+export default function NewProjectReviewItemPage({ params }: { params: { projectId: string } }) {
   const { projectId } = params
   const project = dummyData.getProjectById(projectId)
   if (!project) notFound()
@@ -26,7 +22,11 @@ export default function NewProjectReviewItemPage({
         title="Create Review Item"
         description={project.name}
         action={
-          <Button size="sm" variant="secondary" asChild>
+          <Button
+            size="sm"
+            variant="secondary"
+            asChild
+          >
             <Link href={listHref}>Cancel</Link>
           </Button>
         }
@@ -39,7 +39,10 @@ export default function NewProjectReviewItemPage({
         <CardContent className="space-y-4 p-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" placeholder="Review item title" />
+            <Input
+              id="title"
+              placeholder="Review item title"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description (optional)</Label>
@@ -55,7 +58,11 @@ export default function NewProjectReviewItemPage({
           </div>
           <div className="flex gap-2 pt-2">
             <Button size="sm">Create Review Item</Button>
-            <Button size="sm" variant="secondary" asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+            >
               <Link href={listHref}>Cancel</Link>
             </Button>
           </div>

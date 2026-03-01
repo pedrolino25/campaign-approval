@@ -3,15 +3,15 @@
 import { useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 
-import { PageHeader } from '@/components/navigation/page-header'
-import { useCreateProjectDialog } from '@/components/projects/create-project-dialog'
-import { DataTable } from '@/components/ui/data-table'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   dashboardProjectColumns,
   getDashboardProjectRows,
 } from '@/app/(protected)/dashboard/projects-table-columns'
+import { PageHeader } from '@/components/navigation/page-header'
+import { useCreateProjectDialog } from '@/components/projects/create-project-dialog'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DataTable } from '@/components/ui/data-table'
 import { dummyData } from '@/lib/dummy/data'
 
 const sevenDaysAgo = new Date()
@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const pendingReviews = allItems.filter((r) => r.status === 'Pending Review').length
   const changesRequested = allItems.filter((r) => r.status === 'Changes Requested').length
   const approvedLast7 = allItems.filter(
-    (r) => r.status === 'Approved' && new Date(r.updatedAt) >= sevenDaysAgo
+    (r) => r.status === 'Approved' && new Date(r.updatedAt) >= sevenDaysAgo,
   ).length
 
   const projectRows = getDashboardProjectRows()
@@ -47,7 +47,10 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Organization-level overview"
         action={
-          <Button size="sm" onClick={openCreateProject}>
+          <Button
+            size="sm"
+            onClick={openCreateProject}
+          >
             Create Project
           </Button>
         }
@@ -87,9 +90,7 @@ export default function DashboardPage() {
         </Card>
         <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Approved
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
             <p className="text-2xl font-semibold">{approvedLast7}</p>

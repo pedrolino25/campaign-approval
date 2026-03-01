@@ -1,27 +1,21 @@
-import Image from "next/image";
+import Image from 'next/image'
 
-import testimonialCardBackground1 from "@/assets/testimonials/testimonials-bg-1.png";
-import testimonialCardBackground1SVG from "@/assets/testimonials/testimonials-bg-1.svg";
-import testimonialCardBackground2 from "@/assets/testimonials/testimonials-bg-2.png";
-import testimonialCardBackground2SVG from "@/assets/testimonials/testimonials-bg-2.svg";
+import testimonialCardBackground1 from '@/assets/testimonials/testimonials-bg-1.png'
+import testimonialCardBackground1SVG from '@/assets/testimonials/testimonials-bg-1.svg'
+import testimonialCardBackground2 from '@/assets/testimonials/testimonials-bg-2.png'
+import testimonialCardBackground2SVG from '@/assets/testimonials/testimonials-bg-2.svg'
 
 interface TestimonialCardProps {
-  message: string;
-  name: string;
-  role: string;
-  variant: "default" | "other";
+  message: string
+  name: string
+  role: string
+  variant: 'default' | 'other'
 }
 
-const TestimonialCard = ({
-  message,
-  name,
-  role,
-  variant,
-}: TestimonialCardProps) => {
+const TestimonialCard = ({ message, name, role, variant }: TestimonialCardProps) => {
   return (
     <div className="relative rounded-md border border-gray-200 w-full overflow-hidden">
-
-      {variant === "default" ? (
+      {variant === 'default' ? (
         <>
           <Image
             src={testimonialCardBackground1}
@@ -57,19 +51,15 @@ const TestimonialCard = ({
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-body text-black/80 !font-medium">
-            {name}
-          </span>
+          <span className="text-body text-black/80 !font-medium">{name}</span>
 
           <div className="bg-gray-300 rounded-full w-1 h-1" />
 
-          <span className="text-body text-black/60">
-            {role}
-          </span>
+          <span className="text-body text-black/60">{role}</span>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TestimonialCard;
+export default TestimonialCard

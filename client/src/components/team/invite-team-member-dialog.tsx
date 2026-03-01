@@ -53,7 +53,10 @@ export function InviteTeamMemberDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={handleOpenChange}
+    >
       <DialogContent className="rounded-md sm:max-w-[28rem]">
         <DialogHeader>
           <DialogTitle>Invite team member</DialogTitle>
@@ -61,7 +64,10 @@ export function InviteTeamMemberDialog({
             Send an invitation to join your organization
           </p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="invite-email">Email</Label>
             <Input
@@ -74,8 +80,14 @@ export function InviteTeamMemberDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="invite-role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger id="invite-role" className="w-full">
+            <Select
+              value={role}
+              onValueChange={setRole}
+            >
+              <SelectTrigger
+                id="invite-role"
+                className="w-full"
+              >
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
@@ -93,7 +105,10 @@ export function InviteTeamMemberDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm">
+            <Button
+              type="submit"
+              size="sm"
+            >
               Send invitation
             </Button>
           </DialogFooter>
@@ -119,7 +134,10 @@ export function InviteTeamMemberDialogProvider({ children }: { children: React.R
   return (
     <InviteTeamMemberDialogContext.Provider value={{ openInviteTeamMember }}>
       {children}
-      <InviteTeamMemberDialog open={open} onOpenChange={setOpen} />
+      <InviteTeamMemberDialog
+        open={open}
+        onOpenChange={setOpen}
+      />
     </InviteTeamMemberDialogContext.Provider>
   )
 }

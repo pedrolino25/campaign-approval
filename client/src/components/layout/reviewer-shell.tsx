@@ -3,18 +3,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import Logo from '@/assets/logo.svg'
 import { ProjectSidebar } from '@/components/layout/navigation/project-sidebar'
 import { TopBar } from '@/components/layout/top-bar'
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar'
-
-import Logo from '@/assets/logo.svg'
 
 interface ReviewerShellProps {
   children: React.ReactNode
@@ -40,7 +39,10 @@ export function ReviewerShell({ children, onRoleSwitch }: ReviewerShellProps) {
           <SidebarTrigger hideOnMobile />
         </SidebarHeader>
         <SidebarContent>
-          <ProjectSidebar restrictToAssigned reviewer />
+          <ProjectSidebar
+            restrictToAssigned
+            reviewer
+          />
         </SidebarContent>
       </Sidebar>
       <SidebarInset>

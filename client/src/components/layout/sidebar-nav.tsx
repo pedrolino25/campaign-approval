@@ -42,9 +42,7 @@ const reviewerMainNav: NavItem[] = [
   { label: 'Notifications', href: '/notifications', icon: Bell },
 ]
 
-const reviewerSecondaryNav: NavItem[] = [
-  { label: 'My Account', href: '/account', icon: User },
-]
+const reviewerSecondaryNav: NavItem[] = [{ label: 'My Account', href: '/account', icon: User }]
 
 function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname()
@@ -58,7 +56,7 @@ function NavLink({ item }: { item: NavItem }) {
         'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
         isActive
           ? 'bg-muted text-foreground'
-          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -79,12 +77,18 @@ export function SidebarNav({ variant }: SidebarNavProps) {
     <>
       <nav className="flex flex-col gap-1">
         {main.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink
+            key={item.href}
+            item={item}
+          />
         ))}
       </nav>
       <nav className="mt-auto flex flex-col gap-1 border-t border-border pt-4">
         {secondary.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink
+            key={item.href}
+            item={item}
+          />
         ))}
       </nav>
     </>

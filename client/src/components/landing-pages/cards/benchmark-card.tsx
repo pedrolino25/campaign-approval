@@ -1,7 +1,6 @@
-
 interface BenchmarkCardProps {
-  value: string;
-  description: string;
+  value: string
+  description: string
 }
 const BenchmarkCard = ({ value, description }: BenchmarkCardProps) => {
   return (
@@ -14,4 +13,4 @@ const BenchmarkCard = ({ value, description }: BenchmarkCardProps) => {
   )
 }
 
-export default BenchmarkCard;
+export default BenchmarkCard

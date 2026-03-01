@@ -8,11 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { dummyData } from '@/lib/dummy/data'
 
-export default function InviteReviewerPage({
-  params,
-}: {
-  params: { projectId: string }
-}) {
+export default function InviteReviewerPage({ params }: { params: { projectId: string } }) {
   const { projectId } = params
   const project = dummyData.getProjectById(projectId)
   if (!project) notFound()
@@ -23,7 +19,11 @@ export default function InviteReviewerPage({
         title="Invite Reviewer"
         description={`Add a reviewer to ${project.name}`}
         action={
-          <Button size="sm" variant="secondary" asChild>
+          <Button
+            size="sm"
+            variant="secondary"
+            asChild
+          >
             <Link href={`/projects/${projectId}`}>Cancel</Link>
           </Button>
         }
@@ -36,11 +36,19 @@ export default function InviteReviewerPage({
         <CardContent className="space-y-4 p-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="reviewer@example.com" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="reviewer@example.com"
+            />
           </div>
           <div className="flex gap-2">
             <Button size="sm">Send invitation</Button>
-            <Button size="sm" variant="secondary" asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+            >
               <Link href={`/projects/${projectId}`}>Cancel</Link>
             </Button>
           </div>

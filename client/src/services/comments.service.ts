@@ -29,12 +29,22 @@ export interface CommentListResponse {
 
 export function useCreateCommentMutation(
   options?: Omit<
-    UseMutationOptions<Comment, ParsedError, { reviewItemId: string; request: CreateCommentRequest }>,
+    UseMutationOptions<
+      Comment,
+      ParsedError,
+      { reviewItemId: string; request: CreateCommentRequest }
+    >,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
-    mutationFn: async ({ reviewItemId, request }: { reviewItemId: string; request: CreateCommentRequest }) => {
+    mutationFn: async ({
+      reviewItemId,
+      request,
+    }: {
+      reviewItemId: string
+      request: CreateCommentRequest
+    }) => {
       return apiFetch<Comment>(`/review-items/${reviewItemId}/comments`, {
         method: 'POST',
         body: JSON.stringify(request),
@@ -48,10 +58,16 @@ export function useDeleteCommentMutation(
   options?: Omit<
     UseMutationOptions<void, ParsedError, { reviewItemId: string; commentId: string }>,
     'mutationFn'
-  >
+  >,
 ) {
   return useMutation({
-    mutationFn: async ({ reviewItemId, commentId }: { reviewItemId: string; commentId: string }) => {
+    mutationFn: async ({
+      reviewItemId,
+      commentId,
+    }: {
+      reviewItemId: string
+      commentId: string
+    }) => {
       return apiFetch<void>(`/review-items/${reviewItemId}/comments/${commentId}`, {
         method: 'DELETE',
       })

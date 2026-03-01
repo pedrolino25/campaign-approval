@@ -48,7 +48,11 @@ export function getReviewItemsColumns(projectId: string): ColumnDef<DummyReviewI
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <Button variant="ghost" size="sm" asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+        >
           <Link href={`/projects/${projectId}/review-items/${row.original.id}`}>View</Link>
         </Button>
       ),

@@ -7,13 +7,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -46,14 +40,10 @@ export default function ForgotPasswordPage() {
   const onSubmit = (values: ForgotPasswordFormValues) => {
     forgotPasswordMutation.mutate(values.email, {
       onSuccess: () => {
-        router.push(
-          `/reset-password?email=${encodeURIComponent(values.email)}&sent=true`
-        )
+        router.push(`/reset-password?email=${encodeURIComponent(values.email)}&sent=true`)
       },
       onError: () => {
-        router.push(
-          `/reset-password?email=${encodeURIComponent(values.email)}&sent=true`
-        )
+        router.push(`/reset-password?email=${encodeURIComponent(values.email)}&sent=true`)
       },
     })
   }
@@ -64,13 +54,15 @@ export default function ForgotPasswordPage() {
         <CardHeader>
           <CardTitle>Reset your password</CardTitle>
           <CardDescription>
-            Enter your email address and we&apos;ll send you instructions to reset
-            your password
+            Enter your email address and we&apos;ll send you instructions to reset your password
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="email"
@@ -107,7 +99,10 @@ export default function ForgotPasswordPage() {
                 </Button>
 
                 <div className="text-center text-sm">
-                  <Link href="/login" className="text-primary hover:underline">
+                  <Link
+                    href="/login"
+                    className="text-primary hover:underline"
+                  >
                     Back to sign in
                   </Link>
                 </div>

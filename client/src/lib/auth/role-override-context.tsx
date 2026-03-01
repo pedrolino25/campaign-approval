@@ -35,11 +35,7 @@ export function RoleOverrideProvider({
     isReviewer,
   }
 
-  return (
-    <RoleOverrideContext.Provider value={value}>
-      {children}
-    </RoleOverrideContext.Provider>
-  )
+  return <RoleOverrideContext.Provider value={value}>{children}</RoleOverrideContext.Provider>
 }
 
 export function useRoleOverride(): RoleOverrideContextValue {

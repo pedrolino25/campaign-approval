@@ -33,7 +33,11 @@ export default function ProjectSettingsPage() {
         title="Project Settings"
         description={`Settings for ${project.name}`}
         action={
-          <Button size="sm" variant="secondary" asChild>
+          <Button
+            size="sm"
+            variant="secondary"
+            asChild
+          >
             <Link href={`/projects/${projectId}`}>Back to project</Link>
           </Button>
         }
@@ -46,7 +50,10 @@ export default function ProjectSettingsPage() {
         <CardContent className="space-y-4 p-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="name">Project name</Label>
-            <Input id="name" defaultValue={project.name} />
+            <Input
+              id="name"
+              defaultValue={project.name}
+            />
           </div>
           <Button size="sm">Save changes</Button>
         </CardContent>
@@ -60,23 +67,43 @@ export default function ProjectSettingsPage() {
           <p className="text-sm text-muted-foreground mb-4">
             Archiving this project will hide it from active lists. You can restore it later.
           </p>
-          <Button variant="destructive" size="sm" onClick={() => setArchiveOpen(true)}>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setArchiveOpen(true)}
+          >
             Archive project
           </Button>
         </CardContent>
       </Card>
 
-      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+      <Dialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+      >
         <DialogContent className="rounded-md max-w-[420px]">
           <DialogHeader>
             <DialogTitle>Archive project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to archive &quot;{project.name}&quot;? It will be hidden from active projects.
+              Are you sure you want to archive &quot;{project.name}&quot;? It will be hidden from
+              active projects.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button size="sm" variant="secondary" onClick={() => setArchiveOpen(false)}>Cancel</Button>
-            <Button size="sm" variant="destructive" onClick={() => setArchiveOpen(false)}>Archive</Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setArchiveOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setArchiveOpen(false)}
+            >
+              Archive
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -15,14 +15,12 @@ export function EmptyState({ icon, title, description, action, className }: Empt
     <div
       className={cn(
         'flex flex-col items-center justify-center rounded-md border border-border bg-card p-8 text-center',
-        className
+        className,
       )}
     >
       {icon && <div className="mb-4 text-muted-foreground">{icon}</div>}
       <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      {description && (
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )

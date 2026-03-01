@@ -1,19 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
 
 export const SEO_DEFAULTS = {
-  siteName: "Worklient",
-  siteUrl: "https://worklient.com",
-  defaultOgImage: "https://worklient.com/icon.png",
-  author: { name: "Worklient" as const, url: "https://worklient.com" as const },
-  locale: "en_US" as const,
-} as const;
+  siteName: 'Worklient',
+  siteUrl: 'https://worklient.com',
+  defaultOgImage: 'https://worklient.com/icon.png',
+  author: { name: 'Worklient' as const, url: 'https://worklient.com' as const },
+  locale: 'en_US' as const,
+} as const
 
 const DEFAULT_OG_IMAGE_DESCRIPTOR = {
   url: SEO_DEFAULTS.defaultOgImage,
   width: 512,
   height: 512,
   alt: SEO_DEFAULTS.siteName,
-} as const;
+} as const
 
 const ROBOTS_INDEX_FOLLOW = {
   index: true,
@@ -21,48 +21,46 @@ const ROBOTS_INDEX_FOLLOW = {
   googleBot: {
     index: true,
     follow: true,
-    "max-image-preview": "large" as const,
-    "max-snippet": -1,
-    "max-video-preview": -1,
+    'max-image-preview': 'large' as const,
+    'max-snippet': -1,
+    'max-video-preview': -1,
   },
-} as const;
+} as const
 
 type BaseMetadataConfig = {
-  title: string;
-  description: string;
-  canonicalPath: string;
-  keywords?: string[];
-  openGraphTitle?: string;
-  openGraphDescription?: string;
-  twitterTitle?: string;
-  twitterDescription?: string;
-};
+  title: string
+  description: string
+  canonicalPath: string
+  keywords?: string[]
+  openGraphTitle?: string
+  openGraphDescription?: string
+  twitterTitle?: string
+  twitterDescription?: string
+}
 
 export type MetadataSEOWebsiteConfig = BaseMetadataConfig & {
-  type: "website";
+  type: 'website'
   image?: {
-    url: string;
-    width: number;
-    height: number;
-    alt: string;
-  };
-};
+    url: string
+    width: number
+    height: number
+    alt: string
+  }
+}
 
 export type MetadataSEOArticleConfig = BaseMetadataConfig & {
-  type: "article";
+  type: 'article'
   image: {
-    url: string;
-    width: number;
-    height: number;
-    alt: string;
-  };
-  publishedTime: string;
-  modifiedTime: string;
-};
+    url: string
+    width: number
+    height: number
+    alt: string
+  }
+  publishedTime: string
+  modifiedTime: string
+}
 
-export type MetadataSEOConfig =
-  | MetadataSEOWebsiteConfig
-  | MetadataSEOArticleConfig;
+export type MetadataSEOConfig = MetadataSEOWebsiteConfig | MetadataSEOArticleConfig
 
 export function buildMetadataSEO(config: MetadataSEOConfig): Metadata {
   const {
@@ -74,26 +72,24 @@ export function buildMetadataSEO(config: MetadataSEOConfig): Metadata {
     openGraphDescription,
     twitterTitle,
     twitterDescription,
-  } = config;
+  } = config
 
-  const ogTitle = openGraphTitle ?? title;
-  const ogDescription = openGraphDescription ?? description;
-  const twTitle = twitterTitle ?? title;
-  const twDescription = twitterDescription ?? description;
+  const ogTitle = openGraphTitle ?? title
+  const ogDescription = openGraphDescription ?? description
+  const twTitle = twitterTitle ?? title
+  const twDescription = twitterDescription ?? description
 
   const image =
-    config.type === "article"
-      ? config.image
-      : config.image ?? DEFAULT_OG_IMAGE_DESCRIPTOR;
+    config.type === 'article' ? config.image : (config.image ?? DEFAULT_OG_IMAGE_DESCRIPTOR)
 
-  const openGraph: Metadata["openGraph"] =
-    config.type === "article"
+  const openGraph: Metadata['openGraph'] =
+    config.type === 'article'
       ? {
           title: ogTitle,
           description: ogDescription,
           url: canonicalPath,
           siteName: SEO_DEFAULTS.siteName,
-          type: "article",
+          type: 'article',
           images: [image],
           locale: SEO_DEFAULTS.locale,
           publishedTime: config.publishedTime,
@@ -105,10 +101,10 @@ export function buildMetadataSEO(config: MetadataSEOConfig): Metadata {
           description: ogDescription,
           url: canonicalPath,
           siteName: SEO_DEFAULTS.siteName,
-          type: "website",
+          type: 'website',
           images: [image],
           locale: SEO_DEFAULTS.locale,
-        };
+        }
 
   return {
     title,
@@ -119,10 +115,10 @@ export function buildMetadataSEO(config: MetadataSEOConfig): Metadata {
     alternates: { canonical: canonicalPath },
     openGraph,
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: twTitle,
       description: twDescription,
-      images: [typeof image === "object" && "url" in image ? image.url : image],
+      images: [typeof image === 'object' && 'url' in image ? image.url : image],
     },
-  };
+  }
 }

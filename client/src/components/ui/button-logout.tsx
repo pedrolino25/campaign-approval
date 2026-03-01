@@ -1,15 +1,15 @@
-"use client"
+'use client'
 
-import { useQueryClient } from "@tanstack/react-query"
-import { LogOut } from "lucide-react"
-import { useRouter } from "next/navigation"
-import React from "react"
+import { useQueryClient } from '@tanstack/react-query'
+import { LogOut } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import React from 'react'
 
-import { performLogout } from "@/lib/auth/logout.utils"
-import { cn } from "@/lib/utils"
-import { useLogoutMutation } from "@/services/auth.service"
+import { performLogout } from '@/lib/auth/logout.utils'
+import { cn } from '@/lib/utils'
+import { useLogoutMutation } from '@/services/auth.service'
 
-import { Button, type ButtonProps } from "./button"
+import { Button, type ButtonProps } from './button'
 
 const ButtonLogout = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, children, ...props }, ref) => {
@@ -31,7 +31,7 @@ const ButtonLogout = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         onClick={() => logoutMutation.mutate()}
         disabled={logoutMutation.isPending || props.disabled}
-        className={cn("group/hero-button gap-2 w-fit font-normal", className)}
+        className={cn('group/hero-button gap-2 w-fit font-normal', className)}
       >
         <LogOut
           strokeWidth={1.5}
@@ -42,8 +42,8 @@ const ButtonLogout = React.forwardRef<HTMLButtonElement, ButtonProps>(
         </span>
       </Button>
     )
-  }
+  },
 )
-ButtonLogout.displayName = "ButtonLogout"
+ButtonLogout.displayName = 'ButtonLogout'
 
 export { ButtonLogout }

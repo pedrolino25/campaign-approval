@@ -24,10 +24,7 @@ export interface NotificationListResponse {
 }
 
 export function useMarkNotificationAsReadMutation(
-  options?: Omit<
-    UseMutationOptions<Notification, ParsedError, string>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<Notification, ParsedError, string>, 'mutationFn'>,
 ) {
   return useMutation({
     mutationFn: async (id: string) => {

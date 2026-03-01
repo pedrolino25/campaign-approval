@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react'
 
-import { DataTable } from '@/components/ui/data-table'
 import { getReviewItemsColumns } from '@/components/tables/review-items-columns'
+import { DataTable } from '@/components/ui/data-table'
 import type { DummyReviewItem } from '@/lib/dummy/data'
 
 export function RecentReviewItemsTable({

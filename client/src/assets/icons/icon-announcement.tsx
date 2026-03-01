@@ -17,5 +17,5 @@ export default function IconAnnouncement(props: React.SVGProps<SVGSVGElement>) {
         transform="translate(3.6 2.7)"
       />
     </svg>
-  );
+  )
 }

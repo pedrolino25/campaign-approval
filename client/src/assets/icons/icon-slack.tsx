@@ -24,8 +24,5 @@ export default function IconSlack(props: React.SVGProps<SVGSVGElement>) {
         />
       </g>
     </svg>
-  );
+  )
 }
-
-
-

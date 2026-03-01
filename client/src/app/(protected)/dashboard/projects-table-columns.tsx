@@ -22,7 +22,7 @@ function buildDashboardProjectRows(): DashboardProjectRow[] {
     const items = dummyData.getReviewItemsByProject(p.id)
     const pending = items.filter((r) => r.status === 'Pending Review').length
     const lastItem = [...items].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )[0]
     return {
       id: p.id,
@@ -83,7 +83,11 @@ export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
     id: 'actions',
     header: '',
     cell: ({ row }) => (
-      <Button variant="ghost" size="sm" asChild>
+      <Button
+        variant="ghost"
+        size="sm"
+        asChild
+      >
         <Link href={`/projects/${row.original.id}`}>View</Link>
       </Button>
     ),

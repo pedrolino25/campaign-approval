@@ -1,16 +1,10 @@
 'use client'
 
-import {
-  Bell,
-  Building2,
-  CreditCard,
-  FileCheck,
-  LayoutDashboard,
-  User,
-} from 'lucide-react'
+import { Bell, Building2, CreditCard, FileCheck, LayoutDashboard, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { WorkspaceSwitcher } from '@/components/layout/workspace-switcher'
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -18,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { WorkspaceSwitcher } from '@/components/layout/workspace-switcher'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/lib/workspace/workspace-context'
 
@@ -44,19 +37,18 @@ const secondaryNavAgency = [
 
 const secondaryNavReviewer = [{ label: 'My Account', href: '/account', icon: User }]
 
-function NavLink({
-  item,
-}: {
-  item: { label: string; href: string; icon: React.ElementType }
-}) {
+function NavLink({ item }: { item: { label: string; href: string; icon: React.ElementType } }) {
   const pathname = usePathname()
-  const isActive =
-    pathname === item.href || pathname.startsWith(item.href + '/')
+  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
   const Icon = item.icon
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={item.label}
+      >
         <Link href={item.href}>
           <Icon className="h-4 w-4 shrink-0" />
           <span>{item.label}</span>
@@ -89,7 +81,10 @@ export function ProjectSidebar({
           <SidebarMenu>
             {projectId ? (
               mainNav(projectId).map((item) => (
-                <NavLink key={item.href} item={item} />
+                <NavLink
+                  key={item.href}
+                  item={item}
+                />
               ))
             ) : (
               <li className="px-2 py-2 text-xs text-sidebar-foreground/70 group-data-[state=collapsed]:hidden">
@@ -103,7 +98,10 @@ export function ProjectSidebar({
         <SidebarGroupContent>
           <SidebarMenu>
             {secondaryNav.map((item) => (
-              <NavLink key={item.href} item={item} />
+              <NavLink
+                key={item.href}
+                item={item}
+              />
             ))}
           </SidebarMenu>
         </SidebarGroupContent>

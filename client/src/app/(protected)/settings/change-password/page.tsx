@@ -6,13 +6,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -72,7 +66,7 @@ export default function ChangePasswordPage() {
             message: getErrorMessage(err),
           })
         },
-      }
+      },
     )
   }
 
@@ -83,13 +77,14 @@ export default function ChangePasswordPage() {
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
+          <CardDescription>Update your password to keep your account secure</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -103,7 +98,10 @@ export default function ChangePasswordPage() {
                   <FormItem>
                     <FormLabel>Current Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -117,7 +115,10 @@ export default function ChangePasswordPage() {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,14 +132,21 @@ export default function ChangePasswordPage() {
                   <FormItem>
                     <FormLabel>Confirm New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button size="sm" type="submit" disabled={changePasswordMutation.isPending}>
+              <Button
+                size="sm"
+                type="submit"
+                disabled={changePasswordMutation.isPending}
+              >
                 {changePasswordMutation.isPending ? (
                   <>
                     <Spinner className="mr-2" />

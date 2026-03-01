@@ -30,7 +30,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const projects = useMemo(() => dummyData.getProjects(), [])
 
-  const isProjectRoute = pathname.startsWith(PROJECTS_PREFIX) && getProjectIdFromPathname(pathname) != null
+  const isProjectRoute =
+    pathname.startsWith(PROJECTS_PREFIX) && getProjectIdFromPathname(pathname) != null
 
   const currentProjectId = useMemo(() => {
     const id = getProjectIdFromPathname(pathname)
@@ -40,14 +41,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const currentProject = useMemo(
     () => (currentProjectId ? dummyData.getProjectById(currentProjectId) : undefined),
-    [currentProjectId]
+    [currentProjectId],
   )
 
   const switchProject = useCallback(
     (projectId: string) => {
       router.push(`/projects/${projectId}`)
     },
-    [router]
+    [router],
   )
 
   const value: WorkspaceContextValue = useMemo(
@@ -58,14 +59,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       projects,
       currentProject,
     }),
-    [currentProjectId, isProjectRoute, switchProject, projects, currentProject]
+    [currentProjectId, isProjectRoute, switchProject, projects, currentProject],
   )
 
-  return (
-    <WorkspaceContext.Provider value={value}>
-      {children}
-    </WorkspaceContext.Provider>
-  )
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
 }
 
 export function useWorkspace(): WorkspaceContextValue {

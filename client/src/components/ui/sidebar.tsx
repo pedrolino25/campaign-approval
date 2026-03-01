@@ -55,7 +55,7 @@ function SidebarProvider({
       if (onOpenChange) onOpenChange(value)
       else setUncontrolledOpen(value)
     },
-    [onOpenChange]
+    [onOpenChange],
   )
   const state: SidebarState = open ? 'expanded' : 'collapsed'
   const [isMobile, setIsMobile] = React.useState(true)
@@ -84,7 +84,11 @@ function SidebarProvider({
     isMobile,
   }
 
-  const marginLeft = isMobile ? '0' : state === 'collapsed' ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH
+  const marginLeft = isMobile
+    ? '0'
+    : state === 'collapsed'
+      ? SIDEBAR_WIDTH_COLLAPSED
+      : SIDEBAR_WIDTH
   return (
     <SidebarContext.Provider value={value}>
       <div
@@ -111,23 +115,16 @@ interface SidebarProps extends React.ComponentPropsWithoutRef<'div'> {
 }
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  (
-    {
-      side = 'left',
-      variant = 'sidebar',
-      collapsible = 'icon',
-      className,
-      children,
-      ...props
-    },
-    ref
-  ) => {
+  ({ side = 'left', collapsible = 'icon', className, children, ...props }, ref) => {
     const { state, openMobile, setOpenMobile, isMobile } = useSidebar()
     const isCollapsed = state === 'collapsed'
 
     if (isMobile) {
       return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+        <Sheet
+          open={openMobile}
+          onOpenChange={setOpenMobile}
+        >
           <SheetContent
             side="left"
             className={cn('w-full max-w-full p-0', className)}
@@ -150,10 +147,13 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         className={cn(
           'group fixed inset-y-0 z-10 hidden h-svh flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-linear sm:flex',
           side === 'left' ? 'left-0' : 'right-0',
-          collapsible === 'icon' && (isCollapsed ? 'w-[var(--sidebar-width-collapsed)]' : 'w-[var(--sidebar-width)]'),
+          collapsible === 'icon' &&
+            (isCollapsed ? 'w-[var(--sidebar-width-collapsed)]' : 'w-[var(--sidebar-width)]'),
           collapsible === 'offcanvas' && !isCollapsed && 'w-[var(--sidebar-width)]',
-          collapsible === 'offcanvas' && isCollapsed && (side === 'left' ? '-translate-x-full' : 'translate-x-full'),
-          className
+          collapsible === 'offcanvas' &&
+            isCollapsed &&
+            (side === 'left' ? '-translate-x-full' : 'translate-x-full'),
+          className,
         )}
         style={
           collapsible === 'icon'
@@ -165,55 +165,59 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {children}
       </div>
     )
-  }
+  },
 )
 Sidebar.displayName = 'Sidebar'
 
-const SidebarHeader = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    data-sidebar="header"
-    className={cn('flex shrink-0 items-center border-b border-sidebar-border px-2 py-2', className)}
-    {...props}
-  />
-))
+const SidebarHeader = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-sidebar="header"
+      className={cn(
+        'flex shrink-0 items-center border-b border-sidebar-border px-2 py-2',
+        className,
+      )}
+      {...props}
+    />
+  ),
+)
 SidebarHeader.displayName = 'SidebarHeader'
 
-const SidebarContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    data-sidebar="content"
-    className={cn('flex flex-1 flex-col gap-2 overflow-auto py-2', className)}
-    {...props}
-  />
-))
+const SidebarContent = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-sidebar="content"
+      className={cn('flex flex-1 flex-col gap-2 overflow-auto py-2', className)}
+      {...props}
+    />
+  ),
+)
 SidebarContent.displayName = 'SidebarContent'
 
-const SidebarFooter = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    data-sidebar="footer"
-    className={cn('mt-auto shrink-0 border-t border-sidebar-border px-2 py-2', className)}
-    {...props}
-  />
-))
+const SidebarFooter = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-sidebar="footer"
+      className={cn('mt-auto shrink-0 border-t border-sidebar-border px-2 py-2', className)}
+      {...props}
+    />
+  ),
+)
 SidebarFooter.displayName = 'SidebarFooter'
 
-const SidebarGroup = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, ...props }, ref) => (
-  <div ref={ref} data-sidebar="group" className={cn('flex flex-col gap-1', className)} {...props} />
-))
+const SidebarGroup = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-sidebar="group"
+      className={cn('flex flex-col gap-1', className)}
+      {...props}
+    />
+  ),
+)
 SidebarGroup.displayName = 'SidebarGroup'
 
 const SidebarGroupLabel = React.forwardRef<
@@ -227,7 +231,7 @@ const SidebarGroupLabel = React.forwardRef<
       data-sidebar="group-label"
       className={cn(
         'group-data-[state=collapsed]:hidden px-2 py-1.5 text-xs font-medium text-sidebar-foreground/70',
-        className
+        className,
       )}
       {...props}
     />
@@ -235,28 +239,40 @@ const SidebarGroupLabel = React.forwardRef<
 })
 SidebarGroupLabel.displayName = 'SidebarGroupLabel'
 
-const SidebarGroupContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, ...props }, ref) => (
-  <div ref={ref} data-sidebar="group-content" className={cn('flex flex-col gap-1', className)} {...props} />
-))
+const SidebarGroupContent = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-sidebar="group-content"
+      className={cn('flex flex-col gap-1', className)}
+      {...props}
+    />
+  ),
+)
 SidebarGroupContent.displayName = 'SidebarGroupContent'
 
-const SidebarMenu = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentPropsWithoutRef<'ul'>
->(({ className, ...props }, ref) => (
-  <ul ref={ref} data-sidebar="menu" className={cn('flex flex-col gap-1', className)} {...props} />
-))
+const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentPropsWithoutRef<'ul'>>(
+  ({ className, ...props }, ref) => (
+    <ul
+      ref={ref}
+      data-sidebar="menu"
+      className={cn('flex flex-col gap-1', className)}
+      {...props}
+    />
+  ),
+)
 SidebarMenu.displayName = 'SidebarMenu'
 
-const SidebarMenuItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentPropsWithoutRef<'li'>
->(({ className, ...props }, ref) => (
-  <li ref={ref} data-sidebar="menu-item" className={cn('list-none', className)} {...props} />
-))
+const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentPropsWithoutRef<'li'>>(
+  ({ className, ...props }, ref) => (
+    <li
+      ref={ref}
+      data-sidebar="menu-item"
+      className={cn('list-none', className)}
+      {...props}
+    />
+  ),
+)
 SidebarMenuItem.displayName = 'SidebarMenuItem'
 
 interface SidebarMenuButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -287,12 +303,12 @@ const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonP
         'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',
         'group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2',
         '[&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0 group-data-[state=collapsed]:[&>span]:hidden',
-        className
+        className,
       ),
       ...props,
       children,
     } as never)
-  }
+  },
 )
 SidebarMenuButton.displayName = 'SidebarMenuButton'
 
@@ -320,45 +336,44 @@ function SidebarTrigger({ className, hideOnMobile, ...props }: SidebarTriggerPro
   )
 }
 
-const SidebarInset = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<'div'>
->(({ className, style, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        'flex flex-1 flex-col min-h-svh min-w-0 overflow-x-hidden transition-[margin-left] duration-200 ease-linear max-md:!ml-0',
-        className
-      )}
-      style={
-        {
-          ...style,
-          marginLeft: 'var(--sidebar-margin-left, 0)',
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
-})
+const SidebarInset = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, style, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'flex flex-1 flex-col min-h-svh min-w-0 overflow-x-hidden transition-[margin-left] duration-200 ease-linear max-md:!ml-0',
+          className,
+        )}
+        style={
+          {
+            ...style,
+            marginLeft: 'var(--sidebar-margin-left, 0)',
+          } as React.CSSProperties
+        }
+        {...props}
+      />
+    )
+  },
+)
 SidebarInset.displayName = 'SidebarInset'
 
 export {
   Sidebar,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_COLLAPSED,
+  SIDEBAR_WIDTH_MOBILE,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarInset,
   SidebarTrigger,
-  SIDEBAR_WIDTH,
-  SIDEBAR_WIDTH_COLLAPSED,
-  SIDEBAR_WIDTH_MOBILE,
   useSidebar,
 }

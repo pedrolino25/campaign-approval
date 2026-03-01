@@ -22,14 +22,18 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   if (items.length === 0) return null
 
   return (
-    <nav aria-label="Breadcrumb" className={cn('flex items-center gap-1 text-sm', className)}>
+    <nav
+      aria-label="Breadcrumb"
+      className={cn('flex items-center gap-1 text-sm', className)}
+    >
       {items.map((item, i) => {
         const isLast = i === items.length - 1
         return (
-          <span key={i} className="flex items-center gap-1">
-            {i > 0 && (
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
+          <span
+            key={i}
+            className="flex items-center gap-1"
+          >
+            {i > 0 && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
             {item.href && !isLast ? (
               <Link
                 href={item.href}
@@ -39,9 +43,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
               </Link>
             ) : (
               <span
-                className={cn(
-                  isLast ? 'font-medium text-foreground' : 'text-muted-foreground'
-                )}
+                className={cn(isLast ? 'font-medium text-foreground' : 'text-muted-foreground')}
               >
                 {item.label}
               </span>

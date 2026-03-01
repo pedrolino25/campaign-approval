@@ -9,13 +9,7 @@ import { z } from 'zod'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -39,7 +33,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 function getRedirectPath(
   session: SessionResponse['session'],
-  defaultPath: string = '/dashboard'
+  defaultPath: string = '/dashboard',
 ): string {
   if (session && !session.onboardingCompleted) {
     if (session.actorType === 'INTERNAL') {
@@ -94,13 +88,14 @@ export default function LoginPage() {
       <Card className="w-full max-w-md rounded-md">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
-          <CardDescription>
-            Enter your email and password to access your account
-          </CardDescription>
+          <CardDescription>Enter your email and password to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -132,7 +127,10 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

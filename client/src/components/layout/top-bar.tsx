@@ -47,19 +47,29 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-          <Link href="/notifications" aria-label="Notifications">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          asChild
+        >
+          <Link
+            href="/notifications"
+            aria-label="Notifications"
+          >
             <Bell className="h-5 w-5 text-muted-foreground" />
           </Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-9 sm:w-auto sm:px-2 sm:gap-2 sm:flex">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 sm:h-9 sm:w-auto sm:px-2 sm:gap-2 sm:flex"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
-                  {session?.email
-                    ? session.email.charAt(0).toUpperCase()
-                    : 'U'}
+                  {session?.email ? session.email.charAt(0).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="hidden max-w-[120px] truncate text-sm sm:inline">
@@ -67,7 +77,10 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 rounded-md">
+          <DropdownMenuContent
+            align="end"
+            className="w-56 rounded-md"
+          >
             <DropdownMenuLabel>
               <div className="flex flex-col gap-0.5">
                 <p className="text-sm font-medium">{session?.email}</p>
@@ -79,7 +92,10 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
             <DropdownMenuSeparator />
             {process.env.NODE_ENV === 'development' && onRoleSwitch && (
               <>
-                <DropdownMenuItem onClick={onRoleSwitch} className="cursor-pointer">
+                <DropdownMenuItem
+                  onClick={onRoleSwitch}
+                  className="cursor-pointer"
+                >
                   Switch to {isReviewer ? 'Agency' : 'Reviewer'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

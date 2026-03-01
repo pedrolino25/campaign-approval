@@ -4,9 +4,9 @@ This document explains **every required step** to run the frontend locally with 
 
 This guide assumes:
 
-* macOS
-* Node.js 20
-* Backend already configured per backend README
+- macOS
+- Node.js 20
+- Backend already configured per backend README
 
 ---
 
@@ -33,9 +33,9 @@ Must be Node 20.
 
 The frontend must run on a custom HTTPS domain to:
 
-* Mirror production cookie behavior
-* Support Secure cookies
-* Avoid SameSite issues
+- Mirror production cookie behavior
+- Support Secure cookies
+- Avoid SameSite issues
 
 ---
 
@@ -55,9 +55,9 @@ Add:
 
 Save:
 
-* Control + O
-* Enter
-* Control + X
+- Control + O
+- Enter
+- Control + X
 
 ---
 
@@ -134,8 +134,8 @@ NEXT_PUBLIC_ENVIRONMENT=local
 
 Important:
 
-* Backend must already be running on HTTPS port 4001
-* API URL must use HTTPS
+- Backend must already be running on HTTPS port 4001
+- API URL must use HTTPS
 
 ---
 
@@ -164,7 +164,6 @@ https://app.worklient.test:3000
 You may need to trust the mkcert certificate the first time.
 
 ---
-
 
 # 6. Full Local Stack Summary
 
@@ -196,9 +195,9 @@ Ensure API URL is HTTPS.
 
 Ensure:
 
-* Backend running on HTTPS
-* Domain is `.local.worklient.test`
-* Secure flag enabled
+- Backend running on HTTPS
+- Domain is `.local.worklient.test`
+- Secure flag enabled
 
 ---
 

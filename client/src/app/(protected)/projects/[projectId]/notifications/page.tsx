@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { notFound } from 'next/navigation'
+import { notFound, useParams } from 'next/navigation'
 
 import { PageHeader } from '@/components/navigation/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -32,15 +31,14 @@ export default function ProjectNotificationsPage() {
     return (
       <ul className="space-y-2">
         {list.length === 0 ? (
-          <li className="py-8 text-center text-sm text-muted-foreground">
-            {emptyMessage}
-          </li>
+          <li className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</li>
         ) : (
           list.map((n) => (
             <li
               key={n.id}
-              className={`flex items-start justify-between rounded-md border p-4 text-sm ${!n.read ? 'bg-muted/40' : ''
-                }`}
+              className={`flex items-start justify-between rounded-md border p-4 text-sm ${
+                !n.read ? 'bg-muted/40' : ''
+              }`}
             >
               <div>
                 <p className="font-medium">{n.title}</p>
@@ -50,7 +48,10 @@ export default function ProjectNotificationsPage() {
                 </p>
               </div>
               {!n.read && (
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                >
                   Mark as read
                 </Button>
               )}
@@ -69,11 +70,18 @@ export default function ProjectNotificationsPage() {
         action={
           <>
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="mr-2">
+              <Badge
+                variant="secondary"
+                className="mr-2"
+              >
                 {unreadCount} unread
               </Badge>
             )}
-            <Button size="sm" variant="secondary" asChild>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+            >
               <Link href={`/projects/${projectId}`}>Back to overview</Link>
             </Button>
           </>
@@ -85,25 +93,37 @@ export default function ProjectNotificationsPage() {
           <CardTitle className="text-sm font-medium">Project notifications</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <Tabs defaultValue="all" className="space-y-4">
+          <Tabs
+            defaultValue="all"
+            className="space-y-4"
+          >
             <TabsList className="rounded-md">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="unread">
                 Unread
                 {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 h-5 px-1.5">
+                  <Badge
+                    variant="secondary"
+                    className="ml-1.5 h-5 px-1.5"
+                  >
                     {unreadCount}
                   </Badge>
                 )}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="all" className="mt-4">
+            <TabsContent
+              value="all"
+              className="mt-4"
+            >
               <NotificationList
                 list={allNotifications}
                 emptyMessage="No notifications for this project"
               />
             </TabsContent>
-            <TabsContent value="unread" className="mt-4">
+            <TabsContent
+              value="unread"
+              className="mt-4"
+            >
               <NotificationList
                 list={unreadNotifications}
                 emptyMessage="No unread notifications"
