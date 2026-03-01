@@ -63,6 +63,15 @@
     /* Worklient Border Radius */
     /* Using radius-md: 16px */
     --radius: 16px;
+    /* Light grey sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 91%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   /* Dark mode theme (prepared for future implementation) */
@@ -114,6 +123,14 @@
     /* Worklient Border Radius */
     /* Using radius-md: 16px */
     --radius: 16px;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -124,7 +141,7 @@
   html {
     /* Geist is applied via GeistSans.className, Inter is fallback */
     /* Multiple variable names to catch different Geist package versions */
-    font-family: 
+    font-family:
       var(--geist-sans, var(--font-geist-sans, var(--font-geist, var(--font-inter)))),
       var(--font-inter),
       Inter,
@@ -133,10 +150,13 @@
       'Segoe UI',
       Roboto,
       sans-serif;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
     font-family: inherit;
+    overflow-x: hidden;
+    min-width: 0;
   }
 
 }

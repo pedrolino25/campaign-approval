@@ -1,115 +1,80 @@
-import { Building2, Calendar, FileText, Users } from "lucide-react"
-
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from '@/components/navigation/page-header'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { dummyOrganization } from '@/lib/dummy/data'
 
 export default function OrganizationPage() {
+  const org = dummyOrganization
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Organization</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your organization settings and details
-        </p>
-      </div>
+      <PageHeader
+        title="Organization"
+        description="Organization settings and reminders"
+      />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organization Details
-            </CardTitle>
-            <CardDescription>Basic information about your organization</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Name</p>
-              <p className="text-lg font-semibold">Worklient Organization</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Domain</p>
-              <p className="text-lg">worklient.example.com</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <Badge className="mt-1">Active</Badge>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList className="rounded-md">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="reminders">Reminders</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="audit">Audit</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Team Statistics
-            </CardTitle>
-            <CardDescription>Overview of your team and resources</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Members</p>
-              <p className="text-lg font-semibold">12</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Active Reviewers</p>
-              <p className="text-lg font-semibold">8</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Clients</p>
-              <p className="text-lg font-semibold">5</p>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="general" className="space-y-4">
+          <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+            <CardHeader className="p-4">
+              <CardTitle className="text-sm font-medium">General</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-4 pt-0">
+              <div className="space-y-2">
+                <Label htmlFor="name">Organization name</Label>
+                <Input id="name" defaultValue={org.name} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="domain">Domain</Label>
+                <Input id="domain" defaultValue={org.domain} readOnly />
+              </div>
+              <Button size="sm">Save</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Review Statistics
-            </CardTitle>
-            <CardDescription>Review activity overview</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Reviews</p>
-              <p className="text-lg font-semibold">156</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Completed This Month</p>
-              <p className="text-lg font-semibold">23</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Pending Reviews</p>
-              <p className="text-lg font-semibold">8</p>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="reminders" className="space-y-4">
+          <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+            <CardHeader className="p-4">
+              <CardTitle className="text-sm font-medium">Reminder settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-4 pt-0">
+              <p className="text-sm text-muted-foreground">Configure when to send reminder emails for pending reviews.</p>
+              <div className="space-y-2">
+                <Label>Days before reminder</Label>
+                <Input type="number" defaultValue={3} className=" w-24" />
+              </div>
+              <Button size="sm">Save</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Subscription
-            </CardTitle>
-            <CardDescription>Your current subscription plan</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Plan</p>
-              <p className="text-lg font-semibold">Professional</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Renewal Date</p>
-              <p className="text-lg">April 30, 2024</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <Badge className="mt-1">Active</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="security" className="space-y-4">
+          <Card className="rounded-md border bg-card shadow-sm">
+            <CardContent className="p-6">
+              <p className="text-sm text-muted-foreground">Security settings (placeholder).</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-4">
+          <Card className="rounded-md border bg-card shadow-sm">
+            <CardContent className="p-6">
+              <p className="text-sm text-muted-foreground">Audit log (placeholder).</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

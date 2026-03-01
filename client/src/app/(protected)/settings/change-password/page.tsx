@@ -138,7 +138,7 @@ export default function ChangePasswordPage() {
                 )}
               />
 
-              <Button type="submit" disabled={changePasswordMutation.isPending}>
+              <Button size="sm" type="submit" disabled={changePasswordMutation.isPending}>
                 {changePasswordMutation.isPending ? (
                   <>
                     <Spinner className="mr-2" />

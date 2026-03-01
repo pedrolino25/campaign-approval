@@ -1,5 +1,9 @@
 'use client'
 
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { notFound } from 'next/navigation'
+
 import { PageHeader } from '@/components/navigation/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,18 +11,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { dummyData } from '@/lib/dummy/data'
 
-export default function NotificationsPage() {
-  const notifications = dummyData.getNotifications()
+export default function ProjectNotificationsPage() {
+  const params = useParams()
+  const projectId = params.projectId as string
+  const project = dummyData.getProjectById(projectId)
+  if (!project) notFound()
+
+  const notifications = dummyData.getNotificationsByProject(projectId)
   const allNotifications = notifications
   const unreadNotifications = notifications.filter((n) => !n.read)
   const unreadCount = unreadNotifications.length
 
-  function NotificationList({ list }: { list: typeof allNotifications }) {
+  function NotificationList({
+    list,
+    emptyMessage,
+  }: {
+    list: typeof allNotifications
+    emptyMessage: string
+  }) {
     return (
       <ul className="space-y-2">
         {list.length === 0 ? (
           <li className="py-8 text-center text-sm text-muted-foreground">
-            No notifications
+            {emptyMessage}
           </li>
         ) : (
           list.map((n) => (
@@ -50,17 +65,24 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Notifications"
-        description="Your notification history"
+        description={project.name}
         action={
-          unreadCount > 0 && (
-            <Badge variant="secondary">{unreadCount} unread</Badge>
-          )
+          <>
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="mr-2">
+                {unreadCount} unread
+              </Badge>
+            )}
+            <Button size="sm" variant="secondary" asChild>
+              <Link href={`/projects/${projectId}`}>Back to overview</Link>
+            </Button>
+          </>
         }
       />
 
       <Card className="rounded-md border bg-card shadow-sm">
         <CardHeader className="p-4">
-          <CardTitle className="text-sm font-medium">Notifications</CardTitle>
+          <CardTitle className="text-sm font-medium">Project notifications</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <Tabs defaultValue="all" className="space-y-4">
@@ -76,10 +98,16 @@ export default function NotificationsPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="all" className="mt-4">
-              <NotificationList list={allNotifications} />
+              <NotificationList
+                list={allNotifications}
+                emptyMessage="No notifications for this project"
+              />
             </TabsContent>
             <TabsContent value="unread" className="mt-4">
-              <NotificationList list={unreadNotifications} />
+              <NotificationList
+                list={unreadNotifications}
+                emptyMessage="No unread notifications"
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
