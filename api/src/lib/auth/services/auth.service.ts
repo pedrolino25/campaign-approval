@@ -6,7 +6,7 @@ import {
   type AuthenticatedEvent,
   UnauthorizedError,
 } from '../../../models'
-import { ClientRepository } from '../../../repositories'
+import { ProjectRepository } from '../../../repositories'
 import type { ReviewerRepository } from '../../../repositories/reviewer.repository'
 import type { UserRepository } from '../../../repositories/user.repository'
 import { getCookies } from '../../utils/cors'
@@ -145,23 +145,23 @@ export class AuthService {
       throw new UnauthorizedError('Invalid session: missing reviewerId')
     }
 
-    if (!session.clientId) {
-      throw new UnauthorizedError('Invalid session: missing clientId')
+    if (!session.projectId) {
+      throw new UnauthorizedError('Invalid session: missing projectId')
     }
 
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      session.clientId,
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      session.projectId,
       session.reviewerId
     )
 
-    if (!client) {
-      throw new UnauthorizedError('Client not found')
+    if (!project) {
+      throw new UnauthorizedError('Project not found')
     }
 
     const reviewer = await this.reviewerRepository.findByIdScoped(
       session.reviewerId,
-      client.organizationId
+      project.organizationId
     )
 
     if (!reviewer) {
@@ -178,8 +178,8 @@ export class AuthService {
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
         targetId: session.reviewerId,
-        organizationId: client.organizationId,
-        clientId: session.clientId,
+        organizationId: project.organizationId,
+        projectId: session.projectId,
         ...context,
         metadata: { reason: 'Reviewer archived' },
       })
@@ -196,8 +196,8 @@ export class AuthService {
         actorType: 'REVIEWER',
         actorId: session.reviewerId,
         targetId: session.reviewerId,
-        organizationId: client.organizationId,
-        clientId: session.clientId,
+        organizationId: project.organizationId,
+        projectId: session.projectId,
         ...context,
         metadata: { reason: 'Session version mismatch' },
       })
@@ -224,14 +224,14 @@ export class AuthService {
       throw new UnauthorizedError('Invalid reviewer session')
     }
 
-    if (!session.clientId) {
-      throw new UnauthorizedError('Invalid reviewer session: missing clientId')
+    if (!session.projectId) {
+      throw new UnauthorizedError('Invalid reviewer session: missing projectId')
     }
 
     return {
       type: ActorType.Reviewer,
       reviewerId: session.reviewerId,
-      clientId: session.clientId,
+      projectId: session.projectId,
       onboardingCompleted: session.onboardingCompleted,
     }
   }

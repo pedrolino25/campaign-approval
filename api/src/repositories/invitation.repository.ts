@@ -14,7 +14,7 @@ export type CreateInvitationInput = {
   organizationId: string
   email: string
   type: InvitationType
-  clientId?: string | null
+  projectId?: string | null
   role?: InvitationRole | null
   token: string
   expiresAt: Date
@@ -50,7 +50,7 @@ export class InvitationRepository implements IInvitationRepository {
         organizationId: data.organizationId,
         email: data.email,
         type: data.type,
-        clientId: data.clientId ?? null,
+        projectId: data.projectId ?? null,
         role: data.role ?? null,
         token: data.token,
         expiresAt: data.expiresAt,

@@ -11,15 +11,6 @@ export {
   type IAttachmentService,
 } from './attachment.service'
 export {
-  type ArchiveClientParams,
-  ClientService,
-  type CreateClientParams,
-  type IClientService,
-  type InviteReviewerParams,
-  type RemoveReviewerParams,
-  type UpdateClientParams,
-} from './client.service'
-export {
   type AddCommentParams,
   CommentService,
   type DeleteCommentParams,
@@ -40,6 +31,15 @@ export {
   type UpdateOrganizationParams,
   type UpdateUserRoleParams,
 } from './organization.service'
+export {
+  type ArchiveProjectParams,
+  type CreateProjectParams,
+  type InviteReviewerParams,
+  type IProjectService,
+  ProjectService,
+  type RemoveReviewerParams,
+  type UpdateProjectParams,
+} from './project.service'
 export {
   type ArchiveReviewItemInput,
   type CreateReviewItemInput,

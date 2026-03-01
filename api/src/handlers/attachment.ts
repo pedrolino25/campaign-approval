@@ -117,14 +117,14 @@ const handleGetAttachments = async (
   }
 
   if (actor.type === ActorType.Reviewer) {
-    if (reviewItem.clientId !== actor.clientId) {
+    if (reviewItem.projectId !== actor.projectId) {
       throw new NotFoundError('Review item not found')
     }
   }
 
   authorizeOrThrow(actor, Action.VIEW_ATTACHMENT, {
     organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
+    projectId: reviewItem.projectId,
     deletedAt: reviewItem.archivedAt,
   })
 

@@ -19,7 +19,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ClientRepository, ClientReviewerRepository } from '../repositories'
+import { ProjectRepository, ProjectReviewerRepository } from '../repositories'
 import { NotificationService } from '../services'
 
 type SanitizedNotification = {
@@ -55,14 +55,14 @@ const validateReviewerOrganizationLinkage = async (
   reviewerId: string,
   organizationId: string
 ): Promise<void> => {
-  const clientReviewerRepository = new ClientReviewerRepository()
-  const clientReviewer =
-    await clientReviewerRepository.findByReviewerIdAndOrganization(
+  const projectReviewerRepository = new ProjectReviewerRepository()
+  const projectReviewer =
+    await projectReviewerRepository.findByReviewerIdAndOrganization(
       reviewerId,
       organizationId
     )
 
-  if (!clientReviewer) {
+  if (!projectReviewer) {
     throw new ForbiddenError('Reviewer is not linked to this organization')
   }
 }
@@ -92,7 +92,7 @@ const validateNotificationOwnership = (
   }
 }
 
-// Removed - organizationId now derived from clientId for reviewers
+// Removed - organizationId now derived from projectId for reviewers
 
 const handleGetNotifications = async (
   request: HttpRequest
@@ -127,15 +127,15 @@ const handleGetNotifications = async (
     }
   } else {
     const reviewerId = actor.reviewerId
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      actor.projectId!,
       reviewerId
     )
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
-    const organizationId = client.organizationId
+    const organizationId = project.organizationId
 
     authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
       organizationId,
@@ -175,15 +175,15 @@ const handlePatchNotificationRead = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId!
   } else {
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      actor.projectId!,
       actor.reviewerId
     )
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
-    organizationId = client.organizationId
+    organizationId = project.organizationId
   }
 
   if (actor.type === ActorType.Internal) {

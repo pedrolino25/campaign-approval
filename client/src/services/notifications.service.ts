@@ -12,7 +12,7 @@ export interface Notification {
   message: string
   read: boolean
   reviewItemId?: string
-  clientId?: string
+  projectId?: string
   organizationId: string
   createdAt: string
   updatedAt: string

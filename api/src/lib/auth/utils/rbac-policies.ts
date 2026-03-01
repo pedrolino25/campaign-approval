@@ -14,12 +14,12 @@ const ACTION_HANDLERS: Record<Action, ActionHandler> = {
   [Action.REMOVE_INTERNAL_USER]: checkTeamAction,
   [Action.CHANGE_USER_ROLE]: checkTeamAction,
   [Action.VIEW_INTERNAL_USERS]: checkTeamAction,
-  [Action.CREATE_CLIENT]: checkClientAction,
-  [Action.EDIT_CLIENT]: checkClientAction,
-  [Action.ARCHIVE_CLIENT]: checkClientAction,
-  [Action.VIEW_CLIENT_LIST]: checkClientAction,
-  [Action.INVITE_CLIENT_REVIEWER]: checkClientAction,
-  [Action.REMOVE_CLIENT_REVIEWER]: checkClientAction,
+  [Action.CREATE_PROJECT]: checkProjectAction,
+  [Action.EDIT_PROJECT]: checkProjectAction,
+  [Action.ARCHIVE_PROJECT]: checkProjectAction,
+  [Action.VIEW_PROJECT_LIST]: checkProjectAction,
+  [Action.INVITE_PROJECT_REVIEWER]: checkProjectAction,
+  [Action.REMOVE_PROJECT_REVIEWER]: checkProjectAction,
   [Action.CREATE_REVIEW_ITEM]: checkReviewItemAction,
   [Action.EDIT_REVIEW_ITEM]: checkReviewItemAction,
   [Action.DELETE_REVIEW_ITEM]: checkReviewItemAction,
@@ -61,7 +61,7 @@ function enforceGlobalRules(
   }
 
   checkOrganizationScope(actor, resource)
-  checkClientScope(actor, resource)
+  checkProjectScope(actor, resource)
   checkSoftDeletion(actor, resource)
 }
 
@@ -83,7 +83,7 @@ function checkOrganizationScope(
   }
 }
 
-function checkClientScope(
+function checkProjectScope(
   actor: ActorContext,
   resource: ResourceContext
 ): void {
@@ -92,11 +92,11 @@ function checkClientScope(
   }
 
   if (
-    resource.clientId !== undefined &&
-    resource.clientId !== actor.clientId
+    resource.projectId !== undefined &&
+    resource.projectId !== actor.projectId
   ) {
     throw new ForbiddenError(
-      'Access denied: resource belongs to a different client'
+      'Access denied: resource belongs to a different project'
     )
   }
 }
@@ -189,22 +189,22 @@ function checkTeamAction(actor: ActorContext, action: Action): void {
   }
 }
 
-function checkClientAction(actor: ActorContext, action: Action): void {
+function checkProjectAction(actor: ActorContext, action: Action): void {
   if (actor.type === ActorType.Reviewer) {
     throw new ForbiddenError(
-      'Access denied: reviewers cannot perform client management actions'
+      'Access denied: reviewers cannot perform project management actions'
     )
   }
 
   switch (action) {
-    case Action.VIEW_CLIENT_LIST:
+    case Action.VIEW_PROJECT_LIST:
       return
 
-    case Action.CREATE_CLIENT:
-    case Action.EDIT_CLIENT:
-    case Action.ARCHIVE_CLIENT:
-    case Action.INVITE_CLIENT_REVIEWER:
-    case Action.REMOVE_CLIENT_REVIEWER:
+    case Action.CREATE_PROJECT:
+    case Action.EDIT_PROJECT:
+    case Action.ARCHIVE_PROJECT:
+    case Action.INVITE_PROJECT_REVIEWER:
+    case Action.REMOVE_PROJECT_REVIEWER:
       if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) {
         return
       }

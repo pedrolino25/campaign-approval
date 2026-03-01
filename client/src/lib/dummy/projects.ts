@@ -1,4 +1,4 @@
-export interface Client {
+export interface Project {
   id: string
   name: string
   email: string
@@ -7,7 +7,7 @@ export interface Client {
   reviewCount: number
 }
 
-export const dummyClients: Client[] = [
+export const dummyProjects: Project[] = [
   {
     id: "1",
     name: "Acme Corporation",

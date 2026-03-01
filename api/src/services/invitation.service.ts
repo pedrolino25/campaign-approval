@@ -15,9 +15,9 @@ import {
   NotFoundError,
 } from '../models'
 import {
-  ClientRepository,
-  ClientReviewerRepository,
   InvitationRepository,
+  ProjectRepository,
+  ProjectReviewerRepository,
   ReviewerRepository,
   UserRepository,
 } from '../repositories'
@@ -31,7 +31,7 @@ export interface CreateInvitationParams {
   email: string
   type: InvitationType
   role?: InvitationRole
-  clientId?: string
+  projectId?: string
 }
 
 export interface AcceptInvitationParams {
@@ -47,16 +47,16 @@ export interface AcceptInvitationResult {
 
 export class InvitationService {
   private readonly invitationRepository: InvitationRepository
-  private readonly clientRepository: ClientRepository
-  private readonly clientReviewerRepository: ClientReviewerRepository
+  private readonly projectRepository: ProjectRepository
+  private readonly projectReviewerRepository: ProjectReviewerRepository
   private readonly userRepository: UserRepository
   private readonly reviewerRepository: ReviewerRepository
   private readonly activityLogService: ActivityLogService
 
   constructor() {
     this.invitationRepository = new InvitationRepository()
-    this.clientRepository = new ClientRepository()
-    this.clientReviewerRepository = new ClientReviewerRepository()
+    this.projectRepository = new ProjectRepository()
+    this.projectReviewerRepository = new ProjectReviewerRepository()
     this.userRepository = new UserRepository()
     this.reviewerRepository = new ReviewerRepository()
     this.activityLogService = new ActivityLogService()
@@ -69,14 +69,14 @@ export class InvitationService {
     this.validateInvitationInvariants(
       params.type,
       params.role,
-      params.clientId
+      params.projectId
     )
 
     await this.validateEmailNotExists(params.email, params.type)
 
-    if (params.type === InvitationType.REVIEWER && params.clientId) {
-      await this.validateClientBelongsToOrganization(
-        params.clientId,
+    if (params.type === InvitationType.REVIEWER && params.projectId) {
+      await this.validateProjectBelongsToOrganization(
+        params.projectId,
         params.organizationId
       )
     }
@@ -90,7 +90,7 @@ export class InvitationService {
       organizationId: params.organizationId,
       email: params.email.toLowerCase().trim(),
       type: params.type,
-      clientId: params.clientId,
+      projectId: params.projectId,
       role: params.role,
       token,
       expiresAt,
@@ -117,11 +117,11 @@ export class InvitationService {
   }
 
   async createReviewerInvitation(params: {
-    clientId: string
+    projectId: string
     email: string
     actor: ActorContext
   }): Promise<Invitation> {
-    const { clientId, email, actor } = params
+    const { projectId, email, actor } = params
 
     if (actor.type !== ActorType.Internal) {
       throw new ForbiddenError('Only internal users can invite reviewers')
@@ -130,7 +130,7 @@ export class InvitationService {
     const organizationId = actor.organizationId
 
     await this.validateReviewerInvitationPreconditions(
-      clientId,
+      projectId,
       email,
       organizationId
     )
@@ -146,7 +146,7 @@ export class InvitationService {
         const createdInvitation = await this.createInvitationInTransaction(
           organizationId,
           email,
-          clientId,
+          projectId,
           token,
           expiresAt,
           actor.userId,
@@ -156,7 +156,7 @@ export class InvitationService {
         await this.createActivityLogInTransaction(
           organizationId,
           email,
-          clientId,
+          projectId,
           actor,
           tx
         )
@@ -181,7 +181,7 @@ export class InvitationService {
         error.code === 'P2002'
       ) {
         throw new ConflictError(
-          'An invitation for this email and client already exists'
+          'An invitation for this email and project already exists'
         )
       }
       throw error
@@ -189,24 +189,24 @@ export class InvitationService {
   }
 
   private async validateReviewerInvitationPreconditions(
-    clientId: string,
+    projectId: string,
     email: string,
     organizationId: string
   ): Promise<void> {
-    const client = await this.clientRepository.findById(clientId, organizationId)
+    const project = await this.projectRepository.findById(projectId, organizationId)
 
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
 
-    const existingLink = await this.clientReviewerRepository.findByClientIdAndEmail(
-      clientId,
+    const existingLink = await this.projectReviewerRepository.findByProjectIdAndEmail(
+      projectId,
       email
     )
 
     if (existingLink) {
       throw new BusinessRuleViolationError(
-        'Reviewer is already linked to this client'
+        'Reviewer is already linked to this project'
       )
     }
 
@@ -216,7 +216,7 @@ export class InvitationService {
   private async createInvitationInTransaction(
     organizationId: string,
     email: string,
-    clientId: string,
+    projectId: string,
     token: string,
     expiresAt: Date,
     inviterUserId: string,
@@ -226,7 +226,7 @@ export class InvitationService {
       organizationId,
       email: email.toLowerCase().trim(),
       type: InvitationType.REVIEWER,
-      clientId,
+      projectId,
       token,
       expiresAt,
       inviterUserId,
@@ -238,13 +238,13 @@ export class InvitationService {
   private async createActivityLogInTransaction(
     organizationId: string,
     email: string,
-    clientId: string,
+    projectId: string,
     actor: ActorContext,
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
   ): Promise<void> {
     const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
       invitedUserEmail: email,
-      clientId,
+      projectId,
     }
 
     await this.activityLogService.log({
@@ -268,7 +268,7 @@ export class InvitationService {
       invitationId: invitation.id,
       token: invitation.token,
       type: invitation.type,
-      clientId: invitation.clientId ?? null,
+      projectId: invitation.projectId ?? null,
       tx,
     })
   }
@@ -295,7 +295,7 @@ export class InvitationService {
         invitationId: invitation.id,
         token: invitation.token,
         type: invitation.type,
-        clientId: invitation.clientId ?? null,
+        projectId: invitation.projectId ?? null,
       })
 
       logger.info({
@@ -419,9 +419,10 @@ export class InvitationService {
     cognitoUserId: string,
     email: string
   ): Promise<AcceptInvitationResult> {
-    if (!invitation.clientId) {
+    const projectId = invitation.projectId
+    if (!projectId) {
       throw new InvariantViolationError(
-        'REVIEWER invitation must have a clientId'
+        'REVIEWER invitation must have a projectId'
       )
     }
 
@@ -432,16 +433,10 @@ export class InvitationService {
         email
       )
 
-      if (!invitation.clientId) {
-        throw new InvariantViolationError(
-          'REVIEWER invitation must have a clientId'
-        )
-      }
-
-      const existingLink = await this.ensureClientReviewerLink(
+      const existingLink = await this.ensureProjectReviewerLink(
         tx,
         reviewer.id,
-        invitation.clientId
+        projectId
       )
 
       await this.markInvitationAccepted(tx, invitation.id)
@@ -536,24 +531,24 @@ export class InvitationService {
     return reviewer
   }
 
-  private async ensureClientReviewerLink(
+  private async ensureProjectReviewerLink(
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     reviewerId: string,
-    clientId: string
-  ): Promise<{ id: string; reviewerId: string; clientId: string } | null> {
-    const existingLink = await tx.clientReviewer.findFirst({
+    projectId: string
+  ): Promise<{ id: string; reviewerId: string; projectId: string } | null> {
+    const existingLink = await tx.projectReviewer.findFirst({
       where: {
         reviewerId,
-        clientId,
+        projectId,
         archivedAt: null,
       },
     })
 
     if (!existingLink) {
-      await tx.clientReviewer.create({
+      await tx.projectReviewer.create({
         data: {
           reviewerId,
-          clientId,
+          projectId,
         },
       })
     }
@@ -587,9 +582,9 @@ export class InvitationService {
     email: string,
     linkExisted: boolean
   ): Promise<void> {
-    if (!invitation.clientId) {
+    if (!invitation.projectId) {
       throw new InvariantViolationError(
-        'REVIEWER invitation must have a clientId'
+        'REVIEWER invitation must have a projectId'
       )
     }
 
@@ -600,7 +595,7 @@ export class InvitationService {
     const actor: ActorContext = {
       type: ActorType.Reviewer,
       reviewerId,
-      clientId: invitation.clientId,
+      projectId: invitation.projectId,
       onboardingCompleted: false,
     }
 
@@ -619,7 +614,7 @@ export class InvitationService {
   private validateInvitationInvariants(
     type: InvitationType,
     role: InvitationRole | undefined,
-    clientId: string | undefined
+    projectId: string | undefined
   ): void {
     if (type === InvitationType.INTERNAL_USER) {
       if (!role) {
@@ -627,15 +622,15 @@ export class InvitationService {
           'INVALID_INVITATION_CONFIGURATION: role must be defined for INTERNAL_USER invitations'
         )
       }
-      if (clientId !== undefined && clientId !== null) {
+      if (projectId !== undefined && projectId !== null) {
         throw new InvariantViolationError(
-          'INVALID_INVITATION_CONFIGURATION: clientId must not be defined for INTERNAL_USER invitations'
+          'INVALID_INVITATION_CONFIGURATION: projectId must not be defined for INTERNAL_USER invitations'
         )
       }
     } else if (type === InvitationType.REVIEWER) {
-      if (!clientId) {
+      if (!projectId) {
         throw new InvariantViolationError(
-          'INVALID_INVITATION_CONFIGURATION: clientId must be defined for REVIEWER invitations'
+          'INVALID_INVITATION_CONFIGURATION: projectId must be defined for REVIEWER invitations'
         )
       }
       if (role !== undefined && role !== null) {
@@ -669,18 +664,18 @@ export class InvitationService {
     }
   }
 
-  private async validateClientBelongsToOrganization(
-    clientId: string,
+  private async validateProjectBelongsToOrganization(
+    projectId: string,
     organizationId: string
   ): Promise<void> {
-    const client = await this.clientRepository.findById(
-      clientId,
+    const project = await this.projectRepository.findById(
+      projectId,
       organizationId
     )
 
-    if (!client) {
+    if (!project) {
       throw new InvariantViolationError(
-        'Client does not belong to the specified organization'
+        'Project does not belong to the specified organization'
       )
     }
   }
@@ -697,7 +692,7 @@ export class InvitationService {
         invitationId: invitation.id,
         token: invitation.token,
         type: invitation.type,
-        clientId: invitation.clientId ?? null,
+        projectId: invitation.projectId ?? null,
       })
 
       logger.info({

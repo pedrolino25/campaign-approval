@@ -8,13 +8,11 @@ import {
   ApproveReviewSchema,
   AttachmentParamsSchema,
   ChangePasswordSchema,
-  ClientParamsSchema,
-  ClientReviewerParamsSchema,
   CompleteInternalOnboardingSchema,
   CompleteReviewerOnboardingSchema,
   ConfirmUploadSchema,
-  CreateClientSchema,
   CreatePresignedUploadSchema,
+  CreateProjectSchema,
   CreateReviewItemSchema,
   DeleteAttachmentParamsSchema,
   DeleteCommentParamsSchema,
@@ -23,14 +21,16 @@ import {
   InviteReviewerSchema,
   LoginSchema,
   NotificationParamsSchema,
+  ProjectParamsSchema,
+  ProjectReviewerParamsSchema,
   RequestChangesSchema,
   ResendVerificationSchema,
   ResetPasswordSchema,
   ReviewItemParamsSchema,
   SendForReviewSchema,
   SignUpSchema,
-  UpdateClientSchema,
   UpdateOrganizationSettingsSchema,
+  UpdateProjectSchema,
   UpdateUserRoleSchema,
   VerifyEmailSchema,
 } from '../schemas'
@@ -173,16 +173,16 @@ export const UpdateOrganizationSettingsOpenAPISchema = (
     },
   })
 
-// Client Schemas
-export const CreateClientOpenAPISchema = (CreateClientSchema as any).openapi({
-  description: 'Create client request',
+// Project Schemas
+export const CreateProjectOpenAPISchema = (CreateProjectSchema as any).openapi({
+  description: 'Create project request',
   example: {
     name: 'Acme Corporation',
   },
 })
 
-export const UpdateClientOpenAPISchema = (UpdateClientSchema as any).openapi({
-  description: 'Update client request',
+export const UpdateProjectOpenAPISchema = (UpdateProjectSchema as any).openapi({
+  description: 'Update project request',
   example: {
     name: 'Acme Corporation Updated',
   },
@@ -195,15 +195,15 @@ export const InviteReviewerOpenAPISchema = (InviteReviewerSchema as any).openapi
   },
 })
 
-export const ClientParamsOpenAPISchema = (ClientParamsSchema as any).openapi({
-  description: 'Client path parameters',
+export const ProjectParamsOpenAPISchema = (ProjectParamsSchema as any).openapi({
+  description: 'Project path parameters',
   example: {
     id: '123e4567-e89b-12d3-a456-426614174000',
   },
 })
 
-export const ClientReviewerParamsOpenAPISchema = (ClientReviewerParamsSchema as any).openapi({
-  description: 'Client reviewer path parameters',
+export const ProjectReviewerParamsOpenAPISchema = (ProjectReviewerParamsSchema as any).openapi({
+  description: 'Project reviewer path parameters',
   example: {
     id: '123e4567-e89b-12d3-a456-426614174000',
     reviewerId: '987fcdeb-51a2-43d7-8f9e-123456789abc',
@@ -214,7 +214,7 @@ export const ClientReviewerParamsOpenAPISchema = (ClientReviewerParamsSchema as 
 export const CreateReviewItemOpenAPISchema = (CreateReviewItemSchema as any).openapi({
   description: 'Create review item request',
   example: {
-    clientId: '123e4567-e89b-12d3-a456-426614174000',
+    projectId: '123e4567-e89b-12d3-a456-426614174000',
     title: 'Website Homepage Design',
     description: 'Review the new homepage design mockup',
   },

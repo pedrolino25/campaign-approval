@@ -5,7 +5,7 @@ import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api/client'
 import type { ParsedError } from '@/lib/errors'
 
-export interface Client {
+export interface Project {
   id: string
   name: string
   organizationId: string
@@ -13,16 +13,16 @@ export interface Client {
   updatedAt: string
 }
 
-export interface CreateClientRequest {
+export interface CreateProjectRequest {
   name: string
 }
 
-export interface UpdateClientRequest {
+export interface UpdateProjectRequest {
   name?: string
 }
 
-export interface ClientListResponse {
-  data: Client[]
+export interface ProjectListResponse {
+  data: Project[]
   nextCursor?: string
 }
 
@@ -30,7 +30,7 @@ export interface Reviewer {
   id: string
   email: string
   name: string
-  clientId: string
+  projectId: string
   createdAt: string
   updatedAt: string
 }
@@ -45,15 +45,15 @@ export interface ReviewerListResponse {
   nextCursor?: string
 }
 
-export function useCreateClientMutation(
+export function useCreateProjectMutation(
   options?: Omit<
-    UseMutationOptions<Client, ParsedError, CreateClientRequest>,
+    UseMutationOptions<Project, ParsedError, CreateProjectRequest>,
     'mutationFn'
   >
 ) {
   return useMutation({
-    mutationFn: async (request: CreateClientRequest) => {
-      return apiFetch<Client>('/clients', {
+    mutationFn: async (request: CreateProjectRequest) => {
+      return apiFetch<Project>('/projects', {
         method: 'POST',
         body: JSON.stringify(request),
       })
@@ -62,15 +62,15 @@ export function useCreateClientMutation(
   })
 }
 
-export function useUpdateClientMutation(
+export function useUpdateProjectMutation(
   options?: Omit<
-    UseMutationOptions<Client, ParsedError, { id: string; request: UpdateClientRequest }>,
+    UseMutationOptions<Project, ParsedError, { id: string; request: UpdateProjectRequest }>,
     'mutationFn'
   >
 ) {
   return useMutation({
-    mutationFn: async ({ id, request }: { id: string; request: UpdateClientRequest }) => {
-      return apiFetch<Client>(`/clients/${id}`, {
+    mutationFn: async ({ id, request }: { id: string; request: UpdateProjectRequest }) => {
+      return apiFetch<Project>(`/projects/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(request),
       })
@@ -79,7 +79,7 @@ export function useUpdateClientMutation(
   })
 }
 
-export function useArchiveClientMutation(
+export function useArchiveProjectMutation(
   options?: Omit<
     UseMutationOptions<void, ParsedError, string>,
     'mutationFn'
@@ -87,7 +87,7 @@ export function useArchiveClientMutation(
 ) {
   return useMutation({
     mutationFn: async (id: string) => {
-      return apiFetch<void>(`/clients/${id}/archive`, {
+      return apiFetch<void>(`/projects/${id}/archive`, {
         method: 'POST',
       })
     },
@@ -97,13 +97,13 @@ export function useArchiveClientMutation(
 
 export function useInviteReviewerMutation(
   options?: Omit<
-    UseMutationOptions<Reviewer, ParsedError, { clientId: string; request: InviteReviewerRequest }>,
+    UseMutationOptions<Reviewer, ParsedError, { projectId: string; request: InviteReviewerRequest }>,
     'mutationFn'
   >
 ) {
   return useMutation({
-    mutationFn: async ({ clientId, request }: { clientId: string; request: InviteReviewerRequest }) => {
-      return apiFetch<Reviewer>(`/clients/${clientId}/reviewers`, {
+    mutationFn: async ({ projectId, request }: { projectId: string; request: InviteReviewerRequest }) => {
+      return apiFetch<Reviewer>(`/projects/${projectId}/reviewers`, {
         method: 'POST',
         body: JSON.stringify(request),
       })
@@ -114,13 +114,13 @@ export function useInviteReviewerMutation(
 
 export function useDeleteReviewerMutation(
   options?: Omit<
-    UseMutationOptions<void, ParsedError, { clientId: string; reviewerId: string }>,
+    UseMutationOptions<void, ParsedError, { projectId: string; reviewerId: string }>,
     'mutationFn'
   >
 ) {
   return useMutation({
-    mutationFn: async ({ clientId, reviewerId }: { clientId: string; reviewerId: string }) => {
-      return apiFetch<void>(`/clients/${clientId}/reviewers/${reviewerId}`, {
+    mutationFn: async ({ projectId, reviewerId }: { projectId: string; reviewerId: string }) => {
+      return apiFetch<void>(`/projects/${projectId}/reviewers/${reviewerId}`, {
         method: 'DELETE',
       })
     },

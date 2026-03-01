@@ -1,4 +1,4 @@
-import { type Client, type Invitation } from '@prisma/client'
+import { type Invitation,type Project } from '@prisma/client'
 
 import { logger,prisma, ValidationError } from '../lib'
 import {
@@ -11,74 +11,73 @@ import {
   NotFoundError,
 } from '../models'
 import {
-  ClientRepository,
-  ClientReviewerRepository,
+  ProjectRepository,
+  ProjectReviewerRepository,
   ReviewItemRepository,
 } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 import { InvitationService } from './invitation.service'
 
-export type CreateClientParams = {
+export type CreateProjectParams = {
   name: string
   actor: ActorContext
 }
 
-export type UpdateClientParams = {
-  clientId: string
+export type UpdateProjectParams = {
+  projectId: string
   name?: string
   actor: ActorContext
 }
 
-export type ArchiveClientParams = {
-  clientId: string
+export type ArchiveProjectParams = {
+  projectId: string
   actor: ActorContext
 }
 
 export type InviteReviewerParams = {
-  clientId: string
+  projectId: string
   email: string
   actor: ActorContext
 }
 
 export type RemoveReviewerParams = {
-  clientId: string
+  projectId: string
   reviewerId: string
   actor: ActorContext
 }
 
-export interface IClientService {
-  createClient(params: CreateClientParams): Promise<Client>
-  updateClient(params: UpdateClientParams): Promise<Client>
-  archiveClient(params: ArchiveClientParams): Promise<Client>
+export interface IProjectService {
+  createProject(params: CreateProjectParams): Promise<Project>
+  updateProject(params: UpdateProjectParams): Promise<Project>
+  archiveProject(params: ArchiveProjectParams): Promise<Project>
   inviteReviewer(params: InviteReviewerParams): Promise<Invitation>
   removeReviewer(params: RemoveReviewerParams): Promise<void>
 }
 
-export class ClientService implements IClientService {
-  private readonly clientRepository: ClientRepository
-  private readonly clientReviewerRepository: ClientReviewerRepository
+export class ProjectService implements IProjectService {
+  private readonly projectRepository: ProjectRepository
+  private readonly projectReviewerRepository: ProjectReviewerRepository
   private readonly reviewItemRepository: ReviewItemRepository
   private readonly activityLogService: ActivityLogService
   private readonly invitationService: InvitationService
 
   constructor() {
-    this.clientRepository = new ClientRepository()
-    this.clientReviewerRepository = new ClientReviewerRepository()
+    this.projectRepository = new ProjectRepository()
+    this.projectReviewerRepository = new ProjectReviewerRepository()
     this.reviewItemRepository = new ReviewItemRepository()
     this.activityLogService = new ActivityLogService()
     this.invitationService = new InvitationService()
   }
 
-  async createClient(params: CreateClientParams): Promise<Client> {
+  async createProject(params: CreateProjectParams): Promise<Project> {
     const { name, actor } = params
 
     if (actor.type !== ActorType.Internal) {
-      throw new ForbiddenError('Only internal users can create clients')
+      throw new ForbiddenError('Only internal users can create projects')
     }
 
     return await prisma.$transaction(async (tx) => {
-      // Check uniqueness inside transaction to prevent race conditions
-      const existingClient = await tx.client.findFirst({
+      const existingProject = await tx.project.findFirst({
         where: {
           organizationId: actor.organizationId,
           name: {
@@ -89,68 +88,67 @@ export class ClientService implements IClientService {
         },
       })
 
-      if (existingClient) {
-        throw new ValidationError('Client name must be unique within organization')
+      if (existingProject) {
+        throw new ValidationError('Project name must be unique within organization')
       }
 
-      const client = await tx.client.create({
+      const project = await tx.project.create({
         data: {
           organizationId: actor.organizationId,
           name: name.trim(),
         },
       })
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_CREATED] =
+      const metadata: ActivityLogMetadataMap[ActivityLogActionType.PROJECT_CREATED] =
         {
-          clientId: client.id,
-          name: client.name,
+          projectId: project.id,
+          name: project.name,
         }
 
       await this.activityLogService.log({
-        action: ActivityLogActionType.CLIENT_CREATED,
-        organizationId: client.organizationId,
+        action: ActivityLogActionType.PROJECT_CREATED,
+        organizationId: project.organizationId,
         actor,
         metadata,
         tx,
       })
 
-      return client
+      return project
     })
   }
 
-  async updateClient(params: UpdateClientParams): Promise<Client> {
-    const { clientId, name, actor } = params
+  async updateProject(params: UpdateProjectParams): Promise<Project> {
+    const { projectId, name, actor } = params
 
     if (actor.type !== ActorType.Internal) {
-      throw new ForbiddenError('Only internal users can update clients')
+      throw new ForbiddenError('Only internal users can update projects')
     }
 
     return await prisma.$transaction(async (tx) => {
-      const client = await this.clientRepository.findById(
-        clientId,
+      const project = await this.projectRepository.findById(
+        projectId,
         actor.organizationId
       )
 
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
 
-      if (client.archivedAt !== null) {
-        throw new ForbiddenError('Cannot update archived client')
+      if (project.archivedAt !== null) {
+        throw new ForbiddenError('Cannot update archived project')
       }
 
       if (name === undefined || name === null) {
-        return client
+        return project
       }
 
       const trimmedName = name.trim()
 
-      if (client.name === trimmedName) {
-        return client
+      if (project.name === trimmedName) {
+        return project
       }
 
-      // Check uniqueness inside transaction to prevent race conditions
-      const existingClient = await tx.client.findFirst({
+      const existingProject = await tx.project.findFirst({
         where: {
           organizationId: actor.organizationId,
           name: {
@@ -159,19 +157,19 @@ export class ClientService implements IClientService {
           },
           archivedAt: null,
           id: {
-            not: clientId,
+            not: projectId,
           },
         },
       })
 
-      if (existingClient) {
-        throw new ValidationError('Client name must be unique within organization')
+      if (existingProject) {
+        throw new ValidationError('Project name must be unique within organization')
       }
 
-      const oldName = client.name
-      const updatedClient = await tx.client.update({
+      const oldName = project.name
+      const updatedProject = await tx.project.update({
         where: {
-          id: clientId,
+          id: projectId,
           organizationId: actor.organizationId,
         },
         data: {
@@ -179,57 +177,57 @@ export class ClientService implements IClientService {
         },
       })
 
-      const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
+      const metadata: ActivityLogMetadataMap[ActivityLogActionType.PROJECT_UPDATED] =
         {
-          clientId: updatedClient.id,
+          projectId: updatedProject.id,
           oldName,
-          newName: updatedClient.name,
+          newName: updatedProject.name,
         }
 
       await this.activityLogService.log({
-        action: ActivityLogActionType.CLIENT_UPDATED,
-        organizationId: updatedClient.organizationId,
+        action: ActivityLogActionType.PROJECT_UPDATED,
+        organizationId: updatedProject.organizationId,
         actor,
         metadata,
         tx,
       })
 
-      return updatedClient
+      return updatedProject
     })
   }
 
-  async archiveClient(params: ArchiveClientParams): Promise<Client> {
-    const { clientId, actor } = params
+  async archiveProject(params: ArchiveProjectParams): Promise<Project> {
+    const { projectId, actor } = params
 
     if (actor.type !== ActorType.Internal) {
-      throw new ForbiddenError('Only internal users can archive clients')
+      throw new ForbiddenError('Only internal users can archive projects')
     }
 
     return await prisma.$transaction(async (tx) => {
-      const client = await this.clientRepository.findById(
-        clientId,
+      const project = await this.projectRepository.findById(
+        projectId,
         actor.organizationId
       )
 
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
 
       const activeReviewItemsCount =
-        await this.reviewItemRepository.countActiveByClient(
-          clientId,
+        await this.reviewItemRepository.countActiveByProject(
+          projectId,
           actor.organizationId
         )
 
       if (activeReviewItemsCount > 0) {
         throw new BusinessRuleViolationError(
-          'Cannot archive client with active review items'
+          'Cannot archive project with active review items'
         )
       }
 
-      const result = await tx.client.updateMany({
+      const result = await tx.project.updateMany({
         where: {
-          id: clientId,
+          id: projectId,
           organizationId: actor.organizationId,
           archivedAt: null,
         },
@@ -239,47 +237,46 @@ export class ClientService implements IClientService {
       })
 
 
-      const archivedClient = await tx.client.findUnique({
-        where: { id: clientId },
+      const archivedProject = await tx.project.findUnique({
+        where: { id: projectId },
       })
 
-      if (!archivedClient) {
-        throw new NotFoundError('Client not found')
+      if (!archivedProject) {
+        throw new NotFoundError('Project not found')
       }
 
       if (result.count > 0) {
-        const metadata: ActivityLogMetadataMap[ActivityLogActionType.CLIENT_UPDATED] =
+        const metadata: ActivityLogMetadataMap[ActivityLogActionType.PROJECT_UPDATED] =
           {
-            clientId: archivedClient.id,
+            projectId: archivedProject.id,
             archived: true,
           }
 
         await this.activityLogService.log({
-          action: ActivityLogActionType.CLIENT_UPDATED,
-          organizationId: archivedClient.organizationId,
+          action: ActivityLogActionType.PROJECT_UPDATED,
+          organizationId: archivedProject.organizationId,
           actor,
           metadata,
           tx,
         })
       }
 
-      return archivedClient
+      return archivedProject
     })
   }
 
   async inviteReviewer(params: InviteReviewerParams): Promise<Invitation> {
-    const { clientId, email, actor } = params
+    const { projectId, email, actor } = params
 
-    // Delegate fully to InvitationService
     return await this.invitationService.createReviewerInvitation({
-      clientId,
+      projectId,
       email,
       actor,
     })
   }
 
   async removeReviewer(params: RemoveReviewerParams): Promise<void> {
-    const { clientId, reviewerId, actor } = params
+    const { projectId, reviewerId, actor } = params
 
     if (actor.type !== ActorType.Internal) {
       throw new ForbiddenError('Only internal users can remove reviewers')
@@ -292,66 +289,66 @@ export class ClientService implements IClientService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      const client = await this.clientRepository.findById(
-        clientId,
+      const project = await this.projectRepository.findById(
+        projectId,
         actor.organizationId
       )
 
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
 
-      const clientReviewer =
-        await this.clientReviewerRepository.findByReviewerIdAndClient(
+      const projectReviewer =
+        await this.projectReviewerRepository.findByReviewerIdAndProject(
           reviewerId,
-          clientId
+          projectId
         )
 
-      if (!clientReviewer) {
-        throw new NotFoundError('Client reviewer link not found')
+      if (!projectReviewer) {
+        throw new NotFoundError('Project reviewer link not found')
       }
 
-      if (clientReviewer.archivedAt !== null) {
+      if (projectReviewer.archivedAt !== null) {
         return
       }
 
-      await tx.clientReviewer.update({
-        where: { id: clientReviewer.id },
+      await tx.projectReviewer.update({
+        where: { id: projectReviewer.id },
         data: {
           archivedAt: new Date(),
         },
       })
 
-      const remainingLinks = await this.countRemainingClientLinks(
+      const remainingLinks = await this.countRemainingProjectLinks(
         tx,
         reviewerId,
-        client.organizationId
+        project.organizationId
       )
 
       await this.logReviewerRemovalSecurityEvents(
         tx,
         reviewerId,
-        client.organizationId,
+        project.organizationId,
         internalActor,
         remainingLinks
       )
 
-      this.logReviewerRemoval(reviewerId, clientId, client.organizationId, actor)
+      this.logReviewerRemoval(reviewerId, projectId, project.organizationId, actor)
 
-      await this.logReviewerRemovalActivity(tx, client.organizationId, clientId, actor)
+      await this.logReviewerRemovalActivity(tx, project.organizationId, projectId, actor)
     })
   }
 
-  private async countRemainingClientLinks(
+  private async countRemainingProjectLinks(
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     reviewerId: string,
     organizationId: string
   ): Promise<number> {
-    return await tx.clientReviewer.count({
+    return await tx.projectReviewer.count({
       where: {
         reviewerId,
         archivedAt: null,
-        client: {
+        project: {
           organizationId,
           archivedAt: null,
         },
@@ -383,20 +380,20 @@ export class ClientService implements IClientService {
       })
 
       logger.warn({
-        service: 'ClientService',
+        service: 'ProjectService',
         operation: 'removeReviewer',
         event: 'SESSION_INVALIDATED',
         isSecurityEvent: true,
         targetId: reviewerId,
         organizationId,
-        metadata: { reason: 'Last client link removed' },
+        metadata: { reason: 'Last project link removed' },
       })
     }
 
     logger.warn({
-      service: 'ClientService',
+      service: 'ProjectService',
       operation: 'removeReviewer',
-      event: 'CLIENT_REVIEWER_REMOVED',
+      event: 'PROJECT_REVIEWER_REMOVED',
       isSecurityEvent: true,
       actorId: internalActor.userId,
       targetId: reviewerId,
@@ -407,7 +404,7 @@ export class ClientService implements IClientService {
 
   private logReviewerRemoval(
     reviewerId: string,
-    clientId: string,
+    projectId: string,
     organizationId: string,
     actor: ActorContext
   ): void {
@@ -420,7 +417,7 @@ export class ClientService implements IClientService {
       event: 'MEMBERSHIP_REMOVED',
       actorType: 'REVIEWER',
       actorId: reviewerId,
-      clientId,
+      projectId,
       organizationId,
       metadata: {
         removedBy: actor.userId,
@@ -431,12 +428,12 @@ export class ClientService implements IClientService {
   private async logReviewerRemovalActivity(
     tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
     organizationId: string,
-    clientId: string,
+    projectId: string,
     actor: ActorContext
   ): Promise<void> {
     const metadata: ActivityLogMetadataMap[ActivityLogActionType.USER_INVITED] = {
       invitedUserEmail: '',
-      clientId,
+      projectId,
     }
 
     await this.activityLogService.log({

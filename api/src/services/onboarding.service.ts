@@ -121,10 +121,10 @@ export class OnboardingService {
         where: {
           id: params.reviewerId,
           archivedAt: null,
-          clientLinks: {
+          projectLinks: {
             some: {
               archivedAt: null,
-              client: {
+              project: {
                 organizationId: params.organizationId,
                 archivedAt: null,
               },

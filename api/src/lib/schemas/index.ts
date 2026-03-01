@@ -25,18 +25,6 @@ export {
   VerifyEmailSchema,
 } from './auth.schema'
 export {
-  type ClientParams,
-  ClientParamsSchema,
-  type ClientReviewerParams,
-  ClientReviewerParamsSchema,
-  type CreateClientRequest,
-  CreateClientSchema,
-  type InviteReviewerRequest,
-  InviteReviewerSchema,
-  type UpdateClientRequest,
-  UpdateClientSchema,
-} from './client.schema'
-export {
   type AddCommentRequest,
   AddCommentSchema,
   type CommentParams,
@@ -65,6 +53,18 @@ export {
   type CursorPaginationQuery,
   CursorPaginationQuerySchema,
 } from './pagination.schema'
+export {
+  type CreateProjectRequest,
+  CreateProjectSchema,
+  type InviteReviewerRequest,
+  InviteReviewerSchema,
+  type ProjectParams,
+  ProjectParamsSchema,
+  type ProjectReviewerParams,
+  ProjectReviewerParamsSchema,
+  type UpdateProjectRequest,
+  UpdateProjectSchema,
+} from './project.schema'
 export {
   type ApproveReviewRequest,
   ApproveReviewSchema,

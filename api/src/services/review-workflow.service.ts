@@ -18,7 +18,7 @@ import {
 } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
 import { WorkflowEventType } from '../models/workflow-event'
-import { type AttachmentRepository, ClientRepository, type ReviewItemRepository  } from '../repositories'
+import { type AttachmentRepository, ProjectRepository,type ReviewItemRepository } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 import { NotificationService } from './notification.service'
 
@@ -87,15 +87,18 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     if (actor.type === ActorType.Internal) {
       actorOrganizationId = actor.organizationId
     } else {
-      const clientRepository = new ClientRepository()
-      const client = await clientRepository.findByIdForReviewer(
-        actor.clientId,
+      if (actor.projectId == null) {
+        throw new NotFoundError('Project not found')
+      }
+      const projectRepository = new ProjectRepository()
+      const project = await projectRepository.findByIdForReviewer(
+        actor.projectId,
         actor.reviewerId
       )
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
-      actorOrganizationId = client.organizationId
+      actorOrganizationId = project.organizationId
     }
 
     let reviewItem: ReviewItem
@@ -231,7 +234,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     actor: ActorContext,
     action: WorkflowAction,
     expectedVersion: number
-  ): Promise<Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>> {
+  ): Promise<Pick<ReviewItem, 'id' | 'status' | 'version' | 'projectId' | 'organizationId' | 'archivedAt'>> {
     // Reload only minimal fields needed for locking validation
     const currentReviewItem = await tx.reviewItem.findFirst({
       where: {
@@ -243,7 +246,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
         id: true,
         status: true,
         version: true,
-        clientId: true,
+        projectId: true,
         organizationId: true,
         archivedAt: true,
       },
@@ -261,7 +264,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
     }
 
     if (actor.type === ActorType.Reviewer) {
-      if (currentReviewItem.clientId !== actor.clientId) {
+      if (currentReviewItem.projectId !== actor.projectId) {
         throw new NotFoundError('Review item not found')
       }
     }
@@ -316,7 +319,7 @@ export class ReviewWorkflowService implements IReviewWorkflowService {
 
   private async updateReviewItem(
     tx: Prisma.TransactionClient,
-    reviewItem: Pick<ReviewItem, 'id' | 'status' | 'version' | 'clientId' | 'organizationId' | 'archivedAt'>,
+    reviewItem: Pick<ReviewItem, 'id' | 'status' | 'version' | 'projectId' | 'organizationId' | 'archivedAt'>,
     newStatus: ReviewStatus,
     shouldIncrementVersion: boolean,
     shouldUpdateStatus: boolean,

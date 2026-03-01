@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const entryPoints = {
   "api/organization": "src/handlers/organization.ts",
-  "api/client": "src/handlers/client.ts",
+  "api/project": "src/handlers/project.ts",
   "api/review": "src/handlers/review.ts",
   "api/attachment": "src/handlers/attachment.ts",
   "api/comment": "src/handlers/comment.ts",

@@ -1,5 +1,5 @@
 
-import type { ClientReviewer } from '@prisma/client'
+import type { ProjectReviewer } from '@prisma/client'
 
 import {
   createCursorWhereCondition,
@@ -11,50 +11,50 @@ import {
   prisma,
 } from '../lib'
 
-export type CreateClientReviewerInput = {
-  clientId: string
+export type CreateProjectReviewerInput = {
+  projectId: string
   reviewerId: string
 }
 
-export interface IClientReviewerRepository {
-  create(data: CreateClientReviewerInput): Promise<ClientReviewer>
-  findByReviewerId(reviewerId: string): Promise<ClientReviewer[]>
+export interface IProjectReviewerRepository {
+  create(data: CreateProjectReviewerInput): Promise<ProjectReviewer>
+  findByReviewerId(reviewerId: string): Promise<ProjectReviewer[]>
   findByReviewerIdAndOrganization(
     reviewerId: string,
     organizationId: string
-  ): Promise<ClientReviewer | null>
-  findByReviewerIdAndClient(
+  ): Promise<ProjectReviewer | null>
+  findByReviewerIdAndProject(
     reviewerId: string,
-    clientId: string
-  ): Promise<ClientReviewer | null>
-  listByClient(
-    clientId: string,
+    projectId: string
+  ): Promise<ProjectReviewer | null>
+  listByProject(
+    projectId: string,
     pagination: CursorPaginationParams
-  ): Promise<CursorPaginationResult<ClientReviewer>>
+  ): Promise<CursorPaginationResult<ProjectReviewer>>
   archive(id: string): Promise<void>
   delete(id: string): Promise<void>
-  findByClientIdAndEmail(
-    clientId: string,
+  findByProjectIdAndEmail(
+    projectId: string,
     email: string
-  ): Promise<ClientReviewer | null>
+  ): Promise<ProjectReviewer | null>
   findByIdScopedByOrganization(
     id: string,
     organizationId: string
-  ): Promise<ClientReviewer | null>
+  ): Promise<ProjectReviewer | null>
 }
 
-export class ClientReviewerRepository implements IClientReviewerRepository {
-  async create(data: CreateClientReviewerInput): Promise<ClientReviewer> {
-    return await prisma.clientReviewer.create({
+export class ProjectReviewerRepository implements IProjectReviewerRepository {
+  async create(data: CreateProjectReviewerInput): Promise<ProjectReviewer> {
+    return await prisma.projectReviewer.create({
       data: {
-        clientId: data.clientId,
+        projectId: data.projectId,
         reviewerId: data.reviewerId,
       },
     })
   }
 
-  async findByReviewerId(reviewerId: string): Promise<ClientReviewer[]> {
-    return await prisma.clientReviewer.findMany({
+  async findByReviewerId(reviewerId: string): Promise<ProjectReviewer[]> {
+    return await prisma.projectReviewer.findMany({
       where: {
         reviewerId,
         archivedAt: null,
@@ -65,12 +65,12 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
   async findByReviewerIdAndOrganization(
     reviewerId: string,
     organizationId: string
-  ): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findFirst({
+  ): Promise<ProjectReviewer | null> {
+    return await prisma.projectReviewer.findFirst({
       where: {
         reviewerId,
         archivedAt: null,
-        client: {
+        project: {
           organizationId,
           archivedAt: null,
         },
@@ -78,29 +78,29 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
     })
   }
 
-  async findByReviewerIdAndClient(
+  async findByReviewerIdAndProject(
     reviewerId: string,
-    clientId: string
-  ): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findFirst({
+    projectId: string
+  ): Promise<ProjectReviewer | null> {
+    return await prisma.projectReviewer.findFirst({
       where: {
         reviewerId,
-        clientId,
+        projectId,
         archivedAt: null,
       },
     })
   }
 
-  async listByClient(
-    clientId: string,
+  async listByProject(
+    projectId: string,
     pagination: CursorPaginationParams
-  ): Promise<CursorPaginationResult<ClientReviewer>> {
+  ): Promise<CursorPaginationResult<ProjectReviewer>> {
     const { cursor, limit } = normalizePaginationParams(pagination)
     const cursorWhere = createCursorWhereCondition(cursor)
 
-    const items = await prisma.clientReviewer.findMany({
+    const items = await prisma.projectReviewer.findMany({
       where: {
-        clientId,
+        projectId,
         archivedAt: null,
         ...cursorWhere,
       },
@@ -109,7 +109,7 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
     })
 
     const hasMore = items.length > limit
-    const data: ClientReviewer[] = hasMore ? items.slice(0, limit) : items
+    const data: ProjectReviewer[] = hasMore ? items.slice(0, limit) : items
 
     return {
       data,
@@ -118,7 +118,7 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
   }
 
   async archive(id: string): Promise<void> {
-    await prisma.clientReviewer.update({
+    await prisma.projectReviewer.update({
       where: { id },
       data: {
         archivedAt: new Date(),
@@ -127,18 +127,18 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.clientReviewer.delete({
+    await prisma.projectReviewer.delete({
       where: { id },
     })
   }
 
-  async findByClientIdAndEmail(
-    clientId: string,
+  async findByProjectIdAndEmail(
+    projectId: string,
     email: string
-  ): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findFirst({
+  ): Promise<ProjectReviewer | null> {
+    return await prisma.projectReviewer.findFirst({
       where: {
-        clientId,
+        projectId,
         archivedAt: null,
         reviewer: {
           email: email.toLowerCase().trim(),
@@ -151,12 +151,12 @@ export class ClientReviewerRepository implements IClientReviewerRepository {
   async findByIdScopedByOrganization(
     id: string,
     organizationId: string
-  ): Promise<ClientReviewer | null> {
-    return await prisma.clientReviewer.findFirst({
+  ): Promise<ProjectReviewer | null> {
+    return await prisma.projectReviewer.findFirst({
       where: {
         id,
         archivedAt: null,
-        client: {
+        project: {
           organizationId,
           archivedAt: null,
         },

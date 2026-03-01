@@ -10,7 +10,7 @@ export type Session = {
   email: string
   role?: 'OWNER' | 'ADMIN' | 'MEMBER'
   organizationId?: string
-  clientId?: string
+  projectId?: string
   onboardingCompleted: boolean
 }
 

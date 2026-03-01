@@ -141,7 +141,7 @@ export class AttachmentService implements IAttachmentService {
 
       const uniqueId = randomUUID()
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const key = `${reviewItem.organizationId}/${reviewItem.clientId}/${reviewItemId}/${version}/${uniqueId}-${sanitizedFileName}`
+      const key = `${reviewItem.organizationId}/${reviewItem.projectId}/${reviewItemId}/${version}/${uniqueId}-${sanitizedFileName}`
 
       return {
         finalVersion: version,

@@ -11,7 +11,7 @@ const nonEmptyString = (min: number = 1, max: number = 255): z.ZodString =>
 
 export const CreateReviewItemSchema = z
   .object({
-    clientId: uuidSchema,
+    projectId: uuidSchema,
     title: nonEmptyString(1, 255),
     description: z
       .string()

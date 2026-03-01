@@ -58,10 +58,10 @@ function buildCanonicalSession(
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
       reviewerId: string
-      clientId: string | null
+      projectId: string | null
     }
     session.reviewerId = reviewerActor.reviewerId
-    session.clientId = reviewerActor.clientId || undefined
+    session.projectId = reviewerActor.projectId || undefined
 
     if (!reviewer) {
       throw new InternalError('Reviewer not found when building session')
@@ -88,7 +88,7 @@ function buildJsonResponse(
         userId: session.userId,
         reviewerId: session.reviewerId,
         organizationId: session.organizationId,
-        clientId: session.clientId,
+        projectId: session.projectId,
         role: session.role,
         onboardingCompleted: session.onboardingCompleted,
         email: session.email,

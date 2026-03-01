@@ -9,22 +9,22 @@ const nonEmptyString = (min: number = 1, max: number = 255): z.ZodString =>
     .max(max, `Must be at most ${max} characters`)
     .trim()
 
-export const CreateClientSchema = z
+export const CreateProjectSchema = z
   .object({
     name: nonEmptyString(1, 255),
   })
   .strict()
 
-export type CreateClientRequest = z.infer<typeof CreateClientSchema>
+export type CreateProjectRequest = z.infer<typeof CreateProjectSchema>
 
 
-export const UpdateClientSchema = z
+export const UpdateProjectSchema = z
   .object({
     name: nonEmptyString(1, 255).optional(),
   })
   .strict()
 
-export type UpdateClientRequest = z.infer<typeof UpdateClientSchema>
+export type UpdateProjectRequest = z.infer<typeof UpdateProjectSchema>
 
 
 export const InviteReviewerSchema = z
@@ -41,20 +41,20 @@ export const InviteReviewerSchema = z
 export type InviteReviewerRequest = z.infer<typeof InviteReviewerSchema>
 
 
-export const ClientParamsSchema = z
+export const ProjectParamsSchema = z
   .object({
     id: uuidSchema,
   })
   .strict()
 
-export type ClientParams = z.infer<typeof ClientParamsSchema>
+export type ProjectParams = z.infer<typeof ProjectParamsSchema>
 
 
-export const ClientReviewerParamsSchema = z
+export const ProjectReviewerParamsSchema = z
   .object({
     id: uuidSchema,
     reviewerId: uuidSchema,
   })
   .strict()
 
-export type ClientReviewerParams = z.infer<typeof ClientReviewerParamsSchema>
+export type ProjectReviewerParams = z.infer<typeof ProjectReviewerParamsSchema>

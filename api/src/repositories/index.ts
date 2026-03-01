@@ -10,17 +10,6 @@ export {
   type IAttachmentRepository,
 } from './attachment.repository'
 export {
-  ClientRepository,
-  type CreateClientInput,
-  type IClientRepository,
-  type UpdateClientInput,
-} from './client.repository'
-export {
-  ClientReviewerRepository,
-  type CreateClientReviewerInput,
-  type IClientReviewerRepository,
-} from './client-reviewer.repository'
-export {
   CommentRepository,
   type CreateCommentInput,
   type ICommentRepository,
@@ -41,6 +30,17 @@ export {
   OrganizationRepository,
   type UpdateOrganizationInput,
 } from './organization.repository'
+export {
+  type CreateProjectInput,
+  type IProjectRepository,
+  ProjectRepository,
+  type UpdateProjectInput,
+} from './project.repository'
+export {
+  type CreateProjectReviewerInput,
+  type IProjectReviewerRepository,
+  ProjectReviewerRepository,
+} from './project-reviewer.repository'
 export {
   type CreateDraftReviewItemInput,
   type IReviewItemRepository,

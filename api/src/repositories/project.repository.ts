@@ -1,5 +1,5 @@
 
-import type { Client } from '@prisma/client'
+import type { Project } from '@prisma/client'
 
 import {
   createCursorWhereCondition,
@@ -11,34 +11,34 @@ import {
   prisma
 } from '../lib'
 
-export type CreateClientInput = {
+export type CreateProjectInput = {
   organizationId: string
   name: string
 }
 
-export type UpdateClientInput = {
+export type UpdateProjectInput = {
   name?: string
 }
 
-export interface IClientRepository {
-  create(data: CreateClientInput): Promise<Client>
-  update(id: string, organizationId: string, data: UpdateClientInput): Promise<Client>
-  findById(id: string, organizationId: string): Promise<Client | null>
+export interface IProjectRepository {
+  create(data: CreateProjectInput): Promise<Project>
+  update(id: string, organizationId: string, data: UpdateProjectInput): Promise<Project>
+  findById(id: string, organizationId: string): Promise<Project | null>
   listByOrganization(
     organizationId: string,
     pagination: CursorPaginationParams
-  ): Promise<CursorPaginationResult<Client>>
+  ): Promise<CursorPaginationResult<Project>>
   archive(id: string, organizationId: string): Promise<void>
   findByNameCaseInsensitive(
     name: string,
     organizationId: string
-  ): Promise<Client | null>
-  findByIdForReviewer(clientId: string, reviewerId: string): Promise<Client | null>
+  ): Promise<Project | null>
+  findByIdForReviewer(projectId: string, reviewerId: string): Promise<Project | null>
 }
 
-export class ClientRepository implements IClientRepository {
-  async create(data: CreateClientInput): Promise<Client> {
-    return await prisma.client.create({
+export class ProjectRepository implements IProjectRepository {
+  async create(data: CreateProjectInput): Promise<Project> {
+    return await prisma.project.create({
       data: {
         organizationId: data.organizationId,
         name: data.name,
@@ -49,9 +49,9 @@ export class ClientRepository implements IClientRepository {
   async update(
     id: string,
     organizationId: string,
-    data: UpdateClientInput
-  ): Promise<Client> {
-    return await prisma.client.update({
+    data: UpdateProjectInput
+  ): Promise<Project> {
+    return await prisma.project.update({
       where: {
         id,
         organizationId,
@@ -60,8 +60,8 @@ export class ClientRepository implements IClientRepository {
     })
   }
 
-  async findById(id: string, organizationId: string): Promise<Client | null> {
-    return await prisma.client.findFirst({
+  async findById(id: string, organizationId: string): Promise<Project | null> {
+    return await prisma.project.findFirst({
       where: {
         id,
         organizationId,
@@ -73,11 +73,11 @@ export class ClientRepository implements IClientRepository {
   async listByOrganization(
     organizationId: string,
     pagination: CursorPaginationParams
-  ): Promise<CursorPaginationResult<Client>> {
+  ): Promise<CursorPaginationResult<Project>> {
     const { cursor, limit } = normalizePaginationParams(pagination)
     const cursorWhere = createCursorWhereCondition(cursor)
 
-    const items = await prisma.client.findMany({
+    const items = await prisma.project.findMany({
       where: {
         organizationId,
         archivedAt: null,
@@ -88,7 +88,7 @@ export class ClientRepository implements IClientRepository {
     })
 
     const hasMore = items.length > limit
-    const data: Client[] = hasMore ? items.slice(0, limit) : items
+    const data: Project[] = hasMore ? items.slice(0, limit) : items
 
     return {
       data,
@@ -97,7 +97,7 @@ export class ClientRepository implements IClientRepository {
   }
 
   async archive(id: string, organizationId: string): Promise<void> {
-    await prisma.client.update({
+    await prisma.project.update({
       where: {
         id,
         organizationId,
@@ -111,8 +111,8 @@ export class ClientRepository implements IClientRepository {
   async findByNameCaseInsensitive(
     name: string,
     organizationId: string
-  ): Promise<Client | null> {
-    return await prisma.client.findFirst({
+  ): Promise<Project | null> {
+    return await prisma.project.findFirst({
       where: {
         organizationId,
         archivedAt: null,
@@ -124,23 +124,22 @@ export class ClientRepository implements IClientRepository {
     })
   }
 
-  async findByIdForReviewer(clientId: string, reviewerId: string): Promise<Client | null> {
-    // Validate reviewer has access to this client via ClientReviewer link
-    const clientReviewer = await prisma.clientReviewer.findFirst({
+  async findByIdForReviewer(projectId: string, reviewerId: string): Promise<Project | null> {
+    const projectReviewer = await prisma.projectReviewer.findFirst({
       where: {
         reviewerId,
-        clientId,
+        projectId,
         archivedAt: null,
       },
       include: {
-        client: true,
+        project: true,
       },
     })
 
-    if (!clientReviewer || clientReviewer.client.archivedAt !== null) {
+    if (!projectReviewer || projectReviewer.project.archivedAt !== null) {
       return null
     }
 
-    return clientReviewer.client
+    return projectReviewer.project
   }
 }

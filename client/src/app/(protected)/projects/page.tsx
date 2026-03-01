@@ -8,22 +8,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { dummyClients } from "@/lib/dummy/clients"
+import { dummyProjects } from "@/lib/dummy/projects"
 
-export default function ClientsPage() {
+export default function ProjectsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Clients</h1>
+        <h1 className="text-3xl font-bold">Projects</h1>
         <p className="text-muted-foreground mt-2">
-          Manage your client relationships
+          Manage your projects
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Clients</CardTitle>
-          <CardDescription>A list of all clients in your organization</CardDescription>
+          <CardTitle>All Projects</CardTitle>
+          <CardDescription>A list of all projects in your organization</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -37,25 +37,25 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dummyClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>{client.email}</TableCell>
+              {dummyProjects.map((project) => (
+                <TableRow key={project.id}>
+                  <TableCell className="font-medium">{project.name}</TableCell>
+                  <TableCell>{project.email}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        client.status === "active"
+                        project.status === "active"
                           ? "default"
-                          : client.status === "pending"
+                          : project.status === "pending"
                             ? "secondary"
                             : "outline"
                       }
                     >
-                      {client.status}
+                      {project.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{client.reviewCount}</TableCell>
-                  <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{project.reviewCount}</TableCell>
+                  <TableCell>{new Date(project.createdAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

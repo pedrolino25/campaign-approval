@@ -1,4 +1,4 @@
-import type { ClientReviewer, Notification, NotificationType, Prisma, User } from '@prisma/client'
+import type { Notification, NotificationType, Prisma, ProjectReviewer, User } from '@prisma/client'
 
 import { logger, SQSService } from '../lib'
 import type {
@@ -13,8 +13,8 @@ import {
   WorkflowEventType,
 } from '../models'
 import {
-  ClientReviewerRepository,
   NotificationRepository,
+  ProjectReviewerRepository,
   ReviewerRepository,
   UserRepository,
 } from '../repositories'
@@ -28,7 +28,7 @@ type Recipient = {
 type ReviewItemSelect = {
   id: string
   organizationId: string
-  clientId: string
+  projectId: string
   title: string
 }
 
@@ -36,14 +36,14 @@ export class NotificationService {
   private readonly notificationRepository: NotificationRepository
   private readonly userRepository: UserRepository
   private readonly reviewerRepository: ReviewerRepository
-  private readonly clientReviewerRepository: ClientReviewerRepository
+  private readonly projectReviewerRepository: ProjectReviewerRepository
   private readonly sqsService: SQSService
 
   constructor() {
     this.notificationRepository = new NotificationRepository()
     this.userRepository = new UserRepository()
     this.reviewerRepository = new ReviewerRepository()
-    this.clientReviewerRepository = new ClientReviewerRepository()
+    this.projectReviewerRepository = new ProjectReviewerRepository()
     this.sqsService = new SQSService()
   }
 
@@ -64,7 +64,7 @@ export class NotificationService {
       select: {
         id: true,
         organizationId: true,
-        clientId: true,
+        projectId: true,
         title: true,
       },
     })
@@ -202,7 +202,7 @@ export class NotificationService {
       case WorkflowEventType.REVIEW_SENT:
       case WorkflowEventType.REVIEW_REOPENED:
       case WorkflowEventType.REVIEW_REMINDER:
-        return await this.getReviewersForClient(reviewItem.clientId)
+        return await this.getReviewersForProject(reviewItem.projectId)
 
       case WorkflowEventType.REVIEW_APPROVED:
       case WorkflowEventType.REVIEW_CHANGES_REQUESTED:
@@ -212,11 +212,11 @@ export class NotificationService {
         if (actor.type === ActorType.Reviewer) {
           return await this.getInternalUsers(reviewItem.organizationId)
         } else {
-          return await this.getReviewersForClient(reviewItem.clientId)
+          return await this.getReviewersForProject(reviewItem.projectId)
         }
 
       case WorkflowEventType.ATTACHMENT_UPLOADED:
-        return await this.getReviewersForClient(reviewItem.clientId)
+        return await this.getReviewersForProject(reviewItem.projectId)
 
       default:
         logger.warn({
@@ -227,24 +227,24 @@ export class NotificationService {
     }
   }
 
-  private async getReviewersForClient(
-    clientId: string
+  private async getReviewersForProject(
+    projectId: string
   ): Promise<Recipient[]> {
-    const allClientReviewers: ClientReviewer[] = []
+    const allProjectReviewers: ProjectReviewer[] = []
     let cursor: string | undefined = undefined
 
     do {
-      const result: CursorPaginationResult<ClientReviewer> =
-        await this.clientReviewerRepository.listByClient(clientId, {
+      const result: CursorPaginationResult<ProjectReviewer> =
+        await this.projectReviewerRepository.listByProject(projectId, {
           cursor,
           limit: 100,
         })
-      allClientReviewers.push(...result.data)
+      allProjectReviewers.push(...result.data)
       cursor = result.nextCursor ?? undefined
     } while (cursor)
 
     // Collect reviewerIds
-    const reviewerIds = allClientReviewers.map((cr) => cr.reviewerId)
+    const reviewerIds = allProjectReviewers.map((cr) => cr.reviewerId)
 
     if (reviewerIds.length === 0) {
       return []
@@ -416,11 +416,11 @@ export class NotificationService {
       .map((r) => r.reviewerId!)
 
     if (reviewerIds.length > 0) {
-      const validClientReviewers = await tx.clientReviewer.findMany({
+      const validProjectReviewers = await tx.projectReviewer.findMany({
         where: {
           reviewerId: { in: reviewerIds },
           archivedAt: null,
-          client: {
+          project: {
             organizationId,
             archivedAt: null,
           },
@@ -428,7 +428,7 @@ export class NotificationService {
         select: { reviewerId: true },
       })
 
-      const validReviewerIds = new Set(validClientReviewers.map((cr) => cr.reviewerId))
+      const validReviewerIds = new Set(validProjectReviewers.map((cr) => cr.reviewerId))
       const invalidReviewerRecipients = recipients.filter(
         (r) => r.reviewerId && !validReviewerIds.has(r.reviewerId)
       )
@@ -461,18 +461,18 @@ export class NotificationService {
     }
 
     if (recipient.reviewerId) {
-      const clientReviewer = await tx.clientReviewer.findFirst({
+      const projectReviewer = await tx.projectReviewer.findFirst({
         where: {
           reviewerId: recipient.reviewerId,
           archivedAt: null,
-          client: {
+          project: {
             organizationId,
             archivedAt: null,
           },
         },
       })
 
-      if (!clientReviewer) {
+      if (!projectReviewer) {
         throw new InvariantViolationError('INVALID_NOTIFICATION_RECIPIENT')
       }
     }
@@ -669,9 +669,9 @@ export class NotificationService {
     invitationId: string
     token: string
     type: string
-    clientId: string | null
+    projectId: string | null
   }): Promise<Notification> {
-    const { organizationId, email, invitationId, token, type, clientId } = params
+    const { organizationId, email, invitationId, token, type, projectId } = params
 
     const notification = await this.notificationRepository.create({
       organizationId,
@@ -682,7 +682,7 @@ export class NotificationService {
         token,
         type,
         organizationId,
-        clientId,
+        projectId,
       },
     })
 
@@ -696,7 +696,7 @@ export class NotificationService {
         token,
         type,
         organizationId,
-        clientId,
+        projectId,
       },
     })
 
@@ -709,10 +709,10 @@ export class NotificationService {
     invitationId: string
     token: string
     type: string
-    clientId: string | null
+    projectId: string | null
     tx: Prisma.TransactionClient
   }): Promise<Notification> {
-    const { organizationId, email, invitationId, token, type, clientId, tx } = params
+    const { organizationId, email, invitationId, token, type, projectId, tx } = params
 
     return await this.notificationRepository.create(
       {
@@ -724,7 +724,7 @@ export class NotificationService {
           token,
           type,
           organizationId,
-          clientId,
+          projectId,
         },
       },
       tx
@@ -738,9 +738,9 @@ export class NotificationService {
     invitationId: string
     token: string
     type: string
-    clientId: string | null
+    projectId: string | null
   }): Promise<void> {
-    const { notificationId, organizationId, email, invitationId, token, type, clientId } = params
+    const { notificationId, organizationId, email, invitationId, token, type, projectId } = params
 
     await this.enqueueEmailJob({
       notificationId,
@@ -752,7 +752,7 @@ export class NotificationService {
         token,
         type,
         organizationId,
-        clientId,
+        projectId,
       },
     })
   }

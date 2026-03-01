@@ -6,12 +6,12 @@ import {
   UnauthorizedError,
 } from '../../../models'
 import {
-  type ClientReviewerRepository,
+  type ProjectReviewerRepository,
 } from '../../../repositories'
 
 export class RBACService {
   constructor(
-    private readonly clientReviewerRepository: ClientReviewerRepository
+    private readonly projectReviewerRepository: ProjectReviewerRepository
   ) {}
 
   async resolve(
@@ -45,17 +45,17 @@ export class RBACService {
       return {
         type: ActorType.Reviewer,
         reviewerId: reviewer.id,
-        clientId: null,
+        projectId: null,
       } as Omit<ActorContext, 'onboardingCompleted'>
     }
 
-    const clientReviewer =
-      await this.clientReviewerRepository.findByReviewerIdAndOrganization(
+    const projectReviewer =
+      await this.projectReviewerRepository.findByReviewerIdAndOrganization(
         reviewer.id,
         organizationId
       )
 
-    if (!clientReviewer) {
+    if (!projectReviewer) {
       throw new UnauthorizedError(
         'Unable to resolve actor: reviewer not found for this organization'
       )
@@ -64,7 +64,7 @@ export class RBACService {
     return {
       type: ActorType.Reviewer,
       reviewerId: reviewer.id,
-      clientId: clientReviewer.clientId,
+      projectId: projectReviewer.projectId,
     } as Omit<ActorContext, 'onboardingCompleted'>
   }
 
@@ -72,13 +72,13 @@ export class RBACService {
     reviewerId: string,
     organizationId: string
   ): Promise<Omit<ActorContext, 'onboardingCompleted'>> {
-    const clientReviewer =
-      await this.clientReviewerRepository.findByReviewerIdAndOrganization(
+    const projectReviewer =
+      await this.projectReviewerRepository.findByReviewerIdAndOrganization(
         reviewerId,
         organizationId
       )
 
-    if (!clientReviewer) {
+    if (!projectReviewer) {
       throw new UnauthorizedError(
         'Unable to resolve actor: reviewer not found for this organization'
       )
@@ -87,7 +87,7 @@ export class RBACService {
     return {
       type: ActorType.Reviewer,
       reviewerId,
-      clientId: clientReviewer.clientId,
+      projectId: projectReviewer.projectId,
     } as Omit<ActorContext, 'onboardingCompleted'>
   }
 }

@@ -58,10 +58,10 @@ import {
   UnauthorizedError,
 } from '../models'
 import {
-  ClientRepository,
-  ClientReviewerRepository,
   InvitationRepository,
   OrganizationRepository,
+  ProjectRepository,
+  ProjectReviewerRepository,
   ReviewerRepository,
   UserRepository,
 } from '../repositories'
@@ -77,7 +77,7 @@ const reviewerRepository = new ReviewerRepository()
 const organizationRepository = new OrganizationRepository()
 const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
-const rbacService = new RBACService(new ClientReviewerRepository())
+const rbacService = new RBACService(new ProjectReviewerRepository())
 const authService = new AuthService(
   userRepository,
   reviewerRepository
@@ -207,20 +207,20 @@ function logLoginSuccess(
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
       reviewerId: string
-      clientId: string | null
+      projectId: string | null
     }
     logger.info({
       ...baseLogData,
       event: 'LOGIN_SUCCESS',
       actorId: reviewerActor.reviewerId,
-      clientId: reviewerActor.clientId,
+      projectId: reviewerActor.projectId,
     })
 
     logger.info({
       ...baseLogData,
       event: 'SESSION_CREATED',
       actorId: reviewerActor.reviewerId,
-      clientId: reviewerActor.clientId,
+      projectId: reviewerActor.projectId,
     })
 
     logger.warn({
@@ -580,7 +580,7 @@ function createSessionResponse(session: CanonicalSession): APIGatewayProxyStruct
       userId: session.userId,
       reviewerId: session.reviewerId,
       organizationId: session.organizationId,
-      clientId: session.clientId,
+      projectId: session.projectId,
       role: session.role,
       onboardingCompleted: session.onboardingCompleted,
       email: session.email,
@@ -736,7 +736,7 @@ const handleCompleteSignupInternal = async (
 function buildReviewerSessionAfterOnboarding(
   cognitoSub: string,
   email: string,
-  clientId: string,
+  projectId: string,
   updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>
 ): CanonicalSession {
   if (!updatedReviewer) {
@@ -746,7 +746,7 @@ function buildReviewerSessionAfterOnboarding(
     cognitoSub,
     actorType: ActorType.Reviewer,
     reviewerId: updatedReviewer.id,
-    clientId,
+    projectId,
     onboardingCompleted: true,
     email,
     sessionVersion: updatedReviewer.sessionVersion,
@@ -806,19 +806,19 @@ const handleCompleteSignupReviewer = async (
 
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
   
-  // Derive organizationId from clientId for tenant scoping
-  const clientRepository = new ClientRepository()
+  // Derive organizationId from projectId for tenant scoping
+  const projectRepository = new ProjectRepository()
   const reviewerActor = actor as {
     type: typeof ActorType.Reviewer
     reviewerId: string
-    clientId: string
+    projectId: string
   }
-  const client = await clientRepository.findByIdForReviewer(
-    reviewerActor.clientId,
+  const project = await projectRepository.findByIdForReviewer(
+    reviewerActor.projectId,
     reviewerActor.reviewerId
   )
-  if (!client) {
-    throw new NotFoundError('Client not found')
+  if (!project) {
+    throw new NotFoundError('Project not found')
   }
 
   const onboardingService = new OnboardingService(
@@ -829,14 +829,14 @@ const handleCompleteSignupReviewer = async (
 
   const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
-    organizationId: client.organizationId,
+    organizationId: project.organizationId,
     name: validated.body.name,
   })
 
   const newSessionPayload = buildReviewerSessionAfterOnboarding(
     event.authContext.cognitoSub,
     event.authContext.email,
-    reviewerActor.clientId,
+    reviewerActor.projectId,
     updatedReviewer
   )
 

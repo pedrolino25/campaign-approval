@@ -11,13 +11,14 @@ export interface ReviewItem {
   description?: string
   status: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'CHANGES_REQUESTED' | 'ARCHIVED'
   version: number
-  clientId: string
+  projectId: string
   organizationId: string
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateReviewItemRequest {
+  projectId: string
   title: string
   description?: string
 }

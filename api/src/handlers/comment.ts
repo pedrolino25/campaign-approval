@@ -21,7 +21,7 @@ import {
   NotFoundError,
   type RouteDefinition,
 } from '../models'
-import { ClientRepository, CommentRepository, ReviewItemRepository } from '../repositories'
+import { CommentRepository, ProjectRepository, ReviewItemRepository } from '../repositories'
 import { CommentService } from '../services'
 
 const handleGetComments = async (
@@ -72,17 +72,17 @@ const handlePostComment = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      actor.projectId!,
       actor.reviewerId
     )
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
-    organizationId = client.organizationId
+    organizationId = project.organizationId
   }
-  
+
   const reviewItemRepository = new ReviewItemRepository()
   const reviewItem = await reviewItemRepository.findByIdScoped(reviewItemId, organizationId)
   if (!reviewItem) {
@@ -124,15 +124,15 @@ const handleDeleteComment = async (
   if (actor.type === ActorType.Internal) {
     organizationId = actor.organizationId
   } else {
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      actor.projectId!,
       actor.reviewerId
     )
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
-    organizationId = client.organizationId
+    organizationId = project.organizationId
   }
 
   const commentRepository = new CommentRepository()
