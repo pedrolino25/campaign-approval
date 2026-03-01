@@ -29,7 +29,7 @@ export default function InviteReviewerPage({ params }: { params: { projectId: st
         }
       />
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Reviewer details</CardTitle>
         </CardHeader>

@@ -57,7 +57,7 @@ export default function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Projects
@@ -67,7 +67,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-semibold">{totalProjects}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Pending Reviews
@@ -78,7 +78,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">Across all projects</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Changes Requested
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-semibold">{changesRequested}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
           </CardHeader>
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Projects</CardTitle>
         </CardHeader>

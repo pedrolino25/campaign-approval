@@ -70,7 +70,7 @@ export default function TeamPage() {
         }
       />
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Members</CardTitle>
         </CardHeader>

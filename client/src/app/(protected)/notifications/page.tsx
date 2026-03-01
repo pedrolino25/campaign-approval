@@ -22,9 +22,8 @@ export default function NotificationsPage() {
           list.map((n) => (
             <li
               key={n.id}
-              className={`flex items-start justify-between rounded-md border p-4 text-sm ${
-                !n.read ? 'bg-muted/40' : ''
-              }`}
+              className={`flex items-start justify-between rounded-md border p-4 text-sm ${!n.read ? 'bg-muted/40' : ''
+                }`}
             >
               <div>
                 <p className="font-medium">{n.title}</p>
@@ -56,7 +55,7 @@ export default function NotificationsPage() {
         action={unreadCount > 0 && <Badge variant="secondary">{unreadCount} unread</Badge>}
       />
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Notifications</CardTitle>
         </CardHeader>

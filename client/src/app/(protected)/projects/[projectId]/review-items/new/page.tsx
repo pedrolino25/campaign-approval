@@ -32,7 +32,7 @@ export default function NewProjectReviewItemPage({ params }: { params: { project
         }
       />
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-2xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-2xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Details</CardTitle>
         </CardHeader>

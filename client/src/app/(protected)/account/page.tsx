@@ -28,7 +28,7 @@ export default function AccountPage() {
         description="Profile and security"
       />
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Profile</CardTitle>
         </CardHeader>
@@ -44,7 +44,7 @@ export default function AccountPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Change password</CardTitle>
         </CardHeader>
@@ -67,7 +67,7 @@ export default function AccountPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Sessions</CardTitle>
         </CardHeader>

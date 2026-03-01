@@ -32,7 +32,7 @@ export default function BillingPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-md border bg-card shadow-sm">
+        <Card className="rounded-xs border bg-card shadow-sm">
           <CardHeader className="p-4">
             <CardTitle className="text-sm font-medium">Current plan</CardTitle>
           </CardHeader>
@@ -42,7 +42,7 @@ export default function BillingPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-md border bg-card shadow-sm">
+        <Card className="rounded-xs border bg-card shadow-sm">
           <CardHeader className="p-4">
             <CardTitle className="text-sm font-medium">Payment method</CardTitle>
           </CardHeader>
@@ -60,7 +60,7 @@ export default function BillingPage() {
         </Card>
       </div>
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Invoices</CardTitle>
         </CardHeader>
@@ -75,7 +75,7 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-md border border-destructive/50 bg-card shadow-sm max-w-xl">
+      <Card className="rounded-xs border border-destructive/50 bg-card shadow-sm max-w-xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium text-destructive">
             Cancel subscription

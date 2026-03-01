@@ -31,7 +31,7 @@ export default function OrganizationPage() {
           value="general"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+          <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">General</CardTitle>
             </CardHeader>
@@ -60,7 +60,7 @@ export default function OrganizationPage() {
           value="reminders"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm max-w-xl">
+          <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Reminder settings</CardTitle>
             </CardHeader>
@@ -85,7 +85,7 @@ export default function OrganizationPage() {
           value="security"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">Security settings (placeholder).</p>
             </CardContent>
@@ -96,7 +96,7 @@ export default function OrganizationPage() {
           value="audit"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">Audit log (placeholder).</p>
             </CardContent>

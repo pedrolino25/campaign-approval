@@ -43,7 +43,7 @@ export default function ProjectSettingsPage() {
         }
       />
 
-      <Card className="rounded-md border bg-card shadow-sm max-w-2xl">
+      <Card className="rounded-xs border bg-card shadow-sm max-w-2xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">General</CardTitle>
         </CardHeader>
@@ -59,7 +59,7 @@ export default function ProjectSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-md border border-destructive/50 bg-card shadow-sm max-w-2xl">
+      <Card className="rounded-xs border border-destructive/50 bg-card shadow-sm max-w-2xl">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium text-destructive">Danger zone</CardTitle>
         </CardHeader>
