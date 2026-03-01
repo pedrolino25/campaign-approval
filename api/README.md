@@ -76,7 +76,9 @@ ping api.worklient.test
 It must resolve to:
 
 ```
-127.0.0.1
+127.0.0.1 worklient.test
+127.0.0.1 api.worklient.test
+127.0.0.1 app.worklient.test
 ```
 
 ---
@@ -225,14 +227,14 @@ Backend must run on HTTPS to:
 Inside `api/`:
 
 ```bash
-mkcert api.worklient.test
+mkcert api.worklient.test app.worklient.test worklient.test
 ```
 
 This generates:
 
 ```
-api.worklient.test.pem
-api.worklient.test-key.pem
+api.worklient.test+2.pem
+api.worklient.test+2-key.pem
 ```
 
 Do not commit these files.

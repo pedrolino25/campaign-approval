@@ -6,8 +6,8 @@ const targetPort = 4000
 const securePort = 4001
 
 const options = {
-  key: fs.readFileSync("./api.worklient.test-key.pem"),
-  cert: fs.readFileSync("./api.worklient.test.pem"),
+  key: fs.readFileSync("./api.worklient.test+2-key.pem"),
+  cert: fs.readFileSync("./api.worklient.test+2.pem"),
 }
 
 https

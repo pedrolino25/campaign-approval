@@ -123,10 +123,14 @@ export class SessionService {
   }
 
   private getCookieDomain(): string | undefined {
-    if (config.ENVIRONMENT === 'prod' || config.ENVIRONMENT === 'dev') {
+    const isOffline = process.env.IS_OFFLINE === 'true'
+
+    if (isOffline) {
+      return '.worklient.test'
+    } else if (config.ENVIRONMENT === 'prod' || config.ENVIRONMENT === 'dev') {
       return '.worklient.com'
     }
-    return '.worklient.test'
+    return undefined
   }
 
   private buildCookie(name: string, value: string, maxAge: number): string {

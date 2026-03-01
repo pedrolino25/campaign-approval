@@ -48,6 +48,8 @@ sudo nano /etc/hosts
 Add:
 
 ```
+127.0.0.1 worklient.test
+127.0.0.1 api.worklient.test
 127.0.0.1 app.worklient.test
 ```
 
@@ -101,14 +103,14 @@ mkcert -install
 From inside the frontend root folder:
 
 ```bash
-mkcert app.worklient.test
+mkcert api.worklient.test app.worklient.test worklient.test
 ```
 
 This generates:
 
 ```
-app.worklient.test.pem
-app.worklient.test-key.pem
+api.worklient.test+2.pem
+api.worklient.test+2-key.pem
 ```
 
 Do not commit these files.
