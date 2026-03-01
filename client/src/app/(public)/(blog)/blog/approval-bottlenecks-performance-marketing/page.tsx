@@ -76,7 +76,7 @@ export default function ApprovalBottlenecksPerformanceMarketing() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <article>
+          <article className="flex flex-col gap-10 w-full">
             <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
             <Blog.Title>
               Approval Bottlenecks in Performance Marketing

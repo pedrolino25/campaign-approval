@@ -62,136 +62,136 @@ export default function CampaignApprovalDelaysMarketingAgencies() {
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />
-          <article>
+          <article className="flex flex-col gap-10 w-full">
             <Blog.Date>Jan 10, 2026 • Worklient</Blog.Date>
             <Blog.Title>Campaign Approval Delays in Marketing Agencies</Blog.Title>
             <Blog.Image src={image} alt="Campaign Approval Delays in Marketing Agencies" />
             <div>
-            <Blog.Subtitle>
-              Why approval bottlenecks happen and how structured workflows eliminate revenue drag.
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                Why approval bottlenecks happen and how structured workflows eliminate revenue drag.
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Campaign approval delays are one of the most underestimated operational problems inside marketing agencies. They rarely appear in financial reports, yet they quietly impact delivery speed, team morale, and client satisfaction. When approvals stall, campaigns miss launch windows, performance metrics suffer, and internal teams shift from execution to chasing feedback.
-            </Blog.Text>
+              <Blog.Text>
+                Campaign approval delays are one of the most underestimated operational problems inside marketing agencies. They rarely appear in financial reports, yet they quietly impact delivery speed, team morale, and client satisfaction. When approvals stall, campaigns miss launch windows, performance metrics suffer, and internal teams shift from execution to chasing feedback.
+              </Blog.Text>
 
-            <Blog.Text>
-              <Blog.Strong>
-                Approval delays are not a client problem. They are a workflow problem.
-              </Blog.Strong>
-            </Blog.Text>
+              <Blog.Text>
+                <Blog.Strong>
+                  Approval delays are not a client problem. They are a workflow problem.
+                </Blog.Strong>
+              </Blog.Text>
 
-            <Blog.Text>
-              Agencies often assume delays are caused by unresponsive clients. In reality, the root cause is usually the absence of a structured approval process. Without defined status progression, controlled permissions, and clear accountability, feedback becomes fragmented across email threads, Slack messages, and project management comments.
-            </Blog.Text>
+              <Blog.Text>
+                Agencies often assume delays are caused by unresponsive clients. In reality, the root cause is usually the absence of a structured approval process. Without defined status progression, controlled permissions, and clear accountability, feedback becomes fragmented across email threads, Slack messages, and project management comments.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              The Hidden Operational Cost of Campaign Approval Delays
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                The Hidden Operational Cost of Campaign Approval Delays
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Every delayed approval creates a compounding operational cost. Creative teams pause production. Account managers send manual follow-ups. Performance teams postpone launch dates. The entire campaign pipeline slows down.
-            </Blog.Text>
+              <Blog.Text>
+                Every delayed approval creates a compounding operational cost. Creative teams pause production. Account managers send manual follow-ups. Performance teams postpone launch dates. The entire campaign pipeline slows down.
+              </Blog.Text>
 
-            <Blog.Text>
-              <Blog.Strong>
-                Delayed approvals directly reduce agency margin.
-              </Blog.Strong>
-            </Blog.Text>
+              <Blog.Text>
+                <Blog.Strong>
+                  Delayed approvals directly reduce agency margin.
+                </Blog.Strong>
+              </Blog.Text>
 
-            <Blog.Text>
-              When campaigns launch late, agencies either compress execution timelines or absorb additional labor costs. Both scenarios impact profitability. Over time, recurring approval delays reduce operational efficiency and limit scalability.
-            </Blog.Text>
+              <Blog.Text>
+                When campaigns launch late, agencies either compress execution timelines or absorb additional labor costs. Both scenarios impact profitability. Over time, recurring approval delays reduce operational efficiency and limit scalability.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              Why Campaign Approvals Get Delayed
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                Why Campaign Approvals Get Delayed
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Most marketing agencies experience approval delays due to structural issues in their campaign review process. Common causes include unclear status ownership, informal feedback channels, missing approval deadlines, and lack of visibility across active campaigns.
-            </Blog.Text>
+              <Blog.Text>
+                Most marketing agencies experience approval delays due to structural issues in their campaign review process. Common causes include unclear status ownership, informal feedback channels, missing approval deadlines, and lack of visibility across active campaigns.
+              </Blog.Text>
 
-            <Blog.Text>
-              When there is no defined progression from draft to approved, stakeholders are unsure who needs to act next. Feedback arrives in different formats. Version history becomes confusing. Approval authority is unclear. The result is friction.
-            </Blog.Text>
+              <Blog.Text>
+                When there is no defined progression from draft to approved, stakeholders are unsure who needs to act next. Feedback arrives in different formats. Version history becomes confusing. Approval authority is unclear. The result is friction.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              Email-Based Client Approvals Create Workflow Chaos
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                Email-Based Client Approvals Create Workflow Chaos
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Many agencies still rely on email for campaign approvals. While convenient, email introduces fragmentation. Feedback gets buried in threads. Attachments are duplicated. Version control becomes unreliable.
-            </Blog.Text>
+              <Blog.Text>
+                Many agencies still rely on email for campaign approvals. While convenient, email introduces fragmentation. Feedback gets buried in threads. Attachments are duplicated. Version control becomes unreliable.
+              </Blog.Text>
 
-            <Blog.Text>
-              <Blog.Strong>
-                Email is not an approval workflow system.
-              </Blog.Strong>
-            </Blog.Text>
+              <Blog.Text>
+                <Blog.Strong>
+                  Email is not an approval workflow system.
+                </Blog.Strong>
+              </Blog.Text>
 
-            <Blog.Text>
-              It lacks structured status transitions, audit traceability, and real-time visibility. As agencies scale and manage more clients simultaneously, email-based approvals become increasingly unsustainable.
-            </Blog.Text>
+              <Blog.Text>
+                It lacks structured status transitions, audit traceability, and real-time visibility. As agencies scale and manage more clients simultaneously, email-based approvals become increasingly unsustainable.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              The Role of Structured Approval Workflows
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                The Role of Structured Approval Workflows
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              High-performing agencies reduce campaign approval delays by implementing structured approval workflows. This means every asset moves through clearly defined stages such as Draft, Pending Review, Changes Requested, and Approved.
-            </Blog.Text>
+              <Blog.Text>
+                High-performing agencies reduce campaign approval delays by implementing structured approval workflows. This means every asset moves through clearly defined stages such as Draft, Pending Review, Changes Requested, and Approved.
+              </Blog.Text>
 
-            <Blog.Text>
-              Structured workflows introduce accountability. Each stage has defined actions. Only authorized roles can approve. Status updates reflect real-time progress. Teams no longer rely on memory or manual follow-ups.
-            </Blog.Text>
+              <Blog.Text>
+                Structured workflows introduce accountability. Each stage has defined actions. Only authorized roles can approve. Status updates reflect real-time progress. Teams no longer rely on memory or manual follow-ups.
+              </Blog.Text>
 
-            <Blog.Text>
-              <Blog.Strong>
-                Structure replaces ambiguity.
-              </Blog.Strong>
-            </Blog.Text>
+              <Blog.Text>
+                <Blog.Strong>
+                  Structure replaces ambiguity.
+                </Blog.Strong>
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              Visibility Eliminates Bottlenecks
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                Visibility Eliminates Bottlenecks
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Approval delays often occur because no one has a complete view of campaign status. When teams lack operational visibility, bottlenecks go unnoticed until deadlines are missed.
-            </Blog.Text>
+              <Blog.Text>
+                Approval delays often occur because no one has a complete view of campaign status. When teams lack operational visibility, bottlenecks go unnoticed until deadlines are missed.
+              </Blog.Text>
 
-            <Blog.Text>
-              Real-time status tracking across campaigns allows agencies to identify stalled approvals early. Instead of reactive chasing, teams can proactively intervene and maintain momentum.
-            </Blog.Text>
+              <Blog.Text>
+                Real-time status tracking across campaigns allows agencies to identify stalled approvals early. Instead of reactive chasing, teams can proactively intervene and maintain momentum.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              How High-Growth Agencies Avoid Approval Delays
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                How High-Growth Agencies Avoid Approval Delays
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Agencies operating at scale treat campaign approvals as operational infrastructure, not ad hoc communication. They centralize feedback, enforce structured workflows, maintain version integrity, and preserve complete approval traceability.
-            </Blog.Text>
+              <Blog.Text>
+                Agencies operating at scale treat campaign approvals as operational infrastructure, not ad hoc communication. They centralize feedback, enforce structured workflows, maintain version integrity, and preserve complete approval traceability.
+              </Blog.Text>
 
-            <Blog.Text>
-              This shift transforms approvals from reactive coordination into governed process management. The result is faster campaign launches, reduced internal friction, and improved client confidence.
-            </Blog.Text>
+              <Blog.Text>
+                This shift transforms approvals from reactive coordination into governed process management. The result is faster campaign launches, reduced internal friction, and improved client confidence.
+              </Blog.Text>
 
-            <Blog.Subtitle>
-              Reducing Campaign Approval Delays Starts With Structure
-            </Blog.Subtitle>
+              <Blog.Subtitle>
+                Reducing Campaign Approval Delays Starts With Structure
+              </Blog.Subtitle>
 
-            <Blog.Text>
-              Campaign approval delays are not inevitable. They are the outcome of fragmented processes. By introducing structured approval workflows, permission-based actions, automated follow-ups, and full status visibility, agencies eliminate ambiguity and accelerate delivery.
-            </Blog.Text>
+              <Blog.Text>
+                Campaign approval delays are not inevitable. They are the outcome of fragmented processes. By introducing structured approval workflows, permission-based actions, automated follow-ups, and full status visibility, agencies eliminate ambiguity and accelerate delivery.
+              </Blog.Text>
 
-            <Blog.Text>
-              <Blog.Strong>
-                Approval infrastructure is not overhead. It is operational leverage.
-              </Blog.Strong>
-            </Blog.Text>
+              <Blog.Text>
+                <Blog.Strong>
+                  Approval infrastructure is not overhead. It is operational leverage.
+                </Blog.Strong>
+              </Blog.Text>
 
-            <Blog.Text>
-              Agencies that invest in structured campaign approval systems gain speed, clarity, and margin protection. In competitive markets where timing matters, eliminating approval delays becomes a strategic advantage.
-            </Blog.Text>
+              <Blog.Text>
+                Agencies that invest in structured campaign approval systems gain speed, clarity, and margin protection. In competitive markets where timing matters, eliminating approval delays becomes a strategic advantage.
+              </Blog.Text>
             </div>
           </article>
         </Blog.Container>
