@@ -15,7 +15,6 @@ import image10 from "@/assets/blog/email-based-client-approvals-workflow-ineffic
 import image11 from "@/assets/blog/manual-approval-follow-ups-creative-teams.png";
 import image12 from "@/assets/blog/professional-client-approval-process-agencies.png";
 import BlogCard from "@/components/landing-pages/cards/blog-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
@@ -118,7 +117,6 @@ const BLOG_POSTS = [
 export default function Blog() {
   return (
     <>
-      <Navbar />
       <Container>
         <div className="flex flex-col gap-20">
           <div className="flex flex-col md:flex-row gap-10 lg:gap-20">

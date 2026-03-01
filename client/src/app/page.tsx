@@ -1,4 +1,6 @@
-import { Navbar } from '@/components/landing-pages/navbar/navbar'
+import { headers } from 'next/headers'
+
+import { Navbar } from '@/components/layout/navbar'
 import FAQsSection from '@/components/landing-pages/sections/faqs'
 import FeaturesSection from '@/components/landing-pages/sections/features'
 import FooterSection from '@/components/landing-pages/sections/footer'
@@ -7,9 +9,10 @@ import TestimonialsSection from '@/components/landing-pages/sections/testimonial
 import { Container } from '@/components/ui/container'
 
 export default function HomePage() {
+  const hasSession = headers().get("x-session-present") === "1"
   return (
     <>
-      <Navbar />
+      <Navbar hasSession={hasSession} />
       <HeroSection
         theme="default"
         title={['Campaign Approval Infrastructure', 'Powering Modern Agencies']}

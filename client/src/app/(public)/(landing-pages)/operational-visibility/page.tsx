@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
 import { Container } from "@/components/ui/container";
@@ -33,7 +32,6 @@ export const metadata: Metadata = {
 export default function OperationalVisibility() {
   return (
     <>
-      <Navbar />
       <HeroSection
         theme="blue"
         title={["Complete Approval Visibility", "Across Every Campaign"]}

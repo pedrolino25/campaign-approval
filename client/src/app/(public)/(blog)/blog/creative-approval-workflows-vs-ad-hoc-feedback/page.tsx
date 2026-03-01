@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import image from "@/assets/blog/creative-approval-workflows-vs-ad-hoc-feedback.png";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import Blog from "@/components/landing-pages/sections/blog";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { ButtonBack } from "@/components/ui/button-back";
@@ -27,7 +26,6 @@ export const metadata: Metadata = {
 export default function CreativeApprovalWorkflowsVsAdHocFeedback() {
   return (
     <>
-      <Navbar />
       <Container className="!pt-[120px] !px-0">
         <Blog.Container>
           <ButtonBack variant="ghost" size="sm" />

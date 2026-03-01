@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { Container } from "@/components/ui/container";
 
@@ -30,7 +29,6 @@ export const metadata: Metadata = {
 export default function TermsOfService() {
   return (
     <>
-      <Navbar />
       <Container className="sm:px-5 md:px-10 !py-30 flex flex-col gap-5">
 
         <h1 className="text-h3 lg:text-h2">Terms of Service</h1>

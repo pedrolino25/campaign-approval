@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
 import { PriceCard } from "@/components/landing-pages/cards/pricing-card";
 import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
@@ -34,7 +33,6 @@ export const metadata: Metadata = {
 export default function Pricing() {
   return (
     <>
-      <Navbar />
       <Container className="!pt-[120px] !lg:pt-[150px] flex flex-col gap-10 lg:gap-20">
         <div className="flex flex-col gap-4">
           <p className="text-body lg:text-body-lg text-black/50">Pricing</p>
