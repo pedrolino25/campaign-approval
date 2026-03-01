@@ -7,7 +7,7 @@ export interface Session {
   userId?: string
   reviewerId?: string
   organizationId?: string
-  clientId?: string
+  projectId?: string
   role?: "OWNER" | "ADMIN" | "MEMBER"
   onboardingCompleted: boolean
   email: string

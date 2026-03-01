@@ -1,140 +1,64 @@
 import type { MetadataRoute } from "next";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://worklient.com";
+const BASE_URL = "https://worklient.com";
 
-  return [
-    {
-      url: `${baseUrl}/`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/approval-workflows`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/version-integrity`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/audit-traceability`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/client-experience`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/operational-visibility`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/pricing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/terms-of-service`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/privacy-policy`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/approval-bottlenecks-performance-marketing`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/approval-traceability-agency-risk-management`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/approval-workflow-software-vs-slack`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/campaign-approval-delays-marketing-agencies`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/campaign-review-bottlenecks-marketing-teams`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/client-approval-delays-agencies`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/client-approval-portals-vs-project-management-tools`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/creative-approval-workflows-vs-ad-hoc-feedback`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/creative-version-control-growing-agencies`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/email-based-client-approvals-workflow-inefficiencies`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/manual-approval-follow-ups-creative-teams`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/blog/professional-client-approval-process-agencies`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-  ];
+const BLOG_POST_SLUGS = [
+  "approval-bottlenecks-performance-marketing",
+  "approval-traceability-agency-risk-management",
+  "approval-workflow-software-vs-slack",
+  "campaign-approval-delays-marketing-agencies",
+  "campaign-review-bottlenecks-marketing-teams",
+  "client-approval-delays-agencies",
+  "client-approval-portals-vs-project-management-tools",
+  "creative-approval-workflows-vs-ad-hoc-feedback",
+  "creative-version-control-growing-agencies",
+  "email-based-client-approvals-workflow-inefficiencies",
+  "manual-approval-follow-ups-creative-teams",
+  "professional-client-approval-process-agencies",
+] as const;
+
+const BLOG_POST_LAST_MODIFIED = new Date("2026-01-10");
+
+type ChangeFrequency =
+  MetadataRoute.Sitemap[number]["changeFrequency"];
+type SitemapEntry = {
+  path: string;
+  changeFrequency: ChangeFrequency;
+  priority: number;
+  lastModified?: Date;
+};
+
+const STATIC_PAGES: SitemapEntry[] = [
+  { path: "/", changeFrequency: "weekly", priority: 1 },
+  { path: "/approval-workflows", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/version-integrity", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/audit-traceability", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/client-experience", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/operational-visibility", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/pricing", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.4 },
+];
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const staticEntries: MetadataRoute.Sitemap = STATIC_PAGES.map(
+    ({ path, changeFrequency, priority, lastModified }) => ({
+      url: `${BASE_URL}${path}`,
+      lastModified: lastModified ?? new Date(),
+      changeFrequency,
+      priority,
+    })
+  );
+
+  const blogPostEntries: MetadataRoute.Sitemap = BLOG_POST_SLUGS.map(
+    (slug) => ({
+      url: `${BASE_URL}/blog/${slug}`,
+      lastModified: BLOG_POST_LAST_MODIFIED,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })
+  );
+
+  return [...staticEntries, ...blogPostEntries];
 }

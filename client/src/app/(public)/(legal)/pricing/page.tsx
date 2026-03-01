@@ -3,38 +3,26 @@ import type { Metadata } from "next";
 import BenchmarkCard from "@/components/landing-pages/cards/benchmark-card";
 import { PriceCard } from "@/components/landing-pages/cards/pricing-card";
 import TestimonialCard from "@/components/landing-pages/cards/testimonial-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
-  title: "Pricing",
-  description:
-    "Pricing for the Worklient platform.",
-  keywords: [
-    "pricing",
-    "subscription",
-    "subscription pricing",
-  ],
-  openGraph: {
-    title: "Pricing",
-    description:
-      "Pricing for the Worklient platform.",
-    url: "https://worklient.com/pricing",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/pricing",
-  },
-};
+const CANONICAL_PATH = "/pricing";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/pricing`;
 
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
+  title: "Pricing",
+  description: "Pricing for the Worklient platform. Plans that fit your needs and company stage.",
+  canonicalPath: CANONICAL_PATH,
+  keywords: ["pricing", "subscription", "subscription pricing"],
+});
 
 export default function Pricing() {
   return (
     <>
-      <Navbar />
       <Container className="!pt-[120px] !lg:pt-[150px] flex flex-col gap-10 lg:gap-20">
         <div className="flex flex-col gap-4">
           <p className="text-body lg:text-body-lg text-black/50">Pricing</p>
@@ -102,6 +90,12 @@ export default function Pricing() {
         </div>
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Pricing | Worklient"
+        description="Pricing for the Worklient platform. Plans that fit your needs and company stage."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

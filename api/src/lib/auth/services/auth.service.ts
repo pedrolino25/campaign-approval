@@ -1,0 +1,238 @@
+import type { APIGatewayProxyEventV2 } from 'aws-lambda'
+
+import {
+  type ActorContext,
+  ActorType,
+  type AuthenticatedEvent,
+  UnauthorizedError,
+} from '../../../models'
+import { ProjectRepository } from '../../../repositories'
+import type { ReviewerRepository } from '../../../repositories/reviewer.repository'
+import type { UserRepository } from '../../../repositories/user.repository'
+import { getCookies } from '../../utils/cors'
+import { logger } from '../../utils/logger'
+import { type CanonicalSession, SessionService } from '../services/session.service'
+
+export class AuthService {
+  private readonly sessionService: SessionService
+
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly reviewerRepository: ReviewerRepository
+  ) {
+    this.sessionService = new SessionService()
+  }
+
+  async authenticate(
+    event: APIGatewayProxyEventV2
+  ): Promise<AuthenticatedEvent> {
+    const cookies = getCookies(event)
+    const sessionToken = this.sessionService.getSessionFromCookie(cookies)
+
+    if (!sessionToken) {
+      throw new UnauthorizedError('Missing session cookie')
+    }
+
+    const session = await this.sessionService.verifySession(sessionToken)
+
+    if (!session) {
+      throw new UnauthorizedError('Invalid or expired session')
+    }
+
+    await this.verifySessionVersion(session, event)
+
+    const actor = this.buildActorFromSession(session)
+    const organizationId =
+      actor.type === ActorType.Internal ? actor.organizationId : undefined
+
+    return {
+      ...event,
+      authContext: {
+        cognitoSub: session.cognitoSub,
+        email: session.email,
+        actor,
+        organizationId,
+      },
+    }
+  }
+
+  async verifySessionVersion(
+    session: CanonicalSession,
+    event: APIGatewayProxyEventV2
+  ): Promise<void> {
+    if (session.actorType === ActorType.Internal) {
+      await this.verifyInternalUserSession(session, event)
+    } else {
+      await this.verifyReviewerSession(session, event)
+    }
+  }
+
+  private extractSafeContext(event: APIGatewayProxyEventV2): {
+    ip?: string
+    userAgent?: string
+    requestId?: string
+  } {
+    const requestContext = event.requestContext
+    const headers = event.headers || {}
+
+    return {
+      ip:
+        (requestContext as { identity?: { sourceIp?: string } })?.identity
+          ?.sourceIp || undefined,
+      userAgent: headers['user-agent'] || headers['User-Agent'] || undefined,
+      requestId:
+        (requestContext as { requestId?: string })?.requestId || undefined,
+    }
+  }
+
+  private async verifyInternalUserSession(
+    session: CanonicalSession,
+    event: APIGatewayProxyEventV2
+  ): Promise<void> {
+    if (!session.userId) {
+      throw new UnauthorizedError('Invalid session: missing userId')
+    }
+
+    const user = await this.userRepository.findById(
+      session.userId,
+      session.organizationId || ''
+    )
+
+    if (!user) {
+      throw new UnauthorizedError('User not found')
+    }
+
+    if (user.archivedAt !== null) {
+      const context = this.extractSafeContext(event)
+      logger.warn({
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        actorType: 'INTERNAL',
+        actorId: session.userId,
+        targetId: session.userId,
+        organizationId: session.organizationId,
+        ...context,
+        metadata: { reason: 'User archived' },
+      })
+      throw new UnauthorizedError('Session invalidated: user archived')
+    }
+
+    if (user.sessionVersion !== session.sessionVersion) {
+      const context = this.extractSafeContext(event)
+      logger.warn({
+        service: 'AuthService',
+        operation: 'verifyInternalUserSession',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        actorType: 'INTERNAL',
+        actorId: session.userId,
+        targetId: session.userId,
+        organizationId: session.organizationId,
+        ...context,
+        metadata: { reason: 'Session version mismatch' },
+      })
+      throw new UnauthorizedError('Session invalidated')
+    }
+  }
+
+  private async verifyReviewerSession(
+    session: CanonicalSession,
+    event: APIGatewayProxyEventV2
+  ): Promise<void> {
+    if (!session.reviewerId) {
+      throw new UnauthorizedError('Invalid session: missing reviewerId')
+    }
+
+    if (!session.projectId) {
+      throw new UnauthorizedError('Invalid session: missing projectId')
+    }
+
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      session.projectId,
+      session.reviewerId
+    )
+
+    if (!project) {
+      throw new UnauthorizedError('Project not found')
+    }
+
+    const reviewer = await this.reviewerRepository.findByIdScoped(
+      session.reviewerId,
+      project.organizationId
+    )
+
+    if (!reviewer) {
+      throw new UnauthorizedError('Reviewer not found')
+    }
+
+    if (reviewer.archivedAt !== null) {
+      const context = this.extractSafeContext(event)
+      logger.warn({
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        actorType: 'REVIEWER',
+        actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: project.organizationId,
+        projectId: session.projectId,
+        ...context,
+        metadata: { reason: 'Reviewer archived' },
+      })
+      throw new UnauthorizedError('Session invalidated: reviewer archived')
+    }
+
+    if (reviewer.sessionVersion !== session.sessionVersion) {
+      const context = this.extractSafeContext(event)
+      logger.warn({
+        service: 'AuthService',
+        operation: 'verifyReviewerSession',
+        event: 'SESSION_INVALIDATED',
+        isSecurityEvent: true,
+        actorType: 'REVIEWER',
+        actorId: session.reviewerId,
+        targetId: session.reviewerId,
+        organizationId: project.organizationId,
+        projectId: session.projectId,
+        ...context,
+        metadata: { reason: 'Session version mismatch' },
+      })
+      throw new UnauthorizedError('Session invalidated')
+    }
+  }
+
+  private buildActorFromSession(session: CanonicalSession): ActorContext {
+    if (session.actorType === ActorType.Internal) {
+      if (!session.userId || !session.organizationId || !session.role) {
+        throw new UnauthorizedError('Invalid internal user session')
+      }
+
+      return {
+        type: ActorType.Internal,
+        userId: session.userId,
+        organizationId: session.organizationId,
+        role: session.role,
+        onboardingCompleted: session.onboardingCompleted,
+      }
+    }
+
+    if (!session.reviewerId) {
+      throw new UnauthorizedError('Invalid reviewer session')
+    }
+
+    if (!session.projectId) {
+      throw new UnauthorizedError('Invalid reviewer session: missing projectId')
+    }
+
+    return {
+      type: ActorType.Reviewer,
+      reviewerId: session.reviewerId,
+      projectId: session.projectId,
+      onboardingCompleted: session.onboardingCompleted,
+    }
+  }
+}

@@ -11,22 +11,17 @@ import {
   RBACService,
   SessionService,
 } from '../lib/auth'
-import { CognitoService } from '../lib/auth/cognito.service'
-import type { CanonicalSession } from '../lib/auth/session.service'
-import { processReviewerActivation } from '../lib/auth/utils/activation.utils'
+import { resolveActorFromTokens } from '../lib/auth/services/actor-resolution.service'
+import { CognitoService } from '../lib/auth/services/cognito.service'
 import {
-  clearActivationCookie,
-  setActivationCookie,
-} from '../lib/auth/utils/activation-token.utils'
-import { resolveActorFromTokens } from '../lib/auth/utils/actor.utils'
-import {
-  clearOAuthCookies,
-  parseCookies,
-} from '../lib/auth/utils/cookie.utils'
-import { acceptInvitationForAuth } from '../lib/auth/utils/invitation-acceptance.utils'
+  acceptInvitationForAuth,
+  activateReviewerInvitation,
+} from '../lib/auth/services/invitations.service'
+import type { CanonicalSession } from '../lib/auth/services/session.service'
+import { setActivationCookie } from '../lib/auth/utils/activation-token.utils'
+import { parseCookies } from '../lib/auth/utils/cookie.utils'
 import { JwtVerifier } from '../lib/auth/utils/jwt-verifier'
 import {
-  buildErrorResponse,
   buildInvalidRequestResponse,
   buildMissingParamsResponse,
   buildMissingStateResponse,
@@ -51,7 +46,7 @@ import {
   SignUpSchema,
   VerifyEmailSchema,
 } from '../lib/schemas'
-import { addCorsHeaders, attachCookies, getCookies, getMethod, getPath } from '../lib/utils/cors'
+import { addCorsHeaders, getCookies, getMethod, getPath } from '../lib/utils/cors'
 import { logger } from '../lib/utils/logger'
 import {
   ActorType,
@@ -63,10 +58,10 @@ import {
   UnauthorizedError,
 } from '../models'
 import {
-  ClientRepository,
-  ClientReviewerRepository,
   InvitationRepository,
   OrganizationRepository,
+  ProjectRepository,
+  ProjectReviewerRepository,
   ReviewerRepository,
   UserRepository,
 } from '../repositories'
@@ -82,7 +77,7 @@ const reviewerRepository = new ReviewerRepository()
 const organizationRepository = new OrganizationRepository()
 const invitationRepository = new InvitationRepository()
 const invitationService = new InvitationService()
-const rbacService = new RBACService(new ClientReviewerRepository())
+const rbacService = new RBACService(new ProjectReviewerRepository())
 const authService = new AuthService(
   userRepository,
   reviewerRepository
@@ -212,20 +207,20 @@ function logLoginSuccess(
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
       reviewerId: string
-      clientId: string | null
+      projectId: string | null
     }
     logger.info({
       ...baseLogData,
       event: 'LOGIN_SUCCESS',
       actorId: reviewerActor.reviewerId,
-      clientId: reviewerActor.clientId,
+      projectId: reviewerActor.projectId,
     })
 
     logger.info({
       ...baseLogData,
       event: 'SESSION_CREATED',
       actorId: reviewerActor.reviewerId,
-      clientId: reviewerActor.clientId,
+      projectId: reviewerActor.projectId,
     })
 
     logger.warn({
@@ -263,7 +258,7 @@ async function processOAuthCallback(
   let reviewerActivationCompleted = false
 
   if (activationToken) {
-    await processReviewerActivation(
+    await activateReviewerInvitation(
       activationToken,
       userId,
       email,
@@ -343,10 +338,8 @@ const handleLogin = (
     }),
   }
 
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-
-  return Promise.resolve(attachCookies(response, [verifierCookie, stateCookie]))
+  const oauthCookies = sessionService.buildOAuthCookies(codeVerifier, state)
+  return Promise.resolve(sessionService.buildResponseWithCookies(response, oauthCookies))
 }
 
 function handleCallbackValidationError(
@@ -409,8 +402,7 @@ function handleCallbackValidationError(
       metadata: { reason: 'Invalid activation token in cookies' },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   return null
@@ -431,7 +423,7 @@ const handleCallback = async (
     }
 
     logAuthError('LOGIN_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 
   const { code, state, codeVerifier, expectedState, activationToken } = callbackParams
@@ -455,15 +447,7 @@ const handleCallback = async (
     )
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
-
-    let errorResponse = buildErrorResponse(error)
-
-    if (activationToken) {
-      errorResponse = clearActivationCookie(errorResponse)
-    }
-
-    errorResponse = clearOAuthCookies(errorResponse)
-    return errorResponse
+    throw error
   }
 }
 
@@ -478,13 +462,12 @@ function buildLogoutSuccessResponse(): APIGatewayProxyStructuredResultV2 {
     }),
   }
 
-  let result = attachCookies(response, [sessionService.buildClearSessionCookie()])
-  result = clearOAuthCookies(result)
-
-  const clearActivationCookieValue = `reviewer_activation_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
-  result = attachCookies(result, [clearActivationCookieValue])
-
-  return result
+  const clearCookies = [
+    sessionService.buildClearSessionCookie(),
+    ...sessionService.buildClearOAuthCookies(),
+    sessionService.buildClearActivationCookie(),
+  ]
+  return sessionService.buildResponseWithCookies(response, clearCookies)
 }
 
 const handleLogout = async (
@@ -597,7 +580,7 @@ function createSessionResponse(session: CanonicalSession): APIGatewayProxyStruct
       userId: session.userId,
       reviewerId: session.reviewerId,
       organizationId: session.organizationId,
-      clientId: session.clientId,
+      projectId: session.projectId,
       role: session.role,
       onboardingCompleted: session.onboardingCompleted,
       email: session.email,
@@ -686,7 +669,7 @@ function buildInternalOnboardingResponse(
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupInternal = async (
@@ -753,7 +736,7 @@ const handleCompleteSignupInternal = async (
 function buildReviewerSessionAfterOnboarding(
   cognitoSub: string,
   email: string,
-  clientId: string,
+  projectId: string,
   updatedReviewer: Awaited<ReturnType<ReviewerRepository['updateScoped']>>
 ): CanonicalSession {
   if (!updatedReviewer) {
@@ -763,7 +746,7 @@ function buildReviewerSessionAfterOnboarding(
     cognitoSub,
     actorType: ActorType.Reviewer,
     reviewerId: updatedReviewer.id,
-    clientId,
+    projectId,
     onboardingCompleted: true,
     email,
     sessionVersion: updatedReviewer.sessionVersion,
@@ -790,7 +773,7 @@ function buildReviewerOnboardingResponse(
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(sessionToken)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(sessionToken)])
 }
 
 const handleCompleteSignupReviewer = async (
@@ -823,19 +806,19 @@ const handleCompleteSignupReviewer = async (
 
   const validated = validateBody(CompleteReviewerOnboardingSchema)(request)
   
-  // Derive organizationId from clientId for tenant scoping
-  const clientRepository = new ClientRepository()
+  // Derive organizationId from projectId for tenant scoping
+  const projectRepository = new ProjectRepository()
   const reviewerActor = actor as {
     type: typeof ActorType.Reviewer
     reviewerId: string
-    clientId: string
+    projectId: string
   }
-  const client = await clientRepository.findByIdForReviewer(
-    reviewerActor.clientId,
+  const project = await projectRepository.findByIdForReviewer(
+    reviewerActor.projectId,
     reviewerActor.reviewerId
   )
-  if (!client) {
-    throw new NotFoundError('Client not found')
+  if (!project) {
+    throw new NotFoundError('Project not found')
   }
 
   const onboardingService = new OnboardingService(
@@ -846,14 +829,14 @@ const handleCompleteSignupReviewer = async (
 
   const updatedReviewer = await onboardingService.completeReviewerOnboarding({
     reviewerId: actor.reviewerId,
-    organizationId: client.organizationId,
+    organizationId: project.organizationId,
     name: validated.body.name,
   })
 
   const newSessionPayload = buildReviewerSessionAfterOnboarding(
     event.authContext.cognitoSub,
     event.authContext.email,
-    reviewerActor.clientId,
+    reviewerActor.projectId,
     updatedReviewer
   )
 
@@ -875,9 +858,6 @@ async function buildOAuthRedirectResponse(
   state: string,
   activationToken: string
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  const verifierCookie = `oauth_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-  const stateCookie = `oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`
-
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: 302,
     headers: {
@@ -886,8 +866,9 @@ async function buildOAuthRedirectResponse(
     body: '',
   }
 
-  let result = attachCookies(response, [verifierCookie, stateCookie])
-  result = await setActivationCookie(result, activationToken)
+  const oauthCookies = sessionService.buildOAuthCookies(codeVerifier, state)
+  let result = sessionService.buildResponseWithCookies(response, oauthCookies)
+  result = await setActivationCookie(result, activationToken, sessionService)
 
   return result
 }
@@ -922,8 +903,7 @@ const handleReviewerActivate = async (
       },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   const invitation = await invitationRepository.findByToken(normalizedToken)
@@ -941,8 +921,7 @@ const handleReviewerActivate = async (
       },
     })
     const errorResponse = buildInvalidRequestResponse()
-    clearActivationCookie(errorResponse)
-    return errorResponse
+    return sessionService.clearActivationCookie(errorResponse)
   }
 
   const email = invitation!.email.toLowerCase().trim()
@@ -1017,7 +996,7 @@ const handleSignUp = async (
       },
     })
 
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1106,7 +1085,19 @@ const handleVerifyEmail = async (
     return await processEmailVerification(validated, context)
   } catch (error) {
     logAuthError('EMAIL_VERIFICATION_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
+  }
+}
+
+function resendVerificationSuccessResponse(): APIGatewayProxyStructuredResultV2 {
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      success: true,
+    }),
   }
 }
 
@@ -1119,25 +1110,20 @@ const handleResendVerification = async (
     let body: unknown
     try {
       body = event.body ? JSON.parse(event.body) : {}
-    } catch {
-      // Invalid JSON - return success to prevent enumeration
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          success: true,
-        }),
-      }
+    } catch (error) {
+      logger.warn({
+        source: 'auth',
+        event: 'RESEND_VERIFICATION_INVALID_JSON',
+        ...context,
+        metadata: { reason: 'anti-enumeration' },
+      })
+      return resendVerificationSuccessResponse()
     }
 
     let validated: { email: string }
     try {
       validated = ResendVerificationSchema.parse(body)
     } catch (error) {
-      // Validation error - return success to prevent enumeration
-      // But log it for debugging
       logger.warn({
         source: 'auth',
         event: 'RESEND_VERIFICATION_VALIDATION_ERROR',
@@ -1146,40 +1132,19 @@ const handleResendVerification = async (
           error: error instanceof Error ? error.message : String(error),
         },
       })
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          success: true,
-        }),
-      }
+      return resendVerificationSuccessResponse()
     }
 
     await cognitoService.resendConfirmation(validated.email)
-
-    // Always return success to prevent enumeration
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-      }),
-    }
-  } catch {
-    // Always return success to prevent enumeration
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        success: true,
-      }),
-    }
+    return resendVerificationSuccessResponse()
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'RESEND_VERIFICATION_SUPPRESSED',
+      ...context,
+      metadata: { reason: 'anti-enumeration' },
+    })
+    return resendVerificationSuccessResponse()
   }
 }
 
@@ -1246,7 +1211,7 @@ const handleEmailPasswordLogin = async (
     return await processLogin(validated, context)
   } catch (error) {
     logAuthError('LOGIN_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1269,8 +1234,12 @@ const handleForgotPassword = async (
         success: true,
       }),
     }
-  } catch {
-    // Always return success to prevent enumeration
+  } catch (error) {
+    logger.warn({
+      source: 'auth',
+      event: 'FORGOT_PASSWORD_SUPPRESSED',
+      metadata: { reason: 'anti-enumeration' },
+    })
     return {
       statusCode: 200,
       headers: {
@@ -1341,7 +1310,7 @@ const handleResetPassword = async (
       },
     })
 
-    return buildErrorResponse(error)
+    throw error
   }
 }
 
@@ -1398,8 +1367,12 @@ async function changeUserPassword(
     try {
       const refreshResult = await cognitoService.refreshAccessToken(refreshToken)
       accessToken = refreshResult.accessToken
-    } catch {
-      // If refresh token fails, fall back to old password
+    } catch (error) {
+      logger.warn({
+        source: 'auth',
+        event: 'REFRESH_TOKEN_FALLBACK',
+        metadata: { reason: 'refresh failed, using password' },
+      })
       const loginResult = await cognitoService.login(email, oldPassword)
       accessToken = loginResult.accessToken
     }
@@ -1458,7 +1431,7 @@ const handleChangePassword = async (
     return await processPasswordChange(validated, email, refreshToken, context)
   } catch (error) {
     logAuthError('PASSWORD_CHANGE_FAILURE', context, error)
-    return buildErrorResponse(error)
+    throw error
   }
 }
 

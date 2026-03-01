@@ -1,7 +1,7 @@
-import { AuthService } from './auth.service'
-import { OAuthService } from './oauth.service'
-import { RBACService } from './rbac.service'
-import { SessionService } from './session.service'
+import { AuthService } from './services/auth.service'
+import { OAuthService } from './services/oauth.service'
+import { RBACService } from './services/rbac.service'
+import { SessionService } from './services/session.service'
 import { JwtVerifier } from './utils/jwt-verifier'
 import { BearerTokenExtractor } from './utils/token-extractor'
 

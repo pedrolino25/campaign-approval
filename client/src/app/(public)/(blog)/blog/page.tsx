@@ -15,30 +15,30 @@ import image10 from "@/assets/blog/email-based-client-approvals-workflow-ineffic
 import image11 from "@/assets/blog/manual-approval-follow-ups-creative-teams.png";
 import image12 from "@/assets/blog/professional-client-approval-process-agencies.png";
 import BlogCard from "@/components/landing-pages/cards/blog-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { AnimatedTitle } from "@/components/ui/animated-text";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
-  title: "Blog",
+const CANONICAL_PATH = "/blog";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/blog`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
+  title: "Blog | Agency Operations Insights",
   description:
-    "Blog",
+    "Articles on approval workflows, client collaboration, and operational updates for modern agencies. Insights on campaign approvals, creative version control, and audit traceability.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
-    "blog",
+    "agency blog",
+    "approval workflows",
+    "client collaboration",
+    "campaign approvals",
+    "agency operations",
   ],
-  openGraph: {
-    title: "Blog",
-    description:
-      "Blog",
-    url: "https://worklient.com/blog",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/blog",
-  },
-};
+  openGraphTitle: "Blog | Agency Operations Insights | Worklient",
+});
 
 const BLOG_POSTS = [
   {
@@ -118,7 +118,6 @@ const BLOG_POSTS = [
 export default function Blog() {
   return (
     <>
-      <Navbar />
       <Container>
         <div className="flex flex-col gap-20">
           <div className="flex flex-col md:flex-row gap-10 lg:gap-20">
@@ -144,6 +143,12 @@ export default function Blog() {
         </div>
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Blog | Agency Operations Insights | Worklient"
+        description="Articles on approval workflows, client collaboration, and operational updates for modern agencies."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

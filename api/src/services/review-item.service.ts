@@ -4,12 +4,12 @@ import { prisma } from '../lib'
 import { ConflictError, NotFoundError } from '../models'
 import { ActivityLogActionType, type ActivityLogMetadataMap } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
-import { ClientRepository } from '../repositories'
+import { ProjectRepository } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 
 export type CreateReviewItemInput = {
   actor: ActorContext
-  clientId: string
+  projectId: string
   title: string
   description?: string
 }
@@ -32,7 +32,7 @@ export class ReviewItemService implements IReviewItemService {
   }
 
   async createReviewItem(input: CreateReviewItemInput): Promise<ReviewItem> {
-    const { actor, clientId, title, description } = input
+    const { actor, projectId, title, description } = input
 
     if (actor.type !== ActorType.Internal) {
       throw new NotFoundError('Only internal users can create review items')
@@ -41,21 +41,21 @@ export class ReviewItemService implements IReviewItemService {
     const organizationId = actor.organizationId
 
     return await prisma.$transaction(async (tx) => {
-      const client = await tx.client.findFirst({
+      const project = await tx.project.findFirst({
         where: {
-          id: clientId,
+          id: projectId,
           organizationId,
           archivedAt: null,
         },
       })
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
 
       const reviewItem = await tx.reviewItem.create({
         data: {
           organizationId,
-          clientId,
+          projectId,
           title,
           description,
           status: ReviewStatus.DRAFT,
@@ -88,16 +88,19 @@ export class ReviewItemService implements IReviewItemService {
     if (actor.type === ActorType.Internal) {
       organizationId = actor.organizationId
     } else {
-      // For reviewers, derive organizationId from their clientId
-      const clientRepository = new ClientRepository()
-      const client = await clientRepository.findByIdForReviewer(
-        actor.clientId,
+      if (actor.projectId == null) {
+        throw new NotFoundError('Project not found')
+      }
+      // For reviewers, derive organizationId from their projectId
+      const projectRepository = new ProjectRepository()
+      const project = await projectRepository.findByIdForReviewer(
+        actor.projectId,
         actor.reviewerId
       )
-      if (!client) {
-        throw new NotFoundError('Client not found')
+      if (!project) {
+        throw new NotFoundError('Project not found')
       }
-      organizationId = client.organizationId
+      organizationId = project.organizationId
     }
 
     await prisma.$transaction(async (tx) => {
@@ -116,7 +119,7 @@ export class ReviewItemService implements IReviewItemService {
 
       // Validate reviewer access inside transaction
       if (actor.type === ActorType.Reviewer) {
-        if (reviewItem.clientId !== actor.clientId) {
+        if (reviewItem.projectId !== actor.projectId) {
           throw new NotFoundError('Review item not found')
         }
       }

@@ -1,7 +1,7 @@
 export interface ReviewItem {
   id: string
   title: string
-  clientName: string
+  projectName: string
   status: "pending" | "in_progress" | "completed" | "rejected"
   priority: "low" | "medium" | "high"
   dueDate: string
@@ -13,7 +13,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "1",
     title: "Q1 Financial Report Review",
-    clientName: "Acme Corporation",
+    projectName: "Acme Corporation",
     status: "in_progress",
     priority: "high",
     dueDate: "2024-04-15",
@@ -23,7 +23,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "2",
     title: "Product Launch Documentation",
-    clientName: "TechStart Inc",
+    projectName: "TechStart Inc",
     status: "pending",
     priority: "medium",
     dueDate: "2024-04-20",
@@ -33,7 +33,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "3",
     title: "Compliance Audit Review",
-    clientName: "Global Solutions",
+    projectName: "Global Solutions",
     status: "completed",
     priority: "high",
     dueDate: "2024-03-30",
@@ -43,7 +43,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "4",
     title: "Marketing Campaign Materials",
-    clientName: "Digital Ventures",
+    projectName: "Digital Ventures",
     status: "pending",
     priority: "low",
     dueDate: "2024-04-25",
@@ -53,7 +53,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "5",
     title: "Technical Specification Review",
-    clientName: "Acme Corporation",
+    projectName: "Acme Corporation",
     status: "in_progress",
     priority: "medium",
     dueDate: "2024-04-18",
@@ -63,7 +63,7 @@ export const dummyReviewItems: ReviewItem[] = [
   {
     id: "6",
     title: "Legal Contract Review",
-    clientName: "Innovation Labs",
+    projectName: "Innovation Labs",
     status: "rejected",
     priority: "high",
     dueDate: "2024-03-25",

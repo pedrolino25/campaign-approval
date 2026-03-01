@@ -49,8 +49,8 @@ enum ActivityLogAction {
   COMMENT_ADDED
   COMMENT_DELETED
   ATTACHMENT_UPLOADED
-  CLIENT_CREATED
-  CLIENT_UPDATED
+  PROJECT_CREATED
+  PROJECT_UPDATED
   USER_INVITED
   USER_JOINED
   USER_UPDATED
@@ -78,7 +78,7 @@ model Organization {
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   users         User[]
-  clients       Client[]
+  projects      Project[]
   reviewItems   ReviewItem[]
   notifications Notification[]
   activityLogs  ActivityLog[]
@@ -125,7 +125,7 @@ model Reviewer {
   updatedAt      DateTime  @updatedAt @map("updated_at")
   archivedAt     DateTime? @map("archived_at")
 
-  clientLinks   ClientReviewer[]
+  projectLinks  ProjectReviewer[]
   comments      Comment[]
   notifications Notification[]
   activityLogs  ActivityLog[]
@@ -134,7 +134,7 @@ model Reviewer {
   @@map("reviewers")
 }
 
-model Client {
+model Project {
   id             String    @id @default(uuid())
   organizationId String    @map("organization_id")
   name           String
@@ -142,37 +142,37 @@ model Client {
   updatedAt      DateTime  @updatedAt @map("updated_at")
   archivedAt     DateTime? @map("archived_at")
 
-  organization Organization     @relation(fields: [organizationId], references: [id])
-  reviewers    ClientReviewer[]
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  reviewers    ProjectReviewer[]
   reviewItems  ReviewItem[]
   invitations  Invitation[]
 
   @@index([organizationId])
   @@index([organizationId, createdAt])
   @@index([organizationId, archivedAt])
-  @@map("clients")
+  @@map("projects")
 }
 
-model ClientReviewer {
+model ProjectReviewer {
   id         String    @id @default(uuid())
-  clientId   String    @map("client_id")
+  projectId  String    @map("project_id")
   reviewerId String    @map("reviewer_id")
   createdAt  DateTime  @default(now()) @map("created_at")
   archivedAt DateTime? @map("archived_at")
 
-  client   Client   @relation(fields: [clientId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id])
   reviewer Reviewer @relation(fields: [reviewerId], references: [id])
 
-  @@unique([clientId, reviewerId])
-  @@index([clientId])
+  @@unique([projectId, reviewerId])
+  @@index([projectId])
   @@index([reviewerId])
-  @@map("client_reviewers")
+  @@map("project_reviewers")
 }
 
 model ReviewItem {
   id                 String       @id @default(uuid())
   organizationId     String       @map("organization_id")
-  clientId           String       @map("client_id")
+  projectId          String       @map("project_id")
   title              String
   description        String?      @db.Text
   status             ReviewStatus
@@ -184,25 +184,25 @@ model ReviewItem {
   lastReminderSentAt DateTime?    @map("last_reminder_sent_at")
 
   organization Organization  @relation(fields: [organizationId], references: [id])
-  client       Client        @relation(fields: [clientId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id])
   createdBy    User          @relation(fields: [createdByUserId], references: [id])
   attachments  Attachment[]
   comments     Comment[]
   activityLogs ActivityLog[]
 
   @@index([organizationId])
-  @@index([clientId])
+  @@index([projectId])
   @@index([status])
   @@index([createdAt])
   @@index([updatedAt])
   @@index([lastReminderSentAt])
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
-  @@index([clientId, createdAt])
+  @@index([projectId, createdAt])
   @@index([organizationId, status, archivedAt, createdAt])
   @@index([organizationId, status, lastReminderSentAt])
-  @@index([clientId, archivedAt])
-  @@index([clientId, status])
+  @@index([projectId, archivedAt])
+  @@index([projectId, status])
   @@map("review_items")
 }
 
@@ -309,7 +309,7 @@ model ActivityLog {
 model Invitation {
   id             String          @id @default(uuid())
   organizationId String          @map("organization_id")
-  clientId       String?         @map("client_id")
+  projectId      String?         @map("project_id")
   email          String
   role           InvitationRole?
   type           InvitationType
@@ -321,11 +321,11 @@ model Invitation {
 
   organization Organization @relation(fields: [organizationId], references: [id])
   inviter      User?        @relation("InvitationInviter", fields: [inviterUserId], references: [id])
-  client       Client?      @relation(fields: [clientId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id])
 
-  @@unique([organizationId, clientId, email, type])
+  @@unique([organizationId, projectId, email, type])
   @@index([organizationId])
-  @@index([clientId])
+  @@index([projectId])
   @@index([email])
   @@index([token])
   @@index([expiresAt])

@@ -34,7 +34,7 @@ enable_api_cors = true
 api_cors_allowed_origins = [
   "https://worklient.com",
   "https://dev.worklient.com",
-  "https://app.local.worklient.test:3000",
+  "https://app.worklient.test:3000",
 ]
 
 api_cors_allowed_methods = [

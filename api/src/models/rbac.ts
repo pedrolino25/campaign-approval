@@ -11,13 +11,13 @@ export enum Action {
   REMOVE_INTERNAL_USER,
   CHANGE_USER_ROLE,
   VIEW_INTERNAL_USERS,
-  // Client management actions
-  CREATE_CLIENT,
-  EDIT_CLIENT,
-  ARCHIVE_CLIENT,
-  VIEW_CLIENT_LIST,
-  INVITE_CLIENT_REVIEWER,
-  REMOVE_CLIENT_REVIEWER,
+  // Project management actions
+  CREATE_PROJECT,
+  EDIT_PROJECT,
+  ARCHIVE_PROJECT,
+  VIEW_PROJECT_LIST,
+  INVITE_PROJECT_REVIEWER,
+  REMOVE_PROJECT_REVIEWER,
   // Review item actions
   CREATE_REVIEW_ITEM,
   EDIT_REVIEW_ITEM,
@@ -56,13 +56,13 @@ export type ActorContext =
   | {
       type: ActorType.Reviewer
       reviewerId: string
-      clientId: string
+      projectId: string | null
       onboardingCompleted: boolean
     }
 
 export type ResourceContext = {
   organizationId?: string
-  clientId?: string
+  projectId?: string
   ownerUserId?: string
   deletedAt?: Date | null
 }

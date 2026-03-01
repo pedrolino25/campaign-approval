@@ -27,7 +27,7 @@ export function authorizeOrThrow(
         organizationId: actor.type === ActorType.Internal ? actor.organizationId : undefined,
         metadata: {
           action: String(action),
-          resourceId: resource?.organizationId || resource?.clientId,
+          resourceId: resource?.organizationId || resource?.projectId,
         },
       })
       throw new ForbiddenError("FORBIDDEN")

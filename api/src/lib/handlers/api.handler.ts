@@ -13,14 +13,14 @@ import type { AuthService } from '../auth'
 import { onboardingGuard } from '../auth/utils/onboarding-guard'
 import type { ErrorService } from '../errors/error.service'
 import {
-  runWithRequestContext,
-  updateRequestContext,
-} from '../request-context'
-import {
   addCorsHeaders,
   getHeader,
   handlePreflightRequest,
 } from '../utils/cors'
+import {
+  runWithRequestContext,
+  updateRequestContext,
+} from '../utils/request-context'
 
 export class ApiHandlerFactory {
   constructor(

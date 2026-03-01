@@ -45,10 +45,10 @@ export class ReviewerRepository implements IReviewerRepository {
       where: {
         id,
         archivedAt: null,
-        clientLinks: {
+        projectLinks: {
           some: {
             archivedAt: null,
-            client: {
+            project: {
               organizationId,
               archivedAt: null,
             },
@@ -134,11 +134,11 @@ export class ReviewerRepository implements IReviewerRepository {
     reviewerId: string,
     organizationId: string
   ): Promise<boolean> {
-    const result = await prisma.clientReviewer.findFirst({
+    const result = await prisma.projectReviewer.findFirst({
       where: {
         reviewerId,
         archivedAt: null,
-        client: {
+        project: {
           organizationId,
           archivedAt: null,
         },

@@ -113,30 +113,30 @@ functions:
           method: PATCH
           path: organization/users/{id}/role
 
-  client:
-    handler: dist/api/client.handler
+  project:
+    handler: dist/api/project.handler
     events:
       - http:
           method: GET
-          path: clients
+          path: projects
       - http:
           method: POST
-          path: clients
+          path: projects
       - http:
           method: PATCH
-          path: clients/{id}
+          path: projects/{id}
       - http:
           method: POST
-          path: clients/{id}/archive
+          path: projects/{id}/archive
       - http:
           method: GET
-          path: clients/{id}/reviewers
+          path: projects/{id}/reviewers
       - http:
           method: POST
-          path: clients/{id}/reviewers
+          path: projects/{id}/reviewers
       - http:
           method: DELETE
-          path: clients/{id}/reviewers/{reviewerId}
+          path: projects/{id}/reviewers/{reviewerId}
 
   review:
     handler: dist/api/review.handler

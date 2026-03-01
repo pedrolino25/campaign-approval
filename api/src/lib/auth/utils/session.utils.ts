@@ -7,11 +7,8 @@ import type {
   UserRepository,
 } from '../../../repositories'
 import { config } from '../../utils/config'
-import { attachCookies } from '../../utils/cors'
-import type { RBACService } from '../rbac.service'
-import type { CanonicalSession, SessionService } from '../session.service'
-import { clearActivationCookie } from './activation-token.utils'
-import { clearOAuthCookies } from './cookie.utils'
+import type { RBACService } from '../services/rbac.service'
+import type { CanonicalSession, SessionService } from '../services/session.service'
 
 function calculateOnboardingStatus(
   actor: Awaited<ReturnType<RBACService['resolve']>>,
@@ -61,10 +58,10 @@ function buildCanonicalSession(
     const reviewerActor = actor as {
       type: typeof ActorType.Reviewer
       reviewerId: string
-      clientId: string | null
+      projectId: string | null
     }
     session.reviewerId = reviewerActor.reviewerId
-    session.clientId = reviewerActor.clientId || undefined
+    session.projectId = reviewerActor.projectId || undefined
 
     if (!reviewer) {
       throw new InternalError('Reviewer not found when building session')
@@ -91,14 +88,14 @@ function buildJsonResponse(
         userId: session.userId,
         reviewerId: session.reviewerId,
         organizationId: session.organizationId,
-        clientId: session.clientId,
+        projectId: session.projectId,
         role: session.role,
         onboardingCompleted: session.onboardingCompleted,
         email: session.email,
       },
     }),
   }
-  return attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
+  return sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(signedSession)])
 }
 
 function buildRedirectResponse(
@@ -122,11 +119,11 @@ function buildRedirectResponse(
     body: '',
   }
 
-  response = attachCookies(response, [sessionService.buildSessionCookie(signedSession)])
-  response = clearOAuthCookies(response)
+  response = sessionService.buildResponseWithCookies(response, [sessionService.buildSessionCookie(signedSession)])
+  response = sessionService.clearOAuthCookies(response)
 
   if (activationToken) {
-    response = clearActivationCookie(response)
+    response = sessionService.clearActivationCookie(response)
   }
 
   return response

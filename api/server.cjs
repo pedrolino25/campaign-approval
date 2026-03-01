@@ -6,35 +6,45 @@ const targetPort = 4000
 const securePort = 4001
 
 const options = {
-  key: fs.readFileSync("./api.local.worklient.test-key.pem"),
-  cert: fs.readFileSync("./api.local.worklient.test.pem"),
+  key: fs.readFileSync("./api.worklient.test+2-key.pem"),
+  cert: fs.readFileSync("./api.worklient.test+2.pem"),
 }
 
-https.createServer(options, (req, res) => {
-  const proxyReq = http.request(
-    {
-      hostname: "localhost",
-      port: targetPort,
-      path: req.url,
-      method: req.method,
-      headers: req.headers,
-    },
-    (proxyRes) => {
-      res.statusCode = proxyRes.statusCode
+https
+  .createServer(options, (req, res) => {
+    const proxyReq = http.request(
+      {
+        hostname: "localhost",
+        port: targetPort,
+        path: req.url,
+        method: req.method,
+        headers: req.headers,
+      },
+      (proxyRes) => {
+        // Forward status code
+        res.statusCode = proxyRes.statusCode || 500
 
-      Object.entries(proxyRes.headers).forEach(([key, value]) => {
-        if (key.toLowerCase() === "set-cookie" && Array.isArray(value)) {
-          value.forEach((cookie) => res.setHeader("Set-Cookie", cookie))
-        } else if (value !== undefined) {
-          res.setHeader(key, value)
-        }
-      })
+        // Forward all headers exactly as received (including multi-value Set-Cookie)
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+          if (value !== undefined) {
+            res.setHeader(key, value)
+          }
+        })
 
-      proxyRes.pipe(res, { end: true })
-    }
-  )
+        // Pipe response body
+        proxyRes.pipe(res, { end: true })
+      }
+    )
 
-  req.pipe(proxyReq, { end: true })
-}).listen(securePort, () => {
-  console.log(`🔐 HTTPS proxy running at https://api.local.worklient.test:${securePort}`)
-})
+    proxyReq.on("error", (err) => {
+      res.statusCode = 502
+      res.end("Proxy error")
+    })
+
+    req.pipe(proxyReq, { end: true })
+  })
+  .listen(securePort, () => {
+    console.log(
+      `🔐 HTTPS proxy running at https://api.worklient.test:${securePort}`
+    )
+  })

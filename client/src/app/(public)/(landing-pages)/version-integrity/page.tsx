@@ -2,38 +2,35 @@ import type { Metadata } from "next";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
+const CANONICAL_PATH = "/version-integrity";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/version-integrity`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Creative Version Control for Campaign Approvals",
   description:
     "Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "creative version control",
     "approval version tracking",
     "asset review software",
     "campaign version management",
   ],
-  openGraph: {
-    title: "Version Integrity for Campaign Approvals",
-    description:
-      "Maintain clean version history and preserve feedback across every creative iteration.",
-    url: "https://worklient.com/version-integrity",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/version-integrity",
-  },
-};
+  openGraphTitle: "Creative Version Control for Campaign Approvals | Worklient",
+  openGraphDescription:
+    "Maintain clean version history and preserve feedback across every creative iteration.",
+});
 
 export default function VersionIntegrity() {
   return (
     <>
-      <Navbar />
       <HeroSection
         theme="yellow"
         title={["Version Integrity", "Without the Chaos"]}
@@ -68,6 +65,12 @@ export default function VersionIntegrity() {
         />
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Creative Version Control for Campaign Approvals | Worklient"
+        description="Eliminate version confusion with structured asset history, persistent feedback, and controlled file replacement for campaign approvals."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

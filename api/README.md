@@ -47,8 +47,8 @@ sudo nano /etc/hosts
 Add the following lines at the bottom:
 
 ```
-127.0.0.1 app.local.worklient.test
-127.0.0.1 api.local.worklient.test
+127.0.0.1 app.worklient.test
+127.0.0.1 api.worklient.test
 ```
 
 Save with:
@@ -70,13 +70,15 @@ sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 ## 1.3 Verify
 
 ```bash
-ping api.local.worklient.test
+ping api.worklient.test
 ```
 
 It must resolve to:
 
 ```
-127.0.0.1
+127.0.0.1 worklient.test
+127.0.0.1 api.worklient.test
+127.0.0.1 app.worklient.test
 ```
 
 ---
@@ -119,8 +121,8 @@ COGNITO_APP_CLIENT_ID=xxxxxxxxxxxx
 
 S3_BUCKET_NAME=dev-worklient-storage
 
-FRONTEND_URL=https://app.local.worklient.test:3000
-WORKLIENT_API_URL=https://api.local.worklient.test:4001
+FRONTEND_URL=https://app.worklient.test:3000
+WORKLIENT_API_URL=https://api.worklient.test:4001
 
 SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/xxxx/dev-queue
 
@@ -225,14 +227,14 @@ Backend must run on HTTPS to:
 Inside `api/`:
 
 ```bash
-mkcert api.local.worklient.test
+mkcert api.worklient.test app.worklient.test worklient.test
 ```
 
 This generates:
 
 ```
-api.local.worklient.test.pem
-api.local.worklient.test-key.pem
+api.worklient.test+2.pem
+api.worklient.test+2-key.pem
 ```
 
 Do not commit these files.
@@ -263,7 +265,7 @@ This runs both processes using concurrently.
 Open:
 
 ```
-https://api.local.worklient.test:4001/api-docs
+https://api.worklient.test:4001/api-docs
 ```
 
 Swagger must load.
@@ -275,13 +277,13 @@ Swagger must load.
 Frontend:
 
 ```
-https://app.local.worklient.test:3000
+https://app.worklient.test:3000
 ```
 
 Backend:
 
 ```
-https://api.local.worklient.test:4001
+https://api.worklient.test:4001
 ```
 
 ---

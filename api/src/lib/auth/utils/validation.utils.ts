@@ -108,18 +108,49 @@ export function validateActivationToken(
   return token.toLowerCase()
 }
 
+export interface ValidateReviewerInvitationOptions {
+  requireEmailMatch?: boolean
+  allowExpired?: boolean
+  requireReviewerType?: boolean
+}
+
+const DEFAULT_VALIDATE_OPTIONS: Required<ValidateReviewerInvitationOptions> = {
+  requireEmailMatch: false,
+  allowExpired: false,
+  requireReviewerType: true,
+}
+
+function assertEmailMatchesInvitation(
+  invitation: { email?: string },
+  email: string
+): void {
+  const normalizedInvitationEmail = (invitation.email ?? '').toLowerCase().trim()
+  const normalizedEmail = email.toLowerCase().trim()
+  if (normalizedInvitationEmail !== normalizedEmail) {
+    throw new ValidationError('Email does not match invitation')
+  }
+}
+
 export function validateReviewerInvitation(
   invitation: {
     type: string
+    email?: string
     acceptedAt: Date | null
     expiresAt: Date
-  } | null
+  } | null,
+  email?: string,
+  options: ValidateReviewerInvitationOptions = {}
 ): void {
+  const opts = {
+    ...DEFAULT_VALIDATE_OPTIONS,
+    ...options,
+  }
+
   if (!invitation) {
     throw new NotFoundError('Invitation not found')
   }
 
-  if (invitation.type !== 'REVIEWER') {
+  if (opts.requireReviewerType && invitation.type !== 'REVIEWER') {
     throw new ValidationError('Invalid invitation type')
   }
 
@@ -127,8 +158,11 @@ export function validateReviewerInvitation(
     throw new ConflictError('Invitation has already been accepted')
   }
 
-  const now = new Date()
-  if (invitation.expiresAt <= now) {
+  if (!opts.allowExpired && invitation.expiresAt <= new Date()) {
     throw new ValidationError('Invitation has expired')
+  }
+
+  if (opts.requireEmailMatch && email !== undefined) {
+    assertEmailMatchesInvitation(invitation, email)
   }
 }

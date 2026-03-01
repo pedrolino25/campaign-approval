@@ -2,38 +2,35 @@ import type { Metadata } from "next";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
+const CANONICAL_PATH = "/audit-traceability";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/audit-traceability`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Approval Audit Trail & Campaign Traceability",
   description:
     "Track every approval, comment, and status change with immutable activity logs built for operational accountability and compliance.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "approval audit trail",
     "campaign approval tracking",
     "approval compliance software",
     "creative approval logs",
   ],
-  openGraph: {
-    title: "Approval Audit Trail for Agencies",
-    description:
-      "Every campaign decision permanently recorded with structured approval traceability.",
-    url: "https://worklient.com/audit-traceability",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/audit-traceability",
-  },
-};
+  openGraphTitle: "Approval Audit Trail & Campaign Traceability | Worklient",
+  openGraphDescription:
+    "Every campaign decision permanently recorded with structured approval traceability.",
+});
 
 export default function AuditTraceability() {
   return (
     <>
-      <Navbar />
       <HeroSection
         theme="red"
         title={["Approval Traceability", "Without Compromise"]}
@@ -68,6 +65,12 @@ export default function AuditTraceability() {
         />
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Approval Audit Trail & Campaign Traceability | Worklient"
+        description="Track every approval, comment, and status change with immutable activity logs built for operational accountability and compliance."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

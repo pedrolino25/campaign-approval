@@ -5,12 +5,12 @@ import type {
 import { randomUUID } from 'crypto'
 
 import type { ErrorService } from '../errors/error.service'
-import { runWithRequestContext } from '../request-context'
 import {
   addCorsHeaders,
   getHeader,
   handlePreflightRequest,
 } from '../utils/cors'
+import { runWithRequestContext } from '../utils/request-context'
 
 export class PublicHandlerFactory {
   constructor(private readonly errorService: ErrorService) {}

@@ -3,7 +3,7 @@ const { parse } = require("url")
 const next = require("next")
 const fs = require("fs")
 
-const hostname = "app.local.worklient.test"
+const hostname = "app.worklient.test"
 const port = 3000
 const dev = true
 
@@ -11,8 +11,8 @@ const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
 
 const httpsOptions = {
-  key: fs.readFileSync("./app.local.worklient.test-key.pem"),
-  cert: fs.readFileSync("./app.local.worklient.test.pem"),
+  key: fs.readFileSync("./api.worklient.test+2-key.pem"),
+  cert: fs.readFileSync("./api.worklient.test+2.pem"),
 }
 
 app.prepare().then(() => {

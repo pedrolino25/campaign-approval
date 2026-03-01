@@ -30,7 +30,7 @@ import type { ActorContext } from '../models/rbac'
 import {
   ActivityLogRepository,
   AttachmentRepository,
-  ClientRepository,
+  ProjectRepository,
   ReviewItemRepository,
 } from '../repositories'
 import { ReviewItemService } from '../services/review-item.service'
@@ -41,15 +41,18 @@ async function resolveOrganizationId(actor: ActorContext): Promise<string> {
     return actor.organizationId
   }
 
-  const clientRepository = new ClientRepository()
-  const client = await clientRepository.findByIdForReviewer(
-    actor.clientId,
+  if (actor.projectId == null) {
+    throw new NotFoundError('Project not found')
+  }
+  const projectRepository = new ProjectRepository()
+  const project = await projectRepository.findByIdForReviewer(
+    actor.projectId,
     actor.reviewerId
   )
-  if (!client) {
-    throw new NotFoundError('Client not found')
+  if (!project) {
+    throw new NotFoundError('Project not found')
   }
-  return client.organizationId
+  return project.organizationId
 }
 
 async function loadReviewItemForActor(
@@ -67,7 +70,7 @@ async function loadReviewItemForActor(
     throw new NotFoundError('Review item not found')
   }
 
-  if (actor.type === ActorType.Reviewer && reviewItem.clientId !== actor.clientId) {
+  if (actor.type === ActorType.Reviewer && reviewItem.projectId !== actor.projectId) {
     throw new NotFoundError('Review item not found')
   }
 
@@ -159,8 +162,11 @@ const handleGetReviewItems = async (
       limit: validatedQuery.query.limit as number | undefined,
     })
   } else {
+    if (actor.projectId == null) {
+      throw new NotFoundError('Project not found')
+    }
     const organizationId = await resolveOrganizationId(actor)
-    result = await repository.listByClient(actor.clientId, organizationId, {
+    result = await repository.listByProject(actor.projectId, organizationId, {
       cursor: validatedQuery.query.cursor,
       limit: validatedQuery.query.limit as number | undefined,
     })
@@ -195,7 +201,7 @@ const handlePostReviewItems = async (
   const reviewItemService = new ReviewItemService()
   const reviewItem = await reviewItemService.createReviewItem({
     actor,
-    clientId: validated.body.clientId,
+    projectId: validated.body.projectId,
     title: validated.body.title,
     description: validated.body.description,
   })
@@ -219,7 +225,7 @@ const handleGetReviewItem = async (
 
   authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
     organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
+    projectId: reviewItem.projectId,
     deletedAt: reviewItem.archivedAt,
   })
 
@@ -387,7 +393,7 @@ const handleGetActivity = async (
 
   authorizeOrThrow(actor, Action.VIEW_ACTIVITY_LOG, {
     organizationId: reviewItem.organizationId,
-    clientId: reviewItem.clientId,
+    projectId: reviewItem.projectId,
     deletedAt: reviewItem.archivedAt,
   })
 

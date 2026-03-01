@@ -11,7 +11,7 @@ import {
 import { ActivityLogActionType, type ActivityLogMetadataMap } from '../models/activity-log'
 import { type ActorContext, ActorType } from '../models/rbac'
 import { WorkflowEventType } from '../models/workflow-event'
-import { ClientRepository, type CommentRepository, type ReviewItemRepository} from '../repositories';
+import { type CommentRepository, ProjectRepository, type ReviewItemRepository } from '../repositories'
 import { ActivityLogService } from './activity-log.service'
 import { NotificationService } from './notification.service'
 
@@ -259,7 +259,7 @@ dispatchResult: result }
       payload: {
         reviewItemId: reviewItem.id,
         organizationId: reviewItem.organizationId,
-        clientId: reviewItem.clientId,
+        projectId: reviewItem.projectId,
         actorType: actor.type === ActorType.Internal ? 'INTERNAL' : 'REVIEWER',
         actorId: actor.type === ActorType.Internal ? actor.userId : actor.reviewerId,
       },
@@ -299,15 +299,18 @@ dispatchResult: result }
       return actor.organizationId
     }
 
-    const clientRepository = new ClientRepository()
-    const client = await clientRepository.findByIdForReviewer(
-      actor.clientId,
+    if (actor.projectId == null) {
+      throw new NotFoundError('Project not found')
+    }
+    const projectRepository = new ProjectRepository()
+    const project = await projectRepository.findByIdForReviewer(
+      actor.projectId,
       actor.reviewerId
     )
-    if (!client) {
-      throw new NotFoundError('Client not found')
+    if (!project) {
+      throw new NotFoundError('Project not found')
     }
-    return client.organizationId
+    return project.organizationId
   }
 
   private async loadAndValidateReviewItemForDeletion(
@@ -397,8 +400,8 @@ dispatchResult: result }
     _actorOrganizationId: string
   ): void {
     if (actor.type === ActorType.Reviewer) {
-      if (reviewItem.clientId !== actor.clientId) {
-        throw new ForbiddenError('Reviewer cannot access review items from other clients')
+      if (reviewItem.projectId !== actor.projectId) {
+        throw new ForbiddenError('Reviewer cannot access review items from other projects')
       }
     }
   }

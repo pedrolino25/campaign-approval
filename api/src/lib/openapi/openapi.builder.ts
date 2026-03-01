@@ -6,14 +6,12 @@ import {
   ApproveReviewOpenAPISchema,
   AttachmentParamsOpenAPISchema,
   ChangePasswordOpenAPISchema,
-  ClientParamsOpenAPISchema,
-  ClientReviewerParamsOpenAPISchema,
   CompleteInternalOnboardingOpenAPISchema,
   CompleteReviewerOnboardingOpenAPISchema,
   ConfirmUploadOpenAPISchema,
   ConflictErrorResponseSchema,
-  CreateClientOpenAPISchema,
   CreatePresignedUploadOpenAPISchema,
+  CreateProjectOpenAPISchema,
   CreateReviewItemOpenAPISchema,
   CursorPaginationQueryOpenAPISchema,
   DeleteAttachmentParamsOpenAPISchema,
@@ -27,6 +25,8 @@ import {
   LoginOpenAPISchema,
   NotFoundErrorResponseSchema,
   NotificationParamsOpenAPISchema,
+  ProjectParamsOpenAPISchema,
+  ProjectReviewerParamsOpenAPISchema,
   RequestChangesOpenAPISchema,
   ResendVerificationOpenAPISchema,
   ResetPasswordOpenAPISchema,
@@ -34,8 +34,8 @@ import {
   SendForReviewOpenAPISchema,
   SignUpOpenAPISchema,
   UnauthorizedErrorResponseSchema,
-  UpdateClientOpenAPISchema,
   UpdateOrganizationSettingsOpenAPISchema,
+  UpdateProjectOpenAPISchema,
   UpdateUserRoleOpenAPISchema,
   UserParamsOpenAPISchema,
   ValidationErrorResponseSchema,
@@ -579,22 +579,22 @@ export function buildOpenAPISpec(): Record<string, unknown> {
   })
 
   // ============================================================================
-  // Client Routes
+  // Project Routes
   // ============================================================================
 
   registry.registerPath({
     method: 'get',
-    path: '/clients',
-    tags: ['Clients'],
-    summary: 'Get clients',
-    description: 'Retrieve all clients for the organization',
+    path: '/projects',
+    tags: ['Projects'],
+    summary: 'Get projects',
+    description: 'Retrieve all projects for the organization',
     security: [{ bearerAuth: [] }],
     request: {
       query: CursorPaginationQueryOpenAPISchema,
     },
     responses: {
       200: {
-        description: 'Paginated list of clients',
+        description: 'Paginated list of projects',
         content: {
           'application/json': {
             schema: paginatedResponseSchema,
@@ -630,23 +630,23 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'post',
-    path: '/clients',
-    tags: ['Clients'],
-    summary: 'Create client',
-    description: 'Create a new client',
+    path: '/projects',
+    tags: ['Projects'],
+    summary: 'Create project',
+    description: 'Create a new project',
     security: [{ bearerAuth: [] }],
     request: {
       body: {
         content: {
           'application/json': {
-            schema: CreateClientOpenAPISchema,
+            schema: CreateProjectOpenAPISchema,
           },
         },
       },
     },
     responses: {
       200: {
-        description: 'Client created',
+        description: 'Project created',
         content: {
           'application/json': {
             schema: z.object({
@@ -686,29 +686,29 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'patch',
-    path: '/clients/{id}',
-    tags: ['Clients'],
-    summary: 'Update client',
-    description: 'Update an existing client',
+    path: '/projects/{id}',
+    tags: ['Projects'],
+    summary: 'Update project',
+    description: 'Update an existing project',
     security: [{ bearerAuth: [] }],
     request: {
-      params: ClientParamsOpenAPISchema,
+      params: ProjectParamsOpenAPISchema,
       body: {
         content: {
           'application/json': {
-            schema: UpdateClientOpenAPISchema,
+            schema: UpdateProjectOpenAPISchema,
           },
         },
       },
     },
     responses: {
       200: {
-        description: 'Client updated',
+        description: 'Project updated',
         content: {
           'application/json': {
             schema: z.object({
               message: z.string(),
-              clientId: z.string(),
+              projectId: z.string(),
               userId: z.string(),
               data: z.object({}).passthrough(),
             }),
@@ -732,7 +732,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
       404: {
-        description: 'Client not found',
+        description: 'Project not found',
         content: {
           'application/json': {
             schema: NotFoundErrorResponseSchema,
@@ -752,17 +752,17 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'post',
-    path: '/clients/{id}/archive',
-    tags: ['Clients'],
-    summary: 'Archive client',
-    description: 'Archive a client',
+    path: '/projects/{id}/archive',
+    tags: ['Projects'],
+    summary: 'Archive project',
+    description: 'Archive a project',
     security: [{ bearerAuth: [] }],
     request: {
-      params: ClientParamsOpenAPISchema,
+      params: ProjectParamsOpenAPISchema,
     },
     responses: {
       200: {
-        description: 'Client archived',
+        description: 'Project archived',
         content: {
           'application/json': {
             schema: z.object({}).passthrough(),
@@ -786,7 +786,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
       404: {
-        description: 'Client not found',
+        description: 'Project not found',
         content: {
           'application/json': {
             schema: NotFoundErrorResponseSchema,
@@ -806,13 +806,13 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'get',
-    path: '/clients/{id}/reviewers',
-    tags: ['Clients'],
-    summary: 'Get client reviewers',
-    description: 'Retrieve all reviewers for a client',
+    path: '/projects/{id}/reviewers',
+    tags: ['Projects'],
+    summary: 'Get project reviewers',
+    description: 'Retrieve all reviewers for a project',
     security: [{ bearerAuth: [] }],
     request: {
-      params: ClientParamsOpenAPISchema,
+      params: ProjectParamsOpenAPISchema,
       query: CursorPaginationQueryOpenAPISchema,
     },
     responses: {
@@ -841,7 +841,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
       404: {
-        description: 'Client not found',
+        description: 'Project not found',
         content: {
           'application/json': {
             schema: NotFoundErrorResponseSchema,
@@ -861,13 +861,13 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'post',
-    path: '/clients/{id}/reviewers',
-    tags: ['Clients'],
-    summary: 'Invite client reviewer',
-    description: 'Invite a reviewer to a client',
+    path: '/projects/{id}/reviewers',
+    tags: ['Projects'],
+    summary: 'Invite project reviewer',
+    description: 'Invite a reviewer to a project',
     security: [{ bearerAuth: [] }],
     request: {
-      params: ClientParamsOpenAPISchema,
+      params: ProjectParamsOpenAPISchema,
       body: {
         content: {
           'application/json': {
@@ -885,7 +885,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
               id: z.string().uuid(),
               email: z.string(),
               type: z.string(),
-              clientId: z.string().uuid(),
+              projectId: z.string().uuid(),
               organizationId: z.string().uuid(),
               expiresAt: z.string().datetime(),
               createdAt: z.string().datetime(),
@@ -918,7 +918,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
       404: {
-        description: 'Client not found',
+        description: 'Project not found',
         content: {
           'application/json': {
             schema: NotFoundErrorResponseSchema,
@@ -938,13 +938,13 @@ export function buildOpenAPISpec(): Record<string, unknown> {
 
   registry.registerPath({
     method: 'delete',
-    path: '/clients/{id}/reviewers/{reviewerId}',
-    tags: ['Clients'],
-    summary: 'Remove client reviewer',
-    description: 'Remove a reviewer from a client',
+    path: '/projects/{id}/reviewers/{reviewerId}',
+    tags: ['Projects'],
+    summary: 'Remove project reviewer',
+    description: 'Remove a reviewer from a project',
     security: [{ bearerAuth: [] }],
     request: {
-      params: ClientReviewerParamsOpenAPISchema,
+      params: ProjectReviewerParamsOpenAPISchema,
     },
     responses: {
       204: {
@@ -967,7 +967,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
         },
       },
       404: {
-        description: 'Client or reviewer not found',
+        description: 'Project or reviewer not found',
         content: {
           'application/json': {
             schema: NotFoundErrorResponseSchema,
@@ -1995,7 +1995,7 @@ export function buildOpenAPISpec(): Record<string, unknown> {
     userId: z.string().uuid().optional(),
     reviewerId: z.string().uuid().optional(),
     organizationId: z.string().uuid().optional(),
-    clientId: z.string().uuid().optional(),
+    projectId: z.string().uuid().optional(),
     role: z.enum(['OWNER', 'ADMIN', 'MEMBER']).optional(),
     email: z.string().email(),
     onboardingCompleted: z.boolean(),

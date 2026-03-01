@@ -13,7 +13,7 @@ import {
 
 export type CreateDraftReviewItemInput = {
   organizationId: string
-  clientId: string
+  projectId: string
   title: string
   description?: string
   createdByUserId: string
@@ -48,8 +48,8 @@ export interface IReviewItemRepository {
     organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<ReviewItem>>
-  listByClient(
-    clientId: string,
+  listByProject(
+    projectId: string,
     organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<ReviewItem>>
@@ -76,7 +76,7 @@ export interface IReviewItemRepository {
     cutoffDate: Date,
     tx: Prisma.TransactionClient
   ): Promise<boolean>
-  countActiveByClient(clientId: string, organizationId: string): Promise<number>
+  countActiveByProject(projectId: string, organizationId: string): Promise<number>
 }
 
 export class ReviewItemRepository implements IReviewItemRepository {
@@ -84,7 +84,7 @@ export class ReviewItemRepository implements IReviewItemRepository {
     return await prisma.reviewItem.create({
       data: {
         organizationId: data.organizationId,
-        clientId: data.clientId,
+        projectId: data.projectId,
         title: data.title,
         description: data.description,
         status: ReviewStatus.DRAFT,
@@ -190,8 +190,8 @@ export class ReviewItemRepository implements IReviewItemRepository {
     }
   }
 
-  async listByClient(
-    clientId: string,
+  async listByProject(
+    projectId: string,
     organizationId: string,
     pagination: CursorPaginationParams
   ): Promise<CursorPaginationResult<ReviewItem>> {
@@ -200,7 +200,7 @@ export class ReviewItemRepository implements IReviewItemRepository {
 
     const items = await prisma.reviewItem.findMany({
       where: {
-        clientId,
+        projectId,
         organizationId,
         archivedAt: null,
         ...cursorWhere,
@@ -357,13 +357,13 @@ export class ReviewItemRepository implements IReviewItemRepository {
     return result.count > 0
   }
 
-  async countActiveByClient(
-    clientId: string,
+  async countActiveByProject(
+    projectId: string,
     organizationId: string
   ): Promise<number> {
     return await prisma.reviewItem.count({
       where: {
-        clientId,
+        projectId,
         organizationId,
         archivedAt: null,
         status: {

@@ -48,7 +48,9 @@ sudo nano /etc/hosts
 Add:
 
 ```
-127.0.0.1 app.local.worklient.test
+127.0.0.1 worklient.test
+127.0.0.1 api.worklient.test
+127.0.0.1 app.worklient.test
 ```
 
 Save:
@@ -70,7 +72,7 @@ sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 ## 1.3 Verify
 
 ```bash
-ping app.local.worklient.test
+ping app.worklient.test
 ```
 
 Must resolve to:
@@ -101,14 +103,14 @@ mkcert -install
 From inside the frontend root folder:
 
 ```bash
-mkcert app.local.worklient.test
+mkcert api.worklient.test app.worklient.test worklient.test
 ```
 
 This generates:
 
 ```
-app.local.worklient.test.pem
-app.local.worklient.test-key.pem
+api.worklient.test+2.pem
+api.worklient.test+2-key.pem
 ```
 
 Do not commit these files.
@@ -126,7 +128,7 @@ Create a file:
 Example:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.local.worklient.test:4001
+NEXT_PUBLIC_API_URL=https://api.worklient.test:4001
 NEXT_PUBLIC_ENVIRONMENT=local
 ```
 
@@ -156,7 +158,7 @@ yarn dev
 Open:
 
 ```
-https://app.local.worklient.test:3000
+https://app.worklient.test:3000
 ```
 
 You may need to trust the mkcert certificate the first time.
@@ -169,13 +171,13 @@ You may need to trust the mkcert certificate the first time.
 Frontend:
 
 ```
-https://app.local.worklient.test:3000
+https://app.worklient.test:3000
 ```
 
 Backend:
 
 ```
-https://api.local.worklient.test:4001
+https://api.worklient.test:4001
 ```
 
 Both must be running simultaneously.

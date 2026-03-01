@@ -10,8 +10,8 @@ export enum ActivityLogActionType {
   ATTACHMENT_UPLOADED = 'ATTACHMENT_UPLOADED',
   COMMENT_ADDED = 'COMMENT_ADDED',
   COMMENT_DELETED = 'COMMENT_DELETED',
-  CLIENT_CREATED = 'CLIENT_CREATED',
-  CLIENT_UPDATED = 'CLIENT_UPDATED',
+  PROJECT_CREATED = 'PROJECT_CREATED',
+  PROJECT_UPDATED = 'PROJECT_UPDATED',
   USER_INVITED = 'USER_INVITED',
   USER_JOINED = 'USER_JOINED',
   USER_UPDATED = 'USER_UPDATED',
@@ -57,16 +57,16 @@ export type ActivityLogMetadataMap = {
   [ActivityLogActionType.COMMENT_DELETED]: {
     commentId: string
   }
-  [ActivityLogActionType.CLIENT_CREATED]: { clientId: string; name?: string }
-  [ActivityLogActionType.CLIENT_UPDATED]: {
-    clientId: string
+  [ActivityLogActionType.PROJECT_CREATED]: { projectId: string; name?: string }
+  [ActivityLogActionType.PROJECT_UPDATED]: {
+    projectId: string
     oldName?: string
     newName?: string
     archived?: boolean
   }
   [ActivityLogActionType.USER_INVITED]: {
     invitedUserEmail: string
-    clientId?: string
+    projectId?: string
   }
   [ActivityLogActionType.USER_JOINED]: { userId: string }
   [ActivityLogActionType.USER_UPDATED]: {
@@ -96,8 +96,8 @@ export function mapActionToPrismaAction(
     [ActivityLogActionType.ATTACHMENT_UPLOADED]: 'ATTACHMENT_UPLOADED',
     [ActivityLogActionType.COMMENT_ADDED]: 'COMMENT_ADDED',
     [ActivityLogActionType.COMMENT_DELETED]: 'COMMENT_DELETED',
-    [ActivityLogActionType.CLIENT_CREATED]: 'CLIENT_CREATED',
-    [ActivityLogActionType.CLIENT_UPDATED]: 'CLIENT_UPDATED',
+    [ActivityLogActionType.PROJECT_CREATED]: 'PROJECT_CREATED',
+    [ActivityLogActionType.PROJECT_UPDATED]: 'PROJECT_UPDATED',
     [ActivityLogActionType.USER_INVITED]: 'USER_INVITED',
     [ActivityLogActionType.USER_JOINED]: 'USER_JOINED',
     [ActivityLogActionType.USER_UPDATED]: 'USER_UPDATED',

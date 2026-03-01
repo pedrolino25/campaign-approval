@@ -2,38 +2,35 @@ import type { Metadata } from "next";
 
 import featuresImage1 from "@/assets/features/feature-1.png";
 import { FeatureCard } from "@/components/landing-pages/cards/feature-card";
-import { Navbar } from "@/components/landing-pages/navbar/navbar";
 import FooterSection from "@/components/landing-pages/sections/footer";
 import HeroSection from "@/components/landing-pages/sections/hero";
+import { JsonLdSEO } from "@/components/layout/seo/jsonld-seo";
+import { buildMetadataSEO, SEO_DEFAULTS } from "@/components/layout/seo/metadata-seo";
 import { Container } from "@/components/ui/container";
 
-export const metadata: Metadata = {
+const CANONICAL_PATH = "/operational-visibility";
+const CANONICAL_URL = `${SEO_DEFAULTS.siteUrl}/operational-visibility`;
+
+export const metadata: Metadata = buildMetadataSEO({
+  type: "website",
   title: "Campaign Approval Status Tracking",
   description:
     "Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams.",
+  canonicalPath: CANONICAL_PATH,
   keywords: [
     "approval status tracking",
     "campaign approval dashboard",
     "creative workflow visibility",
     "marketing approval tracking",
   ],
-  openGraph: {
-    title: "Operational Visibility for Campaign Approvals",
-    description:
-      "Monitor approval progress across campaigns and eliminate manual follow-ups.",
-    url: "https://worklient.com/operational-visibility",
-    siteName: "Worklient",
-    type: "website",
-  },
-  alternates: {
-    canonical: "/operational-visibility",
-  },
-};
+  openGraphTitle: "Campaign Approval Status Tracking | Worklient",
+  openGraphDescription:
+    "Monitor approval progress across campaigns and eliminate manual follow-ups.",
+});
 
 export default function OperationalVisibility() {
   return (
     <>
-      <Navbar />
       <HeroSection
         theme="blue"
         title={["Complete Approval Visibility", "Across Every Campaign"]}
@@ -68,6 +65,12 @@ export default function OperationalVisibility() {
         />
       </Container>
       <FooterSection />
+      <JsonLdSEO
+        type="WebPage"
+        name="Campaign Approval Status Tracking | Worklient"
+        description="Gain real-time visibility into campaign approval progress with structured tracking across assets, clients, and internal teams."
+        url={CANONICAL_URL}
+      />
     </>
-  )
+  );
 }

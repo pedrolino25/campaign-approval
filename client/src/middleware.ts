@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (isOffline ||isPublicRoute(pathname)) {
+  if (isOffline || isPublicRoute(pathname)) {
     const response = NextResponse.next()
 
     if (hasValidSession) {

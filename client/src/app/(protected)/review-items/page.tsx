@@ -49,14 +49,14 @@ export default function ReviewItemsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Review Items</CardTitle>
-          <CardDescription>Complete list of review items across all clients</CardDescription>
+          <CardDescription>Complete list of review items across all projects</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Client</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Assigned To</TableHead>
@@ -67,7 +67,7 @@ export default function ReviewItemsPage() {
               {dummyReviewItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{item.clientName}</TableCell>
+                  <TableCell>{item.projectName}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusColor(item.status)}>
                       {item.status}
