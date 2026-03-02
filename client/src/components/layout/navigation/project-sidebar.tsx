@@ -1,9 +1,10 @@
 'use client'
 
-import { ArrowLeft, Bell, Building2, CreditCard, FileCheck, FilePlus, LayoutDashboard, User } from 'lucide-react'
+import { ArrowLeft, Bell, Building2, CreditCard, FileCheck, FilePlus, LayoutDashboard, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { OrganizationSwitcher } from '@/components/layout/organization-switcher'
 import { WorkspaceSwitcher } from '@/components/layout/workspace-switcher'
 import {
   SidebarGroup,
@@ -65,6 +66,7 @@ const secondaryNavAgency: NavItem[] = [
 ]
 
 const secondaryNavReviewer: NavItem[] = [
+  { label: 'Team', href: '/reviewer/team', icon: Users, activeWhen: 'exact' },
   { label: 'My Account', href: '/account', icon: User, activeWhen: 'exact' },
 ]
 
@@ -105,11 +107,16 @@ function NavLink({ item }: { item: NavItem }) {
 interface ProjectSidebarProps {
   restrictToAssigned?: boolean
   reviewer?: boolean
+  /** For reviewers: current organization id and switch handler (switcher shows organizations) */
+  currentOrganizationId?: string | null
+  onSwitchOrganization?: (organizationId: string) => void
 }
 
 export function ProjectSidebar({
   restrictToAssigned = false,
   reviewer = false,
+  currentOrganizationId = null,
+  onSwitchOrganization,
 }: ProjectSidebarProps) {
   const { currentProjectId } = useWorkspace()
   const pathname = usePathname()
@@ -119,6 +126,16 @@ export function ProjectSidebar({
   const isCreateReviewItemPage = Boolean(createPageMatch)
   const createPageProjectId = createPageMatch?.[1] ?? projectId
   const secondaryNav = reviewer ? secondaryNavReviewer : secondaryNavAgency
+
+  const switcher =
+    reviewer && onSwitchOrganization ? (
+      <OrganizationSwitcher
+        currentOrganizationId={currentOrganizationId}
+        onSwitchOrganization={onSwitchOrganization}
+      />
+    ) : (
+      <WorkspaceSwitcher restrictToAssigned={restrictToAssigned} />
+    )
 
   if (isCreateReviewItemPage && createPageProjectId) {
     return (
@@ -148,7 +165,7 @@ export function ProjectSidebar({
   return (
     <>
       <div className={cn('px-2 group-data-[state=collapsed]:hidden')}>
-        <WorkspaceSwitcher restrictToAssigned={restrictToAssigned} />
+        {switcher}
       </div>
       <SidebarGroup>
         <SidebarGroupContent>

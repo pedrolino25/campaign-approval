@@ -15,6 +15,7 @@ export interface DummyOrganization {
   id: string
   name: string
   domain: string
+  logoUrl?: string | null
   createdAt: string
 }
 
@@ -86,11 +87,26 @@ export interface DummyReviewer {
   invitedAt: string
 }
 
+/** Org-level reviewer team member (for reviewer "manage team" page). Role is always reviewer. */
+export interface DummyReviewerTeamMember {
+  id: string
+  email: string
+  name: string
+  invitedAt: string
+}
+
 export const dummyOrganization: DummyOrganization = {
   id: 'org-1',
   name: 'Netflix',
   domain: 'netflix.com',
+  logoUrl: null,
   createdAt: '2024-01-01T00:00:00Z',
+}
+
+const dummyOrganizations: DummyOrganization[] = [dummyOrganization]
+
+function getOrganizations(): DummyOrganization[] {
+  return [...dummyOrganizations]
 }
 
 export const dummyProjects: DummyProject[] = [
@@ -486,6 +502,16 @@ export const dummyReviewers: DummyReviewer[] = [
   },
 ]
 
+const dummyReviewerTeamMembers: DummyReviewerTeamMember[] = [
+  { id: 'rt-1', email: 'reviewer@techstart.io', name: 'TechStart Reviewer', invitedAt: '2024-02-25T00:00:00Z' },
+  { id: 'rt-2', email: 'client@acme.com', name: 'Acme Client', invitedAt: '2024-01-20T00:00:00Z' },
+  { id: 'rt-3', email: 'legal@globalsolutions.com', name: 'Legal Team', invitedAt: '2024-03-12T00:00:00Z' },
+]
+
+function getReviewerTeamMembers(): DummyReviewerTeamMember[] {
+  return [...dummyReviewerTeamMembers]
+}
+
 function getProjects(): DummyProject[] {
   return [...dummyProjects]
 }
@@ -539,10 +565,12 @@ function getNotificationsByProject(projectId: string): DummyNotification[] {
 export const dummyData = {
   getProjects,
   getProjectById,
+  getOrganizations,
   getReviewItemsByProject,
   getAllReviewItems,
   getReviewItemById,
   getTeamMembers,
+  getReviewerTeamMembers,
   getNotifications,
   getNotificationsByProject,
   getActivityByReviewItem,

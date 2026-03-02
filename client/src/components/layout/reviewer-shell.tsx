@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+
 import { ProjectSidebar } from '@/components/layout/navigation/project-sidebar'
-import { SidebarOrgHeader } from '@/components/layout/sidebar-org-header'
+import { SidebarReviewerHeader } from '@/components/layout/sidebar-reviewer-header'
 import { TopBar } from '@/components/layout/top-bar'
 import {
   Sidebar,
@@ -11,6 +13,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { dummyData } from '@/lib/dummy/data'
 
 interface ReviewerShellProps {
   children: React.ReactNode
@@ -18,17 +21,24 @@ interface ReviewerShellProps {
 }
 
 export function ReviewerShell({ children, onRoleSwitch }: ReviewerShellProps) {
+  const orgs = dummyData.getOrganizations()
+  const [currentOrganizationId, setCurrentOrganizationId] = useState<string | null>(
+    () => orgs[0]?.id ?? null,
+  )
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader className="flex h-14 items-center justify-between gap-2 px-2 group-data-[state=collapsed]:justify-center">
-          <SidebarOrgHeader />
+          <SidebarReviewerHeader />
           <SidebarTrigger hideOnMobile />
         </SidebarHeader>
         <SidebarContent>
           <ProjectSidebar
             restrictToAssigned
             reviewer
+            currentOrganizationId={currentOrganizationId}
+            onSwitchOrganization={setCurrentOrganizationId}
           />
         </SidebarContent>
       </Sidebar>

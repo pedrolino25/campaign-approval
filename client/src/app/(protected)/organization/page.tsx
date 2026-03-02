@@ -1,108 +1,131 @@
+'use client'
+
+import { Pencil } from 'lucide-react'
+import Image from 'next/image'
+import { useState } from 'react'
+
+import {
+  EditOrganizationDialog,
+  type EditOrganizationFormValues,
+} from '@/components/organization/edit-organization-dialog'
 import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { dummyOrganization } from '@/lib/dummy/data'
 
 export default function OrganizationPage() {
-  const org = dummyOrganization
+  const [org, setOrg] = useState({
+    name: dummyOrganization.name,
+    domain: dummyOrganization.domain,
+    logoUrl: dummyOrganization.logoUrl ?? null,
+  })
+  const [editOpen, setEditOpen] = useState(false)
+  const [reminderDays, setReminderDays] = useState(3)
+
+  const handleSaveOrganization = (values: EditOrganizationFormValues) => {
+    setOrg({
+      name: values.name,
+      domain: values.domain,
+      logoUrl: values.logoUrl ?? null,
+    })
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Organization"
-        description="Organization settings and reminders"
+        description="Manage your organization settings and notification preferences"
       />
 
-      <Tabs
-        defaultValue="general"
-        className="space-y-4"
-      >
-        <TabsList className="rounded-md">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="audit">Audit</TabsTrigger>
-        </TabsList>
-
-        <TabsContent
-          value="general"
-          className="space-y-4"
-        >
-          <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
-            <CardHeader className="p-4">
-              <CardTitle className="text-sm font-medium">General</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 pt-0">
-              <div className="space-y-2">
-                <Label htmlFor="name">Organization name</Label>
-                <Input
-                  id="name"
-                  defaultValue={org.name}
-                />
+      {/* General information */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground">General information</h2>
+        <Card className="overflow-hidden rounded-xs">
+          <CardContent className="p-0">
+            <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-border bg-muted">
+                  {org.logoUrl ? (
+                    <Image
+                      src={org.logoUrl}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      unoptimized={org.logoUrl?.startsWith('blob:')}
+                    />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-xl font-semibold text-muted-foreground">
+                      {org.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{org.name}</p>
+                  <p className="text-xs text-muted-foreground">{org.domain}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="domain">Domain</Label>
-                <Input
-                  id="domain"
-                  defaultValue={org.domain}
-                  readOnly
-                />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Reminders */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Notifications</h2>
+        <Card className="overflow-hidden rounded-xs">
+          <CardContent className="p-0">
+            <div className="flex flex-col gap-6 p-6 md:flex-row md:items-start md:justify-between md:gap-8">
+              <div className="min-w-0 flex-1 md:max-w-md">
+                <h3 className="text-base font-semibold text-foreground">Reminder settings</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Configure when to send reminder emails for pending reviews.
+                </p>
               </div>
-              <Button size="sm">Save</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent
-          value="reminders"
-          className="space-y-4"
-        >
-          <Card className="rounded-xs border bg-card shadow-sm max-w-xl">
-            <CardHeader className="p-4">
-              <CardTitle className="text-sm font-medium">Reminder settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 pt-0">
-              <p className="text-sm text-muted-foreground">
-                Configure when to send reminder emails for pending reviews.
-              </p>
-              <div className="space-y-2">
-                <Label>Days before reminder</Label>
-                <Input
-                  type="number"
-                  defaultValue={3}
-                  className=" w-24"
-                />
+              <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reminder-days" className="text-sm">
+                    Days before reminder
+                  </Label>
+                  <Input
+                    id="reminder-days"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={reminderDays}
+                    onChange={(e) => setReminderDays(Number(e.target.value) || 1)}
+                    className="w-full sm:w-28"
+                  />
+                </div>
+                <Button size="sm" className="sm:shrink-0">
+                  Save
+                </Button>
               </div>
-              <Button size="sm">Save</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-        <TabsContent
-          value="security"
-          className="space-y-4"
-        >
-          <Card className="rounded-xs border bg-card shadow-sm">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Security settings (placeholder).</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent
-          value="audit"
-          className="space-y-4"
-        >
-          <Card className="rounded-xs border bg-card shadow-sm">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Audit log (placeholder).</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <EditOrganizationDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        initialValues={{
+          name: org.name,
+          domain: org.domain,
+          logoUrl: org.logoUrl,
+        }}
+        onSave={handleSaveOrganization}
+      />
     </div>
   )
 }
