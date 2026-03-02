@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Building2, CreditCard, FileCheck, LayoutDashboard, User } from 'lucide-react'
+import { ArrowLeft, Bell, Building2, CreditCard, FileCheck, FilePlus, LayoutDashboard, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -15,31 +15,75 @@ import {
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/lib/workspace/workspace-context'
 
-const mainNav = (projectId: string) => [
-  { label: 'Overview', href: `/projects/${projectId}`, icon: LayoutDashboard },
+type ActiveWhen = 'exact' | 'prefix' | 'prefixExcludeNew'
+
+interface NavItem {
+  label: string
+  href: string
+  icon: React.ElementType
+  activeWhen?: ActiveWhen
+}
+
+const mainNav = (projectId: string): NavItem[] => [
+  { label: 'Overview', href: `/projects/${projectId}`, icon: LayoutDashboard, activeWhen: 'exact' },
   {
     label: 'Review Items',
     href: `/projects/${projectId}/review-items`,
     icon: FileCheck,
+    activeWhen: 'prefixExcludeNew',
   },
   {
     label: 'Notifications',
     href: `/projects/${projectId}/notifications`,
     icon: Bell,
+    activeWhen: 'exact',
   },
 ]
 
-const secondaryNavAgency = [
-  { label: 'Organization', href: '/organization', icon: Building2 },
-  { label: 'Billing', href: '/billing', icon: CreditCard },
-  { label: 'My Account', href: '/account', icon: User },
+const createReviewItemNav = (projectId: string): NavItem[] => [
+  {
+    label: 'Create Review Item',
+    href: `/projects/${projectId}/review-items/new`,
+    icon: FilePlus,
+    activeWhen: 'exact',
+  },
 ]
 
-const secondaryNavReviewer = [{ label: 'My Account', href: '/account', icon: User }]
+const returnToReviewItemsNav = (projectId: string): NavItem[] => [
+  {
+    label: 'Return to Review Items',
+    href: `/projects/${projectId}/review-items`,
+    icon: ArrowLeft,
+    activeWhen: 'exact',
+  },
+]
 
-function NavLink({ item }: { item: { label: string; href: string; icon: React.ElementType } }) {
+const secondaryNavAgency: NavItem[] = [
+  { label: 'Organization', href: '/organization', icon: Building2, activeWhen: 'exact' },
+  { label: 'Billing', href: '/billing', icon: CreditCard, activeWhen: 'exact' },
+  { label: 'My Account', href: '/account', icon: User, activeWhen: 'exact' },
+]
+
+const secondaryNavReviewer: NavItem[] = [
+  { label: 'My Account', href: '/account', icon: User, activeWhen: 'exact' },
+]
+
+function getIsActive(pathname: string, href: string, activeWhen: ActiveWhen = 'prefix'): boolean {
+  if (activeWhen === 'exact') {
+    return pathname === href
+  }
+  if (activeWhen === 'prefixExcludeNew') {
+    return (
+      pathname === href ||
+      (pathname.startsWith(href + '/') && !pathname.startsWith(href + '/new'))
+    )
+  }
+  return pathname === href || pathname.startsWith(href + '/')
+}
+
+function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname()
-  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+  const isActive = getIsActive(pathname, item.href, item.activeWhen)
   const Icon = item.icon
 
   return (
@@ -68,8 +112,38 @@ export function ProjectSidebar({
   reviewer = false,
 }: ProjectSidebarProps) {
   const { currentProjectId } = useWorkspace()
+  const pathname = usePathname()
   const projectId = currentProjectId ?? ''
+
+  const createPageMatch = pathname.match(/^\/projects\/([^/]+)\/review-items\/new$/)
+  const isCreateReviewItemPage = Boolean(createPageMatch)
+  const createPageProjectId = createPageMatch?.[1] ?? projectId
   const secondaryNav = reviewer ? secondaryNavReviewer : secondaryNavAgency
+
+  if (isCreateReviewItemPage && createPageProjectId) {
+    return (
+      <>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {createReviewItemNav(createPageProjectId).map((item) => (
+                <NavLink key={item.href} item={item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup className="mt-auto border-t border-sidebar-border pt-2">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {returnToReviewItemsNav(createPageProjectId).map((item) => (
+                <NavLink key={item.href} item={item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </>
+    )
+  }
 
   return (
     <>

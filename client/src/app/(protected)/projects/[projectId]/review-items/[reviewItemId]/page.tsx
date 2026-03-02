@@ -4,6 +4,7 @@ import { Paperclip, Send, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
+import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/navigation/page-header'
 import { StatusBadge } from '@/components/navigation/status-badge'
@@ -23,12 +24,14 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { useRoleOverride } from '@/lib/auth/role-override-context'
 import { dummyData } from '@/lib/dummy/data'
 
 export default function ProjectReviewItemDetailPage() {
   const params = useParams()
   const projectId = params.projectId as string
   const reviewItemId = params.reviewItemId as string
+  const { isReviewer } = useRoleOverride()
   const item = dummyData.getReviewItemById(reviewItemId)
   const project = item ? dummyData.getProjectById(item.projectId) : null
   const comments = item ? dummyData.getCommentsByReviewItem(item.id) : []
@@ -38,6 +41,7 @@ export default function ProjectReviewItemDetailPage() {
   const [uploadOpen, setUploadOpen] = useState(false)
 
   if (!item || item.projectId !== projectId) return null
+  if (isReviewer && item.status === 'Draft') notFound()
 
   const listHref = `/projects/${projectId}/review-items`
 
@@ -65,14 +69,16 @@ export default function ProjectReviewItemDetailPage() {
                 </Button>
               </>
             )}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setUploadOpen(true)}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload version
-            </Button>
+            {!isReviewer && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setUploadOpen(true)}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload version
+              </Button>
+            )}
             <Button
               size="sm"
               variant="secondary"

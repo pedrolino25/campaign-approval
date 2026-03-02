@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import { notFound } from 'next/navigation'
+import { useEffect } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
@@ -7,12 +11,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useRoleOverride } from '@/lib/auth/role-override-context'
 import { dummyData } from '@/lib/dummy/data'
 
-export default function NewProjectReviewItemPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params
-  const project = dummyData.getProjectById(projectId)
-  if (!project) notFound()
+export default function NewProjectReviewItemPage() {
+  const params = useParams()
+  const projectId = params.projectId as string
+  const router = useRouter()
+  const { isReviewer } = useRoleOverride()
+  const project = projectId ? dummyData.getProjectById(projectId) : null
+
+  useEffect(() => {
+    if (isReviewer && projectId) {
+      router.replace(`/projects/${projectId}/review-items`)
+    }
+  }, [isReviewer, projectId, router])
+
+  if (!projectId || !project) notFound()
+  if (isReviewer) return null
 
   const listHref = `/projects/${projectId}/review-items`
 

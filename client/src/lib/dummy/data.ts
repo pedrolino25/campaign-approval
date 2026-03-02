@@ -88,8 +88,8 @@ export interface DummyReviewer {
 
 export const dummyOrganization: DummyOrganization = {
   id: 'org-1',
-  name: 'Worklient Organization',
-  domain: 'worklient.example.com',
+  name: 'Netflix',
+  domain: 'netflix.com',
   createdAt: '2024-01-01T00:00:00Z',
 }
 

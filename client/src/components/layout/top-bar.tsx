@@ -39,7 +39,7 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
   })
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 min-w-0 shrink-0 items-center gap-4 overflow-x-hidden border-b border-border bg-background px-4">
+    <header className="fixed top-0 left-[var(--sidebar-margin-left,0px)] right-0 z-50 flex h-14 min-w-0 shrink-0 items-center gap-4 overflow-x-hidden border-b border-border bg-background px-4 transition-[left] duration-200 ease-linear">
       {left}
       <div className="flex flex-1 min-w-0 items-center">
         <div className="hidden sm:block min-w-0">

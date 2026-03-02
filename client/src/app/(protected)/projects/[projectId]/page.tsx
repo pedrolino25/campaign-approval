@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { ProjectOverviewActions } from '@/app/(protected)/projects/[projectId]/project-overview-actions'
 import { RecentReviewItemsTable } from '@/app/(protected)/projects/[projectId]/recent-review-items-table'
 import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
@@ -29,23 +30,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
       <PageHeader
         title={project.name}
         description={project.description}
-        action={
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              asChild
-            >
-              <Link href={`/projects/${projectId}/settings`}>Settings</Link>
-            </Button>
-            <Button
-              size="sm"
-              asChild
-            >
-              <Link href={`/projects/${projectId}/review-items/new`}>Add review item</Link>
-            </Button>
-          </div>
-        }
+        action={<ProjectOverviewActions projectId={projectId} />}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

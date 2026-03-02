@@ -38,18 +38,14 @@ export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitc
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex h-auto w-full items-center gap-2 rounded-sm bg-background border border-border px-3 py-2 text-left hover:bg-muted/50"
+          className="flex h-auto w-full min-w-0 items-center gap-2 overflow-hidden rounded-sm border border-border bg-background px-3 py-2 text-left hover:bg-muted/50"
         >
           <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <span className="block truncate text-sm font-medium">
               {currentProject?.name ?? 'Select project'}
-            </p>
-            {currentProject && (
-              <p className="truncate text-xs text-muted-foreground">
-                {currentProject.reviewItemCount} review items
-              </p>
-            )}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">Project</span>
           </div>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Button>
