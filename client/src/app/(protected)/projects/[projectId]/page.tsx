@@ -49,7 +49,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Review Items
@@ -59,7 +59,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{reviewItems.length}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
           </CardHeader>
@@ -67,7 +67,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{pending}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Changes Requested
@@ -77,7 +77,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{changesRequested}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-md border bg-card p-4 shadow-sm">
+        <Card className="rounded-xs border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
           </CardHeader>
@@ -87,7 +87,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
         </Card>
       </div>
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Recent Review Items</CardTitle>
           <Button
@@ -106,7 +106,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
         </CardContent>
       </Card>
 
-      <Card className="rounded-md border bg-card shadow-sm">
+      <Card className="rounded-xs border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Activity</CardTitle>
         </CardHeader>

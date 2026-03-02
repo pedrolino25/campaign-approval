@@ -35,7 +35,7 @@ export function getTeamColumns(actions: TeamTableActionsProps): ColumnDef<DummyT
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} className="capitalize" />,
       enableSorting: true,
     },
     {

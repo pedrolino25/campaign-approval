@@ -106,7 +106,7 @@ export default function ProjectReviewItemDetailPage() {
           value="details"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Description</CardTitle>
             </CardHeader>
@@ -115,7 +115,7 @@ export default function ProjectReviewItemDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Paperclip className="h-4 w-4" />
@@ -127,7 +127,7 @@ export default function ProjectReviewItemDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Comments</CardTitle>
             </CardHeader>
@@ -156,15 +156,18 @@ export default function ProjectReviewItemDetailPage() {
                 ))
               )}
               <Separator className="my-4" />
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 w-full">
                 <Textarea
                   placeholder="Add a comment..."
                   rows={2}
                   className=" flex-1"
                 />
-                <Button size="sm">
-                  <Send className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-end">
+                  <Button size="sm" className="w-fit flex items-center gap-2">
+                    Send comment
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -174,7 +177,7 @@ export default function ProjectReviewItemDetailPage() {
           value="activity"
           className="space-y-4"
         >
-          <Card className="rounded-md border bg-card shadow-sm">
+          <Card className="rounded-xs border bg-card shadow-sm">
             <CardHeader className="p-4">
               <CardTitle className="text-sm font-medium">Activity</CardTitle>
             </CardHeader>

@@ -148,11 +148,11 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           'group fixed inset-y-0 z-10 hidden h-svh flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-linear sm:flex',
           side === 'left' ? 'left-0' : 'right-0',
           collapsible === 'icon' &&
-            (isCollapsed ? 'w-[var(--sidebar-width-collapsed)]' : 'w-[var(--sidebar-width)]'),
+          (isCollapsed ? 'w-[var(--sidebar-width-collapsed)]' : 'w-[var(--sidebar-width)]'),
           collapsible === 'offcanvas' && !isCollapsed && 'w-[var(--sidebar-width)]',
           collapsible === 'offcanvas' &&
-            isCollapsed &&
-            (side === 'left' ? '-translate-x-full' : 'translate-x-full'),
+          isCollapsed &&
+          (side === 'left' ? '-translate-x-full' : 'translate-x-full'),
           className,
         )}
         style={
@@ -256,7 +256,7 @@ const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentPropsWitho
     <ul
       ref={ref}
       data-sidebar="menu"
-      className={cn('flex flex-col gap-1', className)}
+      className={cn('flex flex-col gap-1 px-1', className)}
       {...props}
     />
   ),
@@ -297,7 +297,7 @@ const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonP
       title: isCollapsed && tooltip ? tooltip : undefined,
       onClick: handleClick,
       className: cn(
-        'flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium outline-none transition-colors',
+        'flex w-full items-center gap-2 rounded-xs px-2 py-2 text-sm font-normal data-[active=true]:font-medium outline-none transition-colors',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         'focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',

@@ -38,7 +38,7 @@ export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitc
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex h-auto w-full items-center gap-2 rounded-md border border-border px-3 py-2 text-left hover:bg-muted/50"
+          className="flex h-auto w-full items-center gap-2 rounded-sm bg-background border border-border px-3 py-2 text-left hover:bg-muted/50"
         >
           <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
