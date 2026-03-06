@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProjects } from '@/hooks/projects/useProjects'
+import { useReviewItems } from '@/hooks/review-items/useReviewItems'
 import { dummyActivityLogs, dummyData } from '@/lib/dummy/data'
 
 export default function ProjectOverviewPage() {
@@ -16,6 +17,8 @@ export default function ProjectOverviewPage() {
   const segment = params.projectId as string
   const { list, getById } = useProjects()
   const project = getById(segment)
+  const projectId = project?.id
+  const { reviewItems, isLoading: reviewItemsLoading } = useReviewItems(projectId)
   const isLoading = list.isLoading
 
   if (isLoading) {
@@ -28,11 +31,11 @@ export default function ProjectOverviewPage() {
 
   if (!project) notFound()
 
-  const projectId = project.id
-  const reviewItems = dummyData.getReviewItemsByProject(projectId)
-  const pending = reviewItems.filter((r) => r.status === 'Pending Review').length
-  const changesRequested = reviewItems.filter((r) => r.status === 'Changes Requested').length
-  const approved = reviewItems.filter((r) => r.status === 'Approved').length
+  const pending = reviewItems.filter((r) => r.status === 'PENDING_REVIEW').length
+  const changesRequested = reviewItems.filter(
+    (r) => r.status === 'CHANGES_REQUESTED',
+  ).length
+  const approved = reviewItems.filter((r) => r.status === 'APPROVED').length
   const recentItems = reviewItems.slice(0, 5)
   const activity = [
     ...dummyData.getActivityByReviewItem(reviewItems[0]?.id ?? ''),
@@ -96,7 +99,10 @@ export default function ProjectOverviewPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <RecentReviewItemsTable projectId={segment} items={recentItems} />
+          <RecentReviewItemsTable
+            projectId={segment}
+            items={reviewItemsLoading ? [] : recentItems}
+          />
         </CardContent>
       </Card>
 
