@@ -23,11 +23,17 @@ export const STATUS_TO_STYLE: Record<string, StatusBadgeStyle> = {
   archived: 'neutral',
   pending: 'warning',
   inactive: 'neutral',
-  // Review item
+  // Review item (display labels)
   Draft: 'neutral',
   'Pending Review': 'info',
   'Changes Requested': 'warning',
   Approved: 'success',
+  // Review item (API enum values)
+  DRAFT: 'neutral',
+  PENDING_REVIEW: 'info',
+  CHANGES_REQUESTED: 'warning',
+  APPROVED: 'success',
+  ARCHIVED: 'neutral',
   // Team member
   // (active, pending, inactive already above)
 }

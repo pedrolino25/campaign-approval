@@ -16,6 +16,7 @@ import {
   CreateReviewItemSchema,
   CursorPaginationQuerySchema,
   RequestChangesSchema,
+  ReviewItemListQuerySchema,
   ReviewItemParamsSchema,
   SendForReviewSchema,
 } from '../lib/schemas'
@@ -144,8 +145,9 @@ const buildVersionHistory = async (
 const handleGetReviewItems = async (
   request: HttpRequest
 ): Promise<HttpResponse> => {
-  const validatedQuery = validateQuery(CursorPaginationQuerySchema)(request)
-  
+  const validatedQuery = validateQuery(ReviewItemListQuerySchema)(request)
+  const { cursor, limit, projectId } = validatedQuery.query
+
   const actor = request.auth.actor
 
   authorizeOrThrow(actor, Action.VIEW_REVIEW_ITEM, {
@@ -153,23 +155,23 @@ const handleGetReviewItems = async (
   })
 
   const repository = new ReviewItemRepository()
+  const pagination = { cursor,
+limit: limit as number | undefined }
   let result
 
   if (actor.type === ActorType.Internal) {
     const organizationId = actor.organizationId
-    result = await repository.listByOrganization(organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
+    if (projectId) {
+      result = await repository.listByProject(projectId, organizationId, pagination)
+    } else {
+      result = await repository.listByOrganization(organizationId, pagination)
+    }
   } else {
     if (actor.projectId == null) {
       throw new NotFoundError('Project not found')
     }
     const organizationId = await resolveOrganizationId(actor)
-    result = await repository.listByProject(actor.projectId, organizationId, {
-      cursor: validatedQuery.query.cursor,
-      limit: validatedQuery.query.limit as number | undefined,
-    })
+    result = await repository.listByProject(actor.projectId, organizationId, pagination)
   }
 
   return {

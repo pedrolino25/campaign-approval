@@ -1,14 +1,17 @@
 import { apiFetch } from '@/lib/api/client'
 
 export interface PresignRequest {
+  reviewItemId: string
   fileName: string
   fileType: string
   fileSize: number
 }
 
 export interface PresignResponse {
-  uploadUrl: string
+  /** Presigned S3 upload URL (API returns presignedUrl) */
+  presignedUrl: string
   s3Key: string
+  version?: number
 }
 
 export interface Attachment {
@@ -29,6 +32,8 @@ export interface CreateAttachmentRequest {
   fileSize: number
   version: number
 }
+
+/** Upload flow: 1) presign 2) PUT file to uploadUrl 3) create(reviewItemId, { s3Key, fileName, fileType, fileSize, version }) */
 
 export interface AttachmentListResponse {
   data: Attachment[]

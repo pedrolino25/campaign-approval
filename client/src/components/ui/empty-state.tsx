@@ -8,8 +8,8 @@ interface EmptyStateProps {
   icon: LucideIcon
   title: string
   subtitle: string
-  actionLabel: string
-  onAction: () => void
+  actionLabel?: string
+  onAction?: () => void
   className?: string
 }
 
@@ -21,6 +21,7 @@ export function EmptyState({
   onAction,
   className,
 }: EmptyStateProps) {
+  const showAction = actionLabel && onAction
   return (
     <div
       className={`flex flex-col items-center justify-center rounded-md border bg-card py-24 shadow-sm max-w-md mx-auto ${className ?? ''}`}
@@ -31,9 +32,11 @@ export function EmptyState({
           <h3 className="text-lg font-semibold">{title}</h3>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
-        <Button size="sm" onClick={onAction}>
-          {actionLabel}
-        </Button>
+        {showAction && (
+          <Button size="sm" onClick={onAction}>
+            {actionLabel}
+          </Button>
+        )}
       </div>
     </div>
   )

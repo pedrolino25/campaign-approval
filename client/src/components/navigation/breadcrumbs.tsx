@@ -76,11 +76,11 @@ export function useBreadcrumbsFromPath(): BreadcrumbItem[] {
 
   if (pathname.startsWith(reviewItemsPrefix)) {
     const afterReviewItems = pathname.slice(reviewItemsPrefix.length)
-    if (afterReviewItems === '' || afterReviewItems === '/new') {
-      items.push({
-        label: 'Review Items',
-        href: pathname === reviewItemsPrefix ? undefined : reviewItemsPrefix,
-      })
+    if (afterReviewItems === '') {
+      items.push({ label: 'Review Items' })
+    } else if (afterReviewItems === '/new') {
+      items.push({ label: 'Review Items', href: reviewItemsPrefix })
+      items.push({ label: 'Create' })
     } else {
       items.push({ label: 'Review Items', href: reviewItemsPrefix })
       const reviewItemId = afterReviewItems.split('/')[1]

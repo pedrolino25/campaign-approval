@@ -17,3 +17,8 @@ export const CursorPaginationQuerySchema = z.object({
 })
 
 export type CursorPaginationQuery = z.infer<typeof CursorPaginationQuerySchema>
+
+export const ReviewItemListQuerySchema = CursorPaginationQuerySchema.extend({
+  projectId: z.string().uuid('Invalid project UUID').optional(),
+})
+export type ReviewItemListQuery = z.infer<typeof ReviewItemListQuerySchema>

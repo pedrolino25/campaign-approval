@@ -69,6 +69,15 @@ export async function getAll(): Promise<ReviewItem[]> {
   return res.data ?? []
 }
 
+/** Fetch review items scoped to a project. All review item queries must be project-scoped. */
+export async function getByProject(projectId: string): Promise<ReviewItem[]> {
+  const params = new URLSearchParams({ projectId })
+  const res = await apiFetch<ReviewItemListResponse>(
+    `/review-items?${params.toString()}`,
+  )
+  return res.data ?? []
+}
+
 export async function get(id: string): Promise<ReviewItemDetail> {
   return apiFetch<ReviewItemDetail>(`/review-items/${id}`)
 }
