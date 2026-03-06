@@ -460,7 +460,7 @@ export default function NewProjectReviewItemPage() {
                               'flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-xs font-medium transition-colors sm:min-h-[80px] sm:gap-2 sm:py-4 sm:text-sm',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                               isSelected
-                                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                ? 'border-[#714B96] bg-[rgba(113,75,150,0.4)] text-[#714B96] shadow-[rgba(113,75,150,0.4)_0px_1.5px_0px_0px]'
                                 : 'border-muted-foreground/25 bg-muted/40 text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted/60 hover:text-foreground',
                             )}
                           >
