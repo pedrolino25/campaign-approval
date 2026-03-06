@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useState } from 'react'
 
@@ -13,7 +14,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useProjects } from '@/hooks/projects/useProjects'
+import { getErrorMessage } from '@/lib/api/client'
+import { useToast } from '@/lib/hooks/use-toast'
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -22,22 +25,49 @@ interface CreateProjectDialogProps {
 }
 
 export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreateProjectDialogProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const { create: createProject } = useProjects()
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: submit to API; for now just close and notify
-    onSuccess?.()
-    onOpenChange(false)
-    setName('')
-    setDescription('')
+    const trimmed = name.trim()
+    if (!trimmed) {
+      toast({
+        title: 'Validation',
+        description: 'Project name is required.',
+        variant: 'destructive',
+      })
+      return
+    }
+    createProject.mutate(
+      { name: trimmed },
+      {
+        onSuccess: (project) => {
+          toast({
+            title: 'Project created',
+            description: `"${project.name}" is ready.`,
+          })
+          onOpenChange(false)
+          setName('')
+          onSuccess?.()
+          router.push(`/projects/${project.slug ?? project.id}`)
+        },
+        onError: (err) => {
+          toast({
+            title: 'Error',
+            description: getErrorMessage(err),
+            variant: 'destructive',
+          })
+        },
+      },
+    )
   }
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setName('')
-      setDescription('')
     }
     onOpenChange(next)
   }
@@ -50,29 +80,20 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
       <DialogContent className="rounded-md sm:max-w-[28rem]">
         <DialogHeader>
           <DialogTitle>Create Project</DialogTitle>
-          <p className="text-sm text-muted-foreground">Add a new project to your organization</p>
+          <p className="text-sm text-muted-foreground">Projects represent clients or campaigns where you manage approval workflows.</p>
         </DialogHeader>
         <form
           onSubmit={handleSubmit}
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="create-project-name">Name</Label>
+            <Label htmlFor="create-project-name">Project Name</Label>
             <Input
               id="create-project-name"
               placeholder="e.g. Acme Campaign"
               value={name}
               onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="create-project-description">Description (optional)</Label>
-            <Textarea
-              id="create-project-description"
-              placeholder="Brief description of the project"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              disabled={createProject.isPending}
             />
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -81,14 +102,16 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
               size="sm"
               variant="secondary"
               onClick={() => handleOpenChange(false)}
+              disabled={createProject.isPending}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               size="sm"
+              disabled={createProject.isPending || !name.trim()}
             >
-              Create Project
+              {createProject.isPending ? 'Creating…' : 'Create Project'}
             </Button>
           </DialogFooter>
         </form>
@@ -103,7 +126,7 @@ const CreateProjectDialogContext = React.createContext<{
 
 export function useCreateProjectDialog() {
   const ctx = React.useContext(CreateProjectDialogContext)
-  if (!ctx) return { openCreateProject: () => {} }
+  if (!ctx) return { openCreateProject: () => { } }
   return ctx
 }
 

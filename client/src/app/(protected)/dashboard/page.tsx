@@ -1,7 +1,6 @@
 'use client'
 
 import { FolderPlus } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -10,16 +9,17 @@ import {
   projectToDashboardRow,
 } from '@/app/(protected)/dashboard/projects-table-columns'
 import { PageHeader } from '@/components/navigation/page-header'
+import { useCreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DataTable } from '@/components/ui/data-table'
-import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useProjects } from '@/hooks/projects/useProjects'
 
 export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { openCreateProject } = useCreateProjectDialog()
   const { list } = useProjects()
   const projects = list.data ?? []
   const isLoading = list.isLoading
@@ -27,16 +27,48 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (searchParams.get('create') === 'project') {
-      router.replace('/projects/new')
+      router.replace('/dashboard')
+      openCreateProject()
     }
-  }, [searchParams, router])
+  }, [searchParams, router, openCreateProject])
 
   const activeProjects = projects.filter((p) => p.status === 'active')
   const totalProjects = activeProjects.length
   const projectRows = activeProjects.map(projectToDashboardRow)
+  const hasProjects = projectRows.length > 0
 
   const handleRowClick = (row: { id: string; slug?: string }) => {
     router.push(`/projects/${row.slug ?? row.id}`)
+  }
+
+  // No projects: show large create-first-project banner only
+  if (!isLoading && !error && !hasProjects) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Dashboard"
+          description="Organization-level overview"
+        />
+        <Card className="rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 p-12 sm:p-16">
+          <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <FolderPlus className="h-8 w-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Create your first project
+              </h2>
+              <p className="text-muted-foreground">
+                Projects help you organize review items for each client or campaign. Create your first project to start sending assets for approval.
+              </p>
+            </div>
+            <Button size="lg" onClick={openCreateProject}>
+              Create Project
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -45,8 +77,8 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Organization-level overview"
         action={
-          <Button size="sm" asChild>
-            <Link href="/projects/new">Create Project</Link>
+          <Button size="sm" onClick={openCreateProject}>
+            Create Project
           </Button>
         }
       />
@@ -136,16 +168,7 @@ export default function DashboardPage() {
               </table>
             </div>
           )}
-          {!error && !isLoading && projectRows.length === 0 && (
-            <EmptyState
-              icon={FolderPlus}
-              title="Create your first project"
-              subtitle="Projects help you organize review items for each client or campaign. Create your first project to start sending assets for approval."
-              actionLabel="Create Project"
-              onAction={() => router.push('/projects/new')}
-            />
-          )}
-          {!error && !isLoading && projectRows.length > 0 && (
+          {!error && !isLoading && hasProjects && (
             <DataTable
               columns={dashboardProjectColumns}
               data={projectRows}
