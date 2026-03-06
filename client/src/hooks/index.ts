@@ -10,4 +10,4 @@ export {
 } from './organization/useOrganization'
 export { projectsQueryKey,useProjects } from './projects/useProjects'
 export { useReviewItemDetail } from './review-items/useReviewItemDetail'
-export { reviewItemsQueryKey,useReviewItems } from './review-items/useReviewItems'
+export { useReviewItems } from './review-items/useReviewItems'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, type useQueryClient } from '@tanstack/react-query'
 
 import type { ReviewItem } from '@/services/review-items.service'
 import * as reviewItemsService from '@/services/review-items.service'
@@ -17,7 +17,6 @@ export interface UseReviewItemsReturn {
 }
 
 export function useReviewItems(projectId: string | undefined): UseReviewItemsReturn {
-  const queryClient = useQueryClient()
 
   const {
     data: reviewItems = [],
