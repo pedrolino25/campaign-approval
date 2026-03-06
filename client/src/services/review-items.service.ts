@@ -39,22 +39,24 @@ export interface ReviewItemDetail extends ReviewItem {
 }
 
 export interface SendForReviewRequest {
-  reviewerIds: string[]
+  expectedVersion: number
 }
 
 export interface ApproveReviewRequest {
+  expectedVersion?: number
   comment?: string
 }
 
 export interface RequestChangesRequest {
-  comment: string
+  expectedVersion: number
+  comment?: string
 }
 
 export interface Activity {
   id: string
   action: string
-  actorType: 'INTERNAL' | 'REVIEWER'
-  actorName: string
+  actorType?: 'INTERNAL' | 'REVIEWER'
+  actorName?: string
   metadata?: Record<string, unknown>
   createdAt: string
 }
