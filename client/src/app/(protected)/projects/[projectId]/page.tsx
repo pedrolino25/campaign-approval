@@ -6,10 +6,12 @@ import { notFound, useParams } from 'next/navigation'
 import { ProjectOverviewActions } from '@/app/(protected)/projects/[projectId]/project-overview-actions'
 import { RecentReviewItemsTable } from '@/app/(protected)/projects/[projectId]/recent-review-items-table'
 import { PageHeader } from '@/components/navigation/page-header'
+import { CreateFirstReviewItemBanner } from '@/components/review-items/create-first-review-item-banner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProjects } from '@/hooks/projects/useProjects'
 import { useReviewItems } from '@/hooks/review-items/useReviewItems'
+import { useRoleOverride } from '@/lib/auth/role-override-context'
 import { dummyActivityLogs, dummyData } from '@/lib/dummy/data'
 
 export default function ProjectOverviewPage() {
@@ -19,6 +21,7 @@ export default function ProjectOverviewPage() {
   const project = getById(segment)
   const projectId = project?.id
   const { reviewItems, isLoading: reviewItemsLoading } = useReviewItems(projectId)
+  const { isReviewer } = useRoleOverride()
   const isLoading = list.isLoading
 
   if (isLoading) {
@@ -30,6 +33,10 @@ export default function ProjectOverviewPage() {
   }
 
   if (!project) notFound()
+
+  const hasReviewItems = reviewItems.length > 0
+  const showCreateFirstBanner =
+    !reviewItemsLoading && !hasReviewItems && !isReviewer
 
   const pending = reviewItems.filter((r) => r.status === 'PENDING_REVIEW').length
   const changesRequested = reviewItems.filter(
@@ -52,7 +59,13 @@ export default function ProjectOverviewPage() {
         action={<ProjectOverviewActions projectId={segment} />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {showCreateFirstBanner && (
+        <CreateFirstReviewItemBanner projectSegment={segment} />
+      )}
+
+      {!showCreateFirstBanner && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -105,6 +118,8 @@ export default function ProjectOverviewPage() {
           />
         </CardContent>
       </Card>
+        </>
+      )}
 
       <Card className="rounded-md border bg-card shadow-sm">
         <CardHeader className="p-4">

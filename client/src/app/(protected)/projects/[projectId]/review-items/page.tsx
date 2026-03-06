@@ -6,6 +6,7 @@ import { notFound, useParams, useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'
+import { CreateFirstReviewItemBanner } from '@/components/review-items/create-first-review-item-banner'
 import { getReviewItemsColumns } from '@/components/tables/review-items-columns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,10 +51,6 @@ export default function ProjectReviewItemsPage() {
   }
 
   if (!project) notFound()
-
-  const handleCreateClick = () => {
-    router.push(`/projects/${segment}/review-items/new`)
-  }
 
   return (
     <div className="space-y-6">
@@ -134,17 +131,15 @@ export default function ProjectReviewItemsPage() {
           </CardContent>
         </Card>
       ) : items.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="No review items yet"
-          subtitle={
-            isReviewer
-              ? 'Review items shared with you will appear here.'
-              : 'Create a review item to start collecting feedback and approvals from your client.'
-          }
-          actionLabel={isReviewer ? undefined : 'Create Review Item'}
-          onAction={isReviewer ? undefined : handleCreateClick}
-        />
+        !isReviewer ? (
+          <CreateFirstReviewItemBanner projectSegment={segment} />
+        ) : (
+          <EmptyState
+            icon={FileText}
+            title="No review items yet"
+            subtitle="Review items shared with you will appear here."
+          />
+        )
       ) : (
         <Card className="rounded-md border bg-card shadow-sm">
           <CardHeader className="p-4">
