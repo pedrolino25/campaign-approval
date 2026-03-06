@@ -20,9 +20,10 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
 import type { ParsedError } from '@/lib/errors'
-import { type SessionResponse, useLoginMutation } from '@/services/auth.service'
+import type { SessionResponse } from '@/services/auth.service'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -48,7 +49,7 @@ function getRedirectPath(
 
 export default function LoginPage() {
   const router = useRouter()
-  const queryClient = useQueryClient()
+  const { login: loginMutation } = useAuth()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -58,27 +59,20 @@ export default function LoginPage() {
     },
   })
 
-  const loginMutation = useLoginMutation({
-    onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push(getRedirectPath(response.session))
-    },
-    onError: async (err, variables) => {
-      const error = err as ParsedError
-
-      if (error.code === 'EMAIL_NOT_VERIFIED') {
-        router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
-        return
-      }
-
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
-
   const onSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values)
+    loginMutation.mutate(values, {
+      onSuccess: (response) => {
+        router.push(getRedirectPath(response.session))
+      },
+      onError: (err, variables) => {
+        const error = err as unknown as ParsedError
+        if (error?.code === 'EMAIL_NOT_VERIFIED') {
+          router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
+          return
+        }
+        form.setError('root', { message: getErrorMessage(err) })
+      },
+    })
   }
 
   const error = form.formState.errors.root?.message

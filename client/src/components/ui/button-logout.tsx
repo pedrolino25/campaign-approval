@@ -5,9 +5,9 @@ import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 
+import { useAuth } from '@/hooks/auth/useAuth'
 import { performLogout } from '@/lib/auth/logout.utils'
 import { cn } from '@/lib/utils'
-import { useLogoutMutation } from '@/services/auth.service'
 
 import { Button, type ButtonProps } from './button'
 
@@ -15,21 +15,20 @@ const ButtonLogout = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, children, ...props }, ref) => {
     const router = useRouter()
     const queryClient = useQueryClient()
+    const { logout: logoutMutation } = useAuth()
 
-    const logoutMutation = useLogoutMutation({
-      onSuccess: () => {
-        performLogout(queryClient, router)
-      },
-      onError: () => {
-        performLogout(queryClient, router)
-      },
-    })
+    const handleLogout = () => {
+      logoutMutation.mutate(undefined, {
+        onSuccess: () => performLogout(queryClient, router),
+        onError: () => performLogout(queryClient, router),
+      })
+    }
 
     return (
       <Button
         ref={ref}
         {...props}
-        onClick={() => logoutMutation.mutate()}
+        onClick={handleLogout}
         disabled={logoutMutation.isPending || props.disabled}
         className={cn('group/hero-button gap-2 w-fit font-normal', className)}
       >

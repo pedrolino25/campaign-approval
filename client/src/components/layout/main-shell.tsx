@@ -16,23 +16,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { performLogout } from '@/lib/auth/logout.utils'
 import { useSession } from '@/lib/auth/use-session'
-import { useLogoutMutation } from '@/services/auth.service'
+import { useAuth } from '@/hooks/auth/useAuth'
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const { session } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const logoutMutation = useLogoutMutation({
-    onSuccess: () => {
-      performLogout(queryClient, router)
-    },
-    onError: () => {
-      performLogout(queryClient, router)
-    },
-  })
+  const { logout: logoutMutation } = useAuth()
 
   const handleLogout = () => {
-    logoutMutation.mutate()
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => performLogout(queryClient, router),
+      onError: () => performLogout(queryClient, router),
+    })
   }
 
   return (

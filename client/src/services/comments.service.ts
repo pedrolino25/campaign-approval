@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface Comment {
   id: string
@@ -27,51 +22,34 @@ export interface CommentListResponse {
   nextCursor?: string
 }
 
-export function useCreateCommentMutation(
-  options?: Omit<
-    UseMutationOptions<
-      Comment,
-      ParsedError,
-      { reviewItemId: string; request: CreateCommentRequest }
-    >,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({
-      reviewItemId,
-      request,
-    }: {
-      reviewItemId: string
-      request: CreateCommentRequest
-    }) => {
-      return apiFetch<Comment>(`/review-items/${reviewItemId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
-  })
+export async function getByReviewItem(
+  reviewItemId: string,
+): Promise<Comment[]> {
+  const res = await apiFetch<CommentListResponse>(
+    `/review-items/${reviewItemId}/comments`,
+  )
+  return res.data ?? []
 }
 
-export function useDeleteCommentMutation(
-  options?: Omit<
-    UseMutationOptions<void, ParsedError, { reviewItemId: string; commentId: string }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({
-      reviewItemId,
-      commentId,
-    }: {
-      reviewItemId: string
-      commentId: string
-    }) => {
-      return apiFetch<void>(`/review-items/${reviewItemId}/comments/${commentId}`, {
-        method: 'DELETE',
-      })
+export async function create(
+  reviewItemId: string,
+  request: CreateCommentRequest,
+): Promise<Comment> {
+  return apiFetch<Comment>(
+    `/review-items/${reviewItemId}/comments`,
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
     },
-    ...options,
-  })
+  )
+}
+
+export async function remove(
+  reviewItemId: string,
+  commentId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/review-items/${reviewItemId}/comments/${commentId}`,
+    { method: 'DELETE' },
+  )
 }

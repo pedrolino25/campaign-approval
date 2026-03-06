@@ -1,27 +1,19 @@
 'use client'
 
-import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
-import { useCompleteSignupReviewerMutation } from '@/services/auth.service'
 
 export default function ReviewerCompleteSignupPage() {
   const { session, isLoading: sessionLoading } = useSession()
   const router = useRouter()
-  const queryClient = useQueryClient()
-
-  const mutation = useCompleteSignupReviewerMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/dashboard')
-    },
-  })
+  const { completeSignupReviewer: mutation } = useAuth()
 
   if (sessionLoading) {
     return <FullScreenLoader />
@@ -36,7 +28,9 @@ export default function ReviewerCompleteSignupPage() {
 
   const handleContinue = () => {
     const name = session?.email.split('@')[0] || ''
-    mutation.mutate(name)
+    mutation.mutate(name, {
+      onSuccess: () => router.push('/dashboard'),
+    })
   }
 
   return (

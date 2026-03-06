@@ -1,18 +1,34 @@
+'use client'
+
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, useParams } from 'next/navigation'
 
 import { ProjectOverviewActions } from '@/app/(protected)/projects/[projectId]/project-overview-actions'
 import { RecentReviewItemsTable } from '@/app/(protected)/projects/[projectId]/recent-review-items-table'
 import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useProjects } from '@/hooks/projects/useProjects'
 import { dummyActivityLogs, dummyData } from '@/lib/dummy/data'
 
-export default function ProjectOverviewPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params
-  const project = dummyData.getProjectById(projectId)
+export default function ProjectOverviewPage() {
+  const params = useParams()
+  const segment = params.projectId as string
+  const { list, getById } = useProjects()
+  const project = getById(segment)
+  const isLoading = list.isLoading
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Loading…" description="Loading project…" />
+      </div>
+    )
+  }
+
   if (!project) notFound()
 
+  const projectId = project.id
   const reviewItems = dummyData.getReviewItemsByProject(projectId)
   const pending = reviewItems.filter((r) => r.status === 'Pending Review').length
   const changesRequested = reviewItems.filter((r) => r.status === 'Changes Requested').length
@@ -29,12 +45,12 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
     <div className="space-y-6">
       <PageHeader
         title={project.name}
-        description={project.description}
-        action={<ProjectOverviewActions projectId={projectId} />}
+        description="Project overview"
+        action={<ProjectOverviewActions projectId={segment} />}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-xs border bg-card p-4 shadow-sm">
+        <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Review Items
@@ -44,7 +60,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{reviewItems.length}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-xs border bg-card p-4 shadow-sm">
+        <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
           </CardHeader>
@@ -52,7 +68,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{pending}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-xs border bg-card p-4 shadow-sm">
+        <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Changes Requested
@@ -62,7 +78,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
             <p className="text-2xl font-semibold">{changesRequested}</p>
           </CardContent>
         </Card>
-        <Card className="rounded-xs border bg-card p-4 shadow-sm">
+        <Card className="rounded-md border bg-card p-4 shadow-sm">
           <CardHeader className="p-0">
             <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
           </CardHeader>
@@ -72,26 +88,19 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
         </Card>
       </div>
 
-      <Card className="rounded-xs border bg-card shadow-sm">
+      <Card className="rounded-md border bg-card shadow-sm">
         <CardHeader className="p-4 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Recent Review Items</CardTitle>
-          <Button
-            size="sm"
-            variant="secondary"
-            asChild
-          >
-            <Link href={`/projects/${projectId}/review-items`}>View all</Link>
+          <Button size="sm" variant="secondary" asChild>
+            <Link href={`/projects/${segment}/review-items`}>View all</Link>
           </Button>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <RecentReviewItemsTable
-            projectId={projectId}
-            items={recentItems}
-          />
+          <RecentReviewItemsTable projectId={segment} items={recentItems} />
         </CardContent>
       </Card>
 
-      <Card className="rounded-xs border bg-card shadow-sm">
+      <Card className="rounded-md border bg-card shadow-sm">
         <CardHeader className="p-4">
           <CardTitle className="text-sm font-medium">Activity</CardTitle>
         </CardHeader>
@@ -101,10 +110,7 @@ export default function ProjectOverviewPage({ params }: { params: { projectId: s
               <li className="text-sm text-muted-foreground">No activity yet.</li>
             ) : (
               activity.map((a) => (
-                <li
-                  key={a.id}
-                  className="text-sm"
-                >
+                <li key={a.id} className="text-sm">
                   <p className="text-foreground">{a.description}</p>
                   <p className="text-xs text-muted-foreground">
                     {a.userName} · {new Date(a.timestamp).toLocaleString()}

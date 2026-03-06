@@ -3,7 +3,6 @@
 import { ChevronsUpDown, Folder, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-import { useCreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -21,16 +20,19 @@ interface WorkspaceSwitcherProps {
 
 export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitcherProps) {
   const { projects, currentProject, switchProject } = useWorkspace()
-  const { openCreateProject } = useCreateProjectDialog()
   const router = useRouter()
   const activeProjects = projects.filter((p) => p.status === 'active')
 
-  const handleSelect = (projectId: string) => {
-    switchProject(projectId)
+  const handleSelect = (projectIdOrSlug: string) => {
+    switchProject(projectIdOrSlug)
   }
 
   const handleDashboard = () => {
     router.push('/dashboard')
+  }
+
+  const handleCreateProject = () => {
+    router.push('/projects/new')
   }
 
   return (
@@ -75,7 +77,7 @@ export function WorkspaceSwitcher({ restrictToAssigned = false }: WorkspaceSwitc
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={openCreateProject}
+              onClick={handleCreateProject}
               className="cursor-pointer"
             >
               <Plus className="mr-2 h-4 w-4" />

@@ -1,7 +1,6 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { type ControllerRenderProps, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -19,9 +18,9 @@ import {
 } from '@/components/ui/form'
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
-import { useCompleteSignupInternalMutation } from '@/services/auth.service'
 
 const completeSignupSchema = z.object({
   organizationName: z
@@ -39,7 +38,7 @@ type CompleteSignupFormValues = z.infer<typeof completeSignupSchema>
 export default function InternalCompleteSignupPage() {
   const { session, isLoading: sessionLoading } = useSession()
   const router = useRouter()
-  const queryClient = useQueryClient()
+  const { completeSignupInternal: mutation } = useAuth()
 
   const form = useForm<CompleteSignupFormValues>({
     resolver: zodResolver(completeSignupSchema),
@@ -49,20 +48,12 @@ export default function InternalCompleteSignupPage() {
     },
   })
 
-  const mutation = useCompleteSignupInternalMutation({
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push('/dashboard')
-    },
-    onError: (err) => {
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
-
   const onSubmit = (data: CompleteSignupFormValues) => {
-    mutation.mutate(data)
+    mutation.mutate(data, {
+      onSuccess: () => router.push('/dashboard'),
+      onError: (err) =>
+        form.setError('root', { message: getErrorMessage(err) }),
+    })
   }
 
   if (sessionLoading) {

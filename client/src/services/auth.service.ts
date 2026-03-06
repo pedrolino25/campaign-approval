@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface SessionResponse {
   session?: {
@@ -50,164 +45,92 @@ export interface ResendVerificationRequest {
   email: string
 }
 
-export function useLoginMutation(
-  options?: Omit<UseMutationOptions<SessionResponse, ParsedError, LoginRequest>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (request: LoginRequest) => {
-      return apiFetch<SessionResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function login(request: LoginRequest): Promise<SessionResponse> {
+  return apiFetch<SessionResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useVerifyEmailMutation(
-  options?: Omit<
-    UseMutationOptions<SessionResponse, ParsedError, VerifyEmailRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: VerifyEmailRequest) => {
-      return apiFetch<SessionResponse>('/auth/verify-email', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: request.email,
-          code: request.code,
-          password: request.password,
-          ...(request.inviteToken && { inviteToken: request.inviteToken }),
-        }),
-      })
-    },
-    ...options,
+export async function verifyEmail(
+  request: VerifyEmailRequest,
+): Promise<SessionResponse> {
+  return apiFetch<SessionResponse>('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: request.email,
+      code: request.code,
+      password: request.password,
+      ...(request.inviteToken && { inviteToken: request.inviteToken }),
+    }),
   })
 }
 
-export function useSignupMutation(
-  options?: Omit<
-    UseMutationOptions<{ requiresEmailVerification: boolean }, ParsedError, SignupRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: SignupRequest) => {
-      return apiFetch<{ requiresEmailVerification: boolean }>('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function signup(
+  request: SignupRequest,
+): Promise<{ requiresEmailVerification: boolean }> {
+  return apiFetch<{ requiresEmailVerification: boolean }>('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useForgotPasswordMutation(
-  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (email: string) => {
-      return apiFetch<{ success: boolean }>('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      })
-    },
-    ...options,
+export async function forgotPassword(
+  email: string,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
   })
 }
 
-export function useResetPasswordMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, ResetPasswordRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: ResetPasswordRequest) => {
-      return apiFetch<{ success: boolean }>('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function resetPassword(
+  request: ResetPasswordRequest,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useCompleteSignupInternalMutation(
-  options?: Omit<
-    UseMutationOptions<SessionResponse, ParsedError, CompleteSignupInternalRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: CompleteSignupInternalRequest) => {
-      return apiFetch<SessionResponse>('/auth/complete-signup/internal', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function completeSignupInternal(
+  request: CompleteSignupInternalRequest,
+): Promise<SessionResponse> {
+  return apiFetch<SessionResponse>('/auth/complete-signup/internal', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useCompleteSignupReviewerMutation(
-  options?: Omit<UseMutationOptions<SessionResponse, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (name: string) => {
-      return apiFetch<SessionResponse>('/auth/complete-signup/reviewer', {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-      })
-    },
-    ...options,
+export async function completeSignupReviewer(
+  name: string,
+): Promise<SessionResponse> {
+  return apiFetch<SessionResponse>('/auth/complete-signup/reviewer', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
   })
 }
 
-export function useLogoutMutation(
-  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, void>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async () => {
-      return apiFetch<{ success: boolean }>('/auth/logout', {
-        method: 'POST',
-      })
-    },
-    ...options,
+export async function logout(): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/auth/logout', {
+    method: 'POST',
   })
 }
 
-export function useChangePasswordMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, ChangePasswordRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: ChangePasswordRequest) => {
-      return apiFetch<{ success: boolean }>('/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function changePassword(
+  request: ChangePasswordRequest,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useResendVerificationMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, ResendVerificationRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: ResendVerificationRequest) => {
-      return apiFetch<{ success: boolean }>('/auth/resend-verification', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function resendVerification(
+  request: ResendVerificationRequest,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }

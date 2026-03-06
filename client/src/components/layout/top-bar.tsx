@@ -16,15 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { performLogout } from '@/lib/auth/logout.utils'
 import { useSession } from '@/lib/auth/use-session'
-import { useLogoutMutation } from '@/services/auth.service'
 
 interface TopBarProps {
-  /** Optional role override for dev (Switch to Agency / Reviewer) */
   onRoleSwitch?: () => void
   isReviewer?: boolean
-  /** Optional left slot (e.g. mobile menu trigger) */
   left?: React.ReactNode
 }
 
@@ -33,10 +31,14 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
   const breadcrumbs = useBreadcrumbsFromPath()
   const queryClient = useQueryClient()
   const router = useRouter()
-  const logoutMutation = useLogoutMutation({
-    onSuccess: () => performLogout(queryClient, router),
-    onError: () => performLogout(queryClient, router),
-  })
+  const { logout: logoutMutation } = useAuth()
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => performLogout(queryClient, router),
+      onError: () => performLogout(queryClient, router),
+    })
+  }
 
   return (
     <header className="fixed top-0 left-[var(--sidebar-margin-left,0px)] right-0 z-50 flex h-14 min-w-0 shrink-0 items-center gap-4 overflow-x-hidden border-b border-border bg-background px-4 transition-[left] duration-200 ease-linear">
@@ -106,7 +108,7 @@ export function TopBar({ onRoleSwitch, isReviewer, left }: TopBarProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => logoutMutation.mutate()}
+              onClick={handleLogout}
               disabled={logoutMutation.isPending}
               className="cursor-pointer"
             >

@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface Organization {
   id: string
@@ -59,79 +54,59 @@ export interface UpdateUserRoleRequest {
   role: 'ADMIN' | 'MEMBER'
 }
 
-export function useUpdateOrganizationMutation(
-  options?: Omit<
-    UseMutationOptions<Organization, ParsedError, UpdateOrganizationRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: UpdateOrganizationRequest) => {
-      return apiFetch<Organization>('/organization', {
-        method: 'PATCH',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function get(): Promise<Organization> {
+  return apiFetch<Organization>('/organization')
+}
+
+export async function getUsers(): Promise<User[]> {
+  const res = await apiFetch<UserListResponse>('/organization/users')
+  return res.data ?? []
+}
+
+export async function getInvitations(): Promise<Invitation[]> {
+  const res = await apiFetch<InvitationListResponse>('/organization/invitations')
+  return res.data ?? []
+}
+
+export async function update(
+  request: UpdateOrganizationRequest,
+): Promise<Organization> {
+  return apiFetch<Organization>('/organization', {
+    method: 'PATCH',
+    body: JSON.stringify(request),
   })
 }
 
-export function useInviteUserMutation(
-  options?: Omit<
-    UseMutationOptions<{ success: boolean }, ParsedError, InviteUserRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: InviteUserRequest) => {
-      return apiFetch<{ success: boolean }>('/organization/users/invite', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function inviteUser(
+  request: InviteUserRequest,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>('/organization/users/invite', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useAcceptInvitationMutation(
-  options?: Omit<UseMutationOptions<{ success: boolean }, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (token: string) => {
-      return apiFetch<{ success: boolean }>(`/organization/invitations/${token}/accept`, {
-        method: 'POST',
-      })
-    },
-    ...options,
+export async function acceptInvitation(
+  token: string,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(
+    `/organization/invitations/${token}/accept`,
+    { method: 'POST' },
+  )
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  await apiFetch<void>(`/organization/users/${userId}`, {
+    method: 'DELETE',
   })
 }
 
-export function useDeleteUserMutation(
-  options?: Omit<UseMutationOptions<void, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      return apiFetch<void>(`/organization/users/${userId}`, {
-        method: 'DELETE',
-      })
-    },
-    ...options,
-  })
-}
-
-export function useUpdateUserRoleMutation(
-  options?: Omit<
-    UseMutationOptions<User, ParsedError, { userId: string; request: UpdateUserRoleRequest }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({ userId, request }: { userId: string; request: UpdateUserRoleRequest }) => {
-      return apiFetch<User>(`/organization/users/${userId}/role`, {
-        method: 'PATCH',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function updateUserRole(
+  userId: string,
+  request: UpdateUserRoleRequest,
+): Promise<User> {
+  return apiFetch<User>(`/organization/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify(request),
   })
 }

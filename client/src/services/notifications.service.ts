@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface Notification {
   id: string
@@ -23,15 +18,13 @@ export interface NotificationListResponse {
   nextCursor?: string
 }
 
-export function useMarkNotificationAsReadMutation(
-  options?: Omit<UseMutationOptions<Notification, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      return apiFetch<Notification>(`/notifications/${id}/read`, {
-        method: 'PATCH',
-      })
-    },
-    ...options,
+export async function getAll(): Promise<Notification[]> {
+  const res = await apiFetch<NotificationListResponse>('/notifications')
+  return res.data ?? []
+}
+
+export async function markAsRead(id: string): Promise<Notification> {
+  return apiFetch<Notification>(`/notifications/${id}/read`, {
+    method: 'PATCH',
   })
 }

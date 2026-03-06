@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
-import { useSignupMutation } from '@/services/auth.service'
 
 const signupSchema = z
   .object({
@@ -40,16 +40,7 @@ function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const signupMutation = useSignupMutation({
-    onSuccess: (_, variables) => {
-      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
-    },
-    onError: (err) => {
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
+  const { signup: signupMutation } = useAuth()
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -62,12 +53,21 @@ function SignupContent() {
 
   const onSubmit = (values: SignupFormValues) => {
     const inviteToken = searchParams.get('inviteToken')
-
-    signupMutation.mutate({
-      email: values.email,
-      password: values.password,
-      ...(inviteToken && { inviteToken }),
-    })
+    signupMutation.mutate(
+      {
+        email: values.email,
+        password: values.password,
+        ...(inviteToken && { inviteToken }),
+      },
+      {
+        onSuccess: (_, variables) => {
+          router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`)
+        },
+        onError: (err) => {
+          form.setError('root', { message: getErrorMessage(err) })
+        },
+      },
+    )
   }
 
   const error = form.formState.errors.root?.message

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import { useForgotPasswordMutation } from '@/services/auth.service'
+import { useAuth } from '@/hooks/auth/useAuth'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -28,7 +28,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
-  const forgotPasswordMutation = useForgotPasswordMutation()
+  const { forgotPassword: forgotPasswordMutation } = useAuth()
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),

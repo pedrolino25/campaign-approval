@@ -5,39 +5,30 @@ import Link from 'next/link'
 
 import { StatusBadge } from '@/components/navigation/status-badge'
 import { Button } from '@/components/ui/button'
-import { dummyData } from '@/lib/dummy/data'
+import type { Project } from '@/services/projects.service'
 
 export interface DashboardProjectRow {
   id: string
+  slug?: string
   name: string
   status: string
   reviewItemCount: number
-  pending: number
-  lastActivity: string
+  updatedAt: string
 }
 
-function buildDashboardProjectRows(): DashboardProjectRow[] {
-  const projects = dummyData.getProjects().filter((p) => p.status === 'active')
-  return projects.map((p) => {
-    const items = dummyData.getReviewItemsByProject(p.id)
-    const pending = items.filter((r) => r.status === 'Pending Review').length
-    const lastItem = [...items].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )[0]
-    return {
-      id: p.id,
-      name: p.name,
-      status: p.status,
-      reviewItemCount: p.reviewItemCount,
-      pending,
-      lastActivity: lastItem ? new Date(lastItem.updatedAt).toLocaleDateString() : '—',
-    }
-  })
+export function projectToDashboardRow(project: Project): DashboardProjectRow {
+  return {
+    id: project.id,
+    slug: project.slug,
+    name: project.name,
+    status: project.status,
+    reviewItemCount: 0, // placeholder for now
+    updatedAt: project.updatedAt,
+  }
 }
 
-export function getDashboardProjectRows(): DashboardProjectRow[] {
-  return buildDashboardProjectRows()
-}
+const projectLink = (row: DashboardProjectRow) =>
+  `/projects/${row.slug ?? row.id}`
 
 export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
   {
@@ -45,8 +36,9 @@ export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
     header: 'Project Name',
     cell: ({ row }) => (
       <Link
-        href={`/projects/${row.original.id}`}
+        href={projectLink(row.original)}
         className="font-medium text-foreground hover:underline"
+        onClick={(e) => e.stopPropagation()}
       >
         {row.original.name}
       </Link>
@@ -62,20 +54,18 @@ export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
   {
     accessorKey: 'reviewItemCount',
     header: 'Review Items',
-    cell: ({ row }) => <span className="text-sm">{row.original.reviewItemCount}</span>,
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'pending',
-    header: 'Pending Reviews',
-    cell: ({ row }) => <span className="text-sm">{row.original.pending}</span>,
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'lastActivity',
-    header: 'Last Activity',
     cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">{row.original.lastActivity}</span>
+      <span className="text-sm">{row.original.reviewItemCount}</span>
+    ),
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'updatedAt',
+    header: 'Last Updated',
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {new Date(row.original.updatedAt).toLocaleDateString()}
+      </span>
     ),
     enableSorting: true,
   },
@@ -87,8 +77,9 @@ export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
         variant="ghost"
         size="sm"
         asChild
+        onClick={(e) => e.stopPropagation()}
       >
-        <Link href={`/projects/${row.original.id}`}>View</Link>
+        <Link href={projectLink(row.original)}>View</Link>
       </Button>
     ),
     enableSorting: false,

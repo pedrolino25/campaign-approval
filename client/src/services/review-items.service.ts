@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface ReviewItem {
   id: string
@@ -69,83 +64,63 @@ export interface ActivityListResponse {
   nextCursor?: string
 }
 
-export function useCreateReviewItemMutation(
-  options?: Omit<
-    UseMutationOptions<ReviewItem, ParsedError, CreateReviewItemRequest>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async (request: CreateReviewItemRequest) => {
-      return apiFetch<ReviewItem>('/review-items', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function getAll(): Promise<ReviewItem[]> {
+  const res = await apiFetch<ReviewItemListResponse>('/review-items')
+  return res.data ?? []
+}
+
+export async function get(id: string): Promise<ReviewItemDetail> {
+  return apiFetch<ReviewItemDetail>(`/review-items/${id}`)
+}
+
+export async function getActivity(id: string): Promise<Activity[]> {
+  const res = await apiFetch<ActivityListResponse>(
+    `/review-items/${id}/activity`,
+  )
+  return res.data ?? []
+}
+
+export async function create(
+  request: CreateReviewItemRequest,
+): Promise<ReviewItem> {
+  return apiFetch<ReviewItem>('/review-items', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useSendForReviewMutation(
-  options?: Omit<
-    UseMutationOptions<ReviewItem, ParsedError, { id: string; request: SendForReviewRequest }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({ id, request }: { id: string; request: SendForReviewRequest }) => {
-      return apiFetch<ReviewItem>(`/review-items/${id}/send`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function sendForReview(
+  id: string,
+  request: SendForReviewRequest,
+): Promise<ReviewItem> {
+  return apiFetch<ReviewItem>(`/review-items/${id}/send`, {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useApproveReviewMutation(
-  options?: Omit<
-    UseMutationOptions<ReviewItem, ParsedError, { id: string; request?: ApproveReviewRequest }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({ id, request }: { id: string; request?: ApproveReviewRequest }) => {
-      return apiFetch<ReviewItem>(`/review-items/${id}/approve`, {
-        method: 'POST',
-        body: JSON.stringify(request || {}),
-      })
-    },
-    ...options,
+export async function approve(
+  id: string,
+  request?: ApproveReviewRequest,
+): Promise<ReviewItem> {
+  return apiFetch<ReviewItem>(`/review-items/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(request ?? {}),
   })
 }
 
-export function useRequestChangesMutation(
-  options?: Omit<
-    UseMutationOptions<ReviewItem, ParsedError, { id: string; request: RequestChangesRequest }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({ id, request }: { id: string; request: RequestChangesRequest }) => {
-      return apiFetch<ReviewItem>(`/review-items/${id}/request-changes`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export async function requestChanges(
+  id: string,
+  request: RequestChangesRequest,
+): Promise<ReviewItem> {
+  return apiFetch<ReviewItem>(`/review-items/${id}/request-changes`, {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useArchiveReviewItemMutation(
-  options?: Omit<UseMutationOptions<ReviewItem, ParsedError, string>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      return apiFetch<ReviewItem>(`/review-items/${id}/archive`, {
-        method: 'POST',
-      })
-    },
-    ...options,
+export async function archive(id: string): Promise<ReviewItem> {
+  return apiFetch<ReviewItem>(`/review-items/${id}/archive`, {
+    method: 'POST',
   })
 }

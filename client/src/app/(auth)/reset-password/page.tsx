@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
-import { useResetPasswordMutation } from '@/services/auth.service'
 
 const resetPasswordSchema = z
   .object({
@@ -40,16 +40,7 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const resetPasswordMutation = useResetPasswordMutation({
-    onSuccess: () => {
-      router.push('/login')
-    },
-    onError: (err) => {
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
+  const { resetPassword: resetPasswordMutation } = useAuth()
 
   const emailFromQuery = searchParams.get('email') || ''
   const emailSent = searchParams.get('sent') === 'true'
@@ -71,11 +62,18 @@ function ResetPasswordContent() {
   }, [emailFromQuery, form])
 
   const onSubmit = (values: ResetPasswordFormValues) => {
-    resetPasswordMutation.mutate({
-      email: values.email,
-      code: values.code,
-      newPassword: values.newPassword,
-    })
+    resetPasswordMutation.mutate(
+      {
+        email: values.email,
+        code: values.code,
+        newPassword: values.newPassword,
+      },
+      {
+        onSuccess: () => router.push('/login'),
+        onError: (err) =>
+          form.setError('root', { message: getErrorMessage(err) }),
+      },
+    )
   }
 
   const error = form.formState.errors.root?.message

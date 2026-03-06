@@ -22,13 +22,10 @@ import {
 import { FullScreenLoader } from '@/components/ui/fullscreen-loader'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
 import { useSession } from '@/lib/auth/use-session'
-import {
-  type SessionResponse,
-  useResendVerificationMutation,
-  useVerifyEmailMutation,
-} from '@/services/auth.service'
+import type { SessionResponse } from '@/services/auth.service'
 
 const verifyEmailSchema = z.object({
   code: z.string().length(6, 'Code must be 6 characters'),
@@ -54,9 +51,9 @@ function getRedirectPath(
 
 function VerifyEmailContent() {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const { session, isLoading: sessionLoading } = useSession()
+  const { verifyEmail, resendVerification } = useAuth()
   const [resendSuccess, setResendSuccess] = useState(false)
 
   const email = searchParams.get('email') || ''
@@ -69,18 +66,8 @@ function VerifyEmailContent() {
     },
   })
 
-  const verifyEmailMutation = useVerifyEmailMutation({
-    onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: ['session'] })
-      router.push(getRedirectPath(response.session))
-    },
-    onError: (err) => {
-      form.setError('root', {
-        message: getErrorMessage(err),
-      })
-    },
-  })
-  const resendVerificationMutation = useResendVerificationMutation()
+  const verifyEmailMutation = verifyEmail
+  const resendVerificationMutation = resendVerification
 
   useEffect(() => {
     if (sessionLoading) {
@@ -108,15 +95,23 @@ function VerifyEmailContent() {
       router.push('/signup')
       return
     }
-
     const inviteToken = searchParams.get('inviteToken')
-
-    verifyEmailMutation.mutate({
-      email,
-      code: values.code,
-      password: values.password,
-      ...(inviteToken && { inviteToken }),
-    })
+    verifyEmailMutation.mutate(
+      {
+        email,
+        code: values.code,
+        password: values.password,
+        ...(inviteToken && { inviteToken }),
+      },
+      {
+        onSuccess: (response) => {
+          router.push(getRedirectPath(response.session))
+        },
+        onError: (err) => {
+          form.setError('root', { message: getErrorMessage(err) })
+        },
+      },
+    )
   }
 
   const error = form.formState.errors.root?.message

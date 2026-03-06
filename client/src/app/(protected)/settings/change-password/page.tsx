@@ -17,9 +17,9 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { getErrorMessage } from '@/lib/api/client'
 import { useToast } from '@/lib/hooks/use-toast'
-import { useChangePasswordMutation } from '@/services/auth.service'
 
 const changePasswordSchema = z
   .object({
@@ -36,7 +36,7 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
 export default function ChangePasswordPage() {
   const { toast } = useToast()
-  const changePasswordMutation = useChangePasswordMutation()
+  const { changePassword: changePasswordMutation } = useAuth()
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),

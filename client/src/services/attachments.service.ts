@@ -1,9 +1,4 @@
-'use client'
-
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
-
 import { apiFetch } from '@/lib/api/client'
-import type { ParsedError } from '@/lib/errors'
 
 export interface PresignRequest {
   fileName: string
@@ -35,65 +30,48 @@ export interface CreateAttachmentRequest {
   version: number
 }
 
-export function usePresignMutation(
-  options?: Omit<UseMutationOptions<PresignResponse, ParsedError, PresignRequest>, 'mutationFn'>,
-) {
-  return useMutation({
-    mutationFn: async (request: PresignRequest) => {
-      return apiFetch<PresignResponse>('/attachments/presign', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
-    },
-    ...options,
+export interface AttachmentListResponse {
+  data: Attachment[]
+  nextCursor?: string
+}
+
+export async function getByReviewItem(
+  reviewItemId: string,
+): Promise<Attachment[]> {
+  const res = await apiFetch<AttachmentListResponse>(
+    `/review-items/${reviewItemId}/attachments`,
+  )
+  return res.data ?? []
+}
+
+export async function presign(
+  request: PresignRequest,
+): Promise<PresignResponse> {
+  return apiFetch<PresignResponse>('/attachments/presign', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }
 
-export function useCreateAttachmentMutation(
-  options?: Omit<
-    UseMutationOptions<
-      Attachment,
-      ParsedError,
-      { reviewItemId: string; request: CreateAttachmentRequest }
-    >,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({
-      reviewItemId,
-      request,
-    }: {
-      reviewItemId: string
-      request: CreateAttachmentRequest
-    }) => {
-      return apiFetch<Attachment>(`/review-items/${reviewItemId}/attachments`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      })
+export async function create(
+  reviewItemId: string,
+  request: CreateAttachmentRequest,
+): Promise<Attachment> {
+  return apiFetch<Attachment>(
+    `/review-items/${reviewItemId}/attachments`,
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
     },
-    ...options,
-  })
+  )
 }
 
-export function useDeleteAttachmentMutation(
-  options?: Omit<
-    UseMutationOptions<void, ParsedError, { reviewItemId: string; attachmentId: string }>,
-    'mutationFn'
-  >,
-) {
-  return useMutation({
-    mutationFn: async ({
-      reviewItemId,
-      attachmentId,
-    }: {
-      reviewItemId: string
-      attachmentId: string
-    }) => {
-      return apiFetch<void>(`/review-items/${reviewItemId}/attachments/${attachmentId}`, {
-        method: 'DELETE',
-      })
-    },
-    ...options,
-  })
+export async function remove(
+  reviewItemId: string,
+  attachmentId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/review-items/${reviewItemId}/attachments/${attachmentId}`,
+    { method: 'DELETE' },
+  )
 }

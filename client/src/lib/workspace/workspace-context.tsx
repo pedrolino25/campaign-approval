@@ -3,11 +3,12 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { createContext, useCallback, useContext, useMemo } from 'react'
 
-import { dummyData, type DummyProject } from '@/lib/dummy/data'
+import { useProjects } from '@/hooks/projects/useProjects'
+import type { Project } from '@/services/projects.service'
 
 const PROJECTS_PREFIX = '/projects/'
 
-function getProjectIdFromPathname(pathname: string): string | null {
+function getProjectSegmentFromPathname(pathname: string): string | null {
   if (!pathname.startsWith(PROJECTS_PREFIX)) return null
   const rest = pathname.slice(PROJECTS_PREFIX.length)
   const segment = rest.split('/')[0]
@@ -18,9 +19,9 @@ function getProjectIdFromPathname(pathname: string): string | null {
 interface WorkspaceContextValue {
   currentProjectId: string | null
   isProjectRoute: boolean
-  switchProject: (projectId: string) => void
-  projects: DummyProject[]
-  currentProject: DummyProject | undefined
+  switchProject: (projectIdOrSlug: string) => void
+  projects: Project[]
+  currentProject: Project | undefined
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
@@ -28,25 +29,23 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const projects = useMemo(() => dummyData.getProjects(), [])
+  const { list } = useProjects()
+  const projects = useMemo(() => list.data ?? [], [list.data])
 
   const isProjectRoute =
-    pathname.startsWith(PROJECTS_PREFIX) && getProjectIdFromPathname(pathname) != null
+    pathname.startsWith(PROJECTS_PREFIX) && getProjectSegmentFromPathname(pathname) != null
 
-  const currentProjectId = useMemo(() => {
-    const id = getProjectIdFromPathname(pathname)
-    if (!id) return null
-    return projects.some((p) => p.id === id) ? id : null
-  }, [pathname, projects])
+  const segment = getProjectSegmentFromPathname(pathname)
+  const currentProject = useMemo(() => {
+    if (!segment) return undefined
+    return projects.find((p) => p.id === segment || p.slug === segment)
+  }, [segment, projects])
 
-  const currentProject = useMemo(
-    () => (currentProjectId ? dummyData.getProjectById(currentProjectId) : undefined),
-    [currentProjectId],
-  )
+  const currentProjectId = currentProject?.id ?? segment ?? null
 
   const switchProject = useCallback(
-    (projectId: string) => {
-      router.push(`/projects/${projectId}`)
+    (projectIdOrSlug: string) => {
+      router.push(`/projects/${projectIdOrSlug}`)
     },
     [router],
   )

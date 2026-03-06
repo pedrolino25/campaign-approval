@@ -53,6 +53,8 @@ export interface DataTableProps<TData, TValue> {
   defaultPageSize?: number
   /** Optional row id accessor for stable keys */
   getRowId?: (row: TData) => string
+  /** Optional row click handler (e.g. navigate to detail) */
+  onRowClick?: (row: TData) => void
   className?: string
 }
 
@@ -62,6 +64,7 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = 'Search...',
   defaultPageSize = 10,
   getRowId,
+  onRowClick,
   className,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -183,8 +186,16 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="hover:bg-muted/40"
+                  className={cn(
+                    'hover:bg-muted/40',
+                    onRowClick && 'cursor-pointer',
+                  )}
                   data-state={row.getIsSelected() && 'selected'}
+                  onClick={
+                    onRowClick
+                      ? () => onRowClick(row.original)
+                      : undefined
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
