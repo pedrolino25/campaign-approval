@@ -35,11 +35,12 @@ module "acm" {
 # --------------------------------------------
 
 module "s3" {
-  source            = "../../modules/s3"
-  bucket_name       = var.s3_bucket_name
-  enable_versioning = var.enable_s3_versioning
-  environment       = var.environment
-  tags              = var.resource_tags
+  source               = "../../modules/s3"
+  bucket_name          = var.s3_bucket_name
+  enable_versioning    = var.enable_s3_versioning
+  environment          = var.environment
+  cors_allowed_origins = var.api_cors_allowed_origins
+  tags                 = var.resource_tags
 }
 
 # --------------------------------------------

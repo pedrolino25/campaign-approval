@@ -19,3 +19,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cors_allowed_origins" {
+  description = "Origins allowed for CORS (e.g. frontend URLs that upload via presigned URLs)"
+  type        = list(string)
+  default     = []
+}

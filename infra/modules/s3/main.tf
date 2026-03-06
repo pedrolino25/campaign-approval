@@ -39,3 +39,18 @@ resource "aws_s3_bucket_public_access_block" "main" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# CORS for browser uploads: frontend (e.g. dev.worklient.com) PUTs to presigned URLs
+resource "aws_s3_bucket_cors_configuration" "main" {
+  count = length(var.cors_allowed_origins) > 0 ? 1 : 0
+
+  bucket = aws_s3_bucket.main.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "HEAD"]
+    allowed_origins = var.cors_allowed_origins
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
