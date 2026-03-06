@@ -9,6 +9,17 @@ const nonEmptyString = (min: number = 1, max: number = 255): z.ZodString =>
     .max(max, `Must be at most ${max} characters`)
     .trim()
 
+const IMAGE_MAX_BYTES = 50 * 1024 * 1024 // 50 MB
+const PDF_MAX_BYTES = 100 * 1024 * 1024 // 100 MB
+const VIDEO_MAX_BYTES = 500 * 1024 * 1024 // 500 MB
+
+function getMaxBytesForFileType(fileType: string): number {
+  if (fileType.startsWith('image/')) return IMAGE_MAX_BYTES
+  if (fileType.startsWith('video/')) return VIDEO_MAX_BYTES
+  if (fileType === 'application/pdf') return PDF_MAX_BYTES
+  return PDF_MAX_BYTES // default 100 MB for other types
+}
+
 export const CreatePresignedUploadSchema = z
   .object({
     reviewItemId: uuidSchema,
@@ -17,10 +28,20 @@ export const CreatePresignedUploadSchema = z
     fileSize: z
       .number()
       .int('File size must be an integer')
-      .positive('File size must be positive')
-      .max(100 * 1024 * 1024, 'File size must be at most 100MB'), // 100MB max
+      .positive('File size must be positive'),
   })
   .strict()
+  .superRefine((data, ctx) => {
+    const maxBytes = getMaxBytesForFileType(data.fileType)
+    if (data.fileSize > maxBytes) {
+      const maxMB = Math.round(maxBytes / (1024 * 1024))
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `File size must be at most ${maxMB}MB for this type`,
+        path: ['fileSize'],
+      })
+    }
+  })
 
 export type CreatePresignedUploadRequest = z.infer<
   typeof CreatePresignedUploadSchema
@@ -33,11 +54,21 @@ export const ConfirmUploadSchema = z
     fileSize: z
       .number()
       .int('File size must be an integer')
-      .positive('File size must be positive')
-      .max(100 * 1024 * 1024, 'File size must be at most 100MB'),
+      .positive('File size must be positive'),
     s3Key: nonEmptyString(1, 500),
   })
   .strict()
+  .superRefine((data, ctx) => {
+    const maxBytes = getMaxBytesForFileType(data.fileType)
+    if (data.fileSize > maxBytes) {
+      const maxMB = Math.round(maxBytes / (1024 * 1024))
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `File size must be at most ${maxMB}MB for this type`,
+        path: ['fileSize'],
+      })
+    }
+  })
 
 export type ConfirmUploadRequest = z.infer<typeof ConfirmUploadSchema>
 
