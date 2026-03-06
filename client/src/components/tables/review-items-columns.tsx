@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 import { StatusBadge } from '@/components/navigation/status-badge'
 import { Button } from '@/components/ui/button'
