@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import { useState } from 'react'
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useProjects } from '@/hooks/projects/useProjects'
+import { projectsQueryKey, useProjects } from '@/hooks/projects/useProjects'
 import { getErrorMessage } from '@/lib/api/client'
 import { useToast } from '@/lib/hooks/use-toast'
 
@@ -26,6 +27,7 @@ interface CreateProjectDialogProps {
 
 export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreateProjectDialogProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { toast } = useToast()
   const { create: createProject } = useProjects()
   const [name, setName] = useState('')
@@ -44,7 +46,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
     createProject.mutate(
       { name: trimmed },
       {
-        onSuccess: (project) => {
+        onSuccess: async (project) => {
           toast({
             title: 'Project created',
             description: `"${project.name}" is ready.`,
@@ -52,6 +54,7 @@ export function CreateProjectDialog({ open, onOpenChange, onSuccess }: CreatePro
           onOpenChange(false)
           setName('')
           onSuccess?.()
+          await queryClient.refetchQueries({ queryKey: projectsQueryKey })
           router.push(`/projects/${project.slug ?? project.id}`)
         },
         onError: (err) => {
