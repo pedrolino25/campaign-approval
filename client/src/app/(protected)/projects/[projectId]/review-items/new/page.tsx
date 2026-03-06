@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useProjects } from '@/hooks/projects/useProjects'
 import { invalidateReviewItems } from '@/hooks/review-items/useReviewItems'
@@ -443,40 +442,45 @@ export default function NewProjectReviewItemPage() {
                 <FormItem>
                   <FormLabel className="sr-only">Asset type</FormLabel>
                   <FormControl>
-                    <Tabs
-                      value={field.value}
-                      onValueChange={(v) => field.onChange(v as AssetType)}
-                      className="w-full"
+                    <div
+                      className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+                      role="tablist"
+                      aria-label="Asset type"
                     >
-                      <TabsList
-                        className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 sm:gap-0"
-                        role="tablist"
-                        aria-label="Asset type"
-                      >
-                        {ASSET_TYPES.map((type) => (
-                          <TabsTrigger
+                      {ASSET_TYPES.map((type) => {
+                        const isSelected = field.value === type
+                        return (
+                          <button
                             key={type}
-                            value={type}
-                            className="gap-1.5 text-xs sm:text-sm"
+                            type="button"
                             role="tab"
+                            aria-selected={isSelected}
+                            onClick={() => field.onChange(type)}
+                            className={cn(
+                              'flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-xs font-medium transition-colors sm:min-h-[80px] sm:gap-2 sm:py-4 sm:text-sm',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                              isSelected
+                                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                : 'border-muted-foreground/25 bg-muted/40 text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted/60 hover:text-foreground',
+                            )}
                           >
                             {type === 'image' && (
-                              <ImageIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                              <ImageIcon className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
                             )}
                             {type === 'video' && (
-                              <Video className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                              <Video className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
                             )}
                             {type === 'pdf' && (
-                              <FileText className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                              <FileText className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
                             )}
                             {type === 'external_link' && (
-                              <Link2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                              <Link2 className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
                             )}
-                            {ASSET_TYPE_LABELS[type]}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
+                            <span>{ASSET_TYPE_LABELS[type]}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
@@ -496,8 +500,8 @@ export default function NewProjectReviewItemPage() {
                     : 'cursor-default',
                   isFileType && !isSubmitting && 'hover:border-muted-foreground/50',
                   isDragActive &&
-                    isFileType &&
-                    'border-primary/50 bg-primary/5 ring-2 ring-primary/20',
+                  isFileType &&
+                  'border-primary/50 bg-primary/5 ring-2 ring-primary/20',
                   isFileType
                     ? fileError
                       ? 'border-destructive/80 bg-destructive/5'
@@ -511,11 +515,11 @@ export default function NewProjectReviewItemPage() {
                 onKeyDown={
                   isFileType
                     ? (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          handleZoneClick()
-                        }
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleZoneClick()
                       }
+                    }
                     : undefined
                 }
                 onDrop={isFileType ? handleDrop : undefined}
@@ -524,9 +528,9 @@ export default function NewProjectReviewItemPage() {
                 aria-label={
                   isFileType
                     ? 'Drop file here or click to browse. ' +
-                      (file
-                        ? `Selected: ${file.name}`
-                        : `Accepted: ${ASSET_TYPE_HINTS[assetType]}. Max ${formatMaxSize(assetType)}.`)
+                    (file
+                      ? `Selected: ${file.name}`
+                      : `Accepted: ${ASSET_TYPE_HINTS[assetType]}. Max ${formatMaxSize(assetType)}.`)
                     : undefined
                 }
               >
