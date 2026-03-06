@@ -1,22 +1,22 @@
 'use client'
 
 import {
-  type UseMutationResult,
-  type UseQueryResult,
   useMutation,
+  type UseMutationResult,
   useQuery,
   useQueryClient,
+  type UseQueryResult,
 } from '@tanstack/react-query'
 
-import * as organizationService from '@/services/organization.service'
 import type {
+  Invitation,
   InviteUserRequest,
   Organization,
   UpdateOrganizationRequest,
   UpdateUserRoleRequest,
   User,
-  Invitation,
 } from '@/services/organization.service'
+import * as organizationService from '@/services/organization.service'
 
 export const organizationQueryKey = ['organization'] as const
 export const organizationUsersQueryKey = ['organization', 'users'] as const

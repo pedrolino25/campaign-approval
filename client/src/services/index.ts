@@ -1,5 +1,5 @@
-export * as authService from './auth.service'
 export * as attachmentsService from './attachments.service'
+export * as authService from './auth.service'
 export * as commentsService from './comments.service'
 export * as notificationsService from './notifications.service'
 export * as organizationService from './organization.service'

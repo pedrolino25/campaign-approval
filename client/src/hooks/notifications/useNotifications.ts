@@ -1,15 +1,15 @@
 'use client'
 
 import {
-  type UseMutationResult,
-  type UseQueryResult,
   useMutation,
+  type UseMutationResult,
   useQuery,
   useQueryClient,
+  type UseQueryResult,
 } from '@tanstack/react-query'
 
-import * as notificationsService from '@/services/notifications.service'
 import type { Notification } from '@/services/notifications.service'
+import * as notificationsService from '@/services/notifications.service'
 
 export const notificationsQueryKey = ['notifications'] as const
 

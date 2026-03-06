@@ -1,12 +1,11 @@
 'use client'
 
 import {
-  type UseMutationResult,
   useMutation,
+  type UseMutationResult,
   useQueryClient,
 } from '@tanstack/react-query'
 
-import * as authService from '@/services/auth.service'
 import type {
   ChangePasswordRequest,
   CompleteSignupInternalRequest,
@@ -17,6 +16,7 @@ import type {
   SignupRequest,
   VerifyEmailRequest,
 } from '@/services/auth.service'
+import * as authService from '@/services/auth.service'
 
 const SESSION_QUERY_KEY = ['session'] as const
 

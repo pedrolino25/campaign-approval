@@ -1,12 +1,12 @@
 'use client'
 
 import {
-  type UseQueryResult,
   useQuery,
+  type UseQueryResult,
 } from '@tanstack/react-query'
 
-import * as reviewItemsService from '@/services/review-items.service'
 import type { ReviewItemDetail } from '@/services/review-items.service'
+import * as reviewItemsService from '@/services/review-items.service'
 
 function reviewItemDetailQueryKey(id: string) {
   return ['review-items', id, 'detail'] as const

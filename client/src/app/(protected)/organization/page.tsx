@@ -4,11 +4,11 @@ import { Pencil } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 
+import { PageHeader } from '@/components/navigation/page-header'
 import {
   EditOrganizationDialog,
   type EditOrganizationFormValues,
 } from '@/components/organization/edit-organization-dialog'
-import { PageHeader } from '@/components/navigation/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'

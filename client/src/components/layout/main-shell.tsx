@@ -14,9 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { performLogout } from '@/lib/auth/logout.utils'
 import { useSession } from '@/lib/auth/use-session'
-import { useAuth } from '@/hooks/auth/useAuth'
 
 export function MainShell({ children }: { children: React.ReactNode }) {
   const { session } = useSession()

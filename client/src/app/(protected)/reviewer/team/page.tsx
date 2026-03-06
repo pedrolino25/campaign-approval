@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { InviteReviewerDialog } from '@/components/reviewer-team/invite-reviewer-dialog'
 import { PageHeader } from '@/components/navigation/page-header'
+import { InviteReviewerDialog } from '@/components/reviewer-team/invite-reviewer-dialog'
 import { getReviewerTeamColumns } from '@/components/tables/reviewer-team-columns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

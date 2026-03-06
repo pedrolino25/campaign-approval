@@ -1,18 +1,18 @@
 'use client'
 
 import {
-  type UseMutationResult,
-  type UseQueryResult,
   useMutation,
+  type UseMutationResult,
   useQuery,
   useQueryClient,
+  type UseQueryResult,
 } from '@tanstack/react-query'
 
-import * as commentsService from '@/services/comments.service'
 import type {
   Comment,
   CreateCommentRequest,
 } from '@/services/comments.service'
+import * as commentsService from '@/services/comments.service'
 
 function commentsQueryKey(reviewItemId: string) {
   return ['review-items', reviewItemId, 'comments'] as const
