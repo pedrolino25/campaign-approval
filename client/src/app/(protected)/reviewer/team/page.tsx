@@ -65,16 +65,16 @@ export default function ReviewerTeamPage() {
     [],
   )
 
-  if (!isReviewer) return null
-
   const columns = useMemo(
     () =>
       getReviewerTeamColumns({
         currentUserEmail,
-        onRemoveClick: onRemoveClick,
+        onRemoveClick,
       }),
     [currentUserEmail, onRemoveClick],
   )
+
+  if (!isReviewer) return null
 
   return (
     <div className="space-y-6">

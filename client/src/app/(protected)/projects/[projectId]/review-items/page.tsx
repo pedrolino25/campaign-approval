@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { useParams } from 'next/navigation'
+import { notFound, useParams } from 'next/navigation'
 import { useMemo } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'

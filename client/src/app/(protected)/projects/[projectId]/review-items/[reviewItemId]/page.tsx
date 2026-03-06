@@ -2,8 +2,7 @@
 
 import { Paperclip, Send, Upload } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { notFound } from 'next/navigation'
+import { notFound, useParams } from 'next/navigation'
 import { useState } from 'react'
 
 import { PageHeader } from '@/components/navigation/page-header'

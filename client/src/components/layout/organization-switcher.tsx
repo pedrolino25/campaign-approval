@@ -11,8 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { DummyOrganization } from '@/lib/dummy/data'
-import { dummyData } from '@/lib/dummy/data'
+import { dummyData, type DummyOrganization } from '@/lib/dummy/data'
 
 interface OrganizationSwitcherProps {
   currentOrganizationId: string | null
