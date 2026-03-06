@@ -190,12 +190,13 @@ async function uploadFirstAttachment(
     credentials: 'include',
     headers: { 'Content-Type': fileType },
   })
+  const version = presignRes.version ?? 1
   await attachmentsService.create(reviewItemId, {
     s3Key: presignRes.s3Key,
     fileName: file.name,
     fileType,
     fileSize: file.size,
-    version: 1,
+    version,
   })
 }
 

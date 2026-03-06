@@ -86,6 +86,7 @@ const handlePostAttachment = async (
     fileType: validated.body.fileType,
     fileSize: validated.body.fileSize,
     s3Key: validated.body.s3Key,
+    version: validated.body.version,
     actor,
   })
 

@@ -56,6 +56,10 @@ export const ConfirmUploadSchema = z
       .int('File size must be an integer')
       .positive('File size must be positive'),
     s3Key: nonEmptyString(1, 500),
+    version: z
+      .number()
+      .int('Version must be an integer')
+      .positive('Version must be a positive integer'),
   })
   .strict()
   .superRefine((data, ctx) => {

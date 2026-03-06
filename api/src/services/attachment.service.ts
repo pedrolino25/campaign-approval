@@ -32,6 +32,7 @@ export type ConfirmUploadParams = {
   fileType: string
   fileSize: number
   s3Key: string
+  version: number
   actor: ActorContext
 }
 
@@ -164,7 +165,8 @@ export class AttachmentService implements IAttachmentService {
   }
 
   async confirmUpload(params: ConfirmUploadParams): Promise<Attachment> {
-    const { reviewItemId, fileName, fileType, fileSize, s3Key, actor } = params
+    const { reviewItemId, fileName, fileType, fileSize, s3Key, version, actor } =
+      params
 
     if (actor.type !== ActorType.Internal) {
       throw new ForbiddenError('Only internal users can confirm uploads')
@@ -178,13 +180,6 @@ export class AttachmentService implements IAttachmentService {
         organizationId
       )
 
-      const finalVersion = await this.determineAttachmentVersion(
-        tx,
-        reviewItemId,
-        organizationId,
-        s3Key
-      )
-
       const attachment = await this.createAttachmentWithConflictHandling(
         tx,
         reviewItemId,
@@ -192,7 +187,7 @@ export class AttachmentService implements IAttachmentService {
         fileType,
         fileSize,
         s3Key,
-        finalVersion
+        version
       )
 
       await this.logAttachmentUpload(tx, attachment, reviewItem, actor)
