@@ -1,7 +1,7 @@
 'use client'
 
 import { MessageSquare, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,6 @@ export interface CommentsPanelProps {
 }
 
 export function CommentsPanel({
-  //reviewItemId,
   commentThreads,
   isLoading,
   onCreateComment,
@@ -52,7 +51,15 @@ export function CommentsPanel({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [replyingTo, setReplyingTo] = useState<{ parentId: string; authorName: string } | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
+
+  const handleReply = (parentId: string, authorName: string) => {
+    setReplyingTo({ parentId, authorName })
+    setInputValue(`Replying to @${authorName}\n\n`)
+    setTimeout(() => textareaRef.current?.focus(), 0)
+  }
 
   const handleSubmit = async () => {
     const trimmed = inputValue.trim()
@@ -61,6 +68,7 @@ export function CommentsPanel({
     try {
       await onCreateComment(trimmed)
       setInputValue('')
+      setReplyingTo(null)
     } catch (e) {
       toast({
         title: 'Failed to post comment',
@@ -74,6 +82,7 @@ export function CommentsPanel({
 
   const handleCancel = () => {
     setInputValue('')
+    setReplyingTo(null)
   }
 
   const handleConfirmDelete = async () => {
@@ -96,46 +105,46 @@ export function CommentsPanel({
 
   return (
     <div className="space-y-4">
-      {/* Reviewers placeholder */}
-      <div className="rounded-md border p-4 space-y-4">
-        <h3 className="text-sm font-medium">Reviewers</h3>
-        <p className="text-sm text-muted-foreground">Reviewers will appear here.</p>
-      </div>
-
-      {/* Comments */}
-      <div className="rounded-md border p-4 space-y-4 text-sm">
-        <h3 className="text-sm font-medium flex items-center gap-2">
+      <div className="rounded-md border p-4 flex flex-col text-sm max-h-[360px]">
+        <h3 className="text-sm font-medium flex items-center gap-2 shrink-0">
           <MessageSquare className="h-4 w-4" />
           Comments
         </h3>
 
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
             <Skeleton className="h-16 w-full rounded-md" />
             <Skeleton className="h-16 w-full rounded-md" />
             <Skeleton className="h-16 w-full rounded-md" />
           </div>
         ) : (
           <>
-            {/* Comment list */}
-            <div className="space-y-4">
+            {/* Scrollable comment list */}
+            <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
               {commentThreads.length === 0 ? (
-                <div className="py-6 text-center text-muted-foreground">
-                  <p className="font-medium">No comments yet.</p>
-                  <p className="text-xs mt-1">Start the conversation.</p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <MessageSquare className="h-10 w-10 text-muted-foreground shrink-0 mb-3" />
+                  <p className="font-medium text-foreground">No comments yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Start the conversation.</p>
                 </div>
               ) : (
                 <CommentTree
                   threads={commentThreads}
-                  onReply={() => { }}
+                  onReply={handleReply}
                   onDelete={setDeleteTargetId}
                 />
               )}
             </div>
 
-            {/* Comment input */}
-            <div className="space-y-2 pt-2 border-t">
+            {/* Sticky comment input */}
+            <div className="shrink-0 sticky bottom-0 bg-background border-t pt-3 mt-3 space-y-2 -mb-4 pb-4">
+              {replyingTo && (
+                <p className="text-xs text-muted-foreground">
+                  Replying to @{replyingTo.authorName}
+                </p>
+              )}
               <Textarea
+                ref={textareaRef}
                 placeholder="Add a comment..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -203,7 +212,7 @@ function CommentTree({
   onDelete,
 }: {
   threads: CommentThread[]
-  onReply: (parentId: string) => void
+  onReply: (parentId: string, authorName: string) => void
   onDelete: (id: string) => void
 }) {
   return (
@@ -230,10 +239,10 @@ function CommentBlock({
   comment,
   onReply,
   onDelete,
-  //isReply,
+  isReply: _isReply,
 }: {
   comment: CommentThread
-  onReply: (parentId: string) => void
+  onReply: (parentId: string, authorName: string) => void
   onDelete: (id: string) => void
   isReply: boolean
 }) {
@@ -263,18 +272,20 @@ function CommentBlock({
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => onReply(comment.id)}
+            className="min-h-[36px] min-w-[36px] px-2 text-xs text-muted-foreground"
+            onClick={() => onReply(comment.id, comment.author)}
+            aria-label={`Reply to ${comment.author}`}
           >
             Reply
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 px-2 text-xs text-muted-foreground text-destructive hover:text-destructive"
+            className="min-h-[36px] min-w-[36px] px-2 text-xs text-muted-foreground text-destructive hover:text-destructive"
             onClick={() => onDelete(comment.id)}
+            aria-label={`Delete comment by ${comment.author}`}
           >
-            <Trash2 className="h-3 w-3 mr-1" />
+            <Trash2 className="h-3 w-3 mr-1" aria-hidden />
             Delete
           </Button>
         </div>

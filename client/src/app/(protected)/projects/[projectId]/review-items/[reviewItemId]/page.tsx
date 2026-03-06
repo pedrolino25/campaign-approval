@@ -259,6 +259,17 @@ export default function ProjectReviewItemDetailPage() {
 
   const listHref = `/projects/${projectId}/review-items`
 
+  const statusGuidance: Record<string, string> = {
+    Draft: 'Add reviewers and send for review when ready.',
+    'Pending Review': 'Waiting for reviewers to approve or request changes.',
+    'Changes Requested': 'A reviewer requested changes. Upload a new version to continue.',
+    Approved: 'This asset has been approved.',
+    Archived: 'This review item has been archived.',
+  }
+  const guidanceText = statusGuidance[status] ?? ''
+
+  const isViewingOlderVersion = versionToShow !== currentVersion
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -270,7 +281,7 @@ export default function ProjectReviewItemDetailPage() {
           <Skeleton className="h-6 w-24 rounded-md" />
           <Skeleton className="h-6 w-20 rounded-md" />
         </div>
-        <div className="grid grid-cols-[2fr_1fr] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
           <div className="space-y-4">
             <Skeleton className="h-10 w-[180px] rounded-md" />
             <Skeleton className="aspect-video min-h-[280px] rounded-md border bg-muted/20" />
@@ -291,59 +302,92 @@ export default function ProjectReviewItemDetailPage() {
         title={reviewItem!.title}
         description={project ? `Project: ${project.name}` : undefined}
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            {canSendForReview && (
-              <Button size="sm" onClick={handleSendForReview}>
-                Send for Review
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {canSendForReview && (
+                <Button size="sm" onClick={handleSendForReview}>
+                  Send for Review
+                </Button>
+              )}
+              {sendForReviewDisabled && !isReviewer && status === 'Draft' && (
+                <Button
+                  size="sm"
+                  disabled
+                  aria-describedby="send-for-review-helper"
+                  title="Add at least one reviewer before sending for review."
+                >
+                  Send for Review
+                </Button>
+              )}
+              {canApprove && (
+                <Button size="sm" onClick={handleApprove}>
+                  Approve
+                </Button>
+              )}
+              {canRequestChanges && (
+                <Button size="sm" variant="secondary" onClick={() => setRequestChangesOpen(true)}>
+                  Request Changes
+                </Button>
+              )}
+              {canUploadVersion && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setUploadVersionOpen(true)}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload New Version
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" asChild>
+                <Link href={listHref}>Back to list</Link>
               </Button>
-            )}
+            </div>
             {sendForReviewDisabled && !isReviewer && status === 'Draft' && (
-              <Button
-                size="sm"
-                disabled
-                title="Add at least one reviewer before sending for review."
+              <p
+                id="send-for-review-helper"
+                className="text-sm text-muted-foreground mt-2"
               >
-                Send for Review
-              </Button>
+                Add at least one reviewer before sending for review.
+              </p>
             )}
-            {canApprove && (
-              <Button size="sm" onClick={handleApprove}>
-                Approve
-              </Button>
-            )}
-            {canRequestChanges && (
-              <Button size="sm" variant="secondary" onClick={() => setRequestChangesOpen(true)}>
-                Request Changes
-              </Button>
-            )}
-            {canUploadVersion && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setUploadVersionOpen(true)}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Upload New Version
-              </Button>
-            )}
-            <Button size="sm" variant="secondary" asChild>
-              <Link href={listHref}>Back to list</Link>
-            </Button>
           </div>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <StatusBadge status={reviewItem!.status} />
-        <span className="text-muted-foreground">Version {reviewItem!.version}</span>
-        <span className="text-muted-foreground">·</span>
-        <span className="text-muted-foreground">
-          Created by {reviewItem!.createdBy || '—'} — {formatShortDate(reviewItem!.createdAt)}
-        </span>
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <StatusBadge status={reviewItem!.status} />
+          <span className="text-muted-foreground">Version {reviewItem!.version}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground">
+            Created by {reviewItem!.createdBy || '—'} — {formatShortDate(reviewItem!.createdAt)}
+          </span>
+        </div>
+        {guidanceText && (
+          <p className="text-sm text-muted-foreground">{guidanceText}</p>
+        )}
       </div>
 
-      <div className="grid grid-cols-[2fr_1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         <div className="space-y-4">
+          {isViewingOlderVersion && (
+            <div className="rounded-md bg-muted px-4 py-2 text-sm flex flex-wrap items-center justify-between gap-2">
+              <span className="text-muted-foreground">
+                Viewing Version {versionToShow}
+                <span className="ml-2 font-medium text-foreground">
+                  Current Version: {currentVersion}
+                </span>
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setSelectedVersion(currentVersion)}
+              >
+                View Current Version
+              </Button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <VersionSelector
               versions={versionOptions}
@@ -364,7 +408,7 @@ export default function ProjectReviewItemDetailPage() {
           />
         </div>
 
-        <Card className="rounded-md border shadow-sm">
+        <Card className="rounded-md border shadow-sm max-h-[calc(100vh-240px)] overflow-y-auto">
           <CardHeader className="p-4">
             <CardTitle className="text-sm font-medium">Review Sidebar</CardTitle>
           </CardHeader>
@@ -382,6 +426,7 @@ export default function ProjectReviewItemDetailPage() {
               }
               onRefetch={() => projectReviewersQuery.refetch()}
             />
+            <div className="border-t my-4" />
             <CommentsPanel
               reviewItemId={reviewItemId}
               commentThreads={commentThreads}
@@ -517,12 +562,14 @@ export default function ProjectReviewItemDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>File</Label>
+            <Label htmlFor="upload-version-file">File</Label>
             <input
+              id="upload-version-file"
               type="file"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               accept="image/*,video/*,application/pdf"
               onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+              aria-label="Choose file to upload as new version"
             />
           </div>
           <DialogFooter>

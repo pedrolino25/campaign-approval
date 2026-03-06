@@ -105,7 +105,7 @@ const buildVersionHistory = async (
     organizationId,
     reviewItemId,
     pagination: {
-      limit: 1000,
+      limit: 100,
       cursor: undefined,
     },
   })

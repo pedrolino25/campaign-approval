@@ -116,7 +116,21 @@ export function ReviewersPanel({
         {isLoading ? (
           <Skeleton className="h-12 w-full rounded-md" />
         ) : reviewers.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No reviewers yet. Add one to send for review.</p>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <UserPlus className="h-10 w-10 text-muted-foreground shrink-0 mb-3" />
+            <p className="font-medium text-foreground">No reviewers assigned</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Add reviewers so they can approve or request changes.
+            </p>
+            <Button
+              size="sm"
+              className="mt-4"
+              onClick={() => setAddOpen(true)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Reviewer
+            </Button>
+          </div>
         ) : (
           <ul className="space-y-3">
             {reviewers.map((r) => (
@@ -141,8 +155,9 @@ export function ReviewersPanel({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 text-destructive hover:text-destructive shrink-0"
+                    className="min-h-[36px] min-w-[36px] text-destructive hover:text-destructive shrink-0"
                     onClick={() => setRemoveTarget(r)}
+                    aria-label={`Remove reviewer ${r.name || r.email}`}
                   >
                     Remove
                   </Button>

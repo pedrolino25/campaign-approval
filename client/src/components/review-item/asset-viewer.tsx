@@ -44,9 +44,19 @@ export function AssetViewer({
 }: AssetViewerProps) {
   const effectiveType = type ?? (attachment ? inferTypeFromFileType(attachment.fileType) : 'image')
   const displayUrl = effectiveType === 'url' ? (externalUrl ?? url) : url
+  const assetTypeLabel =
+    effectiveType === 'image'
+      ? 'Image'
+      : effectiveType === 'video'
+        ? 'Video'
+        : effectiveType === 'pdf'
+          ? 'PDF'
+          : 'Link'
+  const fileName = attachment?.fileName ?? 'asset'
+  const ariaLabel = `${assetTypeLabel} asset, ${versionLabel ?? 'unknown version'}, ${fileName}`
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" role="region" aria-label={ariaLabel}>
       {(versionLabel ?? dateLabel) && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
           {versionLabel && <span>{versionLabel}</span>}
@@ -59,7 +69,7 @@ export function AssetViewer({
             {displayUrl ? (
               <img
                 src={displayUrl}
-                alt={attachment?.fileName ?? 'Asset'}
+                alt={`${assetTypeLabel} asset, ${versionLabel ?? 'unknown version'}, ${fileName}`}
                 className="max-h-[600px] w-full object-contain"
               />
             ) : (
@@ -83,6 +93,7 @@ export function AssetViewer({
                 src={displayUrl}
                 controls
                 className="max-h-[600px] w-full object-contain"
+                aria-label={`${assetTypeLabel} asset, ${versionLabel ?? 'unknown version'}, ${fileName}`}
               />
             ) : (
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -103,7 +114,7 @@ export function AssetViewer({
             {displayUrl ? (
               <iframe
                 src={displayUrl}
-                title={attachment?.fileName ?? 'PDF'}
+                title={`${assetTypeLabel} asset, ${versionLabel ?? 'unknown version'}, ${fileName}`}
                 className="h-full w-full min-h-[400px] rounded-md border-0"
               />
             ) : (

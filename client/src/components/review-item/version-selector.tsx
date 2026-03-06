@@ -21,6 +21,10 @@ export interface VersionSelectorProps {
   disabled?: boolean
 }
 
+function formatVersionDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 export function VersionSelector({
   versions,
   value,
@@ -35,13 +39,13 @@ export function VersionSelector({
       onValueChange={(v) => onValueChange(Number(v))}
       disabled={disabled}
     >
-      <SelectTrigger className="h-9 w-[180px]">
+      <SelectTrigger className="h-9 min-w-[180px]" aria-label="Select version">
         <SelectValue placeholder="Select version" />
       </SelectTrigger>
       <SelectContent>
         {sorted.map((v) => (
           <SelectItem key={v.version} value={String(v.version)}>
-            Version {v.version}
+            Version {v.version} — {formatVersionDate(v.createdAt)}
             {v.isCurrent ? ' (Current)' : ''}
           </SelectItem>
         ))}
