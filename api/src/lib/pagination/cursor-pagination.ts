@@ -115,7 +115,7 @@ export function determineNextCursor<T extends { createdAt: Date; id: string }>(
   })
 }
 
-export const CURSOR_ORDER_BY = {
-  createdAt: 'desc' as const,
-  id: 'desc' as const,
-}
+export const CURSOR_ORDER_BY = [
+  { createdAt: 'desc' as const },
+  { id: 'desc' as const },
+]
