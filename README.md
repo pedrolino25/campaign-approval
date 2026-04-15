@@ -1,6 +1,6 @@
 # Campaign Approval
 
-Worklient is a production-grade web platform built with a serverless backend and a modern React/Next.js frontend.
+Campaign Approval is a production-grade web platform built with a serverless backend and a modern React/Next.js frontend.
 
 This repository is structured as a full-stack monorepo with clear separation between:
 
@@ -70,7 +70,7 @@ Authentication is handled via:
 
 Local development mirrors production as closely as possible:
 
-* Custom local domains (`*.local.worklient.test`)
+* Custom local domains (`*.local.Campaign Approval.test`)
 * HTTPS enforced using mkcert
 * Secure cookies enabled
 * Strict environment validation
@@ -152,4 +152,4 @@ For any local setup issues, refer to the backend and frontend README files.
 
 ---
 
-Worklient – Production-grade architecture, locally reproducible.
+Campaign Approval – Production-grade architecture, locally reproducible.
